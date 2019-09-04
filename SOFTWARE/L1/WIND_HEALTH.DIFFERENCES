@@ -1,0 +1,30 @@
+                                 WIND_HEALTH
+Differences in output between previous working and current versions.
+Header
+	run date differs; expected
+Parameter Heading
+	there is a form feed character on a separate line instead of a 1 in the
+	first column to control page eject
+Parameter Values
+	on SWICS PAPS Output Voltage (Gnd Ref) the average is -22793.93 instead
+	of -22793.87, a difference of .06, or 3E-6
+	on SWICS Stop MCPPS Voltage (PAPS Ref), which has no valid values (all
+	values were zero), the min, max, and average are reported as -999.00;
+	previously they were incorrectly reported as 18.21, 3462.45, and 0.00,
+	respectively; this is a bug fix
+	on MASS HPS Output Voltage (ADPS Ref) the average is reported as
+	23351.91 instead of 23351.77, a difference of .14, or 7E-6
+	on MASS Start MCPPS Voltage (ADPS Ref) the average is reported as
+	2575.25 instead of 2575.26, a difference of .01, or 4E-6
+	on STICS MCPPS 1 Output Voltage the average is reported as 2889.37
+	instead of 2889.39, a difference of .02, or 8E-6
+	the Telemetry Format, Telemetry Rate, and Spin Period are reported on
+	the same line; previously they were reported on separate lines
+	the Spin Rate has been relabelled as Spin Period
+	on Last Reset Cause an English interpretation of the reset code is
+	also displayed
+	on MCPPS 1-5 the values written out are the correct ones; previously
+	the same variable had been used in the WRITE statement for all five
+	quantities; this is a bug fix
+	on STOP MCPPS the correct value of 0.00 is now written out; previously
+	an incorrect non-zero value was written; this is a bug fix

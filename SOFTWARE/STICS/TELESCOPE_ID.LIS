@@ -1,0 +1,197 @@
+TELESCOPE_ID                                                    26-MAR-1997 19:18:01    DEC Fortran V6.2-508                Page   1
+                                                                26-MAR-1997 16:17:21    SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_ID.FOR;1
+
+	      1        SUBROUTINE TELESCOPE_ID (TIME_OF_FLIGHT,ENERGY,
+	      2      .                PSTART,STOP_ID,SSD_ID, TELE_ID, CHECK_TELE)
+	      3 C
+	      4 C      this subroutine determines which telescope (1, 2, 3) the pha word comes 
+	      5 C		from based on PSTART, or if the information from all the detectors 
+	      6 C		is inconsistent, the check_tele flag is set
+	      7 C      HISTORY:  derived from TELESCOPE_CHECK, 18Aug95 - ABG
+	      8 
+	      9        INTEGER*4 ENERGY,		!energy pulse height
+	     10      .           TIME_OF_FLIGHT,	!time pulse height
+	     11      .           PSTART,		!FSR id
+	     12      .           STOP_ID,		!RSR id
+	     13      .           SSD_ID,		!Solid state detector id
+	     14      .           TELE_ID,		!based on PSTART if TOF>0, or SSD if only E>0
+	     15      .           CHECK_TELE		!flag = 0 if all detectors match, 1 if not
+	     16 
+	     17 
+	     18                  CHECK_TELE = 0		!initialize
+	     19 		 TELE_ID    = 0         
+	     20 
+	     21 C                ssd checks
+	     22 	  	 IF (SSD_ID.EQ.0 .AND. ENERGY.NE.0) CHECK_TELE = 1
+	     23 	         IF (SSD_ID.EQ.1 
+	     24      .               .AND.
+	     25      .                    (PSTART.NE.1 .AND. PSTART.NE.2 .AND.
+	     26      .                     PSTART.NE.7 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     27 	         IF (SSD_ID.EQ.2 
+	     28      .               .AND.
+	     29      .                (PSTART.NE.3 .AND. PSTART.NE.4 .AND.
+	     30      .                 PSTART.NE.8 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     31 	         IF (SSD_ID.EQ.3 
+	     32      .                 .AND.
+	     33      .                (PSTART.NE.5 .AND. PSTART.NE.6 .AND.
+	     34      .                 PSTART.NE.9 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     35 	         IF (SSD_ID.EQ.1 
+	     36      .               .AND.
+	     37      .                (STOP_ID.NE.1 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     38 	         IF (SSD_ID.EQ.2 
+	     39      .               .AND.
+	     40      .                (STOP_ID.NE.2 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     41 	         IF (SSD_ID.EQ.3 
+	     42      .               .AND.
+	     43      .                (STOP_ID.NE.3 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     44 
+	     45 C                stop checks
+	     46 	  	 IF (STOP_ID.EQ.0 .AND. TIME_OF_FLIGHT.NE.0) CHECK_TELE = 1
+	     47 	         IF (STOP_ID.EQ.1 
+	     48      .               .AND.
+	     49      .                    (PSTART.NE.1 .AND. PSTART.NE.2 .AND.
+	     50      .                     PSTART.NE.7 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     51 	         IF (STOP_ID.EQ.2 
+	     52      .               .AND.
+	     53      .                (PSTART.NE.3 .AND. PSTART.NE.4 .AND.
+	     54      .                 PSTART.NE.8 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     55 	         IF (STOP_ID.EQ.3 
+	     56      .                 .AND.
+	     57      .                (PSTART.NE.5 .AND. PSTART.NE.6 .AND.
+
+TELESCOPE_ID                                                    26-MAR-1997 19:18:01    DEC Fortran V6.2-508                Page   2
+                                                                26-MAR-1997 16:17:21    SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_ID.FOR;1
+
+	     58      .                 PSTART.NE.9 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     59 	         IF (STOP_ID.EQ.1 
+	     60      .               .AND.
+	     61      .                (SSD_ID.NE.1 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     62 	         IF (STOP_ID.EQ.2 
+	     63      .               .AND.
+	     64      .                (SSD_ID.NE.2 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     65 	         IF (STOP_ID.EQ.3 
+	     66      .               .AND.
+	     67      .                (SSD_ID.NE.3 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     68 
+	     69 
+	     70 C                start checks
+	     71 C			start id only if TOF>0
+	     72 	  	 IF (PSTART.EQ.0 .AND. TIME_OF_FLIGHT.NE.0) CHECK_TELE = 1
+	     73 
+	     74 C			start id consistent with stop id
+	     75   	         IF ( (PSTART.EQ.1 .OR. PSTART.EQ.2  .OR. PSTART.EQ.7)
+	     76      .               .AND.
+	     77      .                (STOP_ID.NE.1 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     78 	         IF ( (PSTART.EQ.3 .OR. PSTART.EQ.4  .OR. PSTART.EQ.8)
+	     79      .               .AND.
+	     80      .                (STOP_ID.NE.2 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     81 	         IF ( (PSTART.EQ.5 .OR. PSTART.EQ.6  .OR. PSTART.EQ.9)
+	     82      .               .AND.
+	     83      .                (STOP_ID.NE.3 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     84 
+	     85 C			start id consistent with solid state detector id
+	     86 	         IF ( (PSTART.EQ.1 .OR. PSTART.EQ.2  .OR. PSTART.EQ.7)
+	     87      .               .AND.
+	     88      .                (SSD_ID.NE.1 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     89 	         IF ( (PSTART.EQ.3 .OR. PSTART.EQ.4  .OR. PSTART.EQ.8)
+	     90      .               .AND.
+	     91      .                (SSD_ID.NE.2 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     92 	         IF ( (PSTART.EQ.5 .OR. PSTART.EQ.6  .OR. PSTART.EQ.9)
+	     93      .               .AND.
+	     94      .                (SSD_ID.NE.3 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     95 
+	     96 	
+	     97 C  	find telescope ID if check_tele ok:
+	     98         IF (CHECK_TELE.EQ.0) THEN
+	     99 	  IF (PSTART.NE.0) THEN
+	    100   	    IF (PSTART.EQ.1 .OR. PSTART.EQ.2  .OR. PSTART.EQ.7) TELE_ID = 1
+	    101 	    IF (PSTART.EQ.3 .OR. PSTART.EQ.4  .OR. PSTART.EQ.8) TELE_ID = 2
+	    102 	    IF (PSTART.EQ.5 .OR. PSTART.EQ.6  .OR. PSTART.EQ.9) TELE_ID = 3
+	    103 	  ELSE IF (SSD_ID.NE.0) THEN
+	    104 	    IF (SSD_ID.EQ.1) TELE_ID = 1
+	    105 	    IF (SSD_ID.EQ.2) TELE_ID = 2
+	    106 	    IF (SSD_ID.EQ.3) TELE_ID = 3
+	    107 	  ENDIF
+	    108         ENDIF
+	    109 
+	    110        RETURN
+	    111        END
+
+TELESCOPE_ID                                                    26-MAR-1997 19:18:01    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    26-MAR-1997 16:17:21    SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_ID.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                1096   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  16 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1112
+
+
+ENTRY POINTS
+
+    Address   Type  Name        
+                                
+  1-00000000        TELESCOPE_ID
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name               Address   Type  Name          
+                                                                                                        
+      **      I*4   CHECK_TELE           **      I*4   SSD_ID               **      I*4   TIME_OF_FLIGHT
+      **      I*4   ENERGY               **      I*4   STOP_ID                                          
+      **      I*4   PSTART               **      I*4   TELE_ID                                          
+
+TELESCOPE_ID                                                    26-MAR-1997 19:18:01    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    26-MAR-1997 16:17:21    SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_ID.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_ID.LIS;2
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_ID.OBJ;2
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.72 seconds
+  Elapsed time:      2.20 seconds
+  Pagefaults:         193
+  I/O Count:            8

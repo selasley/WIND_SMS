@@ -1,0 +1,40 @@
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;13
+    4        Program Name: WIND_HEALTH       Version:1.8         Run Date: 22:13:05 17-NOV-95
+    5        First complete science record:     9948       Time:  0:00:39
+******
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;12
+    4        Program Name: WIND_HEALTH       Version:1.8         Run Date: 16:22:43 16-NOV-95
+    5        First complete science record:     9948       Time:  0:00:39
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;13
+  159         Telemetry Format: Science Mode       Telemetry Rate 5565 BPS       Spin Period:  3.
+  160         Reset Counter:  1
+******
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;12
+  159         Telemetry Format: Science Mode       Telemetry Rate 5565 BPS       Spin Rate:  3.20
+  160         Reset Counter:  1
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;13
+  263        MCPPS 1   |  ON    |   160   |   160   |     2891.51   |
+  264        MCPPS 2   |  ON    |   160   |   160   |     2891.51   |
+  265        MCPPS 3   |  ON    |   160   |   160   |     2891.51   |
+  266        MCPPS 4   |  ON    |   160   |   160   |     2891.51   |
+  267        MCPPS 5   |  ON    |   160   |   160   |     2891.51   |
+  268        TOFPS(6)  |  ON    |   220   |   220   |      994.59   |
+******
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;12
+  263        MCPPS 1   |  ON    |   160   |   160   |     2863.02   |
+  264        MCPPS 2   |  ON    |   160   |   160   |     2886.95   |
+  265        MCPPS 3   |  ON    |   160   |   160   |     2857.30   |
+  266        MCPPS 4   |  ON    |   160   |   160   |     2882.28   |
+  267        MCPPS 5   |  ON    |   160   |   160   |     2887.14   |
+  268        TOFPS(6)  |  ON    |   220   |   220   |      994.59   |
+************
+Number of difference sections found: 3
+Number of difference records found: 7
+DIFFERENCES /IGNORE=()/MERGED=1/OUTPUT=SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.DIF;3-
+    SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;13-
+    SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19950108_V01.HEALTH;12

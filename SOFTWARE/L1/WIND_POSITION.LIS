@@ -1,0 +1,328 @@
+WIND_POSITION                                                   22-JUN-1995 16:27:37    DEC Fortran V6.2-508                Page   1
+                                                                22-JUN-1995 16:27:36    SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.FOR;12
+
+	      1 	PROGRAM WIND_POSITION
+	      2  
+	      3 C+
+	      4 C 
+	      5 C ABSTRACT: 
+	      6 C 
+	      7 C	 This program reports, in tabluar form, the position of the WIND
+	      8 C	 satellite for a given range of dates.
+	      9 C 
+	     10 C COMMON BLOCKS:
+	     11 C  
+	     12 C     EPHDATA
+	     13 C  
+	     14 C DESIGN:
+	     15 C  
+	     16 C     initialize the program
+	     17 C     obtain the orbit request parameters from the user
+	     18 C     set current day to starting date
+	     19 C     loop:
+	     20 C     	  read in the orbit data for the current day into our arrays
+	     21 C     	  process the data as needed
+	     22 C     	  display the data for the user
+	     23 C	  advance to next day
+	     24 C     endloop
+	     25 C  
+	     26 C 
+	     27 C Current version: 
+	     28 C 
+	     29 C	 22-JUN-1995	2.0
+	     30 C 
+	     31 C Created: 
+	     32 C 
+	     33 C	 2-JUN-1995    Larry Bleau
+	     34 C 
+	     35 C Revised:
+	     36 C 
+	     37 C	 Date     | Name  | Description
+	     38 C ----------------+-------+-----------------------------------------------------
+	     39 C  8-JUN-1995	  |  LRB  | increased size of array to 10000, moved OPEN of
+	     40 C			    output file to get_orbit_request
+	     41 C 22-JUN-1995     |  LRB  | add loop to read data once per day and display it
+	     42 C 			    instead of doing all reads first; add routine
+	     43 C			    get_orbit_data
+	     44 C [change_entry]
+	     45 C-
+	     46 CDEC$	IDENT '2.0'
+	     47 	IMPLICIT NONE
+	     48 	INCLUDE 'INC_DIR:EPHDEF.INC'
+    1	     49 	STRUCTURE /EPHEMERIS/		! structure to describe spacecraft 
+    1	     50 					! position in some coordinate system
+    1	     51 	    UNION 
+    1	     52 	    MAP
+    1	     53 		REAL*8           x
+    1	     54 		REAL*8           y
+    1	     55 		REAL*8           z
+    1	     56 	    END MAP
+    1	     57 	    MAP
+
+WIND_POSITION                                                   22-JUN-1995 16:27:37    DEC Fortran V6.2-508                Page   2
+2.0                                                              2-JUN-1995 18:00:14    SMS1:[WIND.SOFTWARE.INC]EPHDEF.INC;3
+
+    1	     58 		REAL*8           r
+    1	     59 		REAL*8           theta
+    1	     60 		REAL*8           phi
+    1	     61 	    END MAP
+    1	     62 	    MAP
+    1	     63 		REAL*8		 member(3)
+    1	     64 	    END MAP
+    1	     65 	    END UNION
+    1	     66 	END STRUCTURE    !EPHEMERIS
+    1	     67 
+    1	     68 	STRUCTURE /ATTITUDE/		! structure to describe spacecraft 
+    1	     69 					! attitude (orientation)
+    1	     70 	    UNION 
+    1	     71 	    MAP
+    1	     72 		REAL*4		 r_asc
+    1	     73 		REAL*4		 decl
+    1	     74 	    END MAP
+    1	     75 	    MAP
+    1	     76 		REAL*4		 member(2)
+    1	     77 	    END MAP
+    1	     78 	    END UNION
+    1	     79 	END STRUCTURE    !ATTITUDE
+	     80 	INCLUDE 'WIND_POSITION.INC'
+    1	     81 	INTEGER POS_FORMAT_USE_TAB
+    1	     82 	PARAMETER (POS_FORMAT_USE_TAB = 1)
+    1	     83 C
+    1	     84 	INTEGER POS_FORMAT_SUPPRESS_DATE
+    1	     85 	PARAMETER (POS_FORMAT_SUPPRESS_DATE = 2)
+    1	     86 C
+    1	     87 	INTEGER POS_FORMAT_SHOW_EPOCH
+    1	     88 	PARAMETER (POS_FORMAT_SHOW_EPOCH = 4)
+    1	     89 C
+    1	     90 	INTEGER POS_FORMAT_SUPPRESS_HEADER
+    1	     91 	PARAMETER (POS_FORMAT_SUPPRESS_HEADER = 8)
+    1	     92 C
+    1	     93 	INTEGER POS_FORMAT_SHOW_TIME_ALL_LINES
+    1	     94 	PARAMETER (POS_FORMAT_SHOW_TIME_ALL_LINES = 16)
+    1	     95 C
+    1	     96 	INTEGER POS_FORMAT_3UP
+    1	     97 	PARAMETER (POS_FORMAT_3UP = 32)
+    1	     98 C
+    1	     99 	INTEGER POS_FORMAT_DOY
+    1	    100 	PARAMETER (POS_FORMAT_DOY = 64)
+	    101 	INTEGER maxsize
+	    102 	PARAMETER (maxsize=144)
+	    103 	INTEGER*4 mode, units, system, step, npoints, dump_unit/7/, status,
+	    104 	1 form, nch
+	    105 	CHARACTER*80 outfile
+	    106 	LOGICAL*4 what_info(7)
+	    107 	REAL*8 beg_date, end_date, todays_date, epoch_time(maxsize), dummy(maxsize)
+	    108 	RECORD /EPHEMERIS/ gci_pos(maxsize),
+	    109 	1 gci_vel(maxsize), gse_pos(maxsize), gse_vel(maxsize),
+	    110 	1 gsm_pos(maxsize), gsm_vel(maxsize), sun_vec(maxsize) 
+	    111 C
+	    112 C Initialize the program
+	    113 C
+	    114 	mode = 1
+
+WIND_POSITION                                                   22-JUN-1995 16:27:37    DEC Fortran V6.2-508                Page   3
+2.0                                                             22-JUN-1995 16:27:36    SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.FOR;12
+
+	    115 	form = POS_FORMAT_3UP
+	    116 C
+	    117 C Obtain the orbit request parameters from the user
+	    118 C
+	    119 	call get_orbit_request(mode, beg_date, end_date, what_info, units,
+	    120 	1		       system, step, form, outfile, nch) 
+	    121 C
+	    122 C Open output file
+	    123 C
+	    124 	IF (nch .eq. 0 .or. outfile .eq. ' ') THEN
+	    125 	    OPEN (
+	    126 	1     UNIT = dump_unit,
+	    127 	1     FILE = 'SYS$OUTPUT:',
+	    128 	1     CARRIAGECONTROL = 'LIST',
+	    129 	1     STATUS = 'OLD',
+	    130 	1     IOSTAT = status,
+	    131 	1     RECL = 500,
+	    132 	1     ERR = 900)
+	    133 	ELSE
+	    134 	    OPEN (
+	    135 	1     UNIT = dump_unit,
+	    136 	1     FILE = outfile(1:nch),
+	    137 	1     CARRIAGECONTROL = 'LIST',
+	    138 	1     STATUS = 'NEW',
+	    139 	1     IOSTAT = status,
+	    140 	1     RECL = 500,
+	    141 	1     ERR = 900)
+	    142 	END IF
+	    143 C
+	    144 C Start daily loop
+	    145 C Read in the orbit data for the current day into our arrays
+	    146 C Update starting and ending date/time with actual values
+	    147 C
+	    148 	todays_date = beg_date
+	    149 	DO WHILE (todays_date .le. end_date)
+	    150 	    call get_orbit_data(todays_date, what_info, maxsize, npoints,
+	    151 	1			epoch_time, gci_pos, gci_vel, gse_pos, gse_vel,
+	    152 	1			gsm_pos, gsm_vel, sun_vec)
+	    153 	    IF (npoints .eq. 0) goto 400
+	    154 C
+	    155 C Process the data as needed
+	    156 C
+	    157 	    if (what_info(1)) call convert_orbit_info(units, system, npoints,
+	    158 	1			gci_pos, dummy)
+	    159 	    if (what_info(2)) call convert_orbit_info(units, system, npoints,
+	    160 	1			gci_vel, dummy)
+	    161 	    if (what_info(3)) call convert_orbit_info(units, system, npoints,
+	    162 	1			gse_pos, dummy)
+	    163 	    if (what_info(4)) call convert_orbit_info(units, system, npoints,
+	    164 	1			gse_vel, dummy)
+	    165 	    if (what_info(5)) call convert_orbit_info(units, system, npoints,
+	    166 	1			gsm_pos, dummy)
+	    167 	    if (what_info(6)) call convert_orbit_info(units, system, npoints,
+	    168 	1			gsm_vel, dummy)
+	    169 	    if (what_info(7)) call convert_orbit_info(units, system, npoints,
+	    170 	1			sun_vec, dummy)
+	    171 C
+
+WIND_POSITION                                                   22-JUN-1995 16:27:37    DEC Fortran V6.2-508                Page   4
+2.0                                                             22-JUN-1995 16:27:36    SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.FOR;12
+
+	    172 C Display the data for the user
+	    173 C
+	    174 	    call display_orbit_info(dump_unit, beg_date, end_date, what_info,
+	    175 	1			 form, units, system, step, npoints, epoch_time,
+	    176 	1			 gci_pos, gci_vel, gse_pos, gse_vel, gsm_pos,
+	    177 	1			 gsm_vel, sun_vec)
+	    178 C
+	    179 C End of daily loop
+	    180 C Bump date to next day so a different CDF file gets accessed
+	    181 C Change form so header doesn't get repeated
+	    182 C
+	    183 400	    todays_date = todays_date + 24.*60.*60.*1000.
+	    184 	    form = form .or. POS_FORMAT_SUPPRESS_HEADER
+	    185 	END DO
+	    186 C
+	    187 910	CLOSE (UNIT=dump_unit, IOSTAT=status, ERR=920)
+	    188 920	call exit(1)
+	    189 C
+	    190 900	TYPE *, 'Error opening dump file; status =',status
+	    191 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                26672 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT *32
+  3 $CODE$                                1672   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 404 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+
+    Total Space Allocated                28756
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  3-00000000        WIND_POSITION
+
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                                                               
+  2-00000000  R*8   BEG_DATE      2-00000018  I*4   MODE          2-0000002C  I*4   STATUS        2-0000001C  I*4   UNITS      
+  1-00000000  I*4   DUMP_UNIT     2-00000034  I*4   NCH           2-00000024  I*4   STEP                                       
+  2-00000008  R*8   END_DATE      2-00000028  I*4   NPOINTS       2-00000020  I*4   SYSTEM                                     
+  2-00000030  I*4   FORM          2-00000960  CHAR  OUTFILE       2-00000010  R*8   TODAYS_DATE                                
+
+
+
+WIND_POSITION                                                   22-JUN-1995 16:27:37    DEC Fortran V6.2-508                Page   5
+2.0                             Symbol Table                    22-JUN-1995 16:27:36    SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.FOR;12
+
+ARRAYS
+
+     Address  Type  Name              Bytes  Dimensions
+
+  2-000004E0  R*8   DUMMY              1152  (144)
+  2-00000060  R*8   EPOCH_TIME         1152  (144)
+  2-00000038  L*4   WHAT_INFO            28  (7)
+
+
+
+RECORD ARRAYS
+
+    Address   Name     Structure         Bytes  Dimensions
+
+  2-000009B0  GCI_POS  EPHEMERIS         3456  (144)
+  2-00001730  GCI_VEL  EPHEMERIS         3456  (144)
+  2-000024B0  GSE_POS  EPHEMERIS         3456  (144)
+  2-00003230  GSE_VEL  EPHEMERIS         3456  (144)
+  2-00003FB0  GSM_POS  EPHEMERIS         3456  (144)
+  2-00004D30  GSM_VEL  EPHEMERIS         3456  (144)
+  2-00005AB0  SUN_VEC  EPHEMERIS         3456  (144)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  3-00000568   400    3-000005F8   900        **       910    3-000005E4   920 
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                       Type  Name                    
+                                                                 
+        CONVERT_ORBIT_INFO               GET_ORBIT_DATA          
+        DISPLAY_ORBIT_INFO               GET_ORBIT_REQUEST       
+
+WIND_POSITION                                                   22-JUN-1995 16:27:37    DEC Fortran V6.2-508                Page   6
+2.0                             Symbol Table                    22-JUN-1995 16:27:36    SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.FOR;12
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /DIAGNOSTICS=SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.DIA;1
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.LIS;20
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_POSITION.OBJ;12
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.41 seconds
+  Elapsed time:      2.27 seconds
+  Pagefaults:         153
+  I/O Count:           19

@@ -1,0 +1,55 @@
+makeCDF is a portable tool that can generate a CDF file from an
+input ASCII or Binary data file.  It requires a skeleton table
+and translation file tailored to the dataset.  See
+http://nssdc.gsfc.nasa.gov/~horrocks/conversion.html
+for detailed information on using makeCDF to create an ISTP compliant 
+CDF file.  *This URL is still under development and will be moved in the 
+future.*
+1) To acquire makeCDF:
+     anonymous ftp to nssdc.gsfc.nasa.gov
+     for Unix tar file: (not yet available)
+     cd /pub/tools/istp/unix
+     binary
+     get makeCDF20.tar
+     for VMS backup file
+     cd /pub/tools/istp/vms
+     binary
+     get makeCDF20.bck
+1a)If you have acquired makeCDF from a unix server such as nssdc.gsfc.nasa.gov
+   anonymous ftp site, and are running VMS, you must first correct the backup
+   save set from the different file characteristics of unix by:
+     $SET FILE /ATTRIBUTE=(LRL:32256,ORG:SEQ,RAT:NONE,RFM:FIX) -
+      makeCDF20.bck
+2) To expand the tar file:
+     tar xvf makeCDF20.tar
+   To expand the backup save set:
+     $backup/log makeCDF20.BCK/Save_Set []
+3) To make in Unix:
+     setenv CDF_HOME top_level_CDFdistribution_directory
+     make
+   To compile and link in VMS:
+     $@makeCDFlink host::device:[top_level_CDFdistribution_directory]
+4) To execute makeCDF: (VMS: after defining makeCDF to system)
+     $makecdf input_file translation_file input_CDF output_CDF
+       input_file:        the input data file to be translated to CDF
+       translation_file:  the translation file specifying the
+                          format of the input_file and the 
+                          correspondence to variables in the CDF
+       input_CDF:         skeleton table or empty CDF in the correct 
+                          format for the dataset
+       output_CDF:        name of the output_CDF
+For more detailed information about these inputs, read the pages
+http://nssdc.gsfc.nasa.gov/~horrocks/conversion.html
+makeCDF written and supported by:
+Richard Burley
+NASA/Goddard Space Flight Center/Code 632
+Greenbelt, Maryland, 20771     USA
+(301)286-2864     FAX(301)286-1771
+burley@nssdca.gsfc.nasa.gov
+6/11/96
+Emily A. Greene
+NSSDC/Hughes STX
+7701 Greenbelt Rd. Suite 400
+Greenbelt, MD 20770
+(301)441-4234
+emily.greene@gsfc.nasa.gov

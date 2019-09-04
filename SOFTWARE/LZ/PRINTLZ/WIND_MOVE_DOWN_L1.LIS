@@ -1,0 +1,305 @@
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   1
+                                                                25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+	      1 	SUBROUTINE WIND_MOVE_DOWN_L1
+	      2 C
+	      3 C       This routine is mainly bookkeeping. Taken from the routine WIND_OUTPUT_L1,
+	      4 C       it moves  data down, but does not shift, conactenate, or output it.
+	      5 C
+	      6 C       1) concatenate the STICS rate data in the 3rd science record
+	      7 C       If EDBset is 3 (this is 3rd science record or later) perform steps 2-8
+	      8 C         2) shift data into/within the first science record
+	      9 C         3) fill in the wall times in the HDB with those of spin 0
+	     10 C         4) build the science record header
+	     11 C         5) write the completed science record to the output file and keep a
+	     12 C            count of the number of records written
+	     13 C         6) move science data down within their various arrays
+	     14 C         7) concatenate STICS PHA data
+	     15 C         8) clear 3rd science record to zero
+	     16 C       9) copy latest HK to first position in newly cleared science record
+	     17 C      10) increment EDBset, but to no higher than 3
+	     18 C
+	     19 C     This version:   25-JAN-1995
+	     20 C
+	     21 C     CREATION:
+	     22 C       25-JAN-1995     J.PAQUETTE
+	     23 C
+	     24 C     REVISIONS:
+	     25 C
+	     26 CDEC$ IDENT     '1.0'
+	     27 	IMPLICIT NONE
+	     28 	INCLUDE   'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   2
+1.0                                                             25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+	    564 	INCLUDE   'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   3
+1.0                                                             25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+	    763 	INCLUDE   'INC_DIR:L0_DATA_Record.INC/NOLIST'
+
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   4
+1.0                                                             25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+	    931 C
+	    932 	INTEGER ISTAT
+	    933 C
+	    934 	INTEGER DIAG
+	    935 	LOGICAL INTER
+	    936 	COMMON /DIAG/ DIAG,INTER
+	    937 C
+	    938 C At low bit rate, a STICS voltage step lasts for two spins, and the data is cut
+	    939 C in half and output over two spins. Thus, for low bit rate, we must concatenate
+	    940 C the two halves of the data. Rate data must be concatenated before shifting.
+	    941 C
+	    942         Sci_rec_cntr=Sci_rec_cntr+1
+	    943 C
+	    944         IF (EDBset .EQ. 3) THEN
+	    945 C
+	    946 C The wall clock time is not given as part of the HDB, so copy it from the
+	    947 C EDB of spin zero and store in the HDB structure.
+	    948 C Also copy it in ITIME format, and store it, too, in structure 
+	    949 C
+	    950           HDB(1).BDH.EPOCH = SCI(1).EDB(0).EPOCH
+	    951           HDB(1).BDH.W_Time = SCI(1).EDB(0).W_Time
+	    952           L1_recs_written = L1_recs_written + 1
+	    953           IF(DIAG .LE. 5 .OR. .NOT.INTER) THEN               
+	    954             WRITE(6,1001) L1_recs_written
+	    955 1001        FORMAT('  Done with L1 Sci Rec ',I4)
+	    956           ELSE                               
+	    957             WRITE(6,1002) L1_recs_written
+	    958 1002        FORMAT('+ Done with L1 Sci Rec ',I4)
+	    959           ENDIF                              
+	    960 C
+	    961 C Move the data. Contents of 2nd science record --> 1st science record.
+	    962 C Contents of 3rd science record --> 2nd science record.  New data will go into
+	    963 C the 3rd science record in the future.  We also have to do the same thing with
+	    964 C the HK's and their pointers and the HDBs and their times.
+	    965 C Also zero out the structures of the third Science Record to logically clear them.
+	    966 C This has to be done to allow for missing spins.
+	    967 C
+	    968           CALL WIND_POST_PROCESS
+	    969         END IF
+	    970 C
+	    971 C At this point we have a completed copy of the most recent science record.  If
+	    972 C EDBset is a 1 or a 2 then the science record just completed is in position
+	    973 C EDBset (that is, 1 or 2).  If, however, EDBset is 3 (the normal case after the
+	    974 C first two records have been processed) then the science record just completed
+	    975 C in is position 2, since it has just been shifted down one position. The
+	    976 C science record just completed (except for the first one) may have an extra HK
+	    977 C at its beginning which should  not have been duplicated from the previous
+	    978 C science record.  Call routine WIND_RESET_HK to examine this science record and
+	    979 C compare the times of the EDB and the second HK (the first HK was duplicated
+	    980 C from the previous science record and is guaranteed to have a much earlier time
+	    981 C stamp).  If the times reasonably match (within 1 sec) remove the first HK by
+	    982 C copying the rest of the HKs down one position.  Remember to adjust the counter
+	    983 C of number of valid HKs (array HKset).  
+	    984 C
+	    985         IF(EDBSet.EQ.3)THEN
+	    986           CALL WIND_RESET_HK(EDBSet-1)
+	    987         ELSE
+
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   5
+1.0                                                             25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+	    988           CALL WIND_RESET_HK(EDBSet)
+	    989         END IF
+	    990 C
+	    991 C Formerly simply had EDBset=2; thus if EDBset was 1 it was set to 2. If it was 2 
+	    992 C already, it remained so. Now If its 1 or 2 its incremented; if its 3 it remains 
+	    993 C 3.
+	    994 C
+	    995         IF(EDBset.LT.3)THEN
+	    996           EDBset =  EDBset+1
+	    997         ENDIF
+	    998 C
+	    999 	RETURN
+	   1000 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46024 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   12 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                                80 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                 380   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 160 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 13 DIAG                                     8 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               532560
+
+
+ENTRY POINTS
+
+    Address   Type  Name             
+                                     
+  4-00000000        WIND_MOVE_DOWN_L1
+
+
+VARIABLES
+
+    Address   Type  Name                       Address   Type  Name                       Address   Type  Name                  
+                                                                                                                                
+  8-00000006  L*1   BITRATE                 12-00000008  I*4   DR2_BEG_MAJFR_CNT       11-00000018  I*4   DR_BEG_DOY            
+  7-00000014  I*4   CURR_SCI_REC_NUMBER     12-00000020  I*4   DR2_BEG_MICSEC          11-00003200  R*8   DR_BEG_EPOCH          
+  7-00000018  I*4   CURR_SPIN               12-0000001C  I*4   DR2_BEG_MSEC            11-00000008  I*4   DR_BEG_MAJFR_CNT      
+  1-00000018  CHAR  C_BIG_NULL_BUFFER       12-00000014  I*4   DR2_BEG_YEAR            11-00000020  I*4   DR_BEG_MICSEC         
+ 12-00000000  CHAR  C_DR2_BUFFER            12-00000000  I*4   DR2_INSTR_NUM           11-0000001C  I*4   DR_BEG_MSEC           
+ 11-00000000  CHAR  C_DR_BUFFER             12-00000024  I*4   DR2_NUM_MINFR_FILL      11-00000014  I*4   DR_BEG_YEAR           
+  1-00000018  CHAR  C_NULL_BUFFER           12-00000028  I*4   DR2_NUM_MINFR_SYNC_ERR  11-00000000  I*4   DR_INSTR_NUM          
+ 13-00000000  I*4   DIAG                    12-00000004  I*4   DR2_PHYS_REC_NUM        11-00000024  I*4   DR_NUM_MINFR_FILL     
+ 12-00000018  I*4   DR2_BEG_DOY             12-00003208  R*8   DR2_SC_EPOCH            11-00000028  I*4   DR_NUM_MINFR_SYNC_ERR 
+ 12-00003200  R*8   DR2_BEG_EPOCH           12-0000002C  I*4   DR2_TLM_MODE            11-00000004  I*4   DR_PHYS_REC_NUM       
+
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   6
+1.0                             Symbol Table                    25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+    Address   Type  Name                       Address   Type  Name                       Address   Type  Name                  
+                                                                                                                                
+ 11-00003208  R*8   DR_SC_EPOCH             11-00003218  I*4   L0_FILE_REC_PNTR         8-00000009  L*1   STICSPOWER            
+ 11-0000002C  I*4   DR_TLM_MODE              7-00000004  I*4   L1_RECS_WRITTEN          1-00000008  I*4   STICS_H_RATE_SIZE     
+  6-0006EEBC  I*4   EDBSET                   8-00000008  L*1   MASSPOWER                1-0000000C  I*4   STICS_N_RATE_SIZE     
+  1-00000000  I*4   EDB_CORE_SIZE            1-00000004  I*4   MASS_RATE_SIZE           2-00000000  I*4   STICS_RATE_SIZE       
+  7-00000008  I*4   EDB_LOST                 8-0000000C  I*4   MEASSPIN                 8-00000004  L*1   SUBS_ID               
+  7-0000000C  I*4   EDB_SKIP                 7-0000001C  L*4   NEW_SCI_REC              8-00000007  L*1   SWICSPOWER            
+  7-00000010  I*4   EDB_SUM                 11-00003210  R*8   PREF_EPOCH               1-00000010  I*4   SWICS_H_RATE_SIZE     
+  8-00000005  L*1   HDBFLAG                  8-0000000A  L*1   RAMCHECK                 1-00000014  I*4   SWICS_N_RATE_SIZE     
+ 13-00000004  L*4   INTER                    7-00000000  I*4   SCI_REC_CNTR             2-00000004  I*4   SWICS_RATE_SIZE       
+  2-00000008  I*4   ISTAT                    8-00000000  I*4   SFPERBLOCK                                                       
+ 11-0000321C  L*1   L0_FILE_READONLY         8-00000010  I*4   SPINCOUNT                                                        
+
+
+ARRAYS
+
+     Address  Type  Name                          Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA                      1980  (0:10, 0:59, 3)
+ 12-0000000C  I*4   DR2_BEG_SC_CLOCK                  8  (2)
+ 12-00000000  I*1   DR2_BUFFER                    13300  (13300)
+ 12-00000000  I*1   DR2_BUFFER_CONTINGENCY        13300  (13300)
+ 12-0000012A  I*1   DR2_FILL                          2  (2)
+ 12-0000012C  I*1   DR2_MINFR                     12500  (12500)
+ 12-0000012C  I*1   DR2_MINFR_3DP                 12500  (50, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_EPA                  6000  (24, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_KON                  1500  (6, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_MFI                  6250  (25, 0:249)
+ 12-00000030  I*1   DR2_MINFR_QUAL                  250  (0:249)
+ 12-0000012C  I*1   DR2_MINFR_SMS                 10500  (42, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_SWE                 11250  (45, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_TGR                  5250  (21, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_WAV                 11250  (45, 0:249)
+ 11-0000000C  I*4   DR_BEG_SC_CLOCK                   8  (2)
+ 11-00000000  I*1   DR_BUFFER                     13300  (13300)
+ 11-00000000  I*1   DR_BUFFER_CONTINGENCY         13300  (13300)
+ 11-0000012A  I*1   DR_FILL                           2  (2)
+ 11-0000012C  I*1   DR_MINFR                      12500  (12500)
+ 11-0000012C  I*1   DR_MINFR_3DP                  12500  (50, 0:249)
+ 11-0000012C  I*1   DR_MINFR_EPA                   6000  (24, 0:249)
+ 11-0000012C  I*1   DR_MINFR_KON                   1500  (6, 0:249)
+ 11-0000012C  I*1   DR_MINFR_MFI                   6250  (25, 0:249)
+ 11-00000030  I*1   DR_MINFR_QUAL                   250  (0:249)
+ 11-0000012C  I*1   DR_MINFR_SMS                  10500  (42, 0:249)
+ 11-0000012C  I*1   DR_MINFR_SWE                  11250  (45, 0:249)
+ 11-0000012C  I*1   DR_MINFR_TGR                   5250  (21, 0:249)
+ 11-0000012C  I*1   DR_MINFR_WAV                  11250  (45, 0:249)
+  9-000003CC  I*4   HDBTIME2                         24  (2, 3)
+ 10-00000CF0  I*4   HKLOCI                          300  (75)
+ 10-00000E1C  I*4   HKLOCJ                          300  (75)
+ 10-00000CE4  I*4   HKSET                            12  (3)
+  1-00000018  I*1   NULL_BUFFER                   46000  (46000)
+  8-0000000B  L*1   SPARFLAGS                         1  (1)
+
+
+
+
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   7
+1.0                             Symbol Table                    25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  9-00000000  HDB         HDBSTR             972  (3)
+ 10-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label
+                                       
+      **       1001       **       1002
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                      Type  Name                   
+                                                               
+        WIND_POST_PROCESS               WIND_RESET_HK          
+
+WIND_MOVE_DOWN_L1                                               23-FEB-1995 12:31:28    DEC Fortran V6.2-508                Page   8
+1.0                             Symbol Table                    25-JAN-1995 16:13:39    WIND_MOVE_DOWN_L1.FOR;2
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_MOVE_DOWN_L1.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_MOVE_DOWN_L1.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.60 seconds
+  Elapsed time:      2.27 seconds
+  Pagefaults:         182
+  I/O Count:           19

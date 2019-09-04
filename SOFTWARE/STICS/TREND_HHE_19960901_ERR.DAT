@@ -1,0 +1,157 @@
+ Errors found while generating the file : SMSDISK4:[WIND.L2DATA.STICS
+   Run time  15:01:44   24-SEP-99
+  DOY:HR:MN:SEC                  COMMENTS
+  245:00:00:11   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  37 spins                                           
+  245:00:15:03   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:00:27:56   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:01:51:41   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:03:02:32   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  53 spins                                           
+  245:04:35:53   Sectors14+15  Basic Rate =      0.   Basic PHA =      1.
+  245:04:56:33   Spin # = 24  Step Mode =  3   DVS = 11
+  245:04:56:40   Spin # = 26  Step Mode =  3   DVS =  7
+  245:04:56:46   Spin # = 28  Step Mode =  3   DVS =  3
+  245:04:56:52   Spin # = 30  Step Mode =  3   DVS =  0
+  245:04:56:59   Spin # = 32  Step Mode =  3   DVS =  4
+  245:04:57:05   Spin # = 34  Step Mode =  3   DVS =  8
+  245:04:57:12   Spin # = 36  Step Mode =  3   DVS = 12
+  245:04:57:18   Spin # = 38  Step Mode =  3   DVS = 16
+  245:04:57:25   Spin # = 40  Step Mode =  3   DVS = 20
+  245:04:57:31   Spin # = 42  Step Mode =  3   DVS = 24
+  245:04:57:38   Spin # = 44  Step Mode =  3   DVS = 30
+  245:04:57:44   Spin # = 46  Step Mode =  3   DVS = 27
+  245:04:57:50   Spin # = 48  Step Mode =  3   DVS = 23
+  245:04:57:57   Spin # = 50  Step Mode =  3   DVS = 19
+  245:04:58:03   Spin # = 52  Step Mode =  3   DVS = 15
+  245:04:58:10   Spin # = 54  Step Mode =  3   DVS = 11
+  245:04:58:16   Spin # = 56  Step Mode =  3   DVS =  7
+  245:04:58:23   Spin # = 58  Step Mode =  3   DVS =  3
+  245:06:28:40   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:07:10:32   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  58 spins                                           
+  245:09:29:02   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:11:18:33   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  56 spins                                           
+  245:13:24:09   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  41 spins                                           
+  245:13:24:15   Spin # =  2  Step Mode =  3   DVS =  4
+  245:13:24:22   Spin # =  4  Step Mode =  3   DVS =  8
+  245:13:25:33   Spin # = 26  Step Mode =  3   DVS =  7
+  245:13:25:40   Spin # = 28  Step Mode =  3   DVS =  3
+  245:13:25:46   Spin # = 30  Step Mode =  3   DVS =  0
+  245:13:25:52   Spin # = 32  Step Mode =  3   DVS =  4
+  245:13:25:59   Spin # = 34  Step Mode =  3   DVS =  8
+  245:13:26:05   Spin # = 36  Step Mode =  3   DVS = 12
+  245:13:26:12   Spin # = 38  Step Mode =  3   DVS = 16
+  245:13:26:18   Spin # = 40  Step Mode =  3   DVS = 20
+  245:13:26:25   Spin # = 42  Step Mode =  3   DVS = 24
+  245:13:26:31   Spin # = 44  Step Mode =  3   DVS = 30
+  245:13:26:37   Spin # = 46  Step Mode =  3   DVS = 27
+  245:13:26:44   Spin # = 48  Step Mode =  3   DVS = 23
+  245:13:26:50   Spin # = 50  Step Mode =  3   DVS = 19
+  245:13:26:57   Spin # = 52  Step Mode =  3   DVS = 15
+  245:13:27:03   Spin # = 54  Step Mode =  3   DVS = 11
+  245:13:27:10   Spin # = 56  Step Mode =  3   DVS =  7
+  245:13:27:16   Spin # = 58  Step Mode =  3   DVS =  3
+  245:14:06:02   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 MASS fsr2=0, no speed                                                          
+  245:15:26:33   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  56 spins                                           
+  245:16:40:38   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:17:19:17   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:17:25:43   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:17:28:56   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:17:32:10   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  41 spins                                           
+  245:17:32:16   Spin # =  2  Step Mode =  3   DVS =  4
+  245:17:32:22   Spin # =  4  Step Mode =  3   DVS =  8
+  245:17:32:29   Spin # =  6  Step Mode =  3   DVS = 12
+  245:17:32:35   Spin # =  8  Step Mode =  3   DVS = 16
+  245:17:32:42   Spin # = 10  Step Mode =  3   DVS = 20
+  245:17:32:48   Spin # = 12  Step Mode =  3   DVS = 24
+  245:17:33:59   Spin # = 34  Step Mode =  3   DVS =  8
+  245:17:34:06   Spin # = 36  Step Mode =  3   DVS = 12
+  245:17:34:12   Spin # = 38  Step Mode =  3   DVS = 16
+  245:17:34:18   Spin # = 40  Step Mode =  3   DVS = 20
+  245:17:34:25   Spin # = 42  Step Mode =  3   DVS = 24
+  245:17:34:31   Spin # = 44  Step Mode =  3   DVS = 30
+  245:17:34:38   Spin # = 46  Step Mode =  3   DVS = 27
+  245:17:34:44   Spin # = 48  Step Mode =  3   DVS = 23
+  245:17:34:51   Spin # = 50  Step Mode =  3   DVS = 19
+  245:17:34:57   Spin # = 52  Step Mode =  3   DVS = 15
+  245:17:35:03   Spin # = 54  Step Mode =  3   DVS = 11
+  245:17:35:10   Spin # = 56  Step Mode =  3   DVS =  7
+  245:17:35:16   Spin # = 58  Step Mode =  3   DVS =  3
+  245:17:41:49   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  53 spins                                           
+  245:17:41:55   Spin # =  2  Step Mode =  3   DVS =  4
+  245:17:42:02   Spin # =  4  Step Mode =  3   DVS =  8
+  245:17:42:15   Spin # =  8  Step Mode =  3   DVS = 16
+  245:17:42:21   Spin # = 10  Step Mode =  3   DVS = 20
+  245:17:42:28   Spin # = 12  Step Mode =  3   DVS = 24
+  245:17:42:34   Spin # = 14  Step Mode =  3   DVS = 30
+  245:17:42:41   Spin # = 16  Step Mode =  3   DVS = 27
+  245:17:42:47   Spin # = 18  Step Mode =  3   DVS = 23
+  245:17:43:19   Spin # = 28  Step Mode =  3   DVS =  3
+  245:17:43:26   Spin # = 30  Step Mode =  3   DVS =  0
+  245:17:43:32   Spin # = 32  Step Mode =  3   DVS =  4
+  245:17:43:39   Spin # = 34  Step Mode =  3   DVS =  8
+  245:17:43:45   Spin # = 36  Step Mode =  3   DVS = 12
+  245:17:43:52   Spin # = 38  Step Mode =  3   DVS = 16
+  245:17:43:58   Spin # = 40  Step Mode =  3   DVS = 20
+  245:17:44:05   Spin # = 42  Step Mode =  3   DVS = 24
+  245:17:44:11   Spin # = 44  Step Mode =  3   DVS = 30
+  245:17:44:18   Spin # = 46  Step Mode =  3   DVS = 27
+  245:17:44:24   Spin # = 48  Step Mode =  3   DVS = 23
+  245:17:44:30   Spin # = 50  Step Mode =  3   DVS = 19
+  245:17:44:37   Spin # = 52  Step Mode =  3   DVS = 15
+  245:17:44:43   Spin # = 54  Step Mode =  3   DVS = 11
+  245:17:44:50   Spin # = 56  Step Mode =  3   DVS =  7
+  245:17:44:56   Spin # = 58  Step Mode =  3   DVS =  3
+  245:17:45:03   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:17:51:29   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:18:38:18   Spin # = 32  Step Mode =  3   DVS =  4
+  245:18:38:24   Spin # = 34  Step Mode =  3   DVS =  8
+  245:18:38:30   Spin # = 36  Step Mode =  3   DVS = 12
+  245:18:38:37   Spin # = 38  Step Mode =  3   DVS = 16
+  245:18:38:43   Spin # = 40  Step Mode =  3   DVS = 20
+  245:18:38:50   Spin # = 42  Step Mode =  3   DVS = 24
+  245:18:38:56   Spin # = 44  Step Mode =  3   DVS = 30
+  245:18:39:03   Spin # = 46  Step Mode =  3   DVS = 27
+  245:18:39:09   Spin # = 48  Step Mode =  3   DVS = 23
+  245:18:39:16   Spin # = 50  Step Mode =  3   DVS = 19
+  245:18:39:22   Spin # = 52  Step Mode =  3   DVS = 15
+  245:18:39:28   Spin # = 54  Step Mode =  3   DVS = 11
+  245:18:39:35   Spin # = 56  Step Mode =  3   DVS =  7
+  245:18:39:41   Spin # = 58  Step Mode =  3   DVS =  3
+  245:18:59:07   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  58 spins                                           
+  245:19:02:21   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  58 spins                                           
+  245:19:15:14   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:19:18:27   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:19:34:30   Bad HDB found
+  245:21:40:10   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  47 spins                                           
+  245:23:23:14   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+  245:23:29:40   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+ Total Bad HDBs =  1
+ Total Invalid DVS =  94
+ Total Bad Speeds =  27
+ Total Bad Basic Rates =    1     Total Good Basic Rates =       1609

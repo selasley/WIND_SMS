@@ -1,0 +1,346 @@
+WIND_COMPRESS                                                   18-JAN-1995 18:50:08    DEC Fortran V6.2-508                Page   1
+                                                                12-DEC-1994 16:03:47    SMS1:[WIND.SOFTWARE.LIB]WIND_COMPRESS.FOR;14
+
+	      1 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+	      2       INTEGER FUNCTION WIND_DECOMPRESS(BYTE_VAR,CODE_C)
+	      3 !
+	      4 ! Data from WIND SMS is compressed (logarithmically encoded so that large numbers will 
+	      5 ! fit into a byte). This routine decompresses a byte into its integer equivalent, so
+	      6 ! arithmetic operations may be performed upon it. BYTE_VAR is the byte variable to be
+	      7 ! decompressed, CODE_C is a logical variable that is true if Compression Code C is to
+	      8 ! be used; if its false, Compression Code A is used instead. An I*4 is returned.
+	      9 !
+	     10 !	This version:    9-DEC-1994
+	     11 !
+	     12 !     Creation:
+	     13 !	JOHN PAQUETTE	12-OCT-1994
+	     14 !
+	     15 !     Revisions:
+	     16 !	 9-DEC-1994	J.PAQUETTE	corrected error in A compression code:
+	     17 !					exponent now allowed to exceed 11
+	     18 !
+	     19 
+	     20       IMPLICIT NONE
+	     21 C
+	     22       BYTE BYTE_VAR
+	     23       INTEGER*4	INTEGER_VAR,EXPONENT,MANTISSA
+	     24       LOGICAL CODE_C
+	     25 C
+	     26 C Convert byte to integer, so that we can use IBITS on it
+	     27 C
+	     28       INTEGER_VAR = BYTE_VAR
+	     29       IF(CODE_C)THEN                            ! Compression Code C
+	     30         IF(IBITS(INTEGER_VAR,6,2).NE.3)THEN     ! Test if either bits 6 or 7 of argument are clear
+	     31 C
+	     32 C Get mantissa and exponent. Since either bit 6 or bit 7 (or both) of INTEGER_VAR were
+	     33 C zero, we have a 4 bit mantissa and a 4 bit exponent.
+	     34 C
+	     35           MANTISSA = IBITS(INTEGER_VAR,0,4)
+	     36           EXPONENT = IBITS(INTEGER_VAR,4,4)
+	     37 C
+	     38 C Decompress. For EXPONENT=11, MANTSSA=15, we get 31,744 (maximum possible value).
+	     39 C
+	     40           IF(EXPONENT.EQ.0)THEN
+	     41             WIND_DECOMPRESS = MANTISSA
+	     42           ELSEIF((EXPONENT.GE.1).AND.(EXPONENT.LE.11))THEN
+	     43             WIND_DECOMPRESS = (16 + MANTISSA)*2**(EXPONENT-1)
+	     44           ENDIF
+	     45 C
+	     46         ELSE                                    ! Test if BOTH bits 6 and 7 of argument are set
+	     47 C
+	     48 C Get mantissa and exponent. If bits 6 and 7 of INTEGER_VAR are both set, we have a
+	     49 C 3 bit mantissa and a 5 bit exponent.
+	     50 C
+	     51           MANTISSA = IBITS(INTEGER_VAR,0,3)
+	     52           EXPONENT = IBITS(INTEGER_VAR,3,5)
+	     53 C
+	     54 C Decompress. For EXPONENT+31, and M=7 we get 7,864,320 (maximum possible value).
+	     55 C
+	     56           WIND_DECOMPRESS = (8 + MANTISSA)*2**(EXPONENT-12)
+	     57 C
+
+WIND_DECOMPRESS                                                 18-JAN-1995 18:50:08    DEC Fortran V6.2-508                Page   2
+                                                                12-DEC-1994 16:03:47    SMS1:[WIND.SOFTWARE.LIB]WIND_COMPRESS.FOR;14
+
+	     58         ENDIF
+	     59       ELSE                                      ! Compression Code A
+	     60 C
+	     61 C Get mantissa and exponent. Since we are using Code A,  we always have a 4 bit mantissa 
+	     62 C and a 4 bit exponent.
+	     63 C
+	     64         MANTISSA = IBITS(INTEGER_VAR,0,4)
+	     65         EXPONENT = IBITS(INTEGER_VAR,4,4)
+	     66 C
+	     67 C Decompress. For EXPONENT=MANTSSA=15, we get 507,904  (maximum possible value).
+	     68 C
+	     69         IF(EXPONENT.EQ.0)THEN
+	     70           WIND_DECOMPRESS = MANTISSA
+	     71         ELSEIF((EXPONENT.GE.1).AND.(EXPONENT.LE.15))THEN
+	     72           WIND_DECOMPRESS = (16 + MANTISSA)*2**(EXPONENT-1)
+	     73         ENDIF
+	     74 C
+	     75       ENDIF
+	     76 C
+	     77       RETURN
+	     78       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                1416   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 120 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1544
+
+
+ENTRY POINTS
+
+    Address   Type  Name           
+                                   
+  2-00000000  I*4   WIND_DECOMPRESS
+
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                               
+      **      I*1   BYTE_VAR    REG-########  I*4   EXPONENT    REG-########  I*4   MANTISSA   
+      **      L*4   CODE_C      REG-00000003  I*4   INTEGER_VAR                                
+
+WIND_DECOMPRESS                                                 18-JAN-1995 18:50:08    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    12-DEC-1994 16:03:47    SMS1:[WIND.SOFTWARE.LIB]WIND_COMPRESS.FOR;14
+
+	     80 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+	     81       BYTE FUNCTION WIND_COMPRESS(INTEGER_VAR,CODE_C)
+	     82 !
+	     83 ! Data from WIND SMS is compressed (logarithmically encoded so that large numbers will 
+	     84 ! fit into a byte). This routine compresses an integer into a byte using one of two
+	     85 ! coding schemes. INTEGER_VAR is the variable to be decompressed, CODE_C is a logical 
+	     86 ! variable that is true if Compression Code C is to be used; if its false, Compression 
+	     87 ! Code A is used instead. An I*4 is returned.
+	     88 !
+	     89 !	This version:	13-OCT-1994
+	     90 !
+	     91 !     Creation:
+	     92 !	JOHN PAQUETTE,	13-OCT-1994
+	     93 !       L. BLEAU
+	     94 !
+	     95 !     Revisions:
+	     96 !
+	     97 !
+	     98 
+	     99       IMPLICIT NONE
+	    100 C
+	    101       BYTE BYTE_VAR
+	    102       INTEGER*4	INTEGER_VAR,EXPONENT,MANTISSA,RESULT
+	    103       LOGICAL CODE_C,EXP_4_BITS
+	    104       REAL TEMP,LOG
+	    105 C
+	    106       IF(CODE_C)THEN                            ! Compression Code C
+	    107         EXP_4_BITS = .TRUE.
+	    108         IF(INTEGER_VAR .LE. 15)THEN             ! Take care of simple case first
+	    109           EXPONENT = 0
+	    110           MANTISSA = INTEGER_VAR
+	    111         ELSEIF(INTEGER_VAR .GE. 7864320)THEN    ! Take care of upper limit
+	    112           EXPONENT = 31
+	    113           MANTISSA = 7
+	    114           EXP_4_BITS = .FALSE.
+	    115         ELSEIF(INTEGER_VAR .LE. 32767)THEN      ! Use 4-bit exponent and mantissa
+	    116 C
+	    117 C Compute lowest power of two of which is greater than INTEGER_VAR
+	    118 C If you want to round instead of truncate, uncomment the following lines and comment out
+	    119 C the 3 lines that follow.
+	    120 C          TEMP = LOG(INTEGER_VAR/15.5)/LOG(2.0)
+	    121 C          EXPONENT = INT(TEMP)
+	    122 C          IF(FLOAT(EXPONENT) .NE. TEMP) EXPONENT = EXPONENT + 1
+	    123           TEMP = LOG(FLOAT(INTEGER_VAR))/LOG(2.0)
+	    124           EXPONENT = INT(TEMP) - 3
+	    125           MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-1) )) - 16
+	    126 C
+	    127 C Due to the limited pecision of a computer, its possible that borderline cases may have
+	    128 C been assigned the wrong exponent in the logarithm above. If the calculated exponent is
+	    129 C too small, then the calculated mantissa will be larger than 7. If the calculated exponent 
+	    130 C is too large, then the calculated mantissa will be less than 0.
+	    131 C
+	    132           IF(MANTISSA.LT.0)THEN
+	    133             EXPONENT=EXPONENT-1
+	    134             MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-1) )) - 16
+	    135           ELSEIF(MANTISSA.GT.16)THEN
+	    136             EXPONENT=EXPONENT+1
+
+WIND_COMPRESS                                                   18-JAN-1995 18:50:08    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    12-DEC-1994 16:03:47    SMS1:[WIND.SOFTWARE.LIB]WIND_COMPRESS.FOR;14
+
+	    137             MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-1) )) - 16
+	    138           ENDIF
+	    139 C
+	    140         ELSE                                    ! Use 5-bit exponent, 3-bit mantissa
+	    141           EXP_4_BITS = .FALSE.
+	    142 C
+	    143 C Compute lowest power of two of which is greater than INTEGER_VAR
+	    144 C If you want to round instead of truncate, uncomment the following lines and comment out
+	    145 C the 3 lines that follow.
+	    146 C          TEMP = LOG(INTEGER_VAR/15.5)/LOG(2.0)
+	    147 C          EXPONENT = INT(TEMP)
+	    148 C          IF(FLOAT(EXPONENT) .NE. TEMP) EXPONENT = EXPONENT + 1
+	    149           TEMP = LOG(FLOAT(INTEGER_VAR))/LOG(2.0)
+	    150           EXPONENT = INT(TEMP) +  9
+	    151           MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-12) )) - 8
+	    152 C
+	    153 C Due to the limited pecision of a computer, its possible that borderline cases may have
+	    154 C been assigned the wrong exponent in the logarithm above. If the calculated exponent is
+	    155 C too small, then the calculated mantissa will be larger than 7. If the calculated exponent 
+	    156 C is too large, then the calculated mantissa will be less than 0.
+	    157 C
+	    158           IF(MANTISSA.LT.0)THEN
+	    159             EXPONENT=EXPONENT-1
+	    160             MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-12) )) - 8
+	    161           ELSEIF(MANTISSA.GT.7)THEN
+	    162             EXPONENT=EXPONENT+1
+	    163             MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-12) )) - 8
+	    164           ENDIF
+	    165         ENDIF
+	    166 C
+	    167 C Convert exponent/mantissa into byte
+	    168 C
+	    169         IF(EXP_4_BITS)THEN
+	    170           RESULT = EXPONENT*16 + MANTISSA
+	    171         ELSE
+	    172           RESULT = EXPONENT*8 + MANTISSA
+	    173         ENDIF
+	    174       ELSE                                      ! Compression Code A
+	    175         IF(INTEGER_VAR .LE. 15)THEN             ! Take care of simple case first
+	    176           EXPONENT = 0
+	    177           MANTISSA = INTEGER_VAR
+	    178         ELSEIF(INTEGER_VAR .GE. 507904)THEN     ! Take care of upper limit
+	    179           EXPONENT = 15
+	    180           MANTISSA = 15
+	    181         ELSE
+	    182 C
+	    183 C Compute lowest power of two of which is greater than INTEGER_VAR
+	    184 C If you want to round instead of truncate, uncomment the following lines and comment out
+	    185 C the 3 lines that follow.
+	    186 C          TEMP = LOG(INTEGER_VAR/15.5)/LOG(2.0)
+	    187 C          EXPONENT = INT(TEMP)
+	    188 C          IF(FLOAT(EXPONENT) .NE. TEMP) EXPONENT = EXPONENT + 1
+	    189           TEMP = LOG(FLOAT(INTEGER_VAR))/LOG(2.0)
+	    190           EXPONENT = INT(TEMP) - 3
+	    191           MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-1) )) - 16
+	    192 C
+	    193 C Due to the limited pecision of a computer, its possible that borderline cases may have
+
+WIND_COMPRESS                                                   18-JAN-1995 18:50:08    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    12-DEC-1994 16:03:47    SMS1:[WIND.SOFTWARE.LIB]WIND_COMPRESS.FOR;14
+
+	    194 C been assigned the wrong exponent in the logarithm above. If the calculated exponent is
+	    195 C too small, then the calculated mantissa will be larger than 7. If the calculated exponent 
+	    196 C is too large, then the calculated mantissa will be less than 0.
+	    197 C
+	    198           IF(MANTISSA.LT.0)THEN
+	    199             EXPONENT=EXPONENT-1
+	    200             MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-1) )) - 16
+	    201           ELSEIF(MANTISSA.GT.16)THEN
+	    202             EXPONENT=EXPONENT+1
+	    203             MANTISSA = (INTEGER_VAR / (2 ** (EXPONENT-1) )) - 16
+	    204           ENDIF
+	    205 C
+	    206         ENDIF
+	    207 C
+	    208 C Convert exponent/mantissa into byte
+	    209 C
+	    210         RESULT = EXPONENT*16 + MANTISSA
+	    211 C
+	    212       ENDIF
+	    213 C
+	    214 C Since Fortran treats BYTE quantities as signed numbers, we encoded the result
+	    215 C into an INTEGER*4 variable first, then subtract 256 if >128 to keep it in the
+	    216 C range [-128,127]
+	    217 C
+	    218       IF(RESULT .GE. 128) RESULT = RESULT - 256
+	    219       WIND_COMPRESS = RESULT
+	    220 C
+	    221       RETURN
+	    222       END
+
+WIND_COMPRESS                                                   18-JAN-1995 18:50:08    DEC Fortran V6.2-508                Page   6
+                                Symbol Table                    12-DEC-1994 16:03:47    SMS1:[WIND.SOFTWARE.LIB]WIND_COMPRESS.FOR;14
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                1416   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 120 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1544
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  2-00000130  I*1   WIND_COMPRESS
+
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                               
+  1-00000000  I*1   BYTE_VAR    REG-00000004  L*4   EXP_4_BITS  REG-00000005  I*4   RESULT     
+      **      L*4   CODE_C            **      I*4   INTEGER_VAR REG-########  R*4   TEMP       
+REG-########  I*4   EXPONENT    REG-########  I*4   MANTISSA                                   
+
+WIND_COMPRESS                                                   18-JAN-1995 18:50:08    DEC Fortran V6.2-508                Page   7
+                                Symbol Table                    12-DEC-1994 16:03:47    SMS1:[WIND.SOFTWARE.LIB]WIND_COMPRESS.FOR;14
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_COMPRESS.LIS;13
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_COMPRESS.OBJ;13
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.59 seconds
+  Elapsed time:      2.01 seconds
+  Pagefaults:         174
+  I/O Count:            9

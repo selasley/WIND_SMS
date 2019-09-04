@@ -1,0 +1,27 @@
+ STICS DIAGNOSTIC RATES (1 science record late)
+         Input Level 1 Filename: SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19961001_V01.DAT;1
+         Clock selected:         SpaceCraft
+         FIFO mode is OFF    TGS mode is OFF      Telemetry mode is Science mode     
+                               WRONG                                                                   MASS    MASS   ENERGY   TIME    TIME     NQ      NQ    BKGND 
+ Sci Rec#      Time      BR    HEAD      D1      D2      D3      D4      D5      D6      D7      D8   OVERFL  UNDERFL OVERFL  UNDERFL OVERFL  UNDERFL OVERFL  BASIC 
+____________________________________________________________________________________________________________________________________________________________________
+    38981  0 275  0:02:36 
+    38982  0 275  0:05:49 
+    38983  0 275  0:09:02 
+    38984  0 275  0:12:16 
+    38985  0 275  0:15:29 
+    38986  0 275  0:18:42 
+    38987  0 275  0:21:56 
+    38988  0 275  0:25:09 
+    38989  0 275  0:28:23 
+    38990  0 275  0:31:36 
+    38991  0 275  0:34:49 
+    38992  0 275  0:38:03 
+    38993  0 275  0:41:16 
+    38994  0 275  0:44:30 
+    38995  0 275  0:47:43 
+    38996  0 275  0:50:56 
+    38997  0 275  0:54:10 
+    38998  0 275  0:57:23 
+    38999 96 275  1:00:36 H       0       0       1       2       0       0       0       0       0       0       0       0       0       0       0       0       0
+    39000 96 275  1:03:50 H       0       0       1       0       0       0       0       0       0       0       0       0       0       0       0       0       0

@@ -1,0 +1,191 @@
+MRQMIN                                                          15-JAN-1997 13:37:51    DEC Fortran V6.2-508                Page   1
+                                                                29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]MRQMIN.FOR;1
+
+	      1 c******************************************************************************
+	      2 c
+	      3       SUBROUTINE MRQMIN(X,Y,SIG,NDATA,A,MA,LISTA,MFIT,
+	      4      *    COVAR,ALPHA,NCA,CHISQ,FUNCS,ALAMDA,sm_flag,max_cnt,max_loc,
+	      5      *    fwhm,he_max_cnt)
+	      6 
+	      7 c     m.r.c. modified on 15 Dec 1994 to receive sm_flag from gaussj
+	      8 c     use in conjunction with routine gaussj_sw
+	      9 
+	     10       PARAMETER (MMAX=20)
+	     11       DIMENSION X(NDATA),Y(NDATA),SIG(NDATA),A(MA),LISTA(MA),
+	     12      *  COVAR(NCA,NCA),ALPHA(NCA,NCA),ATRY(MMAX),BETA(MMAX),DA(MMAX)
+	     13       logical sm_flag   ! .true. indicates a singualr matrix error
+	     14       IF(ALAMDA.LT.0.)THEN
+	     15         KK=MFIT+1
+	     16         DO 12 J=1,MA
+	     17           IHIT=0
+	     18           DO 11 K=1,MFIT
+	     19             IF(LISTA(K).EQ.J)IHIT=IHIT+1
+	     20 11        CONTINUE
+	     21           IF (IHIT.EQ.0) THEN
+	     22             LISTA(KK)=J
+	     23             KK=KK+1
+	     24           ELSE IF (IHIT.GT.1) THEN
+	     25             PAUSE 'Improper permutation in LISTA'
+	     26           ENDIF
+	     27 12      CONTINUE
+	     28         IF (KK.NE.(MA+1)) PAUSE 'Improper permutation in LISTA'
+	     29         ALAMDA=0.001
+	     30         CALL MRQCOF(X,Y,SIG,NDATA,A,MA,LISTA,MFIT,ALPHA,BETA,NCA,CHISQ,F
+	     31      *UNCS,max_cnt,max_loc,fwhm,he_max_cnt)
+	     32         OCHISQ=CHISQ
+	     33         DO 13 J=1,MA
+	     34           ATRY(J)=A(J)
+	     35 13      CONTINUE
+	     36       ENDIF
+	     37       DO 15 J=1,MFIT
+	     38         DO 14 K=1,MFIT
+	     39           COVAR(J,K)=ALPHA(J,K)
+	     40 14      CONTINUE
+	     41         COVAR(J,J)=ALPHA(J,J)*(1.+ALAMDA)
+	     42         DA(J)=BETA(J)
+	     43 15    CONTINUE
+	     44       CALL GAUSSJ(COVAR,MFIT,NCA,DA,1,1,sm_flag)
+	     45       if (sm_flag .eq. .true.) return
+	     46       IF(ALAMDA.EQ.0.)THEN
+	     47         CALL COVSRT(COVAR,NCA,MA,LISTA,MFIT)
+	     48         RETURN
+	     49       ENDIF
+	     50       DO 16 J=1,MFIT
+	     51         ATRY(LISTA(J))=A(LISTA(J))+DA(J)
+	     52 16    CONTINUE
+	     53       CALL MRQCOF(X,Y,SIG,NDATA,ATRY,MA,LISTA,MFIT,COVAR,DA,NCA,CHISQ,FU
+	     54      *NCS,max_cnt,max_loc,fwhm,he_max_cnt)
+	     55       IF(CHISQ.LT.OCHISQ)THEN
+	     56         ALAMDA=0.1*ALAMDA
+	     57         OCHISQ=CHISQ
+
+MRQMIN                                                          15-JAN-1997 13:37:51    DEC Fortran V6.2-508                Page   2
+                                                                29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]MRQMIN.FOR;1
+
+	     58         DO 18 J=1,MFIT
+	     59           DO 17 K=1,MFIT
+	     60             ALPHA(J,K)=COVAR(J,K)
+	     61 17        CONTINUE
+	     62           BETA(J)=DA(J)
+	     63           A(LISTA(J))=ATRY(LISTA(J))
+	     64 18      CONTINUE
+	     65       ELSE
+	     66         ALAMDA=10.*ALAMDA
+	     67         CHISQ=OCHISQ
+	     68       ENDIF
+	     69       RETURN
+	     70       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                  244 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                2872   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 176 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 3292
+
+
+ENTRY POINTS
+
+    Address   Type  Name  
+                          
+  2-00000000        MRQMIN
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                                                           
+      **      R*4   ALAMDA     REG-00000011  I*4   IHIT             **      I*4   MAX_CNT      1-00000000  R*4   OCHISQ    
+      **      R*4   CHISQ      REG-########  I*4   J                **      I*4   MAX_LOC          **      L*4   SM_FLAG   
+      **      R*4   FUNCS      REG-########  I*4   K                **      I*4   MFIT                                     
+      **      R*4   FWHM       REG-00000006  I*4   KK               **      I*4   NCA                                      
+      **      R*4   HE_MAX_CNT       **      I*4   MA               **      I*4   NDATA                                    
+
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+      **      R*4   A               **  (*)
+      **      R*4   ALPHA           **  (*, *)
+  1-00000004  R*4   ATRY            80  (20)
+  1-00000054  R*4   BETA            80  (20)
+      **      R*4   COVAR           **  (*, *)
+  1-000000A4  R*4   DA              80  (20)
+      **      I*4   LISTA           **  (*)
+      **      R*4   SIG             **  (*)
+      **      R*4   X               **  (*)
+
+MRQMIN                                                          15-JAN-1997 13:37:51    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]MRQMIN.FOR;1
+
+      **      R*4   Y               **  (*)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  2-00000110   11     2-00000000   13     2-00000000   15     2-00000000   17  
+  2-00000170   12     2-00000000   14     2-00000000   16     2-00000000   18  
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name           Type  Name           Type  Name        
+                                                              
+        COVSRT               GAUSSJ               MRQCOF      
+
+MRQMIN                                                          15-JAN-1997 13:37:51    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]MRQMIN.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,BOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]MRQMIN.LIS;9
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]MRQMIN.OBJ;9
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.19 seconds
+  Elapsed time:      2.79 seconds
+  Pagefaults:         243
+  I/O Count:            8

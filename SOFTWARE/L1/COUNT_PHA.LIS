@@ -1,0 +1,504 @@
+COUNT_PHA                                                        1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   1
+                                                                 1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+	      1 	PROGRAM COUNT_PHA
+	      2 C
+	      3 C This program reads the L1 data files and compares the number of PHA words
+	      4 C for each sensor in each spin with the stated number of PHA words.
+	      5 C
+	      6 C Specifically, it examines the PHA words to detect if any of them are all
+	      7 C zero.  For SWICS and STICS PHA words are 4 bytes long; for MASS 2 bytes.
+	      8 C
+	      9 C Created:  27-JAN-1995  Larry Bleau
+	     10 C
+	     11 C This version: 1-FEB-1995
+	     12 C
+	     13 C Revisions:
+	     14 C
+	     15 C  1-FEB-1995   L. Bleau   add code to tally, print total # of PHAs; check for
+	     16 C                          end of file and exit gracefully
+	     17 C
+	     18       IMPLICIT NONE
+	     19 
+	     20       INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+COUNT_PHA                                                        1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   2
+                                                                 1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+	    545       INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	    644       INCLUDE '($RMSDEF)/NOLIST'
+	   1355 
+	   1356       INTEGER*4	STATUS,SPIN,KK,MM,RECCNTR,IOUT/17/,HKNUM,L1_LUN/8/
+	   1357       INTEGER START,LAST,COUNT,SENSOR,I,JJ,DETAIL_LEVEL
+	   1358       INTEGER WHERE(100),NZERO,TOTAL_PHA(3),NONZERO_PHA(3),ZERO_PHA(3)
+	   1359       CHARACTER*80 L1FILENAME,LISTFILENAME
+	   1360       CHARACTER*30 FORMAT_TIME
+	   1361       RECORD /CORE/ SCI
+	   1362       RECORD /SW_RATE/ SWICS_RATE
+	   1363       RECORD /SW_PHA/ SWICS_PHA
+	   1364       RECORD /MA_RATE/ MASS_RATE
+	   1365       RECORD /MA_PHA/ MASS_PHA
+	   1366       RECORD /ST_RATE/ STICS_RATE
+	   1367       RECORD /ST_PHA/ STICS_PHA
+	   1368       INTEGER FORTERR,RMSSTC,RMSSTV,LUN,VAXERR
+	   1369 C
+	   1370 C Get input file
+	   1371 C
+	   1372       L1FILENAME = 'DATA_DIR:WI*L1*.DAT'
+	   1373       WRITE(6,1010) 'L1-FILE:'
+	   1374 1010  FORMAT(1X,A)
+	   1375       CALL WIND_GET_FILENAME(L1FILENAME, STATUS)
+	   1376       IF(STATUS.NE.1)STOP
+	   1377 C
+	   1378 C Construct output filename
+	   1379 C
+	   1380       LISTFILENAME = L1FILENAME
+	   1381       KK = INDEX(LISTFILENAME, ']')
+	   1382       MM = INDEX(LISTFILENAME(KK+1:), '.')
+	   1383       IF (MM .NE. 0) THEN
+	   1384         LISTFILENAME(KK+MM:) = '.COUNT'
+	   1385       ELSE
+	   1386         MM = INDEX(LISTFILENAME(KK+1:), ' ')
+	   1387         LISTFILENAME(KK+MM:) = '.COUNT'
+	   1388       ENDIF
+	   1389       WRITE(6,1010) 'LISTING FILE:'
+	   1390       CALL WIND_GET_FILENAME(LISTFILENAME, STATUS)
+	   1391       KK = INDEX(LISTFILENAME, ';')
+	   1392       IF (KK .NE. 0) LISTFILENAME(KK:) = ' '
+	   1393 C
+	   1394 C Get run parameters
+	   1395 C
+	   1396       WRITE(6,1001) 
+	   1397 1001  FORMAT(' Number of first science record to examine (1=first): ',$)
+	   1398       READ(5,*,END=9000) START
+	   1399       IF (START .LT. 1) STOP
+	   1400       WRITE(6,1002) 
+	   1401 1002  FORMAT(' Number of science records to examine (0=entire file): ',$)
+	   1402       READ(5,*,END=9000) COUNT
+	   1403       IF (COUNT .EQ. 0) COUNT = 9999
+	   1404       IF (COUNT .LT. 1) STOP
+	   1405       LAST = START + COUNT - 1
+	   1406       WRITE(6,1003)
+	   1407 1003  FORMAT(' What sensor to examine (1=SWICS, 2=MASS, 3=STICS, 4=all): ',$)
+	   1408       READ(5,*,END=9000) SENSOR
+	   1409       WRITE(6,1004)
+
+COUNT_PHA                                                        1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   3
+                                                                 1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+	   1410 1004  FORMAT(' Detail (1) or summary only (2): ',$)
+	   1411       READ(5,*,END=9000) DETAIL_LEVEL
+	   1412       IF (DETAIL_LEVEL .LT. 1 .OR. DETAIL_LEVEL .GT. 2) STOP
+	   1413 C
+	   1414 C Open files
+	   1415 C
+	   1416       CALL WIND_L1_OPEN( L1_LUN, L1FILENAME, L1_FILE_HEADER, STATUS)
+	   1417       IF (STATUS .NE. 1) GOTO 9001
+	   1418       OPEN(UNIT=IOUT, FILE=LISTFILENAME, STATUS='NEW', ERR=9010, IOSTAT=STATUS)
+	   1419 C
+	   1420 C Initialize variables
+	   1421 C
+	   1422       DO I=1,3
+	   1423         TOTAL_PHA(I) = 0
+	   1424         NONZERO_PHA(I) = 0
+	   1425         ZERO_PHA(I) = 0
+	   1426       END DO
+	   1427 C
+	   1428 C Dump file header
+	   1429 C
+	   1430 C      CALL DUMP_FILE_HEADER(IOUT,L1_FILE_HEADER)
+	   1431 C
+	   1432 C Skip START-1 Science Records
+	   1433 C The next call to WIND_L1_READ_SR will get the START'th Sci Rec
+	   1434 C
+	   1435       CALL WIND_L1_SKIP_SR( L1_LUN, START-1, STATUS )
+	   1436       IF (STATUS .NE. 1) GOTO 9002
+	   1437 C
+	   1438 C Read next Science Record
+	   1439 C
+	   1440 100   CONTINUE
+	   1441       CALL WIND_L1_READ_SR( L1_LUN, RECCNTR, L1_SR_HEADER, STATUS )
+	   1442       IF (STATUS .EQ. RMS$_EOF) GOTO 8000
+	   1443       IF (STATUS .NE. 1) GOTO 9002
+	   1444 C
+	   1445 C      WRITE(IOUT,1004) RECCNTR,L1_SR_HEADER.SR_COUNT
+	   1446 C1004  FORMAT(/' RECORD ',I4,'   ORIGINAL SCI REC# ',I8)
+	   1447 C
+	   1448 C Get the Basic Core data
+	   1449 C
+	   1450       CALL WIND_L1_GET_BASIC( L1_LUN, SCI, STATUS)
+	   1451       IF (STATUS .NE. 1) GOTO 9003
+	   1452 C
+	   1453 C Get SWICS rates and PHA, but ignore rates
+	   1454 C
+	   1455       IF (SENSOR .EQ. 1 .OR. SENSOR .EQ. 4) THEN
+	   1456         CALL WIND_L1_GET_SWICS( L1_LUN, SWICS_RATE, SWICS_PHA, STATUS )
+	   1457         IF (STATUS .NE. 1) GOTO 9006
+	   1458 C
+	   1459 C Now scan through PHA words for each spin, looking for ones that are all zero
+	   1460 C
+	   1461         DO SPIN=0,59
+	   1462           JJ = SCI.EDB( SPIN ).SWICS_Len * 4
+	   1463           IF (JJ .GT. 0 .AND. SCI.EDB( SPIN ).Qual .EQ. 0) THEN
+	   1464             CALL SCAN_ZERO_PHA( SWICS_PHA.EDB(SPIN).PHA, JJ, 4, NZERO, WHERE )
+	   1465             TOTAL_PHA(1) = TOTAL_PHA(1) + SCI.EDB( SPIN ).SWICS_Len
+	   1466             NONZERO_PHA(1) = NONZERO_PHA(1) + (SCI.EDB(SPIN).SWICS_Len - NZERO)
+
+COUNT_PHA                                                        1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   4
+                                                                 1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+	   1467             ZERO_PHA(1) = ZERO_PHA(1) + NZERO
+	   1468             IF (NZERO .NE. 0 .AND. DETAIL_LEVEL .EQ. 1) THEN
+	   1469               WRITE(IOUT,1013) 'SWICS',RECCNTR,L1_SR_HEADER.SR_COUNT,SPIN,
+	   1470      &              SCI.EDB( SPIN ).SWICS_Len,NZERO
+	   1471               WRITE(IOUT,1011) (WHERE(I)+1,4*WHERE(I),I=1,NZERO)
+	   1472             ENDIF
+	   1473           ENDIF
+	   1474         END DO
+	   1475       ENDIF
+	   1476 C
+	   1477 1011  FORMAT(4(1X,I6,4X,I5,3X))
+	   1478 1013  FORMAT(/' ZERO ',A5,' PHA FOUND!   RECORD ',I4,
+	   1479      &    '   ORIGINAL SCI REC# ',I8,'   SPIN ',I2/
+	   1480      &        ' # OF PHA WORDS REPORTED: ',5X,I4,'    # OF ZERO PHA WORDS: ',I4/
+	   1481      &    4(' PHA word  offset  '))
+	   1482 C
+	   1483 C Get MASS rates and PHA, but ignore rates
+	   1484 C
+	   1485       IF (SENSOR .EQ. 2 .OR. SENSOR .EQ. 4) THEN
+	   1486         CALL WIND_L1_GET_MASS( L1_LUN, MASS_RATE, MASS_PHA, STATUS )
+	   1487         IF (STATUS .NE. 1) GOTO 9007
+	   1488 C
+	   1489 C Now scan through PHA words for each spin, looking for ones that are all zero
+	   1490 C
+	   1491         DO SPIN=0,59
+	   1492           JJ = SCI.EDB( SPIN ).MASS_Len * 2
+	   1493           IF (JJ .GT. 0 .AND. SCI.EDB( SPIN ).Qual .EQ. 0) THEN
+	   1494             CALL SCAN_ZERO_PHA( MASS_PHA.EDB(SPIN).PHA, JJ, 2, NZERO, WHERE )
+	   1495             TOTAL_PHA(2) = TOTAL_PHA(2) + SCI.EDB( SPIN ).MASS_Len
+	   1496             NONZERO_PHA(2) = NONZERO_PHA(2) + (SCI.EDB(SPIN).MASS_Len - NZERO)
+	   1497             ZERO_PHA(2) = ZERO_PHA(2) + NZERO
+	   1498             IF (NZERO .NE. 0 .AND. DETAIL_LEVEL .EQ. 1) THEN
+	   1499               WRITE(IOUT,1013) 'MASS',RECCNTR,L1_SR_HEADER.SR_COUNT,SPIN,
+	   1500      &              SCI.EDB( SPIN ).MASS_Len,NZERO
+	   1501               WRITE(IOUT,1011) (WHERE(I)+1,2*WHERE(I),I=1,NZERO)
+	   1502             ENDIF
+	   1503           ENDIF
+	   1504         END DO
+	   1505       ENDIF
+	   1506 C
+	   1507 C Get STICS rates and PHA, but ignore rates
+	   1508 C
+	   1509       IF (SENSOR .EQ. 3 .OR. SENSOR .EQ. 4) THEN
+	   1510         CALL WIND_L1_GET_STICS( L1_LUN, STICS_RATE, STICS_PHA, STATUS )
+	   1511         IF (STATUS .NE. 1) GOTO 9008
+	   1512 C
+	   1513 C Now scan through PHA words for each spin, looking for ones that are all zero
+	   1514 C
+	   1515         DO SPIN=0,59
+	   1516           JJ = SCI.EDB( SPIN ).STICS_Len * 4
+	   1517           IF (JJ .GT. 0 .AND. SCI.EDB( SPIN ).Qual .EQ. 0) THEN
+	   1518             CALL SCAN_ZERO_PHA( STICS_PHA.EDB(SPIN).PHA, JJ, 4, NZERO, WHERE )
+	   1519             TOTAL_PHA(3) = TOTAL_PHA(3) + SCI.EDB( SPIN ).STICS_Len
+	   1520             NONZERO_PHA(3) = NONZERO_PHA(3) + (SCI.EDB(SPIN).STICS_Len - NZERO)
+	   1521             ZERO_PHA(3) = ZERO_PHA(3) + NZERO
+	   1522             IF (NZERO .NE. 0 .AND. DETAIL_LEVEL .EQ. 1) THEN
+	   1523               WRITE(IOUT,1013) 'STICS',RECCNTR,L1_SR_HEADER.SR_COUNT,SPIN,
+
+COUNT_PHA                                                        1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   5
+                                                                 1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+	   1524      &              SCI.EDB( SPIN ).STICS_Len,NZERO
+	   1525               WRITE(IOUT,1011) (WHERE(I)+1,4*WHERE(I),I=1,NZERO)
+	   1526             ENDIF
+	   1527           ENDIF
+	   1528         END DO
+	   1529       ENDIF
+	   1530 C
+	   1531       IF (RECCNTR .LT. LAST) GOTO 100
+	   1532 C
+	   1533 C Done, close files and exit
+	   1534 C
+	   1535 8000  CALL WIND_L1_CLOSE( L1_LUN, STATUS )
+	   1536       IF (STATUS .NE. 1) GOTO 9009
+	   1537       WRITE(6,8001) NONZERO_PHA,ZERO_PHA,TOTAL_PHA
+	   1538       WRITE(IOUT,8001) NONZERO_PHA,ZERO_PHA,TOTAL_PHA
+	   1539 8001  FORMAT(/'                                SUMMARY'/
+	   1540      &       /' Sensor:',T35,'       SWICS       MASS        STICS'/
+	   1541      &        ' Number of non-zero PHA words: ',T35,3I12/
+	   1542      &        ' Number of zero PHA words: ',T35,3I12/
+	   1543      &        ' Total number of PHA words: ',T35,3I12)
+	   1544       CLOSE(IOUT)
+	   1545       STOP
+	   1546 C
+	   1547 C Come here for errors
+	   1548 C
+	   1549 9000  STOP
+	   1550 9001  TYPE *,'ERROR OPENING L1 FILE; STATUS=',STATUS
+	   1551       GOTO 9900
+	   1552 9002  CALL ERRSNS(FORTERR,RMSSTC,RMSSTV,LUN,VAXERR)
+	   1553       IF (RMSSTC .EQ. RMS$_EOF) GOTO 8000
+	   1554       TYPE *,'ERROR READING SCIENCE RECORD ',RECCNTR,'; STATUS=',STATUS
+	   1555       GOTO 9900
+	   1556 9003  TYPE *,'ERROR GETTING BASIC CORE; STATUS=',STATUS
+	   1557       GOTO 9900
+	   1558 9006  TYPE *,'ERROR GETTING SWICS DATA; STATUS=',STATUS
+	   1559       GOTO 9900
+	   1560 9007  TYPE *,'ERROR GETTING MASS DATA; STATUS=',STATUS
+	   1561       GOTO 9900
+	   1562 9008  TYPE *,'ERROR GETTING STICS DATA; STATUS=',STATUS
+	   1563       GOTO 9900
+	   1564 9009  TYPE *,'ERROR CLOSING L1 FILE; STATUS=',STATUS
+	   1565       GOTO 9900
+	   1566 9010  TYPE *,'ERROR OPENING OUTPUT FILE; STATUS=',STATUS
+	   1567       GOTO 9900
+	   1568 9900  CALL LIB$STOP(%VAL(STATUS))
+	   1569       END
+
+COUNT_PHA                                                        1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   6
+                                Symbol Table                     1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                               151464 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               804 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                6844   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                1088 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+  7 L1_HEADERS                             600 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               160812
+
+
+ENTRY POINTS
+
+    Address   Type  Name     
+                             
+  4-00000000        COUNT_PHA
+
+
+VARIABLES
+
+    Address   Type  Name             Address   Type  Name             Address   Type  Name             Address   Type  Name        
+                                                                                                                                   
+  2-00000010  I*4   COUNT        REG-########  I*4   JJ           REG-########  I*4   MM             2-0000000C  I*4   START       
+  2-00000018# I*4   DETAIL_LEVEL REG-########  I*4   KK             0-00000038# I*4   NZERO          2-00000000  I*4   STATUS      
+  2-00000030  CHAR  FORMAT_TIME    2-00000078  CHAR  L1FILENAME     2-00000004  I*4   RECCNTR        2-0000002C  I*4   VAXERR      
+  2-0000001C  I*4   FORTERR        1-00000004  I*4   L1_LUN         2-00000020  I*4   RMSSTC                                       
+  2-00000008  I*4   HKNUM        REG-00000009  I*4   LAST           2-00000024  I*4   RMSSTV                                       
+REG-########  I*4   I              2-000000C8  CHAR  LISTFILENAME   2-00000014# I*4   SENSOR                                       
+  1-00000000  I*4   IOUT           2-00000028  I*4   LUN            0-0000003C# I*4   SPIN                                         
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+  7-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400   2-0001BEA8  STICS_PHA       ST_PHA                   36720
+  7-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            200   2-00019388  STICS_RATE      ST_RATE                  11040
+  2-0000E000  MASS_PHA        MA_PHA                   45960   2-00003A10  SWICS_PHA       SW_PHA                   40560
+  2-0000D880  MASS_RATE       MA_RATE                   1920   2-00001DF0  SWICS_RATE      SW_RATE                   7200
+  2-00000118  SCI             CORE                      7384                                                             
+
+
+
+COUNT_PHA                                                        1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   7
+                                Symbol Table                     1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+ARRAYS
+
+     Address  Type  Name               Bytes  Dimensions
+
+  2-0000005C  I*4   NONZERO_PHA           12  (3)
+  2-00000050  I*4   TOTAL_PHA             12  (3)
+  2-00024E18  I*4   WHERE                400  (100)
+  2-00000068  I*4   ZERO_PHA              12  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label     Address   Label
+                                                                                                   
+  4-00000720   100        **       1004   4-00001448   8000       **       9002       **       9008
+      **       1001       **       1010       **       8001       **       9003       **       9009
+      **       1002       **       1011   4-00000530   9000       **       9006   4-00000000   9010
+      **       1003       **       1013       **       9001       **       9007       **       9900
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                      Type  Name                      Type  Name                      Type  Name                   
+                                                                                                                               
+        LIB$STOP                        WIND_L1_CLOSE                   WIND_L1_GET_STICS               WIND_L1_READ_SR        
+        SCAN_ZERO_PHA                   WIND_L1_GET_BASIC               WIND_L1_GET_SWICS               WIND_L1_SKIP_SR        
+        WIND_GET_FILENAME               WIND_L1_GET_MASS                WIND_L1_OPEN                                           
+
+SCAN_ZERO_PHA                                                    1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   8
+                                Symbol Table                     1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+	   1570       SUBROUTINE SCAN_ZERO_PHA( PHA, NBYTES, PHASIZE, ZERO_COUNT, WHERE )
+	   1571 C
+	   1572 C This subroutine scans a set of PHA words, counting the number of zero PHA
+	   1573 C words which are non-zero.  This count (the number of zero PHA words) is
+	   1574 C returned to the caller.  Since one of the arguments is the size (in bytes) of
+	   1575 C a PHA word this routine can be used to examine PHA words from any of the
+	   1576 C sensors. 
+	   1577 C
+	   1578 C Parameters:
+	   1579 C
+	   1580 C   PHA:
+	   1581 C          A BYTE array containing the PHA words for a given sensor.
+	   1582 C
+	   1583 C   NBYTES:
+	   1584 C          An INTEGER giving the length (in bytes) of the array PHA.  This is
+	   1585 C          not the same as the number of PHA words, since a PHA word occupies
+	   1586 C          either 2 or 4 bytes, depending on the sensor.
+	   1587 C
+	   1588 C   PHASIZE:
+	   1589 C          An INTEGER specifying the number of bytes contained in a single PHA
+	   1590 C          word.
+	   1591 C
+	   1592 C   ZERO_COUNT:
+	   1593 C          An INTEGER which will contain, upon return, the number of zero
+	   1594 C          PHA words.
+	   1595 C
+	   1596 C   WHERE:
+	   1597 C          An INTEGER array of length 100.  Each element of WHERE gives the
+	   1598 C          PHA word number (1 origin) of a PHA word which is zero.  The number
+	   1599 C          of valid entries in WHERE is given by the argument ZERO_COUNT.
+	   1600 C
+	   1601 C
+	   1602 C Created:  30-JAN-1995   Larry Bleau
+	   1603 C
+	   1604 C This version:  1-FEB-1995
+	   1605 C
+	   1606 C Revisions:
+	   1607 C  1-FEB-1995     L. Bleau   added comments, changed NZERO to ZERO_COUNT
+	   1608 C
+	   1609       IMPLICIT NONE
+	   1610       INTEGER NBYTES,ZERO_COUNT,PHASIZE
+	   1611       INTEGER WHERE(100)
+	   1612       BYTE PHA(NBYTES)
+	   1613 C
+	   1614       INTEGER NWORDS,I,J
+	   1615       LOGICAL GOOD
+	   1616 C
+	   1617       ZERO_COUNT = 0
+	   1618       NWORDS = NBYTES / PHASIZE
+	   1619       IF (NWORDS .EQ. 0) RETURN
+	   1620 C
+	   1621       DO J=0,NWORDS-1
+	   1622         GOOD = .FALSE.
+	   1623 C
+	   1624 C If any of the bytes which comprise the PHA word is non-zero count this PHA
+	   1625 C word as good
+	   1626 C
+
+SCAN_ZERO_PHA                                                    1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page   9
+                                Symbol Table                     1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+	   1627         DO I=1,PHASIZE
+	   1628           IF (PHA(J*PHASIZE+I) .NE. 0) GOOD = .TRUE.
+	   1629         ENDDO
+	   1630 C Found one not good, same its index
+	   1631         IF (.NOT. GOOD) THEN
+	   1632           ZERO_COUNT = ZERO_COUNT + 1
+	   1633           WHERE(ZERO_COUNT) = J
+	   1634         ENDIF
+	   1635       ENDDO
+	   1636       RETURN
+	   1637       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                               151464 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               804 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                6844   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                1088 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+  7 L1_HEADERS                             600 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               160812
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  4-000018A0        SCAN_ZERO_PHA
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                                                           
+REG-00000011  L*4   GOOD       REG-00000001  I*4   J          REG-00000000  I*4   NWORDS           **      I*4   ZERO_COUNT
+REG-00000012  I*4   I                **      I*4   NBYTES           **      I*4   PHASIZE                                  
+
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+      **      I*1   PHA             **  (*)
+      **      I*4   WHERE          400  (100)
+
+
+SCAN_ZERO_PHA                                                    1-FEB-1995 18:56:41    DEC Fortran V6.2-508                Page  10
+                                Symbol Table                     1-FEB-1995 18:56:39    SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.FOR;23
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.LIS;20
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]COUNT_PHA.OBJ;19
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          2.74 seconds
+  Elapsed time:      4.84 seconds
+  Pagefaults:         362
+  I/O Count:           35

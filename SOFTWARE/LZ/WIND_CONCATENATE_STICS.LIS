@@ -1,0 +1,282 @@
+WIND_CONCATENATE_STICS                                          13-JAN-1995 19:19:17    DEC Fortran V6.2-508                Page   1
+                                                                13-JAN-1995 13:24:34    WIND_CONCATENATE_STICS.FOR;50
+
+	      1       SUBROUTINE WIND_CONCATENATE_STICS(SCI_REC_NO)
+	      2 !
+	      3 !	Concatenates STICS rates and PHA. In low(=normal) bit rate, a voltage 
+	      4 !	for STICS lasts for 2 spins. The resultant data is split up and part of
+	      5 !	it is output over a pair of spins. This routine puts the two parts of 
+	      6 !	the data back together in the even-numbered spin of the pair. Only a 
+	      7 !	placeholder is left in the odd-numbered spin of the pair.
+	      8 !
+	      9 !	This version:   1.1   16-DEC-1994
+	     10 !
+	     11 !     Creation:
+	     12 !	JOHN PAQUETTE	18-JUL-1994
+	     13 !
+	     14 !     Revisions:
+	     15 !	29-JUL-1994	J. PAQUETTE	Resolved bit rate confusion
+	     16 !       30-SEP-1994	J. PAQUETTE     Changed this routine to modify the 
+	     17 !                                       SCI_REC_NO'th science rec, instead of
+	     18 !                                       the first
+	     19 !       24-OCT-1994     J. PAQUETTE     Set STICS length variable in Core data
+	     20 !  1.1  16-DEC-1994     L. Bleau        removed unneeded diagnostic
+	     21 !
+	     22 CDEC$ IDENT	'1.1'
+	     23 
+	     24       IMPLICIT NONE
+	     25 
+	     26       INCLUDE	'INC_DIR:EDB.INC/NOLIST'
+
+WIND_CONCATENATE_STICS                                          13-JAN-1995 19:19:17    DEC Fortran V6.2-508                Page   2
+1.1                                                             13-JAN-1995 13:24:34    WIND_CONCATENATE_STICS.FOR;50
+
+	    793       INCLUDE	'INC_DIR:WIND_L0_RECORD.INC/NOLIST'
+	    844       INCLUDE   'INC_DIR:WIND_Lun.INC/NOLIST'
+	    872       INCLUDE	'($SSDEF)/NOLIST'
+	   2297 
+	   2298       INTEGER*4	II,JJ,KK,LL,SCI_REC_NO
+	   2299 C
+	   2300 C Loop over the 60 spins in a science record
+	   2301 C
+	   2302       DO 400 II = 0, 58,2
+	   2303         IF(.NOT.SCI(SCI_REC_NO).EDB(II).BitRate)THEN
+	   2304           DO 200 JJ = 0,STICS_N_RATE_Size
+	   2305 C
+	   2306 C Copy rate data from spin II+1 to spin II, adding it to what's already there.
+	   2307 C
+	   2308             STICS_RATE( SCI_REC_NO ).EDB( II ).RATE( JJ + STICS_N_RATE_Size + 1 ) =
+	   2309      &	    STICS_RATE( SCI_REC_NO ).EDB( II + 1 ).RATE( JJ )
+	   2310 C
+	   2311 C Adjust quality flags. Note that this depends on LOGICAL*1 being equivalent to BYTE
+	   2312 C
+	   2313 	    SCI(SCI_REC_NO).EDB(II).ST_HMR_Qual = 
+	   2314      &       SCI(SCI_REC_NO).EDB(II).ST_HMR_Qual.OR.SCI(SCI_REC_NO).EDB(II+1).ST_HMR_Qual
+	   2315             SCI(SCI_REC_NO).EDB(II).ST_SMR_Qual =
+	   2316      &       SCI(SCI_REC_NO).EDB(II).ST_SMR_Qual.OR.SCI(SCI_REC_NO).EDB(II+1).ST_SMR_Qual
+	   2317             SCI(SCI_REC_NO).EDB(II).ST_BR_Qual =
+	   2318      &       SCI(SCI_REC_NO).EDB(II).ST_BR_Qual.OR.SCI(SCI_REC_NO).EDB(II+1).ST_BR_Qual
+	   2319             SCI(SCI_REC_NO).EDB(II).ST_OMR_Qual =
+	   2320      &       SCI(SCI_REC_NO).EDB(II).ST_OMR_Qual.OR.SCI(SCI_REC_NO).EDB(II+1).ST_OMR_Qual
+	   2321             SCI(SCI_REC_NO).EDB(II).ST_ER_Qual =
+	   2322      &       SCI(SCI_REC_NO).EDB(II).ST_ER_Qual.OR.SCI(SCI_REC_NO).EDB(II+1).ST_ER_Qual
+	   2323 C
+	   2324 C Remove the data from the odd-numbered spin.
+	   2325 C
+	   2326             STICS_RATE( SCI_REC_NO ).EDB( II + 1 ).RATE( JJ ) = 0
+	   2327  200      CONTINUE
+	   2328 C
+	   2329 C Adjust quality flags. Since the odd spins no longer contain data, set them to 8
+	   2330 C ( which denotes 'missing EDB'; see EDB.INC).
+	   2331 C
+	   2332           SCI(SCI_REC_NO).EDB(II).ST_HMR_Qual = 8
+	   2333           SCI(SCI_REC_NO).EDB(II).ST_SMR_Qual = 8
+	   2334           SCI(SCI_REC_NO).EDB(II).ST_BR_Qual = 8
+	   2335           SCI(SCI_REC_NO).EDB(II).ST_OMR_Qual = 8
+	   2336           SCI(SCI_REC_NO).EDB(II).ST_ER_Qual = 8
+	   2337 C
+	   2338 C Adjust the number of rates per spin in the Core to reflect the  fact that some spins
+	   2339 C now contain as much rate data as a spin at high bit rate, and some contain no data.
+	   2340 C
+	   2341           SCI(SCI_REC_NO).EDB(II).STICS_RATE_Size   = STICS_H_RATE_Size
+	   2342           SCI(SCI_REC_NO).EDB(II+1).STICS_RATE_Size = 0
+	   2343 C
+	   2344 C Find number of STICS PHA bytes output in IIth spin. Since STICS PHA words are
+	   2345 C 4 bytes long, this is 4 times the number of PHA words. The additional + 4 is
+	   2346 C due to the presence of a 4-character identifier at the start of each PHA 
+	   2347 C record.
+	   2348 C
+	   2349           JJ = SCI( SCI_REC_NO ).EDB( II ).STICS_Len * 4 + 4		
+	   2350 
+
+WIND_CONCATENATE_STICS                                          13-JAN-1995 19:19:17    DEC Fortran V6.2-508                Page   3
+1.1                                                             13-JAN-1995 13:24:34    WIND_CONCATENATE_STICS.FOR;50
+
+	   2351 C
+	   2352 C Find number of STICS PHA bytes output in spin II+1. The logic is the same as
+	   2353 C above.
+	   2354 C 
+	   2355           KK = SCI( SCI_REC_NO ).EDB( II + 1 ).STICS_Len * 4 + 4
+	   2356 C
+	   2357 C Transfer PHA data from spin II+1 to spin II, adding it to what's already 
+	   2358 C there. Since the first 4 characters (characters 0 to 3) are an identifier 
+	   2359 C ("STPH" in this case) we don't want to transfer them; thus the initial index
+	   2360 C for the source record is 4, not 0.
+	   2361 C
+	   2362           IF(KK.NE.4)THEN
+	   2363             STICS_PHA( SCI_REC_NO ).C_ST_PHA( II )( JJ + 1 : JJ + KK - 4 ) = 
+	   2364      &      STICS_PHA( SCI_REC_NO ).C_ST_PHA( II + 1 )( 5 : KK ) 	
+	   2365 C
+	   2366 C Adjust the # of PHA words for this spin to reflect the change
+	   2367 C
+	   2368 	    SCI( SCI_REC_NO ).EDB( II ).STICS_Len = SCI( SCI_REC_NO ).EDB( II ).STICS_Len +
+	   2369      &      SCI( SCI_REC_NO ).EDB( II + 1 ).STICS_Len
+	   2370 C
+	   2371 C Adjust quality flags. Note that this depends on LOGICAL*1 being equivalent to BYTE
+	   2372 C
+	   2373 	    SCI(SCI_REC_NO).EDB(II).ST_P_Qual =
+	   2374      &       SCI(SCI_REC_NO).EDB(II).ST_P_Qual.OR.SCI(SCI_REC_NO).EDB(II+1).ST_P_Qual
+	   2375 C
+	   2376 C Remove data from odd-numbered spin
+	   2377 C
+	   2378             DO 300 LL=0,SCI( SCI_REC_NO ).EDB( II ).STICS_Len
+	   2379               STICS_PHA( SCI_REC_NO ).EDB( II + 1 ).PHA(LL) = 0
+	   2380  300        CONTINUE
+	   2381 C
+	   2382 C Adjust the # of PHA words for this spin to reflect the change
+	   2383 C
+	   2384             SCI( SCI_REC_NO ).EDB( II + 1 ).STICS_Len = 0
+	   2385 C
+	   2386 C Adjust quality flags. Since the odd spins no longer contain data, set them to 8
+	   2387 C ( which denotes 'missing EDB'; see EDB.INC).
+	   2388 C
+	   2389 	    SCI(SCI_REC_NO).EDB(II).ST_P_Qual = 8
+	   2390           ENDIF
+	   2391 C
+	   2392         ENDIF
+	   2393  400  CONTINUE
+	   2394 C
+	   2395       RETURN
+	   2396 C
+	   2397       END
+
+WIND_CONCATENATE_STICS                                          13-JAN-1995 19:19:17    DEC Fortran V6.2-508                Page   4
+1.1                             Symbol Table                    13-JAN-1995 13:24:34    WIND_CONCATENATE_STICS.FOR;50
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                1388   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                  80 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 L1INFO                                  20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                   1000 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 L0_RECORD                               38 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               460826
+
+
+ENTRY POINTS
+
+    Address   Type  Name                  
+                                          
+  3-00000000        WIND_CONCATENATE_STICS
+
+
+VARIABLES
+
+    Address   Type  Name                  Address   Type  Name                  Address   Type  Name             
+                                                                                                                 
+  7-00000006  L*1   BITRATE             6-00000004  I*4   L1_RECS_WRITTEN    10-00000022  I*2   SPHANUM          
+ 10-00000006  I*2   COREID            REG-00000003  I*4   LL                  7-00000010  I*4   SPINCOUNT        
+ 10-00000018  I*2   CORENUM             7-00000008  L*1   MASSPOWER           7-00000009  L*1   STICSPOWER       
+  5-0006EEBC  I*4   EDBSET              1-00000004  I*4   MASS_RATE_SIZE      1-00000008  I*4   STICS_H_RATE_SIZE
+  1-00000000  I*4   EDB_CORE_SIZE      10-0000000C  I*2   MCOREID             1-0000000C  I*4   STICS_N_RATE_SIZE
+  6-00000008  I*4   EDB_LOST           10-0000001E  I*2   MCORENUM            2-00000000  I*4   STICS_RATE_SIZE  
+  6-0000000C  I*4   EDB_SKIP            7-0000000C  I*4   MEASSPIN            7-00000004  L*1   SUBS_ID          
+  6-00000010  I*4   EDB_SUM            10-00000012  I*2   MPHAID              7-00000007  L*1   SWICSPOWER       
+  7-00000005  L*1   HDBFLAG            10-00000024  I*2   MPHANUM             1-00000010  I*4   SWICS_H_RATE_SIZE
+ 10-00000002  I*2   HDBRECID            7-0000000A  L*1   RAMCHECK            1-00000014  I*4   SWICS_N_RATE_SIZE
+ 10-00000014  I*2   HDBRECNUM          10-00000000  I*2   RECORDID            2-00000004  I*4   SWICS_RATE_SIZE  
+  8-000003CC  I*4   HDBSET              6-00000000  I*4   SCI_REC_CNTR       10-00000008  I*2   WCOREID          
+ 10-00000004  I*2   HKRECID                 **      I*4   SCI_REC_NO         10-0000001A  I*2   WCORENUM         
+ 10-00000016  I*2   HKRECNUM           10-0000000A  I*2   SCOREID            10-0000000E  I*2   WPHAID           
+REG-00000017  I*4   II                 10-0000001C  I*2   SCORENUM           10-00000020  I*2   WPHANUM          
+REG-########  I*4   JJ                  7-00000000  I*4   SFPERBLOCK                                             
+REG-00000006  I*4   KK                 10-00000010  I*2   SPHAID                                                 
+
+
+
+WIND_CONCATENATE_STICS                                          13-JAN-1995 19:19:17    DEC Fortran V6.2-508                Page   5
+1.1                             Symbol Table                    13-JAN-1995 13:24:34    WIND_CONCATENATE_STICS.FOR;50
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  5-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  8-000003D0  I*4   HDBTIME2            24  (2, 3)
+  9-00000CF0  I*4   HKLOCI             300  (75)
+  9-00000E1C  I*4   HKLOCJ             300  (75)
+  9-00000CE4  I*4   HKSET               12  (3)
+  7-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  5-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  5-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  5-00000000  SCI         CORE             22152  (3)
+  5-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  5-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  5-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  5-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+  3-00000000   200    3-00000000   300    3-000004A4   400 
+
+WIND_CONCATENATE_STICS                                          13-JAN-1995 19:19:17    DEC Fortran V6.2-508                Page   6
+1.1                             Symbol Table                    13-JAN-1995 13:24:34    WIND_CONCATENATE_STICS.FOR;50
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_CONCATENATE_STICS.LIS;34
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_CONCATENATE_STICS.OBJ;13
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          2.02 seconds
+  Elapsed time:      4.14 seconds
+  Pagefaults:         639
+  I/O Count:           31

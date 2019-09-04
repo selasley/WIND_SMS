@@ -1,0 +1,359 @@
+                                Source Listing                   1-MAR-2007 17:57:23  Compaq Fortran V7.2-780           Page 1
+                                                                 1-MAR-2007 17:55:10  SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.FOR;33
+
+	      1 	SUBROUTINE select_file(pattern,default_spec,confirm,result,reslen,status)
+	      2 C+
+	      3 C 
+	      4 C FUNCTIONAL DESCRIPTION:	
+	      5 C 
+	      6 C    This subroutine searches a directory for a list of files which fit a
+	      7 C    certain pattern.  It prompts the user interactively, allowing him to select
+	      8 C    a file.  The selected filename is returned to the caller.
+	      9 C 
+	     10 C FORMAL PARAMETERS:
+	     11 C  
+	     12 C     pattern:
+	     13 C	  A CHARACTER variable or constant containing the search pattern to be
+	     14 C	  used to produce the list of files.  This pattern must contain at
+	     15 C	  least one '*' or '%' wildcard character.
+	     16 C      
+	     17 C     default_spec:
+	     18 C	  A CHARACTER variable or constant specifying the default file
+	     19 C	  specification to use in the file search.  If left blank (' ') no
+	     20 C	  default specification is used.
+	     21 C      
+	     22 C     confirm:
+	     23 C	  An INTEGER*4 variable or constant which, if non-zero, causes
+	     24 C	  SELECT_FILE to prompt the user for confirmation of the selected
+	     25 C	  file.
+	     26 C      
+	     27 C     result:
+	     28 C	  A CHARACTER variable which will receive the selected file.  This
+	     29 C	  should be long enough to contain the entire filename including the
+	     30 C	  directory name.  If too short the filename will be truncated.  If no
+	     31 C	  file was selected result will be set to blanks.
+	     32 C      
+	     33 C     reslen:
+	     34 C	  An INTEGER*4 variable which will receive the length (number of
+	     35 C	  characters) in the selected filename which is stored in `result'.  If
+	     36 C	  reslen is equal to LEN(result) the filename may have been truncated.
+	     37 C	  If no file was selected reslen will be set to zero.
+	     38 C      
+	     39 C     status:
+	     40 C	  An INTEGER*4 variable which will receive the status code for the
+	     41 C	  select operation.  A 1 indicates success; any other value indicates a
+	     42 C	  problem of some type.
+	     43 C  
+	     44 C COMMON BLOCKS:
+	     45 C  
+	     46 C     None
+	     47 C  
+	     48 C DESIGN:
+	     49 C  
+	     50 C     Using pattern call the library routine LIB$FIND_FILE to produce a list of
+	     51 C     filenames.  Hold the list internally and display them to the terminal
+	     52 C     with index numbers.  Prompt the user for an index number and return that
+	     53 C     filename as the result.  Allow user to not select any files or to display
+	     54 C     more selections if they won't all fit on a screen.
+	     55 C
+	     56 C 
+	     57 C This version:   5-NOV-1994
+
+                                Source Listing                   1-MAR-2007 17:57:23  Compaq Fortran V7.2-780           Page 2
+                                                                 1-MAR-2007 17:55:10  SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.FOR;33
+
+	     58 C 
+	     59 C Created: 
+	     60 C 
+	     61 C	 5-NOV-1994    L. Bleau  University of Maryland
+	     62 C				 Physics Dept. / Space Physics Group
+	     63 C				 College Park, MD 20742
+	     64 C 
+	     65 C Revised:
+	     66 C 
+	     67 C Ver	 Date     | Name  | Description
+	     68 C ----------------+-------+-----------------------------------------------------
+	     69 C 1.1  7-NOV-1994 |  LRB  | add comments, include $RMSDEF, add logic to allow
+	     70 C                           for filename using entire variable's length
+	     71 C 1.2  9-NOV-1994 |  LRB  | ignore trailing blanks in pattern
+	     72 C 1.3 10-NOV-1994 |  LRB  | added argument and code to optionally confirm file
+	     73 C                           selection
+	     74 C 1.4  9-JAN-1995 |  LRB  | if no more filenames to list use different prompt
+	     75 C 1.5  5-MAY-1995 |  LRB  | increase max number of files in menu from 200 to 400
+	     76 C 1.6 16-MAY-1995 |  LRB  | increase max number of files in menu from 400 to 800
+	     77 C 1.7  1-MAR-2007 |  JAP  | increase max number of files in menu from 800 to 4400
+	     78 C-
+	     79 CDEC$   IDENT   '1.4'
+	     80 
+	     81 	IMPLICIT NONE
+	     82 	CHARACTER*(*) pattern,result,default_spec
+	     83 	INTEGER*4 confirm,reslen,status
+	     84 	INCLUDE '($RMSDEF)/NOLIST'
+	     85 C
+	    820 	INTEGER maxsave,nlines
+	    821 	PARAMETER (maxsave = 4400)
+	    822 	PARAMETER (nlines = 20)
+	    823 C
+	    824 	CHARACTER*132 possibles(maxsave)
+	    825 	CHARACTER*132 filename,line
+	    826 	INTEGER dirend(maxsave),namelen(maxsave)
+	    827 	INTEGER*4 lib$find_file,lib$find_file_end,lib$put_output,lib$get_input
+	    828 	INTEGER*4 nch,context
+	    829 	INTEGER nfound,i,first,last,patlen
+	    830 	INTEGER*2 msglen
+	    831 	BYTE resarr(4)
+	    832 	LOGICAL more
+	    833 C
+	    834 C Make sure pattern has some wildcards
+	    835 C If it doesn't, just return pattern as result
+	    836 C
+	    837         patlen = INDEX(pattern,' ') - 1
+	    838         IF (patlen .eq. -1) patlen = LEN(pattern)
+	    839 	IF (INDEX(pattern(1:patlen),'*') .eq. 0 .and. INDEX(pattern(1:patlen),'%') .eq. 0) THEN
+	    840 	    result = pattern
+	    841 	    reslen = INDEX(result,' ') - 1
+	    842 	    IF (reslen .eq. -1) reslen = LEN(result)
+	    843 	    status = 1
+	    844 	    RETURN
+	    845 	END IF
+	    846 C
+	    847 C Fill up possibles array with candidate filenames
+	    848 C
+
+                                Source Listing                   1-MAR-2007 17:57:23  Compaq Fortran V7.2-780           Page 3
+                                                                 1-MAR-2007 17:55:10  SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.FOR;33
+
+	    849 	nfound = 0
+	    850 	DO i=1,maxsave
+	    851 	    IF (default_spec .eq. ' ') THEN
+	    852 		status = lib$find_file (pattern(1:patlen), filename, context, , , ,)
+	    853 	    ELSE
+	    854 		status = lib$find_file (pattern(1:patlen), filename, context, 
+	    855      1					default_spec, , , )
+	    856 	    END IF
+	    857 	    IF (status .eq. RMS$_FNF) GOTO 900		! can't find file/directory
+	    858 	    IF (status .eq. RMS$_NMF) GOTO 100		! no more files
+	    859 	    IF (status .ne. RMS$_NORMAL) GOTO 900	! other error, quit
+	    860 C
+	    861 C We have a file; store it into table of possible selections
+	    862 C
+	    863 	    nfound = nfound + 1
+	    864 	    dirend(i) = INDEX (filename,']')
+	    865 	    namelen(i) = INDEX (filename,' ') - 1
+	    866 	    IF (namelen(i) .eq. 0) namelen(i) = LEN(filename)
+	    867 	    possibles(i) = filename
+	    868 	END DO
+	    869 C
+	    870 C Display array on screen with index numbers
+	    871 C
+	    872 100	first = 1
+	    873 200	last = MIN(first+nlines-1, nfound)
+	    874 	more = last .ne. nfound
+	    875 	call lib$put_output (' ') 
+		.............1                     
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    876 	DO i=first,last
+	    877 	    WRITE(line,1001) i,possibles(i)(1:namelen(i))
+	    878 1001	FORMAT(i3,2x,a)
+	    879 	    call lib$put_output (line(1:namelen(i)+5)) 
+		.................1                                      
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    880 	END DO
+	    881 	call lib$put_output (' ') 
+		.............1                     
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    882 300	IF (more) THEN
+	    883 	  status = lib$get_input (
+	    884      1		     line, 
+	    885      1		     'Enter selection # (or q=quit, r=redisplay, <return>=show more): ', 
+	    886      1		     nch) 
+	    887 	ELSE
+	    888 	  status = lib$get_input (
+	    889      1		     line, 
+	    890      1		     'Enter selection # (or q=quit, r=redisplay): ', 
+	    891      1		     nch) 
+	    892 	ENDIF
+	    893 	IF (status .ne. 1) GOTO 800
+	    894 C
+	    895 C Check if user wants more filenames displayed (empty line)
+	    896 C
+
+                                Source Listing                   1-MAR-2007 17:57:23  Compaq Fortran V7.2-780           Page 4
+                                                                 1-MAR-2007 17:55:10  SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.FOR;33
+
+	    897 	IF (nch .eq. 0) THEN
+	    898 C
+	    899 C User wants more filenames
+	    900 C If there are more left adjust starting point and go back to display code
+	    901 C
+	    902 	    IF (last .lt. nfound) THEN
+	    903 		first = last + 1
+	    904 		GOTO 200
+	    905 	    END IF
+	    906 C
+	    907 C User wants more filenames but there aren't any left
+	    908 C Give user choice of quitting (no selection made) or redisplaying the entire
+	    909 C list
+	    910 C
+	    911 400	    status = lib$get_input (
+	    912      1			 line, 
+	    913      1			 'No more filenames; q=quit, r=redisplay entire list: ', 
+	    914      1			 nch)
+	    915 	    IF (status .ne. 1) GOTO 800
+	    916 	    IF (nch .eq. 0) GOTO 400
+	    917 	    IF (line(1:1) .eq. 'q' .or. line(1:1) .eq. 'Q') GOTO 800
+	    918 	    IF (line(1:1) .eq. 'r' .or. line(1:1) .eq. 'R') GOTO 100
+	    919 	    GOTO 400
+	    920 	END IF
+	    921 C
+	    922 C User entered something; decode it
+	    923 C First check for 'q' or 'Q', then check if an integer
+	    924 C
+	    925 	IF (line(1:1) .eq. 'q' .or. line(1:1) .eq. 'Q') GOTO 800
+	    926 	IF (line(1:1) .eq. 'r' .or. line(1:1) .eq. 'R') GOTO 200
+	    927 	READ(line(1:nch),1002,ERR=700) i
+	    928 1002	FORMAT(I<nch>)
+	    929 C
+	    930 C User gave a syntactically valid integer, check if it is in range
+	    931 C If so and confirm is non-zero display selected name and confirm choice
+	    932 C
+	    933 	IF (i .lt. 1 .or. i .gt. nfound) GOTO 700
+	    934 	IF (confirm .ne. 0) THEN
+	    935 	  call lib$put_output ('You selected '//possibles(i)(1:namelen(i)))
+		...............1                                                            
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    936 	  status = lib$get_input (
+	    937      1		     line, 
+	    938      1		     'Is this correct? (<return>=Y) ', 
+	    939      1		     nch) 
+	    940 	  IF (status .ne. 1) line = 'n'
+	    941 	  IF (nch .eq. 0) line = 'y'
+	    942 	  IF (line(1:1) .ne. 'y' .and. line(1:1) .ne. 'Y') GOTO 300
+	    943 	END IF
+	    944 	GOTO 850
+	    945 C
+	    946 C User gave non-integer, reprompt
+	    947 C
+
+                                Source Listing                   1-MAR-2007 17:57:23  Compaq Fortran V7.2-780           Page 5
+                                                                 1-MAR-2007 17:55:10  SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.FOR;33
+
+	    948 700	call lib$put_output('Invalid response')
+		.............1                                  
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    949 	GOTO 300
+	    950 C
+	    951 C User wants to quit without any selection
+	    952 C Return status of 0 to indicate this to caller
+	    953 C Also set result to blanks, reslen to 0 to caller doesn't get misleading info
+	    954 C
+	    955 800	status = lib$find_file_end (context)
+	    956 	status = 0
+	    957 	result = ' '
+	    958 	reslen = 0
+	    959 	RETURN
+	    960 C
+	    961 C User made his selection; return value to caller
+	    962 C
+	    963 850	status = lib$find_file_end (context)
+	    964 	status = 1
+	    965 	result = possibles(i)
+	    966 	reslen = namelen(i)
+	    967 	RETURN
+	    968 C
+	    969 C Error of some type
+	    970 C If no files in list just return
+	    971 C If some files in list allow user to select or quit
+	    972 C
+	    973 900	IF (nfound .eq. 0) THEN
+	    974 	    call lib$put_output('Error during file search, no list generated')
+		.................1                                                             
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    975 	ELSE
+	    976 	    call lib$put_output('Error during file search, only have partial list')
+		.................1                                                                  
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    977 	ENDIF
+	    978 C	call lib$signal(%val(status))
+	    979 	call lib$sys_getmsg (status, msglen, line, , resarr)
+	    980 	call lib$put_output('*** '//line(1:msglen))
+		.............1                                      
+%F90-E-ERROR, (1) This subroutine has already been used in a type statement.   [LIB$PUT_OUTPUT]
+
+	    981 	IF (nfound .ne. 0) GOTO 100
+	    982 	result = ' '
+	    983 	reslen = 0
+	    984 	RETURN
+	    985 	END
+
+                                Source Listing                   1-MAR-2007 17:57:23  Compaq Fortran V7.2-780           Page 6
+                                                                 1-MAR-2007 17:55:10  SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.FOR;33
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(NONATURAL,PACKED,NOSTANDARD,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ARCHITECTURE=GENERIC
+  /ASSUME=(ACCURACY_SENSITIVE,ALTPARAM,NOBUFFERED_IO,NOBYTERECL,NODUMMY_ALIASES,NOFP_CONSTANT,NOINT_CONSTANT,NOMINUS0,
+           NOUNDERSCORE,NOSOURCE_INCLUDE)
+  /NOAUTOMATIC
+  /NOBY_REF_CALL
+  /CHECK=(NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,OUTPUT_CONVERSION,NOOVERFLOW,POWER,NOUNDERFLOW)
+  /CONVERT=NATIVE
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /NODEFINE
+  /DOUBLE_SIZE=64
+  /NOD_LINES
+  /ERROR_LIMIT=30
+  /EXTEND_SOURCE
+  /F77
+  /FLOAT=G_FLOAT
+  /GRANULARITY=QUADWORD
+  /IEEE_MODE=FAST
+  /INTEGER_SIZE=32
+  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE
+  /NOMODULE
+  /NAMES=UPPERCASE
+  /OPTIMIZE=(INLINE=SPEED,LEVEL=4,NOLOOPS,NOPIPELINE,TUNE=GENERIC,UNROLL=0)
+  /NOPAD_SOURCE
+  /REAL_SIZE=32
+  /NORECURSIVE
+  /REENTRANCY=NONE
+  /ROUNDING_MODE=NEAREST
+  /NOSEPARATE_COMPILATION
+  /SEVERITY=(WARNING=WARNING)
+  /SHOW=(INCLUDE,MAP)
+  /SOURCE_FORM=FIXED
+  /STANDARD=NONE
+  /NOSYNCHRONOUS_EXCEPTIONS
+  /NOSYNTAX_ONLY
+  /NOTIE
+  /VMS
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,GRANULARITY,NOTRUNCATED_SOURCE,UNCALLED,UNINITIALIZED,
+           NOUNUSED,USAGE)
+
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=FORT$INCLUDE:
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.LIS;11
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.OBJ;12
+  /NOLIBRARY
+
+COMPILER: Compaq Fortran V7.2-780-4293Q
+
+                                Source Listing                   1-MAR-2007 17:57:23  Compaq Fortran V7.2-780           Page 7
+                                                                 1-MAR-2007 17:55:10  SMS1:[WIND.SOFTWARE.LIB]SELECT_FILE.FOR;33
+
+COMPILATION STATISTICS
+
+  CPU time:          1.09 seconds
+  Elapsed time:      3.05 seconds
+  Pagefaults:         308
+  I/O Count:           70

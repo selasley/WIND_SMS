@@ -1,0 +1,295 @@
+               WIND SMS Daily Health Check - WIND_HEALTH Output
+          ----------------------------------------------------------
+     Input File:    DISK$L1DATA:[WIND.L1DATA]WI_L1_SMS_19950108_V01.DAT;1                           
+     Program Name: WIND_HEALTH       Version:1.5         Run Date: 16:36:04 14-NOV-95
+     First complete science record:     9948       Time:  0:00:39
+     Last complete science record:     10390       Time: 23:43:30
+     Number of complete science records: 433       Number incomplete:  12
+     SUBCOMM|   SWICS DPPS   |   MASS ADPS    |   MASS DPPS    |  STICS +DPPS   |  STICS -DPPS   |
+       NUM  | Output Voltage | Output Voltage | Output Voltage | Output Voltage | Output Voltage |
+     ---------------------------------------------------------------------------------------------
+        0   |       2604.44  |        237.19  |      -1463.57  |        209.01  |       -259.57  |
+        1   |       2448.11  |       1707.14  |      -1391.06  |        220.83  |       -271.49  |
+        2   |       2326.52  |       1707.14  |      -1318.56  |        279.96  |       -357.88  |
+        3   |       2170.19  |       1707.14  |      -1254.11  |        291.78  |       -342.98  |
+        4   |       2031.23  |       1741.33  |      -1197.72  |        395.25  |       -426.40  |
+        5   |       1892.27  |       1741.33  |      -1141.33  |        350.91  |       -435.34  |
+        6   |       1753.31  |       1741.33  |      -1084.93  |        469.16  |       -545.56  |
+        7   |       1649.09  |       1707.14  |      -1028.54  |        495.76  |       -545.56  |
+        8   |       1527.50  |       1707.14  |       -980.21  |        640.61  |       -682.60  |
+        9   |       1423.28  |       1707.14  |       -931.87  |        616.97  |       -676.64  |
+       10   |       1319.06  |       1707.14  |       -883.53  |        776.60  |       -855.39  |
+       11   |       1232.21  |       1707.14  |       -843.25  |        788.42  |       -843.47  |
+       12   |       1145.36  |       1536.22  |       -802.97  |       1039.70  |      -1069.88  |
+       13   |       1058.51  |       1160.18  |       -762.69  |       1039.70  |      -1075.84  |
+       14   |        989.03  |        784.15  |       -722.41  |       1293.94  |      -1332.04  |
+       15   |        919.55  |        647.41  |       -690.19  |       1293.94  |      -1332.04  |
+       16   |        850.07  |       -104.66  |       -657.97  |       1630.94  |      -1692.52  |
+       17   |        797.96  |       -275.59  |       -625.74  |       1630.94  |      -1692.52  |
+       18   |        745.85  |       -241.40  |       -593.52  |       2059.59  |      -2121.51  |
+       19   |        676.37  |       -343.96  |       -561.29  |       2053.68  |      -2133.42  |
+       20   |        641.63  |      -1061.84  |       -537.13  |       2624.23  |      -2654.77  |
+       21   |        589.52  |       -993.47  |       -512.96  |       2600.58  |      -2672.64  |
+       22   |        537.41  |      -1745.54  |       -488.79  |       3283.46  |      -3357.83  |
+       23   |        502.67  |      -1608.80  |       -464.62  |       3295.28  |      -3351.87  |
+       24   |        467.93  |      -2155.76  |       -440.45  |       4158.49  |      -4221.77  |
+       25   |        433.19  |      -2189.95  |       -416.29  |       4158.49  |      -4218.79  |
+       26   |        398.45  |      -2497.61  |       -398.94  |       6618.05  |      -6706.34  |
+       27   |        393.37  |      -2360.88  |       -379.60  |       6626.92  |      -6715.28  |
+       28   |        365.68  |      -3010.39  |       -361.86  |       8371.08  |      -8425.28  |
+       29   |        341.25  |      -3044.57  |       -342.52  |       8320.82  |      -8410.39  |
+       30   |        318.44  |      -3044.57  |       -326.40  |       7442.83  |      -7504.74  |
+       31   |        297.26  |      -3044.57  |       -310.28  |       7422.14  |      -7510.70  |
+       32   |        277.72  |      -3044.57  |       -295.77  |        253.35  |       -283.40  |
+       33   |        258.17  |      -3010.39  |       -281.26  |        259.27  |       -280.42  |
+       34   |        241.88  |      -3010.39  |       -266.76  |        303.61  |       -354.90  |
+       35   |        225.59  |      -3044.57  |       -255.47  |        303.61  |       -342.98  |
+       36   |        210.93  |      -3044.57  |       -242.57  |        362.73  |       -426.40  |
+       37   |        196.27  |      -3044.57  |       -229.68  |        374.56  |       -438.31  |
+       38   |        183.23  |      -3044.57  |       -220.01  |        492.80  |       -548.54  |
+       39   |        171.83  |      -3044.57  |       -208.72  |        469.16  |       -548.54  |
+       40   |        160.43  |      -3010.39  |       -197.44  |        634.70  |       -676.64  |
+       41   |        149.02  |      -3010.39  |       -187.77  |        631.75  |       -688.56  |
+       42   |        139.25  |      -3044.57  |       -178.09  |        815.03  |       -855.39  |
+       43   |        129.48  |      -3044.57  |       -170.03  |        776.60  |       -855.39  |
+       44   |        121.33  |      -3044.57  |       -161.97  |       1010.14  |      -1069.88  |
+       45   |        113.19  |      -3044.57  |       -153.91  |        989.45  |      -1072.86  |
+       46   |        105.04  |      -3044.57  |       -147.47  |       1273.24  |      -1358.86  |
+       47   |         98.53  |      -3044.57  |       -139.41  |       1288.02  |      -1358.86  |
+       48   |         92.01  |      -3010.39  |       -132.96  |       1627.99  |      -1677.62  |
+       49   |         85.49  |      -3044.57  |       -126.51  |       1633.90  |      -1686.56  |
+       50   |         80.61  |      -3044.57  |       -120.06  |       2059.59  |      -2118.53  |
+       51   |         74.09  |      -3044.57  |       -113.61  |       2059.59  |      -2133.42  |
+       52   |         69.20  |      -3010.39  |       -108.78  |       2624.23  |      -2666.68  |
+       53   |         65.95  |      -3044.57  |       -102.33  |       2621.27  |      -2666.68  |
+       54   |         61.06  |      -3044.57  |        -99.11  |       3283.46  |      -3360.81  |
+       55   |         56.17  |      -3044.57  |        -92.66  |       3289.37  |      -3351.87  |
+       56   |         52.91  |      -3044.57  |        -89.43  |       4146.67  |      -4215.81  |
+       57   |         49.66  |      -3044.57  |        -82.99  |       4161.45  |      -4224.75  |
+       58   |         46.40  |      -3044.57  |        -79.76  |       6626.92  |      -6706.34  |
+       59   |         43.14  |      -3044.57  |        -76.54  |       6618.05  |      -6700.38  |
+     ---------------------------------------------------------------------------------------------
+1CHK         Parameter Identification            Minimum     Maximum     Average    # 0's   Commanded Level    Commanded Voltage
+ -------------------------------------------------------------------------------------------------------------------------------
+   0  DPU Temp (Passive)                           35.53       37.22       36.57       4
+   1  SWICS Gnd Electronics Temp (Passive)        -12.17      -11.30      -11.48       4
+   2  MASS Gnd Electronics Temp (Passive)          24.74       24.74       24.74       4
+   3  STICS SSD Temp (Passive)                     -7.89       -7.89       -7.89       4
+   4  STICS AE Housing Temp (Passive)              24.74       24.74       24.74       4
+   5  DPU 28 V Primary Current                     99.96      112.20      106.25       5
+   6  DPU 5.2 V (Switched) Voltage                  5.18        5.25        5.22       5
+   7  DPU 5.2 V (Permanent) Voltage                 5.18        5.18        5.18       5
+   8  DPU 10 V Voltage                              9.95        9.95        9.95       5
+   9  DPU Temperature, PIF_A                       31.22       32.09       31.78       5
+      DPU Temperature, CTL_W                       36.42       38.14       37.44       5
+  10  SWICS +28 V Primary Current (Gnd Ref)       207.03      209.09      207.57       5
+  11  SWICS +5 V Voltage (Gnd Ref)                  4.93        4.95        4.95       5
+  12  SWICS +5 V Current (Gnd Ref)                 26.50       27.00       26.95       5
+  13  SWICS -5 V Voltage (Gnd Ref)                 -4.97       -4.97       -4.97       5
+  14  SWICS +8 V Voltage (Gnd Ref)                  7.88        7.92        7.92       5
+      SWICS +8 V Current (Gnd Ref)                 13.40       13.60       13.43       5
+  15  SWICS 20 V Voltage (Gnd Ref)                 19.60       19.80       19.70       5
+  16  SWICS 20 V Current (Gnd Ref)                150.17      164.16      153.78       5
+  17  SWICS LVPS 28 V Voltage (Gnd Ref)            28.44       28.58       28.44       5
+  18  SWICS DPPS 28 V Current (Gnd Ref)             8.55        8.55        8.55       5
+  19  SWICS PAPS 28 V Current (Gnd Ref)             7.83        8.24        8.10       5
+  20  SWICS PAPS Output Voltage (Gnd Ref)      -20890.67   -20744.27   -20750.94       5            180         -20896.04
+  21  SWICS +5 V Voltage (PAPS Ref)                 5.02        5.02        5.02       5
+  22  SWICS +5 V Current (PAPS Ref)                99.75      100.46       99.88       5
+  23  SWICS -5 V Voltage (PAPS Ref)                -5.20       -5.20       -5.20       5
+  24  SWICS -5 V Current (PAPS Ref)                42.65       43.38       43.32       5
+  25  SWICS +12 V Voltage (PAPS Ref)               11.83       11.83       11.83       5
+  26  SWICS +12 V Current (PAPS Ref)               49.69       50.35       50.35       5
+  27  -12 V Voltage (PAPS Ref)                    -11.89      -11.89      -11.89       5
+  28  SWICS -12 V Current (PAPS Ref)               21.81       22.26       22.08       5
+      SWICS SSD Bias Voltage (PAPS Ref)            57.00       57.00       57.00       5
+      SWICS Start MCPPS Voltage (PAPS Ref)       2754.11     2772.75     2770.71       5            170           2772.64
+      SWICS Stop MCPPS Voltage (PAPS Ref)          18.21     3462.45        0.00     444              0              1.56
+  29  SWICS SSD Temp (PAPS Ref)                    -5.59       -5.30       -5.38       5
+      SWICS Bubble Elect Temp, (PAPS Ref)           2.61        3.21        3.06       5
+  30  MASS +28 V Primary Current (Gnd Ref)        163.80      166.95      164.96       5
+  31  MASS +5 V Voltage (Gnd Ref)                   5.00        5.00        5.00       5
+  32  MASS +5 V Current (Gnd Ref)                  34.00       36.00       35.04       5
+  33  MASS -5 V Voltage (Gnd Ref)                  -5.03       -5.00       -5.02       5
+  34  MASS +8 V Voltage (Gnd Ref)                   8.00        8.00        8.00       5
+  35  MASS LVPS 28 V Voltage (Gnd Ref)             27.86       28.00       28.00       5
+  36  MASS ADPS 28 V Current (Gnd Ref)             13.00       13.40       13.21       5
+  38  MASS DPPS 28 V Current (Gnd Ref)              6.60        7.00        6.75       5
+  39  MASS Analog Electronics Temp (Gnd Ref)       26.92       27.56       27.41       5
+  40  MASS +5 V Voltage (ADPS Ref)                  4.97        4.97        4.97       5
+  41  MASS +5 V Current (ADPS Ref)                126.00      138.00      132.33       5
+  42  MASS -5 V Voltage (ADPS Ref)                 -5.05       -5.03       -5.04       5
+  43  MASS -5 V Current (ADPS Ref)                110.00      112.00      110.96       5
+  44  MASS +6 V Voltage (ADPS Ref)                  5.70        5.82        5.77       5
+  45  MASS +6 V Current (ADPS Ref)                 21.00       21.00       21.00       5
+  46  MASS +12 V Voltage (ADPS Ref)                12.18       12.18       12.18       5
+  47  MASS -12 V Voltage (ADPS Ref)               -12.00      -12.00      -12.00       5
+  48  MASS LVPS 28 V Voltage (ADPS Ref)            27.16       27.44       27.30       5
+  49  MASS HPS & MCPPS 28V I (ADPS Ref)            23.40       23.80       23.60       5
+  50  MASS HPS Output Voltage (ADPS Ref)        23351.77    23351.77    23351.77       5            176          23226.58
+      MASS Start MCPPS Voltage (ADPS Ref)        2545.97     2588.90     2567.88       5            136           2500.18
+      MASS Stop MCPPS Voltage (ADPS Ref)         1869.65     1869.65     1869.65       5            136           1829.67
+  51  STICS 28 V Primary Current                  220.32      222.36      221.89       5
+  52  STICS +5 V Voltage                            4.66        4.69        4.68       5
+  53  STICS -5 V Voltage                           -5.00       -4.98       -5.00       5
+  54  STICS +6 V Voltage                            5.55        5.58        5.56       5
+  55  STICS -6 V Voltage                           -5.94       -5.91       -5.94       5
+  56  STICS +12 V Voltage                          10.97       11.03       11.02       5
+  57  STICS -12 V Voltage                         -11.76      -11.70      -11.72       5
+  58  STICS MCPPS 28 V Current                     32.50       35.00       33.62       5
+  59  STICS DPPS 28 V Current                      30.00       31.50       30.90       5
+      STICS SSD Bias Voltage                      107.50      109.50      108.41       5
+      STICS MCPPS 0 Output Voltage               2832.74     2930.69     2887.50       5            160           1994.52
+      STICS MCPPS 1 Output Voltage               2863.02     2921.52     2889.94       5            160           1997.84
+      STICS MCPPS 2 Output Voltage               2828.24     2965.23     2889.99       5            160           1994.43
+      STICS MCPPS 3 Output Voltage               2817.62     2916.82     2892.14       5            160           1997.05
+      STICS MCPPS 4 Output Voltage               2862.44     2961.64     2910.25       5            160           1998.05
+      STICS MCPPS 5 Output Voltage               2887.14     2946.21     2907.90       5            160           2000.32
+      STICS TOFPS (MCPPS 6) Output Voltage        916.15     1014.20      971.45       5            220            994.89
+  60  STICS T1, AE Housing Temp                    25.68       26.29       25.73       5
+      STICS T2, Fairing/HOP Temp                   -8.75       -8.18       -8.46       5
+  61  STICS T3, SSD Temp                           -7.89       -7.32       -7.66       5
+      STICS T4, Back Panel Temp                   -10.74      -10.17      -10.33       5
+          SPACECRAFT AND DPU STATUS ITEMS
+      Telemetry Format: Science Mode
+      Telemetry Rate 5565 BPS
+      Spin Rate:  3.20
+      Reset Counter:  1
+      Last Reset Cause:  0
+      Latchup Counter - Main:  1
+      Latchup Counter for Memory:  0
+      Latchup Counter for MP:  0
+      Latchup Counter for SWICS Classification 0
+      Latchup Counter for STICS Classification:  0
+      Latchup Counter for MASS Classification:  0
+      RAM Error Counter:  0
+      ROM Error Counter:  0
+      PROM Bank Selection: A
+      PROM Toggle Mode Enabled
+      Program Patch Active
+      Valid Command Counter: 175
+      Invalid Command Counter:  73
+      Command Repetition for SWICS: Disabled
+      Command Repetition for MASS: Disabled
+      Command Repetition for STICS: Disabled
+      High Voltage Reconfiguration with HV
+      Sun Sector/Offset: 14/  0
+      Sun Sector Clock Source: External
+      Sun Sector Clock OK
+      Sun Pulse OK
+               POWER SWITCH STATUS
+           |  Main Power  |  Cover Power | Heater Power |
+     ----------------------------------------------------
+     STICS |      ON      |      OFF     |      OFF     |
+     SWICS |      ON      |      OFF     |      OFF     |
+     MASS  |      ON      |      OFF     |       -      |
+          CONFIGURATION ERRORS
+           | Configuration |    Snapshot   |
+     --------------------------------------
+     STICS |     Normal    |     Normal    |
+     SWICS |     Normal    |     Normal    |
+     MASS  |     Normal    |     Normal    |
+     LOAD  |     Normal    |     Normal    |
+          MASS STATUS ITEMS
+                 ENABLE    LIMIT     LEVEL   MEASURED VOLTAGE
+     --------------------------------------------------------
+     HPS       |  ON    |   176   |   176   |    23351.77   |
+     STOP MCP  |  ON    |   139   |   136   |     1869.65   |
+     START MCP |  ON    |   139   |   136   |     2560.28   |
+     ADPS      |  ON    | 160, 11 |    -    |        -      |
+     DPPS      |  ON    |    -    |    -    |        -      |
+      ADPS automatic calculation: ON
+      ADPS stepping sequence: RAM
+      ADPS table: Not Fixed
+      DPPS stepping sequence: ROM
+      FSR limit for stop reversal: 255
+      No discharge
+      Internal Callibrator: Inactive
+      Callibrator level:  0
+      Test tables: Inactive
+      Command Echo Check: Enabled
+      PHA FIFO mode: Disabled
+      Stop preamp power: ON
+      Start preamp 1 power: OFF
+      Start preamp 2 power: ON
+      Multiple Stops: Disabled
+      Multiple Starts: Disabled
+      MASS sun sector definition: 0000000000110000
+     MATRIX RATE BORDERS
+          LOWER     UPPER
+     ---------------------
+     MR0 |    4  |  754  |
+     MR1 |  754  |  879  |
+     MR2 |  879  | 1505  |
+     MR3 | 1505  | 1716  |
+     MR4 | 1716  | 1843  |
+     MR5 | 1843  | 2046  |
+     MR6 | 2046  | 2281  |
+     MR7 | 2281  | 2425  |
+     MR8 | 2425  | 2648  |
+     MR9 | 2648  | 4094  |
+     ---------------------
+      BR0/BR1 border: 1505
+      Compression code for rate groups 1 and 2: A,A
+          STICS STATUS ITEMS
+                 ENABLE    LIMIT     LEVEL   MEASURED VOLTAGE
+     --------------------------------------------------------
+     +DPPS     |  ON    |    -    |    -    |        -      |
+     -DPPS     |  ON    |    -    |    -    |        -      |
+     MCPPS 0   |  ON    |   160   |   160   |     2891.51   |
+     MCPPS 1   |  ON    |   160   |   160   |     2863.02   |
+     MCPPS 2   |  ON    |   160   |   160   |     2886.95   |
+     MCPPS 3   |  ON    |   160   |   160   |     2857.30   |
+     MCPPS 4   |  ON    |   160   |   160   |     2882.28   |
+     MCPPS 5   |  ON    |   160   |   160   |     2887.14   |
+     TOFPS(6)  |  ON    |   220   |   220   |      994.59   |
+      DPPS Stepping Sequence: RAM Table
+      Internal Callibrator power: OFF
+      Auto Callibrate Sequence: Enabled
+      Commanded Time Callibrator Level: 300 ns
+      Energy Callibrator Level: 255
+      Command Echo Check: Enabled
+      Rate Mode: High
+      PHA FIFO Mode: Disabled
+      Data Mode: Diagnostic(TGS)
+      Main SSD Bias: ON
+      Time Preamp "Telescope 1": ON
+      Time Preamp Start 3: ON
+      Time Preamp Start 4: ON
+      Time Preamps "Telescope 3": ON
+      Time Preamp Stop 2: ON
+      Multiple Starts: Disabled
+      Multiple Stops: Disabled
+      Trigger Mode: 1 = Tn
+      Compression code for rate groups 1 and 2: A,A
+                   BIAS    PREAMP POWER   THRESHOLD LEVEL
+     -----------------------------------------------------
+     SSD 1     |   ON    |      ON      |        8       |
+     SSD 2     |   ON    |      ON      |        8       |
+     SSD 3     |   ON    |      ON      |        8       |
+          SWICS STATUS ITEMS
+                   ENABLE    LIMIT     LEVEL   MEASURED VOLTAGE
+     --------------------------------------------------------
+     DPPS        |  ON    |    -    |    -    |        -      |
+     PAPS        |  ON    |   180   |   180   |   -20744.27   |
+     START MCPPS |  ON    |   170   |   170   |     2772.75   |
+     STOP MCPPS  |  OFF   |   134   |     0   |     2772.75   |
+      DPPS Stepping Sequence: ROM
+      Discharge Indicator: No Discharge
+      Callibration: Not Active
+      Energy Callibrator Level:   0
+      Time Callibrator Level:  0
+      Main  SSD Bias: ON 
+      SSD 1 Preamp and Bias: ON 
+      SSD 2 Preamp and Bias: ON 
+      SSD 3 Preamp and Bias: ON 
+      Energy Threshold: Low
+      TAC Slope: Nominal
+      Trigger Mode: 2 = E AND T 
+      Command Error Check: ON 
+      SWICS sun sector definition: 0011000000000000
+      Compressed FSR Limit for Step Reversal: 255
+      Reversal Stepping Mode: Rate Counting Continued After Reversal Stepping 
+      PHA FIFO Mode: Enabled
+      Test Tables: Inactive
+      Compression code for rate groups 1 and 2: C,C

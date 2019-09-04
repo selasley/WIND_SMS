@@ -1,0 +1,255 @@
+DUMP_FILE_HEADER                                                27-OCT-1995 11:57:55    DEC Fortran V6.2-508                Page   1
+                                                                21-APR-1995 16:13:42    SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.FOR;13
+
+	      1       SUBROUTINE DUMP_FILE_HEADER(IOUT,FILE_HEADER)
+	      2       IMPLICIT NONE
+	      3       INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	    135 C
+	    136       INTEGER IOUT,NCH
+	    137       RECORD /ST_L1_FILE_HEADER/ FILE_HEADER
+	    138 C
+	    139       READ(FILE_HEADER.COMMENT_LEN,1001) NCH
+	    140 1001  FORMAT(I3)
+	    141 C
+	    142       WRITE(IOUT,1002)
+	    143      1  FILE_HEADER.IDENT,
+	    144      1  FILE_HEADER.HEADER_VERS,
+	    145      1  FILE_HEADER.INPUT_FILE,
+	    146      1  FILE_HEADER.MEDIUM,
+	    147      1  FILE_HEADER.CREDATE_DOY,
+	    148      1  FILE_HEADER.CREDATE_YEAR,
+	    149      1  FILE_HEADER.CREDATE,
+	    150      1  FILE_HEADER.DATE_OF_EXE,
+	    151      1  FILE_HEADER.HW_TYPE,
+	    152      1  FILE_HEADER.RUN_DATE,
+	    153      1  FILE_HEADER.START_TIME,
+	    154      1  FILE_HEADER.STOP_TIME,
+	    155      1  FILE_HEADER.COMMENT_LEN,
+	    156      1  FILE_HEADER.COMMENT(1:MAX(1,NCH)),
+	    157      1  FILE_HEADER.L1_RECORDS,
+	    158      1  FILE_HEADER.EDB_COUNT,
+	    159      1  FILE_HEADER.EDB_LOST,
+	    160      1  FILE_HEADER.EDB_SKIP,
+	    161      1  FILE_HEADER.PROGRAM_VERS,
+	    162      1	FILE_HEADER.EPH_AVAIL
+	    163 C
+	    164 1002  FORMAT(
+	    165      1  '  IDENT        = ',A4/
+	    166      1  '  HEADER_VERS  = ',A2/
+	    167      1  '  INPUT_FILE   = ',A72/
+	    168      1  '  MEDIUM       = ',A2/
+	    169      1  '  CREDATE_DOY  = ',A3/
+	    170      1  '  CREDATE_YEAR = ',A4/
+	    171      1  '  CREDATE      = ',A11/
+	    172      1  '  DATE_OF_EXE  = ',A23/
+	    173      1  '  HW_TYPE      = ',A1/
+	    174      1  '  RUN_DATE     = ',A11/
+	    175      1  '  START_TIME   = ',A20/
+	    176      1  '  STOP_TIME    = ',A20/
+	    177      1  '  COMMENT_LEN  = ',A3/
+	    178      1  '  COMMENT      = ',A/
+	    179      1  '  L1_RECORDS   = ',A4/
+	    180      1  '  EDB_COUNT    = ',A6/
+	    181      1  '  EDB_LOST     = ',A6/
+	    182      1  '  EDB_SKIP     = ',A6/
+	    183      1	'  PROGRAM_VERS = ',A5/
+	    184      1	'  EPH_AVAIL    = ',A1
+	    185      1  )
+	    186       RETURN
+	    187       END
+
+DUMP_FILE_HEADER                                                27-OCT-1995 11:57:55    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                    21-APR-1995 16:13:42    SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.FOR;13
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                    4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                              1376 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                2608   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 224 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                 4856
+
+
+ENTRY POINTS
+
+    Address   Type  Name            
+                                    
+  3-00000000        DUMP_FILE_HEADER
+
+
+VARIABLES
+
+    Address   Type  Name     Address   Type  Name
+                                                 
+      **      I*4   IOUT   1-00000000  I*4   NCH 
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+      **      FILE_HEADER     ST_L1_FILE_HEADER          400   5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400                                                             
+
+
+LABELS
+
+    Address   Label     Address   Label
+                                       
+      **       1001       **       1002
+
+DUMP_SR_HEADER                                                  27-OCT-1995 11:57:55    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    21-APR-1995 16:13:42    SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.FOR;13
+
+	    188       SUBROUTINE DUMP_SR_HEADER(IOUT,SR_HEADER)
+	    189       IMPLICIT NONE
+	    190       INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	    322 C
+	    323       INTEGER IOUT
+	    324       RECORD /ST_L1_SR_HEADER/ SR_HEADER
+	    325 C
+	    326       WRITE(IOUT,1001)
+	    327      1  SR_HEADER.IDENT,
+	    328      1  SR_HEADER.NVALID,
+	    329      1  SR_HEADER.PRESENT(1),SR_HEADER.PRESENT(2),
+	    330      1  SR_HEADER.BITRATE_CODE,
+	    331      1  SR_HEADER.SR_COUNT,
+	    332      1  SR_HEADER.ZERO_SWICS_PHA(1),SR_HEADER.ZERO_SWICS_PHA(2),
+	    333      1  SR_HEADER.ZERO_MASS_PHA(1),SR_HEADER.ZERO_MASS_PHA(2),
+	    334      1  SR_HEADER.ZERO_STICS_PHA(1),SR_HEADER.ZERO_STICS_PHA(2),
+	    335      1	SR_HEADER.GCI_POS.X,SR_HEADER.GCI_POS.Y,SR_HEADER.GCI_POS.Z,
+	    336      1	SR_HEADER.GCI_VEL.X,SR_HEADER.GCI_VEL.Y,SR_HEADER.GCI_VEL.Z,
+	    337      1	SR_HEADER.GSE_POS.X,SR_HEADER.GSE_POS.Y,SR_HEADER.GSE_POS.Z,
+	    338      1	SR_HEADER.GSE_VEL.X,SR_HEADER.GSE_VEL.Y,SR_HEADER.GSE_VEL.Z,
+	    339      1	SR_HEADER.GSM_POS.X,SR_HEADER.GSM_POS.Y,SR_HEADER.GSM_POS.Z,
+	    340      1	SR_HEADER.GSM_VEL.X,SR_HEADER.GSM_VEL.Y,SR_HEADER.GSM_VEL.Z,
+	    341      1	SR_HEADER.GCI_SUN_VECTOR.X,SR_HEADER.GCI_SUN_VECTOR.Y,SR_HEADER.GCI_SUN_VECTOR.Z,
+	    342      1	SR_HEADER.SPIN_RATE,
+	    343      1	SR_HEADER.GCI_ATT.R_ASC,SR_HEADER.GCI_ATT.DECL,
+	    344      1	SR_HEADER.GSE_ATT.R_ASC,SR_HEADER.GSE_ATT.DECL,
+	    345      1	SR_HEADER.GSM_ATT.R_ASC,SR_HEADER.GSM_ATT.DECL
+	    346 C
+	    347 1001  FORMAT(
+	    348      1  '   IDENT           = ',A4/
+	    349      1  '   NVALID          = ',I10/
+	    350      1  '   PRESENT         = ',Z8.8,2X,Z8.8/
+	    351      1  '   BITRATE_CODE    = ',I10/
+	    352      1  '   SR_COUNT        = ',I10/
+	    353      1  '   ZERO_SWICS_PHA  = ',Z8.8,2X,Z8.8/
+	    354      1  '   ZERO_MASS_PHA   = ',Z8.8,2X,Z8.8/
+	    355      1  '   ZERO_STICS_PHA  = ',Z8.8,2X,Z8.8/
+	    356      1	'   GCI_POS         = ',3F12.1/
+	    357      1	'   GCI_VEL         = ',3F12.5/
+	    358      1	'   GSE_POS         = ',3F12.1/
+	    359      1	'   GSE_VEL         = ',3F12.5/
+	    360      1	'   GSM_POS         = ',3F12.1/
+	    361      1	'   GSM_VEL         = ',3F12.5/
+	    362      1	'   GCI_SUN_VECTOR  = ',3F12.1/
+	    363      1	'   SPIN_RATE       = ',F12.3/
+	    364      1	'   GCI_ATT         = ',2F12.3/
+	    365      1	'   GSE_ATT         = ',2F12.3/
+	    366      1	'   GSM_ATT         = ',2F12.3
+	    367      1  )
+	    368       RETURN
+	    369       END
+
+DUMP_SR_HEADER                                                  27-OCT-1995 11:57:55    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    21-APR-1995 16:13:42    SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.FOR;13
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                    4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                              1376 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                2608   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 224 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                 4856
+
+
+ENTRY POINTS
+
+    Address   Type  Name          
+                                  
+  3-00000430        DUMP_SR_HEADER
+
+
+VARIABLES
+
+    Address   Type  Name
+                        
+      **      I*4   IOUT
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400       **      SR_HEADER       ST_L1_SR_HEADER            244
+  5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244                                                             
+
+
+LABELS
+
+    Address   Label
+                   
+      **       1001
+
+DUMP_SR_HEADER                                                  27-OCT-1995 11:57:55    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    21-APR-1995 16:13:42    SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.FOR;13
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.LIS;20
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.OBJ;14
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.96 seconds
+  Elapsed time:      2.59 seconds
+  Pagefaults:         204
+  I/O Count:           23

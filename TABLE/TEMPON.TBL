@@ -1,0 +1,11 @@
+ 1  STICS TIME, PHA and DPU M & M/Q TABLE LISTING
+ 2       Input Level 1 Filename: SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19950106_V01.DAT;2
+ 3              Output Filename: STICS_PHA_19950106_
+ 4
+ 5  Clock selected: Wall            DATA FILTERING CHOICES:   Voltage step selection =   0 to 31      TELESCOPE FILTERING CHOICES:   Start anode =  -1
+ 6  Trigger mode is Tn                                        Event type selection   =   M/Q & M                                     Stop MCP    =  -1
+ 7  FIFO mode is OFF                                          Range selection        =     2 1 0                                     SSD ID      =  -1
+ 8  TGS  mode is ON                                           Range checking is OFF                                                  Telescope checking is OFF
+ 9  Telemetry mode is Science mode     
+ 10
+ 11    SR BR  Year  Day    Time    VS     E/Q    StopID   StartID/Range  Energy(Ed)  Sector  SSD-ID    ToF(Td)  START   RANGE      M/Q     MASS   NM   NQ  NRG

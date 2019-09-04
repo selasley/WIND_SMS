@@ -1,0 +1,395 @@
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   1
+                                                                23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+	      1         SUBROUTINE WIND_OPEN_L1( FIL1NAME, CTYPE, STATUS )
+	      2 C+
+	      3 C       This version:   1.10   23-FEB-1995
+	      4 C
+	      5 C     REFERENCE:
+	      6 C
+	      7 C     USAGE and PARAMETERS:
+	      8 C       CALL WIND_OPEN_L1( FIL1NAME, CTYPE, STATUS )
+	      9 C       FIL1NAME  CHAR*(*)	Input string containing the name
+	     10 C				of the file to be opened.
+	     11 C       TYPE	  CHAR*3	Input string containing 'NEW' or 'OLD'
+	     12 C				to indicate what type file to open.
+	     13 C       STATUS	  INTEGER*4	Output variable containing the completion
+	     14 C				status of the subroutine's execution.
+	     15 C
+	     16 C     CALLS/FUNCTIONS:
+	     17 C
+	     18 C     CREATION:
+	     19 C        6 Feb 1992, S. R. Nylund
+	     20 C
+	     21 C     REVISIONS:
+	     22 C	23-FEB-1994	H.BROER	        adopted from EPIC to WIND
+	     23 C	 5-APR-1994	H.BROER	        name changed
+	     24 C	29-JUN-1994	H.BROER	        adapt for L1-file
+	     25 C	19-JUL-1994	L.Bleau	        added declarations for status variables,
+	     26 C				        added diagnostic TYPE statement
+	     27 C	12-SEP-1994	L.Bleau	        added comments
+	     28 C	28-SEP-1994	L.Bleau	        OPEN with READONLY if CTYPE is 'OLD' or
+	     29 C					'old' 
+	     30 C	18-OCT-1994	J.PAQUETTE      added call to WIND_WRITE_L1_HEADER
+	     31 C	 3-FEB-1995	L. Bleau	removed old commented out code
+	     32 C	 3-FEB-1995	L. Bleau	create L1 file with large initial
+	     33 C					allocation, large extend size
+	     34 C 1.7	 9-FEB-1995     L. Bleau	add common DIAG, check if NRT mode and
+	     35 C	 				open with smaller allocation if so
+	     36 C 1.8	 9-FEB-1995     L. Bleau	return proper status to caller on error
+	     37 C					instead of exiting
+	     38 C	 9-FEB-1995	L. Bleau	change include stmt to use EDBDEF.INC
+	     39 C					and EDBVARS.INC instead of EDB.INC only
+	     40 C 1.9	 9-FEB-1995	L. Bleau	changed FIL1NAME to adjustable length
+	     41 C 1.10	23-FEB-1995	L. Bleau	removed common DIAG, added INCLUDE
+	     42 C					DIAG.INC
+	     43 C-
+	     44 CDEC$	IDENT '1.10'
+	     45 
+	     46       IMPLICIT NONE
+	     47 
+	     48       INCLUDE	'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   2
+1.10                                                            23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+	    586       INCLUDE	'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   3
+1.10                                                            23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+	    768       INCLUDE	'INC_DIR:L0_Labl_Record.INC/NOLIST'
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   4
+1.10                                                            23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+	    895       INCLUDE	'INC_DIR:SW_CODES.INC/NOLIST'
+	   1198       INCLUDE	'INC_DIR:WIND_Lun.INC/NOLIST'		! WIND SYSTEM Logical Unit #s
+	   1228       INCLUDE   'INC_DIR:DIAG.INC/NOLIST'
+	   1237       INCLUDE	'($SSDEF)/NOLIST'
+	   2662 
+	   2663       CHARACTER*(*)	FIL1NAME
+	   2664       CHARACTER*3	CTYPE
+	   2665       INTEGER*4		STATUS
+	   2666 
+	   2667       INTEGER NBLOCKS,EXTBLOCKS,RECORD_SIZE
+	   2668       INTEGER FORTERR,RMSSTC,RMSSTV,LUN,VAXERR
+	   2669 C
+	   2670 C   Open old or new file
+	   2671 C
+	   2672       RECORD_SIZE = 32766		! Maximum record length
+	   2673       NBLOCKS = 20000			! Initial size for new files
+	   2674       EXTBLOCKS = 200			! Extend file size for new files
+	   2675       IF (NRT_MODE) THEN
+	   2676         NBLOCKS = 2000			! Initial size for new NRT files
+	   2677         EXTBLOCKS = 50			! Extend file size for new NRT files
+	   2678       ENDIF
+	   2679 C
+	   2680 C Check cTYPE and do different OPEN command
+	   2681 C
+	   2682       IF ((CTYPE .EQ. 'OLD') .OR. (CTYPE  .EQ. 'old'))    THEN
+	   2683         OPEN ( UNIT	= L1_LUN,
+	   2684      +	       NAME	= FIL1NAME,
+	   2685      +	       CARRIAGECONTROL='NONE',
+	   2686      +	       FORM	= 'FORMATTED',
+	   2687      +	       READONLY,
+	   2688      +	       STATUS	= CTYPE,
+	   2689      +	       RECL	= RECORD_SIZE,
+	   2690      +	       ERR	= 2000,			! Return if error
+	   2691      +	       IOSTAT	= STATUS)
+	   2692        ELSE
+	   2693          OPEN ( UNIT	= L1_Lun,
+	   2694      +		NAME	= FIL1NAME,
+	   2695      +		CARRIAGECONTROL='NONE',
+	   2696      +		FORM	= 'FORMATTED',
+	   2697      +		STATUS	= cTYPE,
+	   2698      +		RECL	= Record_Size,
+	   2699      +          INITIALSIZE = NBLOCKS,
+	   2700      +          EXTENDSIZE = EXTBLOCKS,
+	   2701      +		ERR	= 1900,			! Return if error
+	   2702      +		IOSTAT	= STATUS)
+	   2703        ENDIF
+	   2704 1200   IF (STATUS .EQ. 0)	STATUS = SS$_NORMAL
+	   2705 C
+	   2706 C If this is a newly-opened file write file header into it
+	   2707 C
+	   2708       IF ((CTYPE .EQ. 'NEW') .OR. (CTYPE  .EQ. 'new')) THEN
+	   2709           CALL WIND_WRITE_L1_HEADER(L1_LUN,1)
+	   2710       ENDIF
+	   2711 C
+	   2712 C Done
+	   2713 C
+	   2714       RETURN
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   5
+1.10                                                            23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+	   2715 C
+	   2716 C Come here if opening a new file gets an error.  Assume the error is that VMS
+	   2717 C could not initially allocate sufficient contiguous blocks.  Try another OPEN
+	   2718 C without any initial allocation.  If this, to, fails, then give up.
+	   2719 C
+	   2720 1900     OPEN ( UNIT	= L1_LUN,
+	   2721      +		NAME	= FIL1NAME,
+	   2722      +		CARRIAGECONTROL='NONE',
+	   2723      +		FORM	= 'FORMATTED',
+	   2724      +		STATUS	= CTYPE,
+	   2725      +		RECL	= RECORD_SIZE,
+	   2726      +		ERR	= 2000,			! Return if error
+	   2727      +		IOSTAT	= STATUS)
+	   2728       GOTO 1200
+	   2729 C
+	   2730 C We got an error while opening the L1 file.  Translate Fortran error code to
+	   2731 C VMS error code and return it to caller.
+	   2732 C
+	   2733 2000  TYPE 2001, STATUS, FIL1NAME
+	   2734  2001 FORMAT(' ***ERROR in WIND_OPEN_L1, FORTRAN STATUS =', I6, ' ***'/
+	   2735      +       ' *** L1 FILENAME = ',A)
+	   2736       CALL ERRSNS(FORTERR,RMSSTC,RMSSTV,LUN,VAXERR)
+	   2737 C      CALL LIB$SIGNAL(%VAL(RMSSTC))
+	   2738 C      CALL LIB$SIGNAL(%VAL(VAXERR))
+	   2739       STATUS = RMSSTV
+	   2740       RETURN
+	   2741       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               100 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                 860   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 304 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 LABEL_RECORD                         13000 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 LR_EPOCH_TIMES                          16 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 LR_EDITFILE                            128 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 13 VERSIONS                              1004 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 14 DIAG                                    48 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               474776
+
+
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   6
+1.10                            Symbol Table                    23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+ENTRY POINTS
+
+    Address   Type  Name        
+                                
+  4-00000000        WIND_OPEN_L1
+
+
+VARIABLES
+
+    Address   Type  Name                         Address   Type  Name                    
+                                                                                         
+  7-00000006  L*1   BITRATE                   10-00000AE8  CHAR  LR_L0_RERUN_NUM         
+      **      CHAR  CTYPE                     10-00000AF4  CHAR  LR_L0_RUN_DATETIME      
+ 10-00000000  CHAR  C_LR_BUFFER               10-000000CC  CHAR  LR_MERGE_PROG_V_NUM     
+ 14-00000000  I*4   DIAG                      10-000000C8  I*4   LR_MERGE_RERUN_NUM      
+  6-0006EEBC  I*4   EDBSET                    10-000000D4  CHAR  LR_MERGE_RUN_DATETIME   
+  1-00000000  I*4   EDB_CORE_SIZE             10-000000E4  I*4   LR_NUM_EDIT_FILES       
+REG-00000010  I*4   EXTBLOCKS                 10-00000050  I*4   LR_NUM_MAJFR_EXP        
+      **      CHAR  FIL1NAME                  10-00000054  I*4   LR_NUM_MAJFR_FILE       
+  2-00000008  I*4   FORTERR                   10-00000058  I*4   LR_NUM_MAJFR_GAPS       
+ 14-0000002C  L*4   HALT_IF_NO_EPH            10-00000014  I*4   LR_PHYS_REC_IN_FILE     
+  7-00000005  L*1   HDBFLAG                   10-0000000C  I*4   LR_PHYS_REC_NUM         
+ 14-00000004  L*4   INTER                     10-00000010  I*4   LR_PHYS_REC_PER_MAJFR   
+ 14-00000010  CHAR  LINK_DATE_TIME            10-000000B0  I*4   LR_PHYS_REC_SIZE        
+ 10-00000034  I*4   LR_BEG_DOY                10-00000000  I*4   LR_SCID                 
+ 11-00000000  R*8   LR_BEG_EPOCH               2-00000014  I*4   LUN                     
+ 10-00000018  I*4   LR_BEG_MAJFR_CNT           7-00000008  L*1   MASSPOWER               
+ 10-0000003C  I*4   LR_BEG_MICSEC              1-00000004  I*4   MASS_RATE_SIZE          
+ 10-00000038  I*4   LR_BEG_MSEC                7-0000000C  I*4   MEASSPIN                
+ 10-00000030  I*4   LR_BEG_YEAR              REG-00000001  I*4   NBLOCKS                 
+ 10-0000005C  CHAR  LR_DATA_COV_TYP           14-00000008  L*4   NRT_MODE                
+ 10-0000006C  CHAR  LR_DECOM_CHAR_DB_V_NUM    14-0000000C  L*4   PRINTLZ_MODE            
+ 10-00000064  CHAR  LR_DECOM_PROG_V_NUM       14-00000027  CHAR  PROG_VERSION            
+ 10-00000060  I*4   LR_DECOM_RERUN_NUM         7-0000000A  L*1   RAMCHECK                
+ 10-00000074  CHAR  LR_DECOM_RUN_DATETIME          **      I*4   RECORD_SIZE             
+ 12-00000000  CHAR  LR_EDITFILE_BUF            2-0000000C  I*4   RMSSTC                  
+ 12-00000034  CHAR  LR_EDITFILE_DATA_TYP       2-00000010  I*4   RMSSTV                  
+ 12-00000000  CHAR  LR_EDITFILE_KEY            7-00000000  I*4   SFPERBLOCK              
+ 12-0000001C  CHAR  LR_EDITFILE_PROG_V_NUM     7-00000010  I*4   SPINCOUNT               
+ 12-00000018  CHAR  LR_EDITFILE_RERUN_NUM          **      I*4   STATUS                  
+ 12-00000024  CHAR  LR_EDITFILE_RUN_DATETIME   7-00000009  L*1   STICSPOWER              
+ 10-00000044  I*4   LR_END_DOY                 1-00000008  I*4   STICS_H_RATE_SIZE       
+ 11-00000008  R*8   LR_END_EPOCH               1-0000000C  I*4   STICS_N_RATE_SIZE       
+ 10-0000001C  I*4   LR_END_MAJFR_CNT           2-00000000  I*4   STICS_RATE_SIZE         
+ 10-0000004C  I*4   LR_END_MICSEC              7-00000004  L*1   SUBS_ID                 
+ 10-00000048  I*4   LR_END_MSEC                7-00000007  L*1   SWICSPOWER              
+ 10-00000040  I*4   LR_END_YEAR                1-00000010  I*4   SWICS_H_RATE_SIZE       
+ 10-000000B4  CHAR  LR_FILL3                   1-00000014  I*4   SWICS_N_RATE_SIZE       
+ 10-00000084  CHAR  LR_INSTR_FILE_NAME         2-00000004  I*4   SWICS_RATE_SIZE         
+ 10-00000008  CHAR  LR_INSTR_NAME             13-000003E8  I*4   SWVERSION_N             
+ 10-00000004  I*4   LR_INSTR_NUM               2-00000018  I*4   VAXERR                  
+ 10-00000AEC  CHAR  LR_L0_PROG_V_NUM                                                     
+
+
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   7
+1.10                            Symbol Table                    23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+ARRAYS
+
+     Address  Type  Name                                   Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA                               1980  (0:10, 0:59, 3)
+  8-000003CC  I*4   HDBTIME2                                  24  (2, 3)
+  9-00000CF0  I*4   HKLOCI                                   300  (75)
+  9-00000E1C  I*4   HKLOCJ                                   300  (75)
+  9-00000CE4  I*4   HKSET                                     12  (3)
+ 10-00000020  I*4   LR_BEG_SC_CLOCK                            8  (2)
+ 10-00000000  I*1   LR_BUFFER                              13000  (13000)
+ 10-000000E8  CHAR  LR_EDIT_FILE                            2560  (20)
+ 10-00000028  I*4   LR_END_SC_CLOCK                            8  (2)
+  7-0000000B  L*1   SPARFLAGS                                  1  (1)
+ 13-00000000  R*4   SWVERSION                               1000  (2, 125)
+ 13-000001B0  R*4   VER_EPIC_ADJUST_TIME                       8  (2)
+ 13-00000010  R*4   VER_EPIC_CHECK_SWVERSION                   8  (2)
+ 13-00000190  R*4   VER_EPIC_CHECK_SYNC                        8  (2)
+ 13-00000258  R*4   VER_EPIC_CLEAR_BUFFERS                     8  (2)
+ 13-00000110  R*4   VER_EPIC_CLOSE_CAL                         8  (2)
+ 13-000001E8  R*4   VER_EPIC_CLOSE_L0                          8  (2)
+ 13-00000358  R*4   VER_EPIC_CLOSE_L1                          8  (2)
+ 13-000000F0  R*4   VER_EPIC_CLOSE_SFDU                        8  (2)
+ 13-00000020  R*4   VER_EPIC_CLOSE_USERMSG                     8  (2)
+ 13-00000198  R*4   VER_EPIC_DECOM                             8  (2)
+ 13-000001A0  R*4   VER_EPIC_DECOM_DPUCOMMON                   8  (2)
+ 13-00000378  R*4   VER_EPIC_DECOM_HSKP                        8  (2)
+ 13-00000370  R*4   VER_EPIC_FILL_OUT                          8  (2)
+ 13-00000270  R*4   VER_EPIC_GET_CHINDEX                       8  (2)
+ 13-00000268  R*4   VER_EPIC_GET_FORMAT                        8  (2)
+ 13-00000330  R*4   VER_EPIC_HDR_WRITE                         8  (2)
+ 13-00000018  R*4   VER_EPIC_INIT_CHANNELS                     8  (2)
+ 13-00000320  R*4   VER_EPIC_INIT_DECOMPRESS                   8  (2)
+ 13-00000368  R*4   VER_EPIC_INIT_SCHEMES                      8  (2)
+ 13-00000050  R*4   VER_EPIC_INTERPRET_USERMSG                 8  (2)
+ 13-00000288  R*4   VER_EPIC_IN_FILL                           8  (2)
+ 13-00000278  R*4   VER_EPIC_L0_TO_L1                          8  (2)
+ 13-000000F8  R*4   VER_EPIC_OPEN_CAL                          8  (2)
+ 13-000001B8  R*4   VER_EPIC_OPEN_L0                           8  (2)
+ 13-00000350  R*4   VER_EPIC_OPEN_L1                           8  (2)
+ 13-000000D0  R*4   VER_EPIC_OPEN_SFDU                         8  (2)
+ 13-00000028  R*4   VER_EPIC_OPEN_USERMSG                      8  (2)
+ 13-00000030  R*4   VER_EPIC_PUT_USERMSG                       8  (2)
+ 13-00000108  R*4   VER_EPIC_READ_CAL_DATA_RECORD              8  (2)
+ 13-00000100  R*4   VER_EPIC_READ_CAL_LABL_RECORD              8  (2)
+ 13-00000360  R*4   VER_EPIC_READ_EDBMAP                       8  (2)
+ 13-000001E0  R*4   VER_EPIC_READ_L0_DATA_RECORD               8  (2)
+ 13-000001D8  R*4   VER_EPIC_READ_L0_LABL_RECORD               8  (2)
+ 13-00000348  R*4   VER_EPIC_READ_L1                           8  (2)
+ 13-000000E8  R*4   VER_EPIC_READ_SFDU_DATA_RECORD             8  (2)
+ 13-000000D8  R*4   VER_EPIC_READ_SFDU_FILE_HEADER             8  (2)
+ 13-000000E0  R*4   VER_EPIC_READ_SFDU_LABL_RECORD             8  (2)
+ 13-00000040  R*4   VER_EPIC_RET_CALIBRATION                   8  (2)
+ 13-00000048  R*4   VER_EPIC_RET_CONTROL_PARAMETERS            8  (2)
+ 13-000001F8  R*4   VER_EPIC_RET_HEADS                         8  (2)
+ 13-000001A8  R*4   VER_EPIC_RET_LEVEL0                        8  (2)
+ 13-00000260  R*4   VER_EPIC_RET_MODE                          8  (2)
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   8
+1.10                            Symbol Table                    23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+ 13-00000338  R*4   VER_EPIC_RET_TIME                          8  (2)
+ 13-00000200  R*4   VER_EPIC_SETUP_SCI_RECORD                  8  (2)
+ 13-000000C8  R*4   VER_EPIC_SFDU_TO_L0                        8  (2)
+ 13-00000280  R*4   VER_EPIC_SHIFT_EDBS                        8  (2)
+ 13-00000038  R*4   VER_EPIC_TERM                              8  (2)
+ 13-00000380  R*4   VER_EPIC_UNPACK_HSKP                       8  (2)
+ 13-000001D0  R*4   VER_EPIC_WRITE_L0_DATA_RECORD              8  (2)
+ 13-000001C0  R*4   VER_EPIC_WRITE_L0_FILE_HEADER              8  (2)
+ 13-000001C8  R*4   VER_EPIC_WRITE_L0_LABL_RECORD              8  (2)
+ 13-00000340  R*4   VER_EPIC_WRITE_L1                          8  (2)
+ 13-00000118  R*4   VER_ICSS_RET_LZ                            8  (2)
+ 13-000001F0  R*4   VER_JULIAN_DOY                             8  (2)
+ 13-00000328  R*4   VER_L1_GET_REC_PREAMBLE                    8  (2)
+ 13-00000008  R*4   VER_MAINSEC                                8  (2)
+ 13-00000000  R*4   VER__PROG                                  8  (2)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+      **       1200   4-00000000   1900       **       2000       **       2001
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                      
+                                  
+        WIND_WRITE_L1_HEADER      
+
+WIND_OPEN_L1                                                    30-NOV-1995 14:17:22    DEC Fortran V6.2-508                Page   9
+1.10                            Symbol Table                    23-FEB-1995 15:04:40    SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.FOR;26
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.LIS;82
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_L1.OBJ;53
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.59 seconds
+  Elapsed time:      3.43 seconds
+  Pagefaults:         261
+  I/O Count:           44

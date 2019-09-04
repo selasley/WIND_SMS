@@ -1,0 +1,849 @@
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   1
+                                                                23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	      1       SUBROUTINE RECORD_PC_DATA( TIME, STATUS )
+	      2 C
+	      3 C	RECORD_PC_DATA 	records all sciences dat in the same fashion
+	      4 C	as the GSE records the data.  This allows on one side to check
+	      5 C	the data as produced on the VAX with data produced with the GSE
+	      6 C	and allows to use the data produced with either source to
+	      7 C	establish level 1 data files.
+	      8 C
+	      9 C	This version:   1.10   23-FEB-1995
+	     10 C
+	     11 C	USAGE:
+	     12 C		CALL RECORD_PC_DATA( TIME, STATUS )
+	     13 C
+	     14 C	PARAMETERS:
+	     15 C		TIME	R*8	Input
+	     16 C		STATUS	I*4	Input	0-> max Spin	EDB's
+	     17 C					100		Hk data
+	     18 C					200		HDB data
+	     19 C				Output	001		Normal return
+	     20 C		
+	     21 C	CREATION :
+	     22 C
+	     23 C		H.BROER	11-MAR-1994
+	     24 C
+	     25 C	REVISION :
+	     26 C	 22-APR-1994	H.BROER
+	     27 C	 26-MAY-1994	H.BROER		new HK.INC
+	     28 C	  9-JUN-1994	H.BROER		combined EDB.inc and HK.inc
+	     29 C	 30-JUN-1994	H.BROER		SWICS,MASS,+STICS converted to structure
+	     30 C	  9-SEP-1994	J.PAQUETTE	changed location of SHIFT and STORE;
+	     31 C					altered HK structure; changed
+	     32 C					references to HKset and Hkeep to array
+	     33 C					references using EDBset as subscript
+	     34 C        27-OCT-1994    L. Bleau        made WRITE statements to KB conditional,
+	     35 C                                       added common block DIAG
+	     36 C         4-NOV-1994    L. Bleau        changed KB to TTOUT in WRITE statements
+	     37 C         7-DEC-1994    L. Bleau        changed filename of unit 21 output file
+	     38 C                                       to GSEFORMAT.DAT in DATA_DIR:
+	     39 C	 13-DEC-1994	L. Bleau	removed duplicate IDENT line
+	     40 C   1.8  20-DEC-1994    L. Bleau        changed RECFILE to LOGICAL*4
+	     41 C	  9-FEB-1995	L. Bleau	changed '!' to 'C' in program comments
+	     42 C	  9-FEB-1995	L. Bleau	change include stmt to use EDBDEF.INC
+	     43 C					and EDBVARS.INC instead of EDB.INC only
+	     44 C        15-FEB-1995    J.PAQUETTE      removed refrences to HDBset since HDB
+	     45 C                       L. Bleau        now indexed by EDBset
+	     46 C	 23-FEB-1995	L. Bleau	removed DIAG def, add INCLUDE DIAG.INC
+	     47 C  1.10	 23-FEB-1995	L. Bleau	if in PRINTLZ mode don't do anything
+	     48 C
+	     49 CDEC$ IDENT   '1.10'
+	     50 
+	     51       IMPLICIT NONE
+	     52 
+	     53       INCLUDE	'INC_DIR:EDBDEF.INC/NOLIST'
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   2
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	    591       INCLUDE	'INC_DIR:EDBVARS.INC/NOLIST'
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   3
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	    773       INCLUDE	'INC_DIR:L0_PC_RECORD.INC/NOLIST'
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   4
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	    859       INCLUDE	'INC_DIR:WIND_L0_RECORD.INC/NOLIST'
+	    910       INCLUDE	'INC_DIR:WIND_Lun.INC/NOLIST'
+	    940       INCLUDE   'INC_DIR:DIAG.INC/NOLIST'
+	    949       INCLUDE	'($SSDEF)/NOLIST'
+	   2374 
+	   2375       REAL*8		TIME,
+	   2376      :			TIME70
+	   2377 
+	   2378       INTEGER*4		II,
+	   2379      :			MaxSpin/59/,
+	   2380      :			ONEXT,
+	   2381      :			STATUS,
+	   2382      :			TASK
+	   2383 
+	   2384       BYTE		bEDB(0:777),
+	   2385      :			bEBYTE(512)/512*0/,
+	   2386      :			IIByte(4)
+	   2387 
+	   2388       CHARACTER		CEDB*778,
+	   2389      :			BBYTE*2048,
+	   2390      :			EBYTE*512,
+	   2391      :			NAM19*19,
+	   2392      :			NAM26*26
+	   2393 
+	   2394       LOGICAL*4		RECFILE
+	   2395 
+	   2396       EQUIVALENCE	( bEDB, CEDB ),
+	   2397      :			( EBYTE,bEBYTE ),
+	   2398      :			( II,	IIByte(1) )
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   5
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2400       TASK	= STATUS
+	   2401       STATUS	= SS$_NORMAL
+	   2402 C
+	   2403 C If the program is in PRINTLZ mode (ie, dumping the LZ file) this routine
+	   2404 C serves no purpose, so just return without doing anything.
+	   2405 C
+	   2406       IF (PRINTLZ_MODE) RETURN
+	   2407 C
+	   2408       INQUIRE( UNIT=21, OPENED=RECFILE )
+	   2409       IF( .NOT.RECFILE )	THEN
+	   2410           OPEN(	UNIT = 21,
+	   2411      :		FILE = 'GSEFORMAT',
+	   2412      :		DEFAULTFILE = 'DATA_DIR:.DAT',
+	   2413      :		FORM = 'FORMATTED',
+	   2414      :		TYPE = 'NEW',
+	   2415      :		CARRIAGECONTROL = 'NONE',
+	   2416      :		ACCESS = 'SEQUENTIAL',
+	   2417      :		RECL = 512,
+	   2418      :		ERR  = 9990,
+	   2419      :		IOSTAT = STATUS,
+	   2420      :		RECORDTYPE = 'FIXED' )
+	   2421           HLABEL.LABEL.byID(0)	= 'EB'X
+	   2422           HLABEL.LABEL.byID(1)	= '90'X
+	   2423           HLABEL.LABEL.byID(2)	= 'G'
+	   2424           HLABEL.LABEL.byID(3)	= 'S'
+	   2425           HLABEL.LABEL.byID(4)	= 'E'
+	   2426           HLABEL.LABEL.wVersion	= '101'X
+	   2427           NAM19			= 'SMS'
+	   2428           DO II = 4, 19
+	   2429               NAM19(II:II)	= CHAR(0)
+	   2430           END DO
+	   2431           HLABEL.LABEL.ProjectName	= NAM19
+	   2432           HLABEL.LABEL.wNULL	= 0
+	   2433 
+	   2434           REC_PRE.LABEL.bID(0)	= 'D'
+	   2435           REC_PRE.LABEL.bID(1)	= 'E'
+	   2436           REC_DAT.LABEL.bID(0)	= 'T'
+	   2437           REC_DAT.LABEL.bID(1)	= 'A'
+	   2438 
+	   2439           CALL WIND_GREG_TO_EPOCH( 1970, 1, 0, 0, TIME70, STATUS )
+	   2440           TIME70	= TIME70 - 432.D5
+	   2441           HLABEL.LABEL.dwTime	= INT( (TIME - TIME70) / 1D3 )
+	   2442           IF(DIAG .LE. 3) WRITE( TTOUT, 100 )	HLABEL.LABEL.dwTime, HLABEL.LABEL.dwTime
+	   2443   100 FORMAT( 1H , T10, I10, ' SECONDS ELAPSED SINCE 1970, in hex =', Z8.8 )
+	   2444 
+	   2445           DO II = 0, 31
+	   2446               bEDB( II )	= HLABEL.BBYTE( II )
+	   2447           END DO
+	   2448           ONEXT	= 1
+	   2449           BBYTE(513:)	= EBYTE
+	   2450           BBYTE(1025:)	= EBYTE
+	   2451 
+	   2452           CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2453 
+	   2454           RecordId	= 0	! Next RECORD type to be assigned
+	   2455           HDBRecId	= -1	! HDB assigned Record ID
+	   2456           HkRecId	= -1	! Hk assigned Record ID
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   6
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2457           CoreId	= -1	! Core data assigned Record ID
+	   2458           WCoreId	= -1	! SWICS Core assigned Record ID
+	   2459           SCoreId	= -1	! STICS Core assigned Record ID
+	   2460           MCoreId	= -1	! MASS  Core assigned Record ID
+	   2461           WPhaId	= -1	! SWICS PHA assigned Record ID
+	   2462           SPhaId	= -1	! STICS PHA assigned Record ID
+	   2463           MPhaId	= -1	! MASS  PHA assigned Record ID
+	   2464           HDBRecNum	= -1	! HDB record running count
+	   2465           HkRecNum	= -1	! Hk record running count
+	   2466           CoreNum	= -1	! Core record running count
+	   2467           WCoreNum	= -1	! SWICS Core record running count
+	   2468           SCoreNum	= -1	! STICS Core record running count
+	   2469           MCoreNum	= -1	! MASS  Core record running count
+	   2470           WPhaNum	= -1	! SWICS PHA record running count
+	   2471           SPhaNum	= -1	! STICS PHA record running count
+	   2472           MPhaNum	= -1	! MASS  PHA record running count
+	   2473       END IF !	( .NOT.RECFILE )
+	   2474 
+	   2475       IF( TASK .LE. MaxSpin )	THEN
+	   2476           IF( CoreId .LT. 0 )	THEN
+	   2477               REC_PRE.LABEL.wBlockID	= RecordId
+	   2478               NAM26			= 'ExpHeader'		! Core
+	   2479 
+	   2480               DO II = 10, 26
+	   2481                   NAM26( II:II )	= CHAR( 0 )
+	   2482               END DO
+	   2483 
+	   2484               REC_PRE.LABEL.szName	= NAM26
+	   2485               REC_PRE.LABEL.wLen	= 32
+	   2486 
+	   2487               DO II = 0, 31
+	   2488                   bEDB( II )	= REC_PRE.BBYTE( II )
+	   2489               END DO
+	   2490 
+	   2491               CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2492 
+	   2493               CoreId	= RecordId
+	   2494               RecordId	= RecordId + 1
+	   2495           END IF
+	   2496 
+	   2497           CoreNum	= CoreNum + 1
+	   2498           REC_DAT.LABEL.wBlockID	= CoreId
+	   2499           REC_DAT.LABEL.wCountStamp	= CoreNum
+	   2500           REC_DAT.LABEL.wSize		= EDB_Core_Size + 1
+	   2501           REC_DAT.LABEL.dwTime		= INT( (TIME - TIME70) * 1.D-3 )
+	   2502 
+	   2503           DO II = 0, 11
+	   2504               bEDB( II )	= REC_DAT.BBYTE( II )
+	   2505           END DO
+	   2506 
+	   2507           DO II = 0, EDB_Core_Size
+	   2508               bEDB( 12 + II )	= CORE_data( II, TASK, EDBset )
+	   2509           END DO
+	   2510 
+	   2511           II	= REC_DAT.LABEL.wSize + 14
+	   2512           bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2513           bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   7
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2514 
+	   2515           CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2516 
+	   2517           IF( SCI( EDBset ).EDB( TASK ).SWICSPower )	THEN
+	   2518               IF( WCoreId .LT. 0 )	THEN
+	   2519                   REC_PRE.LABEL.wBlockID	= RecordId
+	   2520                   NAM26			= 'ExpWRate'		! SWICS Rate
+	   2521 
+	   2522                   DO II = 9, 26
+	   2523                       NAM26( II:II )	= CHAR( 0 )
+	   2524                   END DO
+	   2525 
+	   2526                   REC_PRE.LABEL.szName	= NAM26
+	   2527                   REC_PRE.LABEL.wLen	= 32
+	   2528 
+	   2529                   DO II = 0, 31
+	   2530                       bEDB( II )	= REC_PRE.BBYTE( II )
+	   2531                   END DO
+	   2532 
+	   2533                   CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2534 
+	   2535                   WCoreId	= RecordId
+	   2536                   RecordId	= RecordId + 1
+	   2537               END IF
+	   2538 
+	   2539               WCoreNum	= WCoreNum + 1
+	   2540               REC_DAT.LABEL.wBlockID	= WCoreId
+	   2541               REC_DAT.LABEL.wCountStamp	= WCoreNum
+	   2542               IF( BITRATE )	THEN
+	   2543                   REC_DAT.LABEL.wSize	= SWICS_H_RATE_Size+1
+	   2544               ELSE
+	   2545                   REC_DAT.LABEL.wSize	= SWICS_N_RATE_Size+1
+	   2546               END IF
+	   2547               REC_DAT.LABEL.dwTime		= INT( (TIME - TIME70) * 1.D-3 )
+	   2548 
+	   2549               DO II = 0, 11
+	   2550                   bEDB( II )	= REC_DAT.BBYTE( II )
+	   2551               END DO
+	   2552 
+	   2553               DO II = 0, REC_DAT.LABEL.wSize-1
+	   2554                   bEDB( 12 + II ) = SWICS_RATE( EDBset ).EDB( TASK ).RATE( II )
+	   2555               END DO
+	   2556 
+	   2557               II	= REC_DAT.LABEL.wSize + 14
+	   2558               bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2559               bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2560 
+	   2561               CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2562 
+	   2563               IF( SCI( EDBset ).EDB( TASK ).SWICS_Len .GT. 0 )	THEN
+	   2564                   IF( WPHAId .LT. 0 )	THEN
+	   2565                       REC_PRE.LABEL.wBlockID	= RecordId
+	   2566                       NAM26			= 'ExpWPHA'	! SWICS PHA
+	   2567 
+	   2568                       DO II = 8, 26
+	   2569                           NAM26( II:II )	= CHAR( 0 )
+	   2570                       END DO
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   8
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2571 
+	   2572                       REC_PRE.LABEL.szName	= NAM26
+	   2573                       REC_PRE.LABEL.wLen	= 32
+	   2574 
+	   2575                       DO II = 0, 31
+	   2576                           bEDB( II )	= REC_PRE.BBYTE( II )
+	   2577                       END DO
+	   2578 
+	   2579                       CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2580 
+	   2581                       WPHAId	= RecordId
+	   2582                       RecordId	= RecordId + 1
+	   2583                   END IF
+	   2584 
+	   2585                   WPHANum	= WPHANum + 1
+	   2586                   REC_DAT.LABEL.wBlockID	= WPHAId
+	   2587                   REC_DAT.LABEL.wCountStamp	= WPHANum
+	   2588                   REC_DAT.LABEL.wSize		= SCI( EDBset ).EDB( TASK ).SWICS_Len * 4
+	   2589                   REC_DAT.LABEL.dwTime		= INT( (TIME - TIME70) * 1.D-3 )
+	   2590 
+	   2591                   DO II = 0, 11
+	   2592                       bEDB( II )	= REC_DAT.BBYTE( II )
+	   2593                   END DO
+	   2594 
+	   2595                   DO II = 0, REC_DAT.LABEL.wSize-1
+	   2596                       bEDB( 12 + II ) = SWICS_PHA( EDBset ).EDB( TASK ).PHA( II )
+	   2597                   END DO
+	   2598 
+	   2599                   II	= REC_DAT.LABEL.wSize + 14
+	   2600                   bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2601                   bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2602 
+	   2603                   CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2604               END IF !	( SCI( EDBset ).EDB( TASK ).SWICS_Len .GT. 0 )
+	   2605           END IF !	( SCI( EDBset ).EDB( TASK ).SWICSPower )
+	   2606 
+	   2607           IF( SCI( EDBset ).EDB( TASK ).STICSPower )	THEN
+	   2608               IF( SCoreId .LT. 0 )	THEN
+	   2609                   REC_PRE.LABEL.wBlockID	= RecordId
+	   2610                   NAM26			= 'ExpSRate'		! STICS Rate
+	   2611 
+	   2612                   DO II = 9, 26
+	   2613                       NAM26( II:II )	= CHAR( 0 )
+	   2614                   END DO
+	   2615 
+	   2616                   REC_PRE.LABEL.szName	= NAM26
+	   2617                   REC_PRE.LABEL.wLen	= 32
+	   2618 
+	   2619                   DO II = 0, 31
+	   2620                       bEDB( II )	= REC_PRE.BBYTE( II )
+	   2621                   END DO
+	   2622 
+	   2623                   CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2624 
+	   2625                   SCoreId	= RecordId
+	   2626                   RecordId	= RecordId + 1
+	   2627               END IF
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page   9
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2628 
+	   2629               SCoreNum	= SCoreNum + 1
+	   2630               REC_DAT.LABEL.wBlockID	= SCoreId
+	   2631               REC_DAT.LABEL.wCountStamp	= SCoreNum
+	   2632               IF( BITRATE )	THEN
+	   2633                   REC_DAT.LABEL.wSize	= STICS_H_RATE_Size+1
+	   2634               ELSE
+	   2635                   REC_DAT.LABEL.wSize	= STICS_N_RATE_Size+1
+	   2636               END IF
+	   2637               REC_DAT.LABEL.dwTime		= INT( (TIME - TIME70) * 1.D-3 )
+	   2638 
+	   2639               DO II = 0, 11
+	   2640                   bEDB( II )	= REC_DAT.BBYTE( II )
+	   2641               END DO
+	   2642 
+	   2643               DO II = 0, REC_DAT.LABEL.wSize-1
+	   2644                   bEDB( 12 + II ) = STICS_RATE( EDBset ).EDB( TASK ).RATE( II )
+	   2645               END DO
+	   2646 
+	   2647               II	= REC_DAT.LABEL.wSize + 14
+	   2648               bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2649               bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2650 
+	   2651               CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2652 
+	   2653               IF( SCI( EDBset ).EDB( TASK ).STICS_Len .GT. 0 )	THEN
+	   2654                   IF( SPHAId .LT. 0 )	THEN
+	   2655                       REC_PRE.LABEL.wBlockID	= RecordId
+	   2656                       NAM26			= 'ExpSPHA'	! STICS PHA
+	   2657 
+	   2658                       DO II = 8, 26
+	   2659                           NAM26( II:II )	= CHAR( 0 )
+	   2660                       END DO
+	   2661 
+	   2662                       REC_PRE.LABEL.szName	= NAM26
+	   2663                       REC_PRE.LABEL.wLen	= 32
+	   2664 
+	   2665                       DO II = 0, 31
+	   2666                           bEDB( II )	= REC_PRE.BBYTE( II )
+	   2667                       END DO
+	   2668 
+	   2669                       CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2670 
+	   2671                       SPHAId	= RecordId
+	   2672                       RecordId	= RecordId + 1
+	   2673                   END IF
+	   2674 
+	   2675                   SPHANum	= SPHANum + 1
+	   2676                   REC_DAT.LABEL.wBlockID	= SPHAId
+	   2677                   REC_DAT.LABEL.wCountStamp	= SPHANum
+	   2678                   REC_DAT.LABEL.wSize		= SCI( EDBset ).EDB( TASK ).STICS_Len * 4
+	   2679                   REC_DAT.LABEL.dwTime		= INT( (TIME - TIME70) * 1.D-3 )
+	   2680 
+	   2681                   DO II = 0, 11
+	   2682                       bEDB( II )	= REC_DAT.BBYTE( II )
+	   2683                   END DO
+	   2684 
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  10
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2685                   DO II = 0, REC_DAT.LABEL.wSize-1
+	   2686                       bEDB( 12 + II ) = STICS_PHA( EDBset ).EDB( TASK ).PHA( II )
+	   2687                   END DO
+	   2688 
+	   2689                   II	= REC_DAT.LABEL.wSize + 14
+	   2690                   bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2691                   bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2692 
+	   2693                   CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2694               END IF !	( SCI( EDBset ).EDB( TASK ).STICS_Len .GT. 0 )
+	   2695           END IF !	( SCI( EDBset ).EDB( TASK ).STICSPower )
+	   2696 
+	   2697           IF( SCI( EDBset ).EDB( TASK ).MASSPower )	THEN
+	   2698               IF( MCoreId .LT. 0 )	THEN
+	   2699                   REC_PRE.LABEL.wBlockID	= RecordId
+	   2700                   NAM26			= 'ExpMRate'		! MASS Rate
+	   2701 
+	   2702                   DO II = 9, 26
+	   2703                       NAM26( II:II )	= CHAR( 0 )
+	   2704                   END DO
+	   2705 
+	   2706                   REC_PRE.LABEL.szName	= NAM26
+	   2707                   REC_PRE.LABEL.wLen	= 32
+	   2708 
+	   2709                   DO II = 0, 31
+	   2710                       bEDB( II )	= REC_PRE.BBYTE( II )
+	   2711                   END DO
+	   2712 
+	   2713                   CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2714 
+	   2715                   MCoreId	= RecordId
+	   2716                   RecordId	= RecordId + 1
+	   2717               END IF
+	   2718 
+	   2719               MCoreNum	= MCoreNum + 1
+	   2720               REC_DAT.LABEL.wBlockID	= MCoreId
+	   2721               REC_DAT.LABEL.wCountStamp	= MCoreNum
+	   2722               REC_DAT.LABEL.wSize	= MASS_RATE_Size+1
+	   2723               REC_DAT.LABEL.dwTime	= INT( (TIME - TIME70) * 1.D-3 )
+	   2724 
+	   2725               DO II = 0, 11
+	   2726                   bEDB( II )	= REC_DAT.BBYTE( II )
+	   2727               END DO
+	   2728 
+	   2729               DO II = 0, REC_DAT.LABEL.wSize-1
+	   2730                   bEDB( 12 + II ) = MASS_RATE( EDBset ).EDB( TASK ).RATE( II )
+	   2731               END DO
+	   2732 
+	   2733               II	= REC_DAT.LABEL.wSize + 14
+	   2734               bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2735               bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2736 
+	   2737               CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2738 
+	   2739               IF( SCI( EDBset ).EDB( TASK ).MASS_Len .GT. 0 )	THEN
+	   2740                   IF( MPHAId .LT. 0 )	THEN
+	   2741                       REC_PRE.LABEL.wBlockID	= RecordId
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  11
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2742                       NAM26			= 'ExpMPHA'	! MASS PHA
+	   2743 
+	   2744                       DO II = 8, 26
+	   2745                           NAM26( II:II )	= CHAR( 0 )
+	   2746                       END DO
+	   2747 
+	   2748                       REC_PRE.LABEL.szName	= NAM26
+	   2749                       REC_PRE.LABEL.wLen	= 32
+	   2750 
+	   2751                       DO II = 0, 31
+	   2752                           bEDB( II )	= REC_PRE.BBYTE( II )
+	   2753                       END DO
+	   2754 
+	   2755                       CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2756 
+	   2757                       MPHAId	= RecordId
+	   2758                       RecordId	= RecordId + 1
+	   2759                   END IF
+	   2760 
+	   2761                   MPHANum	= MPHANum + 1
+	   2762                   REC_DAT.LABEL.wBlockID	= MPHAId
+	   2763                   REC_DAT.LABEL.wCountStamp	= MPHANum
+	   2764                   REC_DAT.LABEL.wSize		= SCI( EDBset ).EDB( TASK ).MASS_Len * 2
+	   2765                   REC_DAT.LABEL.dwTime		= INT( (TIME - TIME70) * 1.D-3 )
+	   2766 
+	   2767                   DO II = 0, 11
+	   2768                       bEDB( II )	= REC_DAT.BBYTE( II )
+	   2769                   END DO
+	   2770 
+	   2771                   DO II = 0, REC_DAT.LABEL.wSize-1
+	   2772                       bEDB( 12 + II ) = MASS_PHA( EDBset ).EDB( TASK ).PHA( II )
+	   2773                   END DO
+	   2774 
+	   2775                   II	= REC_DAT.LABEL.wSize + 14
+	   2776                   bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2777                   bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2778 
+	   2779                   CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2780               END IF !	( SCI( EDBset ).EDB( TASK ).MASS_Len .GT. 0 )
+	   2781           END IF !	( SCI( EDBset ).EDB( TASK ).MASSPower )
+	   2782 
+	   2783       ELSE IF( TASK .EQ. 100 )	THEN
+	   2784           IF( HkRecId .LT. 0 )	THEN
+	   2785               REC_PRE.LABEL.wBlockID	= RecordId
+	   2786               NAM26			= 'ExpHk'		! Hk DATA
+	   2787 
+	   2788               DO II = 6, 26
+	   2789                   NAM26( II:II )	= CHAR( 0 )
+	   2790               END DO
+	   2791 
+	   2792               REC_PRE.LABEL.szName	= NAM26
+	   2793               REC_PRE.LABEL.wLen	= 32
+	   2794 
+	   2795               DO II = 0, 31
+	   2796                   bEDB( II )	= REC_PRE.BBYTE( II )
+	   2797               END DO
+	   2798 
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  12
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2799               CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2800 
+	   2801               HkRecId	= RecordId
+	   2802               RecordId	= RecordId + 1
+	   2803           END IF
+	   2804 
+	   2805           HkRecNum	= HkRecNum + 1
+	   2806           REC_DAT.LABEL.wBlockID	= HkRecId
+	   2807           REC_DAT.LABEL.wCountStamp	= HkRecNum
+	   2808           REC_DAT.LABEL.wSize	= 70
+	   2809           REC_DAT.LABEL.dwTime	= INT( (TIME - TIME70) * 1.D-3 )
+	   2810 
+	   2811           DO II = 0, 11
+	   2812               bEDB( II )	= REC_DAT.BBYTE( II )
+	   2813           END DO
+	   2814 
+	   2815           DO II = 1, REC_DAT.LABEL.wSize
+	   2816               bEDB( 11 + II )	= HKeep( EDBset ).HKSET( HKset(EDBset) ).HK( II+5 ).BVAL
+	   2817           END DO
+	   2818 
+	   2819           II	= REC_DAT.LABEL.wSize + 14
+	   2820           bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2821           bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2822 
+	   2823           CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2824 
+	   2825       ELSE IF( TASK .EQ. 200 )	THEN
+	   2826           IF( HDBRecId .LT. 0 )	THEN
+	   2827               REC_PRE.LABEL.wBlockID	= RecordId
+	   2828               NAM26			= 'ExpHDB'		! HDB DATA
+	   2829 
+	   2830               DO II = 7, 26
+	   2831                   NAM26( II:II )	= CHAR( 0 )
+	   2832               END DO
+	   2833 
+	   2834               REC_PRE.LABEL.szName	= NAM26
+	   2835               REC_PRE.LABEL.wLen	= 32
+	   2836 
+	   2837               DO II = 0, 31
+	   2838                   bEDB( II )	= REC_PRE.BBYTE( II )
+	   2839               END DO
+	   2840 
+	   2841               CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: 32 ))
+	   2842 
+	   2843               HDBRecId	= RecordId
+	   2844               RecordId	= RecordId + 1
+	   2845           END IF
+	   2846 
+	   2847           HDBRecNum	= HDBRecNum + 1
+	   2848           REC_DAT.LABEL.wBlockID	= HDBRecId
+	   2849           REC_DAT.LABEL.wCountStamp	= HDBRecNum
+	   2850           REC_DAT.LABEL.wSize	= 280
+	   2851           REC_DAT.LABEL.dwTime	= INT( (TIME - TIME70) * 1.D-3 )
+	   2852 
+	   2853           DO II = 0, 11
+	   2854               bEDB( II )	= REC_DAT.BBYTE( II )
+	   2855           END DO
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  13
+1.10                                                            23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2856 
+	   2857           DO II = 0, REC_DAT.LABEL.wSize-1
+	   2858               bEDB( 12 + II )	= HDB( EDBset - 1 ).BDH.DAT( II )
+	   2859           END DO
+	   2860 
+	   2861           II	= REC_DAT.LABEL.wSize + 14
+	   2862           bEDB( REC_DAT.LABEL.wSize + 12 )	= IIByte(1)
+	   2863           bEDB( REC_DAT.LABEL.wSize + 13 )	= IIByte(2)
+	   2864 
+	   2865           CALL OUTRECORD( BBYTE, ONEXT, CEDB( 1: II ))
+	   2866 
+	   2867       ELSE IF( TASK .EQ. 900 )	THEN
+	   2868 
+	   2869           II	= 513 - ONEXT
+	   2870           CALL OUTRECORD( BBYTE, ONEXT, EBYTE( 1: II ))
+	   2871           CLOSE( UNIT=21 )
+	   2872 
+	   2873       END IF !	( TASK .LE. MaxSpin )
+	   2874 
+	   2875       RETURN
+	   2876 
+	   2877  9990 CONTINUE
+	   2878       WRITE( 6, 990 )
+	   2879   990 FORMAT( ' COULD NOT OPEN UNIT=21 ' )
+	   2880       STOP 990
+	   2881       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                 544 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                 3720 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               120 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                               24788   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 681 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 L0_RECORD                               38 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 DIAG                                    48 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               489203
+
+
+ENTRY POINTS
+
+    Address   Type  Name          
+                                  
+  4-00000000        RECORD_PC_DATA
+
+
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  14
+1.10                            Symbol Table                    23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+VARIABLES
+
+    Address   Type  Name                  Address   Type  Name                  Address   Type  Name             
+                                                                                                                 
+  2-00000688  CHAR  BBYTE               1-00000018  I*4   MAXSPIN             7-00000010  I*4   SPINCOUNT        
+  7-00000006  L*1   BITRATE            10-0000000C  I*2   MCOREID                 **      I*4   STATUS           
+  2-00000378  CHAR  CEDB               10-0000001E  I*2   MCORENUM            7-00000009  L*1   STICSPOWER       
+ 10-00000006  I*2   COREID              7-0000000C  I*4   MEASSPIN            1-00000008  I*4   STICS_H_RATE_SIZE
+ 10-00000018  I*2   CORENUM            10-00000012  I*2   MPHAID              1-0000000C  I*4   STICS_N_RATE_SIZE
+ 11-00000000  I*4   DIAG               10-00000024  I*2   MPHANUM             2-00000008  I*4   STICS_RATE_SIZE  
+  1-00000020  CHAR  EBYTE               2-00000060  CHAR  NAM19               7-00000004  L*1   SUBS_ID          
+  6-0006EEBC  I*4   EDBSET              2-00000078  CHAR  NAM26               7-00000007  L*1   SWICSPOWER       
+  1-00000000  I*4   EDB_CORE_SIZE      11-00000008  L*4   NRT_MODE            1-00000010  I*4   SWICS_H_RATE_SIZE
+ 11-0000002C  L*4   HALT_IF_NO_EPH      2-00000014  I*4   ONEXT               1-00000014  I*4   SWICS_N_RATE_SIZE
+  7-00000005  L*1   HDBFLAG            11-0000000C  L*4   PRINTLZ_MODE        2-0000000C  I*4   SWICS_RATE_SIZE  
+ 10-00000002  I*2   HDBRECID           11-00000027  CHAR  PROG_VERSION      REG-00000005  I*4   TASK             
+ 10-00000014  I*2   HDBRECNUM           7-0000000A  L*1   RAMCHECK                **      R*8   TIME             
+ 10-00000004  I*2   HKRECID             2-00000018  L*4   RECFILE             2-00000000  R*8   TIME70           
+ 10-00000016  I*2   HKRECNUM           10-00000000  I*2   RECORDID           10-00000008  I*2   WCOREID          
+  2-00000010  I*4   II                 10-0000000A  I*2   SCOREID            10-0000001A  I*2   WCORENUM         
+ 11-00000004  L*4   INTER              10-0000001C  I*2   SCORENUM           10-0000000E  I*2   WPHAID           
+ 11-00000010  CHAR  LINK_DATE_TIME      7-00000000  I*4   SFPERBLOCK         10-00000020  I*2   WPHANUM          
+  7-00000008  L*1   MASSPOWER          10-00000010  I*2   SPHAID                                                 
+  1-00000004  I*4   MASS_RATE_SIZE     10-00000022  I*2   SPHANUM                                                
+
+
+RECORDS
+
+    Address   Name     Structure           Bytes     Address   Name     Structure           Bytes
+                                                                                                 
+  2-00000020  HLABEL   HEADER_LABEL           32   2-00000040  REC_PRE  BLOCK_LABEL            32
+  2-00000098  REC_DAT  BLOCK_DATA            734                                                 
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  1-00000020  I*1   BEBYTE             512  (512)
+  2-00000378  I*1   BEDB               778  (0:777)
+  6-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  8-000003CC  I*4   HDBTIME2            24  (2, 3)
+  9-00000CF0  I*4   HKLOCI             300  (75)
+  9-00000E1C  I*4   HKLOCJ             300  (75)
+  9-00000CE4  I*4   HKSET               12  (3)
+  2-00000010  I*1   IIBYTE               4  (4)
+  7-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+
+RECORD_PC_DATA                                                  30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  15
+1.10                            Symbol Table                    23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+      **       100        **       990    4-00000000   9990
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                       Type  Name                    
+                                                                 
+        OUTRECORD                        WIND_GREG_TO_EPOCH      
+
+OUTRECORD                                                       30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  16
+1.10                            Symbol Table                    23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+	   2883       SUBROUTINE OUTRECORD(BBYTE,ONEXT,CONTENTS)
+	   2884 
+	   2885       CHARACTER*(*)	BBYTE,CONTENTS
+	   2886       INTEGER*4		ONEXT,
+	   2887      :			CLEN
+	   2888 
+	   2889       CLEN	= LEN(CONTENTS)
+	   2890       BBYTE( ONEXT:ONEXT+CLEN-1 ) = CONTENTS
+	   2891           ONEXT	= ONEXT + CLEN
+	   2892 
+	   2893           IF( ONEXT .GT. 512 )	THEN
+	   2894               WRITE( 21, 123 )	BBYTE
+	   2895               BBYTE	= BBYTE( 513: )
+	   2896               ONEXT	= ONEXT - 512
+	   2897           END IF !	( ONEXT .GT. 512 )
+	   2898 
+	   2899   123 FORMAT( A512 )
+	   2900       RETURN
+	   2901 
+	   2902       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                 544 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                 3720 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               120 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                               24788   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 681 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 L0_RECORD                               38 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 DIAG                                    48 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               489203
+
+
+ENTRY POINTS
+
+    Address   Type  Name     
+                             
+  4-00005F00        OUTRECORD
+
+
+
+OUTRECORD                                                       30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  17
+1.10                            Symbol Table                    23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+VARIABLES
+
+    Address   Type  Name         Address   Type  Name    
+                                                         
+      **      CHAR  BBYTE          **      CHAR  CONTENTS
+REG-00000011  I*4   CLEN           **      I*4   ONEXT   
+
+
+LABELS
+
+    Address   Label
+                   
+      **       123 
+
+OUTRECORD                                                       30-NOV-1995 14:16:57    DEC Fortran V6.2-508                Page  18
+1.10                            Symbol Table                    23-FEB-1995 22:42:35    SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.FOR;15
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.LIS;75
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]RECORD_PC_DATA.OBJ;46
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          7.45 seconds
+  Elapsed time:      9.66 seconds
+  Pagefaults:         997
+  I/O Count:           60

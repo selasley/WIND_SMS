@@ -1,0 +1,134 @@
+From:	UMDSP::PAQUETTE     "John Paquette(Univ. Md)" 27-APR-1995 16:02:07.49
+To:	UMSMS::PAQUETTE
+CC:	
+Subj:	
+From:	UMDSP::LUNDGREN     "Robert Lundgren, (301)-405-6211" 27-APR-1995 15:56:27.86
+To:	PAQUETTE
+CC:	LUNDGREN
+Subj:	SMS analog HK conversion factors
+                       SMS Analog Housekeeping - Conversion of Telelmetry to Engineering Units                           SMS_AHK.TXT
+                                                                                                                         Revised 11 April 1995
+HDB                                                                   ----  Engineering Units = CO + C1*X + C2*X^2 + C3*X^3 + C4*X^4 + C5*X^5  ----
+Byte  CHK#   Parameter Identification                Notes    Units   C0          C1           C2           C3            C4           C5
+                                                                                                                                  
+      CHK0   DPU Temp (Passive)                      1, 2     deg C   6.558508E2  -1.802378E1  2.133615E-1  -1.295112E-3  3.927925E-6  -4.754717E-9
+      CHK1   SWICS Gnd Electronics Temp (Passive)    1, 2     deg C   6.558508E2  -1.802378E1  2.133615E-1  -1.295112E-3  3.927925E-6  -4.754717E-9
+      CHK2   MASS Gnd Electronics Temp (Passive)     1, 2     deg C   6.558508E2  -1.802378E1  2.133615E-1  -1.295112E-3  3.927925E-6  -4.754717E-9
+      CHK3   STICS SSD Temp (Passive)                1, 2     deg C   6.558508E2  -1.802378E1  2.133615E-1  -1.295112E-3  3.927925E-6  -4.754717E-9
+      CHK4   STICS AE Housing Temp (Passive)         1, 2     deg C   6.558508E2  -1.802378E1  2.133615E-1  -1.295112E-3  3.927925E-6  -4.754717E-9
+215   CHK5   DPU 28 V Primary Current                3        mAmp    0           2.040
+216   CHK6   DPU 5.2 V (Switched) Voltage            4        Volt    0           2.500E-2 
+217   CHK7   DPU 5.2 V (Permanent) Voltage           4        Volt    0           2.500E-2 
+218   CHK8   DPU 10 V Voltage                        4        Volt    0           5.000E-2 
+219   CHK9   DPU Temperature, PIF_A                  1        deg C   1.437601E2  -3.224279    4.848285E-2  -4.101237E-4  1.682762E-6  -2.660079E-9
+220          DPU Temperature, CTL_W                  1        deg C   1.437601E2  -3.224279    4.848285E-2  -4.101237E-4  1.682762E-6  -2.660079E-9
+90    CHK10  SWICS +28 V Primary Current (Gnd Ref)   3        mAmp    0           1.030
+94    CHK11  SWICS +5 V Voltage (Gnd Ref)            4        Volt    0           2.500E-2 
+93    CHK12  SWICS +5 V Current (Gnd Ref)            4        mAmp    0           5.000E-1      
+95    CHK13  SWICS -5 V Voltage (Gnd Ref)            4        Volt    0           -2.500E-2     
+92    CHK14  SWICS +8 V Voltage (Gnd Ref)            4        Volt    0           4.000E-2 
+91           SWICS +8 V Current (Gnd Ref)            4        mAmp    0           2.000E-1      
+67    CHK15  SWICS 20 V Voltage (Gnd Ref)            5        Volt    -4.0        1.000E-1      
+66    CHK16  SWICS 20 V Current (Gnd Ref)            5        mAmp    -1.675      9.990E-1 
+69    CHK17  SWICS LVPS 28 V Voltage (Gnd Ref)       5        Volt    -7.143E-1   1.429E-1 
+71    CHK18  SWICS DPPS 28 V Current (Gnd Ref)       5        mAmp    -3.864E-1   2.078E-1 
+72           SWICS DPPS Output Voltage (Gnd Ref)     5        Volt   
+             HDB byte 89, bit 1 = 0, Levels 0-32                      7.858E-1    1.629 
+             HDB byte 89, bit 1 = 1, Levels 33-63                     -5.317E1    1.737E1      
+68    CHK19  SWICS PAPS 28 V Current (Gnd Ref)       5        mAmp    -8.454E-1   2.065E-1 
+70    CHK20  SWICS PAPS Output Voltage (Gnd Ref)     5        Volt    4.453E1     -1.464E2
+73    CHK21  SWICS +5 V Voltage (PAPS Ref)           5        Volt    0           2.483E-2 
+74    CHK22  SWICS +5 V Current (PAPS Ref)           5        mAmp    0           7.176E-1 
+75    CHK23  SWICS -5 V Voltage (PAPS Ref)           5        Volt    0           -2.488E-2     
+76    CHK24  SWICS -5 V Current (PAPS Ref)           5        mAmp    0           7.353E-1 
+82    CHK25  SWICS +12 V Voltage (PAPS Ref)          5        Volt    0           5.977E-2 
+83    CHK26  SWICS +12 V Current (PAPS Ref)          5        mAmp    0           6.625E-1 
+84    CHK27  SWICS -12 V Voltage (PAPS Ref)          5        Volt    0           -5.917E-2     
+85    CHK28  SWICS -12 V Current (PAPS Ref)          5        mAmp    0           1.484E-1 
+81           SWICS SSD Bias Voltage (PAPS Ref)       4, 7     Volt    0           5.0E-1
+77           SWICS Start MCPPS Voltage (PAPS Ref)    5, 8     Volt    -4.610      1.864E1 
+78           SWICS Stop MCPPS Voltage (PAPS Ref)     5, 9     Volt    4.650       1.356E1 
+79    CHK29  SWICS SSD Temp (PAPS Ref)               1        deg C   7.886257E1  -1.848392    2.143749E-2  -1.483171E-4  5.149126E-7  -7.140936E-10
+80           SWICS Bubble Elect Temp, (PAPS Ref)     1        deg C   7.886257E1  -1.848392    2.143749E-2  -1.483171E-4  5.149126E-7  -7.140936E-10
+98    CHK30  MASS +28 V Primary Current (Gnd Ref)    3        mAmp    0           1.050 
+103   CHK31  MASS +5 V Voltage (Gnd Ref)             4        Volt    0           2.500E-2 
+97    CHK32  MASS +5 V Current (Gnd Ref)             4        mAmp    0           5.000E-1 
+104   CHK33  MASS -5 V Voltage (Gnd Ref)             4        Volt    0           -2.500E-2     
+102   CHK34  MASS +8 V Voltage (Gnd Ref)             4        Volt    0           4.000E-2 
+101   CHK35  MASS LVPS 28 V Voltage (Gnd Ref)        4        Volt    0           1.400E-1 
+100   CHK36  MASS ADPS 28 V Current (Gnd Ref)        4        mAmp    0           2.000E-1 
+106   CHK37  MASS ADPS Output Voltage (Gnd Ref)      6, 10    Volt    -6.634E3    3.4185E1 
+99    CHK38  MASS DPPS 28 V Current (Gnd Ref)        4        mAmp    0           2.000E-1 
+96           MASS DPPS Output Voltage (Gnd Ref)      6, 10    Volt    
+             HDB byte 107, bit 5 = 0, Levels 0-33                     -2.387      -1.612     
+             HDB byte 107, bit 5 = 1, Levels 34-63                    2.626       -8.056     
+105   CHK39  MASS Analog Electronics Temp (Gnd Ref)  1        deg C   7.886257E1  -1.848392    2.143749E-2  -1.483171E-4  5.149126E-7  -7.140936E-10
+125   CHK40  MASS +5 V Voltage (ADPS Ref)            4        Volt    0           2.500E-2 
+126   CHK41  MASS +5 V Current (ADPS Ref)            4        mAmp    0           1.000E1 
+128   CHK42  MASS -5 V Voltage (ADPS Ref)            4        Volt    0           -2.500E-2     
+127   CHK43  MASS -5 V Current (ADPS Ref)            4        mAmp    0           1.000E1 
+123   CHK44  MASS +6 V Voltage (ADPS Ref)            4        Volt    0           3.000E-2 
+124   CHK45  MASS +6 V Current (ADPS Ref)            4        mAmp    0           1.000E1 
+122   CHK46  MASS +12 V Voltage (ADPS Ref)           4        Volt    0           6.000E-2 
+129   CHK47  MASS -12 V Voltage (ADPS Ref)           4        Volt    0           -6.000E-2     
+121   CHK48  MASS LVPS 28 V Voltage (ADPS Ref)       4        Volt    0           1.400E-1 
+118   CHK49  MASS HPS & MCPPS 28V I (ADPS Ref)       4        mAmp    0           2.000E-1 
+117   CHK50  MASS HPS Output Voltage (ADPS Ref)      10       Volt    -3.428E1    1.5285E2
+119          MASS Start MCPPS Voltage (ADPS Ref)     10, 11   Volt    1.310E1     1.431E1 
+120          MASS Stop MCPPS Voltage (ADPS Ref)      12       Volt    0           3.065E1 
+49    CHK51  STICS 28 V Primary Current              3        mAmp    0           2.040 
+45    CHK52  STICS +5 V Voltage                      13       Volt    0           2.455E-2 
+46    CHK53  STICS -5 V Voltage                      13       Volt    0           -2.451E-2     
+43    CHK54  STICS +6 V Voltage                      13       Volt    0           2.876E-2 
+44    CHK55  STICS -6 V Voltage                      13       Volt    0           -2.898E-2     
+47    CHK56  STICS +12 V Voltage                     13       Volt    0           5.837E-2 
+50    CHK57  STICS -12 V Voltage                     13       Volt    0           -5.880E-2     
+34    CHK58  STICS MCPPS 28 V Current                4        mAmp    0           5.000E-1 
+35    CHK59  STICS DPPS 28 V Current                 4        mAmp    0           5.000E-1 
+36+          STICS +DPPS Output Voltage (12 bits,    6, 13    Volt    -2.453E1    2.9562
+             HDB byte 36 + bits 0-3 of byte 37)                        
+38+          STICS -DPPS Output Voltage (12 bits,    6, 13    Volt    -2.422E1    -2.9791     
+             bits 4-7 of HDB byte 37 + byte 38)                        
+48           STICS SSD Bias Voltage                  4, 14    Volt                                                 
+27           STICS MCPPS 0 Output Voltage            13, 15   Volt    -7.806      1.959E1 
+28           STICS MCPPS 1 Output Voltage            13, 15   Volt    -3.475      1.950E1 
+29           STICS MCPPS 2 Output Voltage            13, 15   Volt    -9.405      1.957E1 
+30           STICS MCPPS 3 Output Voltage            13, 15   Volt    -1.950E1    1.984E1 
+31           STICS MCPPS 4 Output Voltage            13, 15   Volt    -1.436E1    1.984E1 
+32           STICS MCPPS 5 Output Voltage            13, 15   Volt    -7.293      1.969E1 
+33           STICS TOFPS (MCPPS 6) Output Voltage    13       Volt    -5.518      1.961E1
+39    CHK60  STICS T1, AE Housing Temp               1        deg C   7.886257E1  -1.848392    2.143749E-2  -1.483171E-4  5.149126E-7  -7.140936E-10
+40           STICS T2, Fairing/HOP Temp              1        deg C   7.886257E1  -1.848392    2.143749E-2  -1.483171E-4  5.149126E-7  -7.140936E-10
+41    CHK61  STICS T3, SSD Temp                      1        deg C   7.886257E1  -1.848392    2.143749E-2  -1.483171E-4  5.149126E-7  -7.140936E-10
+42           STICS T4, Back Panel Temp               1        deg C   7.886257E1  -1.848392    2.143749E-2  -1.483171E-4  5.149126E-7  -7.140936E-10
+Notes:
+1  Uncalibrated.  This fifth order polynomial is from a least squares fit to a table of temperature as a function of raw telemetry value.  The
+temperature table was calculated as follows:
+     1. Analysis of the circuit gives a relation between the raw telemetry value and the measured voltage, and from this the thermistor resistance is
+calculated.
+     2. The temperature is calculated using the Steinhart and Hart expression for the resistance versus temperature relationship of the thermistor,
+with coefficients from the manufacturer's catalog.  (Interchangability of the thermistors, 0.1%, is much better than other sources of error.)
+The range of telemetry values used in the polynomial fit does not include all 256 possible values, but has been limited in order to improve the fit to
+the data over the temperature range of interest.
+2  Passive analog housekeeping measured by the s/c, even with SMS off.
+3  Calibrated 29 September 1992.  Total 28 volt current to SMS was measured in the following states: DPU only, DPU & SWICS, DPU & MASS, DPU & STICS. 
+DPU current is subtracted to get current to sensor.  (When SWICS is on, the SWICS converter in the DPU supplies part of the power to the DPU.)
+4  Uncalibrated.
+5  Calibrated 27 October 1993.
+6  Subcomutated over 64 HDBs.  The counter for subcomutation is HDB byte 5, bits 0-5 (science record counter).  The HDB number n*64 + m contains a
+measured high voltage of the previous science record in measurement spin m (valid readings are defined  for m from 0 to 59 only).
+7  Raw telemetry readings fluxuate from 89 to 114 with SSD bias on.
+8  Volt sensor measures voltage at the anode; voltage across the MCP stack is 65.9% of the anode voltage.
+9  Volt sensor measures voltage at the anode; voltage across the MCP stack is 89.6% of the anode voltage.
+10  Calibrated 28 October to 4 November 1993.
+11  Volt sensor measures voltage at the anode; voltage across the MCP stack is 66.4% of the anode voltage.
+12  Uncalibrated.  Measured data from 28 October to 4 November 1993 with instrument disassembled is not consistent with assembled instrument behavior. 
+Richard Pappalardo thinks it has to do with a missing connection (see MASS Notebook B page 94).  This value of C1 assumes that the commanded voltage
+is correctly known: level 139 = 1870 volts, and volt sensor telemetry value = 61.  Volt sensor measures voltage at the anode; voltage across the MCP
+stack is 99.5% of the anode voltage.
+13  Calibrated 5 November 1993.
+14  Volt sensor is on power supply side of bias regulator/switch, so this is not a good indicator of the bias on detectors.  Typical raw telemetry
+readings with bias off are 207-214; typical readings with bias on are 215-224.  
+15.  The MCP supplies float on the output of the TOF power supply (MCPPS 6).  The volt sensor measures the total voltage at the anode, i.e., the sum
+of the voltages from the MCP supply and the TOF supply.  Voltage across the MCP stack is 87.0% of the voltage from the MCP supply alone, i.e.,
+0.87*(anode voltage - TOF voltage). 

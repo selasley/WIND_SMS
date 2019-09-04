@@ -1,0 +1,175 @@
+                WIND Level 1 File Access Routine Documentation
+I.   Overview
+     The WIND Level 1 reading routines provide the user with an easy to learn
+     interface to and means of reading of the Level 1 data file.  Housekeeping
+     details relating to the reading of the Level 1 file are containing within
+     the reading routines and need not be learned - and programmed - by each
+     user for each application.
+     A separate routine is provided to access each type of data.  Before data
+     from a Science Record may be accessed, the Science Record must first be
+     read into memory.  After this point any of the data items, in any order
+     desired, may be accessed.  The Level 1 data is returned to the calling
+     program through the routine's argument list.
+     The Level 1 data file is organized into records to make handling easier. 
+     These records are complex in themselves, however.  To make handling the
+     different data types easier, all data is arranged using high-level data
+     structures.  This allows an entire data structure to be passed to the
+     application program as a single argument, rather than as 5, 10, or 20
+     arguments.
+II.  List of Routine Names
+     Below is a list of the WIND Level 1 reading routines, in the order
+     typically used.
+       WIND_L1_OPEN                opens a Level 1 data file
+       WIND_L1_READ_SR             reads a complete science record
+       WIND_L1_SKIP_SR             skips complete science records
+       WIND_L1_GET_BASIC           returns the basic core data to the caller
+       WIND_L1_GET_HDB             returns the Housekeeping Data Block (HDB) to
+                                   the caller 
+       WIND_L1_GET_HK              returns the housekeeping (HK) records to the
+                                   caller 
+       WIND_L1_GET_SWICS           returns the SWICS data to the caller
+       WIND_L1_GET_MASS            returns the MASS data to the caller
+       WIND_L1_GET_STICS           returns the STICS data to the caller
+       WIND_DISSECT_MASS_PHA       extract bit fields from a MASS PHA word
+       WIND_DISSECT_STICS_PHA      extract bit fields from a STICS PHA word
+       WIND_DISSECT_SWICS_PHA      extract bit fields from a SWICS PHA word
+       WIND_COMPRESS               compress an integer value into a byte value
+       WIND_DECOMPRESS             decompress a byte value into an integer value
+       WIND_L1_CLOSE               closes the Level 1 data file
+III. Data Structures Used
+     The following data structures are required by the calling program.  Their
+     definitions can be found in the include files EDBDEF.INC and L1FMT.INC. 
+     An array of these structures is maintained internally to allow more than
+     one Level 1 file to be read, as well as to allow the calling program to
+     reaccess any data type or to access the data in any order.
+WIND Level 1 File Access Routine Documentation                                p1-2
+Data Structures Used
+     Structure Name          Purpose
+     CORE                    defines Basic Core data
+     HKeep                   defines up to 6 HK records
+     HDBstr                  defines a single Housekeeping Data Block (HDB)
+     SW_RATE                 defines SWICS rate data
+     SW_PHA                  defines SWICS pha words
+     MA_RATE                 defines MASS rate data
+     MA_PHA                  defines MASS pha words
+     ST_RATE                 defines STICS rate data
+     ST_PHA                  defines STICS pha words
+     ST_L1_FILE_HEADER       defines file header record
+     ST_L1_SR_HEADER         defines Science Record header record
+IV.  Brief Design Outline
+Naming Convention
+     All routines names begin with the string 'WIND_', which is followed by
+     the name of the function being performed.  Those routines which deal with
+     the L1 file per se, as opposed to a data format which is present in both
+     Level Zero and Level 1 formats, start with the string 'WIND_L1_'.
+Calling Convention
+     The first argument to each routine is the unit number on which the L1 file
+     was opened.  The last argument is typically a status value which is
+     returned.  The meaning and number of the remaining arguments is dependent
+     on the routine being called.  Unless specified otherwise all arguments are
+     passed by reference except for CHARACTER variables, which are passed by
+     descriptor; this is the default argument passing mechanism used by VMS
+     Fortran.
+Unit Numbers
+     A Fortran unit number is associated with and identifies a particular Level
+     1 data file.  Since this is used as an index into several internal data
+     structures its range of values must be limited.  The allowable range of
+     values for the Level 1 file unit number is 1-20. 
+Status Value
+     A status value of 1 indicates normal successful completion.  Any other
+     value indicates an error.  Standard VMS error codes are used.
+V.   Suggested Use
+     Before any file access takes place you first need to select and open the
+     L1 file.  File selection can be handled in three ways: explicitly, by
+     naming the file to be opened; logically, by using a logical name and
+     requiring the user to define this name before running the program; or
+     automatically, by using a menu-driven file selection routine.  To use the
+     automatic method call the routine WIND_GET_FILENAME; see the Examples
+     section for details on its use.  This does not actually open an L1 file;
+     rather it returns the name of the L1 file which the user selected at
+     runtime from a list of possible L1 files.
+WIND Level 1 File Access Routine Documentation                                p1-3
+Suggested Use
+     In all cases the file, now that its name is known, must be opened.  This
+     is done by calling the routine WIND_L1_OPEN.  Opening a file returns the
+     file's header in one of the arguments of WIND_L1_OPEN.  Opening a file
+     only reads the header information; it does not read any data.
+     Science Records must be accessed sequentially.  If you do not wish to
+     examine one of more Science Records use the routine WIND_L1_SKIP_SR to
+     skip past N Science Records.
+     Prior to actually retrieving any data for any type of sensor the Science
+     Record containing that data must be read.  Use the routine WIND_L1_READ_SR
+     to read the next sequential Science Record.  This must be done before any
+     of the WIND_L1_GET routines are called.
+     Use the various WIND_L1_GET routines to access specific parts of the
+     Science Record, be it Housekeeping information (both HDB and HK), Basic
+     Core, or  instrument-specific data (SWICS, MASS, or STICS).  You may call
+     the WIND_L1_GET routines as often as is needed; they return the same data
+     each time for a given Science Record; ie, they do not do additional reads
+     from the L1 file.  This makes them safe to use in a subroutine without
+     fear of accidentally skipping over a Science Record.  Use WIND_L1_READ_SR
+     to read the file and advance to the next Science Record.
+     Use WIND_L1_CLOSE when done with the L1 file.  This not only closes the L1
+     file but also releases internal data structures, allowing the unit to be
+     reopened.
+VI.  Include Files Needed
+     The two include files which are required are EDBDEF.INC and L1FMT.INC.  On
+     UMDSP both of these files are located in the directory pointed to by the
+     logical name INC_DIR:.  The two statements needed in the program are
+           INCLUDE 'INC_DIR:EDBDEF.INC'
+           INCLUDE 'INC_DIR:L1FMT.INC'
+     The file EDBDEF.INC does not define any variables, only the structures
+     themselves.  The application programmer will need to code the appropriate
+     RECORD declarations.  
+     For the programmer's convenience the file L1FMT.INC, in addition to
+     defining the header structures, also declares two RECORD variables, one
+     for the file header and one for the Science Record header.  These
+     variables are named L1_FILE_HEADER and L1_SR_HEADER, respectively.  Their
+     contents are not changed by any of the WIND_L1 routines unless they are
+     specified as an argument to the routine (see WIND_L1_OPEN and
+     WIND_L1_READ_SR).
+WIND Level 1 File Access Routine Documentation                                p1-4
+Linking a program
+VII. Linking a program
+     Besides the application itself the WIND_L1 routines which it calls must be
+     linked to it.  Instead of listing each of the WIND_L1 routines which it
+     calls on the LINK command line, which would become rather lengthy, the
+     object modules for the WIND_L1 routines have been collected into a single
+     object library.  This allows the programmer to specify a single filename
+     on the LINK command line instead of many filenames.  The object library is
+     named L1LIB.OLB and is located in a directory pointed to by the logical
+     name LIB_DIR.  A typical LINK command would look like
+         LINK yourprogram,LIB_DIR:L1LIB/LIB
+     If your application uses other routines which are not WIND_L1 routines
+     they will also have to be specified on your LINK command line.  If the
+     routines are WIND-related, however, such as WIND_GET_FILENAME and
+     WIND_DECOMPRESS, they have been collected into the object library
+     WIND_LIB.OLB.  Some of these routines reference terminal input (XTI)
+     routines; these are in the object library XTI_LIB.OLB.  The libraries
+     WIND_LIB and XTI_LIB are also located in LIB_DIR:.  So, your LINK command
+     line might resemble the one below for a moderately complex program:
+     
+         LINK yourprogram,LIB_DIR:WIND_LIB/LIB,LIB_DIR:L1LIB/LIB,LIB_DIR:XTI_LIB/LIB
+VIII. Example
+     A complete programming example, showing input file selection and calls to
+     all the WIND_L1 routines, is given in the file PRINTL1.FOR.  This program
+     reads all types of data records and dumps them, but attaches no further
+     meaning to any particular bytes or bits within the record.  A read-only
+     copy of PRINTL1 is located in the directory DISK1:[WIND.SOFTWARE.L1].
+     While WIND_GET_FILENAME is not a WIND_L1 routine per se, it is so
+     frequently used that a short description is included here.  It has two
+     arguments: a CHARACTER variable containing a pattern upon entry and the
+     selected filename upon return, and an INTEGER variable indicating the
+     status of the selection operation.  It obtains a list of filenames,
+     prompts the user to select one of them, and confirms the user's selection.
+     The user should respond with a press of the Return key when initially
+     presented with a filename prompt; this will generated the list of L1
+     files.
+     Without going into additional detail it is sufficient that the programmer
+     use the following three lines of code in the program.  
+            L1FILENAME = 'DATA_DIR:WI*L1*.DAT'
+            CALL WIND_GET_FILENAME(L1FILENAME, ISTATUS)
+            IF (ISTATUS .NE. 1) STOP
+     The variable L1FILENAME is a CHARACTER*80 variable.  Its initial value is
+     set to a pattern, including wildcards, of where the L1 files are located
+     and what they are named.

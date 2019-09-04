@@ -1,0 +1,549 @@
+COMPARE_TIME_NE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   1
+                                                                26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	      1 C+
+	      2 C 
+	      3 C FUNCTIONAL DESCRIPTION:	
+	      4 C 
+	      5 C    This file consists of seven functions: one integer function and six
+	      6 C    logical functions.  All of them have the same parameter list.  The integer
+	      7 C    function, COMPARE_TIME, is used by the other six functions.  The six
+	      8 C    logical functions are named COMPARE_TIME_xx, where xx is a 2-letter
+	      9 C    abbreviation for the relation to be tested: EQ, LE, LT, GE, GT, or NE.
+	     10 C 
+	     11 C FORMAL PARAMETERS:
+	     12 C  
+	     13 C     T1:
+	     14 C	  A time of type RECORD /T/.
+	     15 C      
+	     16 C     T2:
+	     17 C	  A time of type RECORD /T/.
+	     18 C      
+	     19 C  
+	     20 C DESIGN:
+	     21 C  
+	     22 C     Use a common compare_time routine to return an integer result indicating
+	     23 C     which of its time arguments is greater or if they are the same.  Test this
+	     24 C     result to produce the six relations .lt., .le., .eq., .ge., .gt., and
+	     25 C     .ne. .  Return a logical value indicating if the given relation is true.
+	     26 C  
+	     27 C 
+	     28 C This version:    6-JAN-1995
+	     29 C 
+	     30 C Created: 
+	     31 C 
+	     32 C      11-NOV-1994    Larry Bleau
+	     33 C 
+	     34 C Revised:
+	     35 C       6-JAN-1995    L. Bleau     added comments
+	     36 C      20-JAN-1995    L. Bleau     added alternate entry names
+	     37 C                                  WIND_COMPARE_TIME_xx
+	     38 C 
+	     39 C-
+
+COMPARE_TIME                                                    21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   2
+                                                                26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	     41         integer function compare_time (t1, t2)
+	     42         entry wind_compare_time (t1, t2)
+	     43         integer wind_compare_time
+	     44 C+
+	     45 C 
+	     46 C FUNCTIONAL DESCRIPTION:
+	     47 C 
+	     48 C Compare the times specified in parameter t1 with that of parameter t2. 
+	     49 C
+	     50 C Both t1 and t2 are RECORDs of structure type /T/, which is defined in the
+	     51 C file EDFDEF.INC.
+	     52 C 
+	     53 C FUNCTION VALUE:
+	     54 C 
+	     55 C Returns one of the following integer values:
+	     56 C	-1	if time t1 is greater (later) than time t2
+	     57 C	 0	if time t1 is equal to time t2
+	     58 C	-1	if time t1 is less (before) than time t2
+	     59 C 
+	     60 C DESIGN:
+	     61 C  
+	     62 C     Too simple to need a description
+	     63 C 
+	     64 C Created: 
+	     65 C 
+	     66 C	 11-NOV-1994    L. Bleau
+	     67 C 
+	     68 C Revised:
+	     69 C 
+	     70 C-
+	     71         include 'inc_dir:edbdef.inc/nolist'
+
+COMPARE_TIME                                                    21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   3
+                                                                26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	    609         record /t/ t1, t2
+	    610         if (t1.year .lt. t2.year) then
+	    611           compare_time = -1
+	    612         else if (t1.year .gt. t2.year) then
+	    613           compare_time = 1
+	    614         else
+	    615           if (t1.doy .lt. t2.doy) then
+	    616             compare_time = -1
+	    617           else if (t1.doy .gt. t2.doy) then
+	    618             compare_time = 1
+	    619           else
+	    620             if (t1.hr .lt. t2.hr) then
+	    621               compare_time = -1
+	    622             else if (t1.hr .gt. t2.hr) then
+	    623               compare_time = 1
+	    624             else
+	    625               if (t1.min .lt. t2.min) then
+	    626                 compare_time = -1
+	    627               else if (t1.min .gt. t2.min) then
+	    628                 compare_time = 1
+	    629               else
+	    630                 if (t1.sec .lt. t2.sec) then
+	    631                   compare_time = -1
+	    632                 else if (t1.sec .gt. t2.sec) then
+	    633                   compare_time = 1
+	    634                 else
+	    635                   if (t1.csec .lt. t2.csec) then
+	    636                     compare_time = -1
+	    637                   else if (t1.csec .gt. t2.csec) then
+	    638                     compare_time = 1
+	    639                   else
+	    640                     compare_time = 0
+	    641                   endif
+	    642                 endif
+	    643               endif
+	    644             endif
+	    645           endif
+	    646         endif
+	    647         return
+	    648         end
+
+COMPARE_TIME                                                    21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 956   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 416 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1400
+
+
+ENTRY POINTS
+
+    Address   Type  Name                  Address   Type  Name             
+                                                                           
+  2-00000000  I*4   COMPARE_TIME        2-00000000  I*4   WIND_COMPARE_TIME
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes     Address   Name  Structure        Bytes
+                                                                                     
+      **      T1    T                    8       **      T2    T                    8
+
+COMPARE_TIME_GE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	    650         logical function compare_time_ge (t1, t2)
+	    651         entry wind_compare_time_ge (t1, t2)
+	    652         logical wind_compare_time_ge
+	    653 C
+	    654 C Compare the times specified in parameter t1 with that of parameter t2. 
+	    655 C Return .TRUE. if time t1 is greater than (later) or equal to time t2, .FALSE.
+	    656 C otherwise.
+	    657 C
+	    658 C Both t1 and t2 are RECORDs of structure type /T/, which is defined in the
+	    659 C file EDFDEF.INC.
+	    660 C
+	    661         include 'inc_dir:edbdef.inc/nolist'
+
+COMPARE_TIME_GE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   6
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   1199         record /t/ t1, t2
+	   1200 	integer compare_time
+	   1201 C
+	   1202 	compare_time_ge = compare_time(t1,t2) .ge. 0
+	   1203 	return
+	   1204 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 956   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 416 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1400
+
+
+ENTRY POINTS
+
+    Address   Type  Name                     Address   Type  Name                
+                                                                                 
+  2-00000210  L*4   COMPARE_TIME_GE        2-00000210  L*4   WIND_COMPARE_TIME_GE
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes     Address   Name  Structure        Bytes
+                                                                                     
+      **      T1    T                    8       **      T2    T                    8
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name              
+                          
+  I*4   COMPARE_TIME      
+
+COMPARE_TIME_GE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   7
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   1205 
+	   1206         logical function compare_time_gt (t1, t2)
+	   1207         entry wind_compare_time_gt (t1, t2)
+	   1208         logical wind_compare_time_gt
+	   1209 C
+	   1210 C Compare the times specified in parameter t1 with that of parameter t2. 
+	   1211 C Return .TRUE. if time t1 is greater than (later) to time t2, .FALSE.
+	   1212 C otherwise.
+	   1213 C
+	   1214 C Both t1 and t2 are RECORDs of structure type /T/, which is defined in the
+	   1215 C file EDFDEF.INC.
+	   1216 C
+	   1217         include 'inc_dir:edbdef.inc/nolist'
+
+COMPARE_TIME_GT                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   8
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   1755         record /t/ t1, t2
+	   1756 	integer compare_time
+	   1757 C
+	   1758 	compare_time_gt = compare_time(t1,t2) .gt. 0
+	   1759 	return
+	   1760 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 956   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 416 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1400
+
+
+ENTRY POINTS
+
+    Address   Type  Name                     Address   Type  Name                
+                                                                                 
+  2-00000258  L*4   COMPARE_TIME_GT        2-00000258  L*4   WIND_COMPARE_TIME_GT
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes     Address   Name  Structure        Bytes
+                                                                                     
+      **      T1    T                    8       **      T2    T                    8
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name              
+                          
+  I*4   COMPARE_TIME      
+
+COMPARE_TIME_GT                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page   9
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   1761 
+	   1762         logical function compare_time_eq (t1, t2)
+	   1763         entry wind_compare_time_eq (t1, t2)
+	   1764         logical wind_compare_time_eq
+	   1765 C
+	   1766 C Compare the times specified in parameter t1 with that of parameter t2. 
+	   1767 C Return .TRUE. if time t1 is equal to time t2, .FALSE. otherwise.
+	   1768 C
+	   1769 C Both t1 and t2 are RECORDs of structure type /T/, which is defined in the
+	   1770 C file EDFDEF.INC.
+	   1771 C
+	   1772         include 'inc_dir:edbdef.inc/nolist'
+
+COMPARE_TIME_EQ                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  10
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   2310         record /t/ t1, t2
+	   2311 	integer compare_time
+	   2312 C
+	   2313 	compare_time_eq = compare_time(t1,t2) .eq. 0
+	   2314 	return
+	   2315 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 956   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 416 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1400
+
+
+ENTRY POINTS
+
+    Address   Type  Name                     Address   Type  Name                
+                                                                                 
+  2-000002A0  L*4   COMPARE_TIME_EQ        2-000002A0  L*4   WIND_COMPARE_TIME_EQ
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes     Address   Name  Structure        Bytes
+                                                                                     
+      **      T1    T                    8       **      T2    T                    8
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name              
+                          
+  I*4   COMPARE_TIME      
+
+COMPARE_TIME_EQ                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  11
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   2316 
+	   2317         logical function compare_time_le (t1, t2)
+	   2318         entry wind_compare_time_le (t1, t2)
+	   2319         logical wind_compare_time_le
+	   2320 C
+	   2321 C Compare the times specified in parameter t1 with that of parameter t2. 
+	   2322 C Return .TRUE. if time t1 is less than (before) or equal to time t2, .FALSE.
+	   2323 C otherwise.
+	   2324 C
+	   2325 C Both t1 and t2 are RECORDs of structure type /T/, which is defined in the
+	   2326 C file EDFDEF.INC.
+	   2327 C
+	   2328         include 'inc_dir:edbdef.inc/nolist'
+
+COMPARE_TIME_LE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  12
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   2866         record /t/ t1, t2
+	   2867 	integer compare_time
+	   2868 C
+	   2869 	compare_time_le = compare_time(t1,t2) .le. 0
+	   2870 	return
+	   2871 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 956   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 416 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1400
+
+
+ENTRY POINTS
+
+    Address   Type  Name                     Address   Type  Name                
+                                                                                 
+  2-000002E8  L*4   COMPARE_TIME_LE        2-000002E8  L*4   WIND_COMPARE_TIME_LE
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes     Address   Name  Structure        Bytes
+                                                                                     
+      **      T1    T                    8       **      T2    T                    8
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name              
+                          
+  I*4   COMPARE_TIME      
+
+COMPARE_TIME_LE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  13
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   2872 
+	   2873         logical function compare_time_lt (t1, t2)
+	   2874         entry wind_compare_time_lt (t1, t2)
+	   2875         logical wind_compare_time_lt
+	   2876 C
+	   2877 C Compare the times specified in parameter t1 with that of parameter t2. 
+	   2878 C Return .TRUE. if time t1 is less than (before) time t2, .FALSE. otherwise.
+	   2879 C
+	   2880 C Both t1 and t2 are RECORDs of structure type /T/, which is defined in the
+	   2881 C file EDFDEF.INC.
+	   2882 C
+	   2883         include 'inc_dir:edbdef.inc/nolist'
+
+COMPARE_TIME_LT                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  14
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   3421         record /t/ t1, t2
+	   3422 	integer compare_time
+	   3423 C
+	   3424 	compare_time_lt = compare_time(t1,t2) .le. 0
+	   3425 	return
+	   3426 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 956   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 416 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1400
+
+
+ENTRY POINTS
+
+    Address   Type  Name                     Address   Type  Name                
+                                                                                 
+  2-00000330  L*4   COMPARE_TIME_LT        2-00000330  L*4   WIND_COMPARE_TIME_LT
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes     Address   Name  Structure        Bytes
+                                                                                     
+      **      T1    T                    8       **      T2    T                    8
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name              
+                          
+  I*4   COMPARE_TIME      
+
+COMPARE_TIME_LT                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  15
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   3427 
+	   3428         logical function compare_time_ne (t1, t2)
+	   3429         entry wind_compare_time_ne (t1, t2)
+	   3430         logical wind_compare_time_ne
+	   3431 C
+	   3432 C Compare the times specified in parameter t1 with that of parameter t2. 
+	   3433 C Return .TRUE. if time t1 is not equal to time t2, .FALSE. otherwise.
+	   3434 C
+	   3435 C Both t1 and t2 are RECORDs of structure type /T/, which is defined in the
+	   3436 C file EDFDEF.INC.
+	   3437 C
+	   3438         include 'inc_dir:edbdef.inc/nolist'
+
+COMPARE_TIME_NE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  16
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+	   3976         record /t/ t1, t2
+	   3977 	integer compare_time
+	   3978 C
+	   3979 	compare_time_ne = compare_time(t1,t2) .ne. 0
+	   3980 	return
+	   3981 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 956   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 416 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1400
+
+
+ENTRY POINTS
+
+    Address   Type  Name                     Address   Type  Name                
+                                                                                 
+  2-00000378  L*4   COMPARE_TIME_NE        2-00000378  L*4   WIND_COMPARE_TIME_NE
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes     Address   Name  Structure        Bytes
+                                                                                     
+      **      T1    T                    8       **      T2    T                    8
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name              
+                          
+  I*4   COMPARE_TIME      
+
+COMPARE_TIME_NE                                                 21-APR-1995 16:14:47    DEC Fortran V6.2-508                Page  17
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.LIS;26
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.OBJ;27
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.84 seconds
+  Elapsed time:      3.58 seconds
+  Pagefaults:         247
+  I/O Count:           41

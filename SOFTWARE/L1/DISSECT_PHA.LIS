@@ -1,0 +1,153 @@
+DISSECT_PHA                                                     21-APR-1995 16:14:52    DEC Fortran V6.2-508                Page   1
+                                                                26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]DISSECT_PHA.FOR;4
+
+	      1       SUBROUTINE DISSECT_PHA(PHA,SECTOR,RANGE,ANODE,TIME_OF_FLIGHT)
+	      2 C+
+	      3 C 
+	      4 C FUNCTIONAL DESCRIPTION:	
+	      5 C 
+	      6 C    This subroutine extracts the sector, range, anode, and time of flight
+	      7 C    fields from a PHA word and returns each component to the caller as an
+	      8 C    INTEGER*4 quantity.
+	      9 C
+	     10 C  NOTE: This subroutine is obsolete.  The routine WIND_DISSECT_MASS_PHA should
+	     11 C        be called instead.  To provide backward compatibility DISSECT_PHA
+	     12 C        calls WIND_DISSECT_MASS_PHA with the proper argument list.
+	     13 C 
+	     14 C FORMAL PARAMETERS:
+	     15 C  
+	     16 C     PHA:
+	     17 C	  A BYTE array of length 2 containing the PHA word to be dissected.
+	     18 C      
+	     19 C     SECTOR:
+	     20 C	  An INTEGER*4 variable which will receive the extracted sector field
+	     21 C         of the PHA word.
+	     22 C      
+	     23 C     RANGE:
+	     24 C	  An INTEGER*4 variable which will receive the extracted range field
+	     25 C         of the PHA word.
+	     26 C      
+	     27 C     ANODE:
+	     28 C	  An INTEGER*4 variable which will receive the extracted anode field
+	     29 C         of the PHA word.
+	     30 C      
+	     31 C     TIME_OF_FLIGHT:
+	     32 C	  An INTEGER*4 variable which will receive the extracted time of flight
+	     33 C         field of the PHA word.
+	     34 C      
+	     35 C DESIGN:
+	     36 C  
+	     37 C     Use MVBITS to extract a bit field and store it into an INTEGER*4 variable.
+	     38 C  
+	     39 C 
+	     40 C This version:   18-JAN-1995
+	     41 C 
+	     42 C Created: 
+	     43 C 
+	     44 C	 6-JAN-1995    J.PAQUETTE
+	     45 C 
+	     46 C Revised:
+	     47 C 
+	     48 C   18-JAN-1995   L. Bleau    changed to call WIND_DISSECT_MASS_PHA
+	     49 C-
+	     50       INTEGER*4 SECTOR,RANGE,ANODE,TIME_OF_FLIGHT
+	     51       INTEGER*4 ITEMP
+	     52       BYTE PHA(2)
+	     53 C
+	     54       CALL WIND_DISSECT_MASS_PHA(PHA,SECTOR,RANGE,ANODE,TIME_OF_FLIGHT)
+	     55       RETURN
+	     56       END
+
+DISSECT_PHA                                                     21-APR-1995 16:14:52    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]DISSECT_PHA.FOR;4
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                    4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                  56   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  48 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  108
+
+
+ENTRY POINTS
+
+    Address   Type  Name       
+                               
+  2-00000000        DISSECT_PHA
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name               Address   Type  Name          
+                                                                                                        
+      **      I*4   ANODE                **      I*4   RANGE                **      I*4   TIME_OF_FLIGHT
+  1-00000000  I*4   ITEMP                **      I*4   SECTOR                                           
+
+
+ARRAYS
+
+     Address  Type  Name        Bytes  Dimensions
+
+      **      I*1   PHA             2  (2)
+
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                       
+                                   
+        WIND_DISSECT_MASS_PHA      
+
+DISSECT_PHA                                                     21-APR-1995 16:14:52    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]DISSECT_PHA.FOR;4
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]DISSECT_PHA.LIS;19
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]DISSECT_PHA.OBJ;19
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.11 seconds
+  Elapsed time:      1.66 seconds
+  Pagefaults:         159
+  I/O Count:           10

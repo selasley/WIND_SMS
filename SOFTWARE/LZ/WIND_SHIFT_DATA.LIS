@@ -1,0 +1,919 @@
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   1
+                                                                 9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	      1       SUBROUTINE WIND_SHIFT_DATA
+	      2 C
+	      3 C	The time associated with the data in the level 0 data is the time at
+	      4 C	which the data was read out, not the time at which it was accumulated.
+	      5 C	This routine shifts the data elements so that the data is associated
+	      6 C	with the time period during which it was accumulated. The reference
+	      7 C	used to determine the amount shift, and the rate format for each
+	      8 C	instrument was the WIND SMS Commands and Data Formats for the SMS
+	      9 C	Instruments Revision 3.0.
+	     10 C
+	     11 C	To understand the logic of this program, it is important to note that
+	     12 C	we have two science records in memory at a time. Every science record
+	     13 C	is initially read into SCI(3). When SCI(1) is stored, SCI(2) -->
+	     14 C	SCI(1), SCI(3) --> SCI(2), and a new science record is read into
+	     15 C	SCI(3).
+	     16 C
+	     17 C
+	     18 C	This version:   9-FEB-1995 
+	     19 C
+	     20 C     Creation:
+	     21 C	JOHN PAQUETTE	 3-AUG-1994
+	     22 C
+	     23 C     Revisions:
+	     24 C        4-AUG-1994	J.PAQUETTE	added code to handle STICS data 
+	     25 C	 5-AUG-1994	J.PAQUETTE	added code to handle SWICS data 
+	     26 C	26-SEP-1994	J.PAQUETTE	added code to handle quality flags 
+	     27 C	28-SEP-1994	L.Bleau		changed bitrate test to examine SCI
+	     28 C                                       structure instead of flag in common
+	     29 C	29-SEP-1994	L.Bleau		removed errant logic re low spin
+	     30 C       				numbers in all sensors
+	     31 C        4-OCT-1994	J.PAQUETTE      use good Qual spin for Bit Rate
+	     32 C       10-OCT-1994	J.PAQUETTE,     complete change in logic to deal with
+	     33 C                       L. Bleau        changes in Bit Rate
+	     34 C       12-OCT-1994     J.PAQUETTE      added calls to COMPRESS and DECOMPRESS
+	     35 C       19-JAN-1995     J.PAQUETTE      at low bitrate, STICS PHA data is still 
+	     36 C                                       only shifted by 1 spin, not by 2 (even
+	     37 C                                       rates that are shifted by 1 spin at HBR
+	     38 C                                       are shifted by 2 at LBR). Changed code
+	     39 C                                       accordingly
+	     40 C       20-JAN-1995     J.PAQUETTE      STICS PHA given their own DO loop 
+	     41 C                                       because the DO 500 loop steps by a
+	     42 C                                       variable ammount, not by 1 each time
+	     43 C	 9-FEB-1995	L. Bleau	change include stmt to use EDBDEF.INC
+	     44 C					and EDBVARS.INC instead of EDB.INC only
+	     45 C
+	     46 CDEC$ IDENT   '1.8'
+	     47 
+	     48       IMPLICIT NONE
+	     49 
+	     50       INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   2
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	    588       INCLUDE 'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   3
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	    770       INCLUDE 'INC_DIR:WIND_L0_RECORD.INC/NOLIST'
+	    821       INCLUDE 'INC_DIR:WIND_Lun.INC/NOLIST'
+	    851       INCLUDE '($SSDEF)/NOLIST'
+	   2276 
+	   2277       INTEGER*4	II,	  ! Spin index
+	   2278      :	        JJ,	  ! Byte index
+	   2279      :          KK,       ! Pointer to first good spin
+	   2280      :          MRSTART,  ! Index of last Matrix Rate for spin II     
+	   2281      :          MESTART,  ! Index of last Matrix Element for spin II  
+	   2282      :          ERSTART,  ! Index of last Engineering Rate for spin II
+	   2283      :          MRSTART2, ! Index of last Matrix Rate for spin II+2
+	   2284      :          MESTART2, ! Index of last Matrix Element for spin II SCI-REC 2 or 3
+	   2285      :          ERSTART2, ! Index of last Engineering Rate for spin II+2
+	   2286      :          INC1,INC2,              ! (STICS) Amount to increment to reach next, 2nd spin
+	   2287      :          NEXTSPIN,NEXTSPIN2,     ! Pointer to next, 2nd spin
+	   2288      :          RECNO,RECNO2,           ! SCI-REC of next, 2nd spin
+	   2289      :          NEXTSPIN_PHA,           ! Pointer to next spin with PHA
+	   2290      :          RECNO_PHA,              ! SCI-REC of next spin
+	   2291      :          ACTIVE_PHA_RANGE,       ! Active PHA range ID; 0,1, or 2
+	   2292      :          APHASTART(3),           ! Start index for PHA ranges
+	   2293      :          HOUSEKEEPING,           ! House keeping byte for SWICS
+	   2294      :          SUM,SUM2,               ! Used as accumulators
+	   2295      :          ITEMP
+	   2296       INTEGER*4 INCREMENT,WIND_DECOMPRESS    ! Functions
+	   2297       BYTE      WIND_COMPRESS                ! Function 
+	   2298       LOGICAL   HIGHLOW,LOWHIGH,CODE_C
+	   2299 C
+	   2300 C In some science records, spins may be absent, fill, or otherwise of low
+	   2301 C quality.  Determine first good quality spin, and use it for bit rate
+	   2302 C determination.
+	   2303 C
+	   2304       KK=0
+	   2305       DO 5 WHILE((SCI( 1 ).EDB(KK).Qual.NE.0).AND.(KK.LT.59))
+	   2306         KK=KK+1
+	   2307   5   CONTINUE    
+	   2308 C
+	   2309 C Shift SWICS data. Loop over the 60 spins in a science record. Since some
+	   2310 C rates are read out 1 spin after accumulation, some are read out 2 spins, some
+	   2311 C are read out 1 full science record after accumulation, and some are read out
+	   2312 C 2 full science records after accumulation, we have several possible
+	   2313 C conditions.
+	   2314 C
+	   2315       DO 200 II = 0, 59
+	   2316 C
+	   2317 C RECNO, and RECNO2 are the numbers of the science records containing NEXTSPIN
+	   2318 C and NEXTSPIN2, respectively.
+	   2319 C
+	   2320         NEXTSPIN=MOD(II+1,60)
+	   2321         NEXTSPIN2=MOD(II+2,60)
+	   2322         RECNO=(II+1)/60+1
+	   2323         RECNO2=(II+2)/60+1
+	   2324 C
+	   2325         IF(SCI( 1 ).EDB( II ).BitRate)THEN      		! High bit rate (current spin)
+	   2326           MRSTART=80
+	   2327           MESTART=101
+	   2328           ERSTART=109
+	   2329           LOWHIGH=.FALSE.
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   4
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2330           IF(.NOT.(SCI( RECNO ).EDB( NEXTSPIN ).BitRate))THEN	! High bit rate (next spin)
+	   2331             HIGHLOW=.TRUE.
+	   2332           ELSE
+	   2333             HIGHLOW=.FALSE.
+	   2334           ENDIF
+	   2335         ELSE                                                    ! Low bit rate (current spin)
+	   2336           MRSTART=26
+	   2337           MESTART=47
+	   2338           ERSTART=55
+	   2339           HIGHLOW=.FALSE.
+	   2340           IF(SCI( RECNO ).EDB( NEXTSPIN ).BitRate)THEN	        ! High bit rate (next spin)
+	   2341             LOWHIGH=.TRUE.
+	   2342           ELSE
+	   2343             LOWHIGH=.FALSE.
+	   2344           ENDIF
+	   2345         ENDIF
+	   2346 C
+	   2347         IF(SCI( RECNO2 ).EDB( NEXTSPIN2).BitRate)THEN	        ! High bit rate
+	   2348           MRSTART2=80
+	   2349           ERSTART2=109
+	   2350         ELSE                                                    ! Low bit rate
+	   2351           MRSTART2=26
+	   2352           ERSTART2=55
+	   2353         ENDIF
+	   2354 C
+	   2355 C Basic Rates (bytes 0 to MRSTART-1) are read out 1 spin after accumulation.
+	   2356 C Shift them back by one spin, except in various special cases.
+	   2357 C
+	   2358         IF(LOWHIGH)THEN
+	   2359 C
+	   2360 C When the current record is in low bit rate, and the record that follows is in
+	   2361 C high bit rate, we cannot simply shift the Basic Rates. The Basic Rates at low
+	   2362 C bit rate are summed over several sectors, while the Basic Rates at high bit
+	   2363 C rate are each specific to a sector. Thus we must sum the data together
+	   2364 C appropriately before we shift. Since the SWICS rates are "compressed" (i.e.
+	   2365 C logarithmically encoded so as to fit into a byte), we must decompress them, 
+	   2366 C add the decompressed values and recompress them.
+	   2367 C
+	   2368           DO 10 JJ = 0, 15
+	   2369             ITEMP = HDB(RECNO).BDH.DAT(189)
+	   2370             CODE_C = BTEST(ITEMP,0)
+	   2371             SUM = WIND_DECOMPRESS(SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(2*JJ),CODE_C) +
+	   2372      &            WIND_DECOMPRESS(SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(2*JJ+1),CODE_C)
+	   2373             SWICS_RATE( 1 ).EDB( II ).RATE(JJ) = WIND_COMPRESS(SUM,CODE_C)
+	   2374   10      CONTINUE
+	   2375 C
+	   2376 C The active PHA range determines which data are more fully transmitted.
+	   2377 C
+	   2378           HOUSEKEEPING = SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(61)
+	   2379           ACTIVE_PHA_RANGE = IBITS(HOUSEKEEPING,6,2)
+	   2380 C
+	   2381 C Based on which range is active, get indices needed for summing.
+	   2382 C
+	   2383           IF(ACTIVE_PHA_RANGE.EQ.0)THEN      ! Active range=2a
+	   2384             APHASTART(1)=32
+	   2385             APHASTART(2)=48
+	   2386             APHASTART(3)=64
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   5
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2387           ELSEIF(ACTIVE_PHA_RANGE.EQ.1)THEN  ! Active range=2b
+	   2388             APHASTART(1)=48
+	   2389             APHASTART(2)=32
+	   2390             APHASTART(3)=64
+	   2391           ELSE                               ! Active range=2c
+	   2392             APHASTART(1)=64
+	   2393             APHASTART(2)=32
+	   2394             APHASTART(3)=48
+	   2395           ENDIF  
+	   2396 C
+	   2397 C For active PHA range, sum rates in pairs and shift.
+	   2398 C
+	   2399           DO 20 JJ = 0, 7                 
+	   2400             ITEMP = HDB(RECNO).BDH.DAT(189)
+	   2401             CODE_C = BTEST(ITEMP,0)
+	   2402             SUM = 
+	   2403      &       WIND_DECOMPRESS(SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(2*JJ + APHASTART(1)), CODE_C) + 
+	   2404      &       WIND_DECOMPRESS(SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(2*JJ + APHASTART(1) + 1),CODE_C) 
+	   2405             SWICS_RATE(1).EDB(II).RATE(JJ+8) = WIND_COMPRESS(SUM,CODE_C)
+	   2406   20      CONTINUE
+	   2407 C
+	   2408 C For other two PHA ranges, sum all sectors and shift.
+	   2409 C      
+	   2410           SUM=0
+	   2411           SUM2=0                  
+	   2412           DO 40 JJ = 0, 15
+	   2413             ITEMP = HDB(RECNO).BDH.DAT(189)
+	   2414             CODE_C = BTEST(ITEMP,0)
+	   2415             SUM = SUM + 
+	   2416      &            WIND_DECOMPRESS(SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(JJ + APHASTART(2)),CODE_C)
+	   2417             SUM2= SUM2 + 
+	   2418      &            WIND_DECOMPRESS(SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(JJ + APHASTART(3)),CODE_C)
+	   2419   40      CONTINUE
+	   2420           SWICS_RATE(1).EDB(II).RATE(24) = WIND_COMPRESS(SUM, CODE_C)
+	   2421           SWICS_RATE(1).EDB(II).RATE(25) = WIND_COMPRESS(SUM2,CODE_C)
+	   2422 C
+	   2423 C Adjust quality flags for Basic Rates. Note that this depends on LOGICAL*1
+	   2424 C being equivalent to BYTE.
+	   2425 C
+	   2426           SCI(1).EDB(II).SW_BR_Qual  = SCI(RECNO).EDB(NEXTSPIN).SW_BR_Qual
+	   2427 C
+	   2428         ELSEIF(HIGHLOW)THEN
+	   2429 C
+	   2430 C Specific Sector information is lost in low bit rate, as the numbers
+	   2431 C transmitted are accumulated over several sectors. In high bit rate, specific
+	   2432 C sector information is needed. Therefore, when a spin in high bit rate is
+	   2433 C immediately followed by a spin in low bit rate, we cannot shift the basic
+	   2434 C rates. Thus, we zero them and set the quality flags to indicate that the
+	   2435 C Basic Rates are missing.
+	   2436 C
+	   2437           DO 60 JJ = 0, 15
+	   2438             SWICS_RATE( 1 ).EDB( II ).RATE(JJ) = 0
+	   2439   60      CONTINUE
+	   2440 C
+	   2441 C Set quality flags for Basic Rates to 8 (missing data). Note that this depends
+	   2442 C on LOGICAL*1 being equivalent to BYTE.
+	   2443 C
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   6
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2444           SCI(1).EDB(II).SW_BR_Qual  = 8
+	   2445         ELSE
+	   2446 C
+	   2447 C If the spin that follows the current one has the same bitrate as the current
+	   2448 C one, then the Basic Rates may easily be shifted.
+	   2449 C
+	   2450           DO 110 JJ = 0, MRSTART-1
+	   2451             SWICS_RATE( 1 ).EDB( II ).RATE(JJ) = SWICS_RATE(RECNO).EDB(NEXTSPIN).RATE(JJ)
+	   2452  110      CONTINUE
+	   2453 C
+	   2454 C Adjust quality flags for Basic Rates. Note that this depends on LOGICAL*1
+	   2455 C being equivalent to BYTE.
+	   2456 C
+	   2457           SCI(1).EDB(II).SW_BR_Qual  = SCI(RECNO).EDB(NEXTSPIN).SW_BR_Qual
+	   2458         ENDIF
+	   2459 C
+	   2460 C PHA data is read out 1 spin after being accumulated also. Transfer SWICS PHA
+	   2461 C data from spin II+1 to spin II.
+	   2462 C
+	   2463         SWICS_PHA( 1 ).C_SW_PHA( II ) = SWICS_PHA(RECNO).C_SW_PHA(NEXTSPIN)
+	   2464 C
+	   2465 C Adjust the # of PHA words for this spin to reflect the change
+	   2466 C
+	   2467         SCI( 1 ).EDB( II ).SWICS_Len = SCI(RECNO).EDB(NEXTSPIN).SWICS_Len
+	   2468 C
+	   2469 C Adjust quality flags for PHA. Note that this depends on LOGICAL*1 being
+	   2470 C equivalent to BYTE.
+	   2471 C
+	   2472         SCI(1).EDB(II).SW_P_Qual = SCI(RECNO).EDB(NEXTSPIN).SW_P_Qual
+	   2473 C     
+	   2474 C Matrix Rates (bytes MRSTART to MESTART-1) are read out 2 spins after
+	   2475 C accumulation. Shift them back by two spins.
+	   2476 C
+	   2477         DO 120 JJ = 0,20
+	   2478           SWICS_RATE(1).EDB(II).RATE(JJ+MRSTART)=SWICS_RATE(RECNO2).EDB(NEXTSPIN2).RATE(JJ+MRSTART2)
+	   2479  120    CONTINUE
+	   2480 C
+	   2481 C Adjust quality flags for Matrix Rates. Note that this depends on LOGICAL*1
+	   2482 C being equivalent to BYTE.
+	   2483 C
+	   2484         SCI(1).EDB(II).SW_MR_Qual  = SCI(RECNO2).EDB(NEXTSPIN2).SW_MR_Qual
+	   2485 C       
+	   2486 C Engineering Rates (bytes MESTART+1 to ERSTART) are read out 2 spins after
+	   2487 C accumulation. Shift them back by two spins.
+	   2488 C
+	   2489         DO 130 JJ = 0,5
+	   2490           SWICS_RATE(1).EDB(II).RATE(JJ+ERSTART)=SWICS_RATE(RECNO2).EDB(NEXTSPIN2).RATE(JJ+ERSTART2)
+	   2491  130    CONTINUE
+	   2492 C
+	   2493 C Adjust quality flags for Engineering Rates. Note that this depends on
+	   2494 C LOGICAL*1 being equivalent to BYTE.
+	   2495 C
+	   2496         SCI(1).EDB(II).SW_ER_Qual = SCI(RECNO2).EDB(NEXTSPIN2).SW_ER_Qual
+	   2497 C
+	   2498 C Now shift Matrix Elements. Matrix Elements 0-121 are shifted by 1 science
+	   2499 C record. Since the Matrix Elements are subcommutated over 60 spins, eight of
+	   2500 C them are read out each spin (appearing in bytes MESTART to MESTART+7). Thus,
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   7
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2501 C the first 15 spins hold the Matrix Elements 0-119, all of which are shifted
+	   2502 C by one science record.
+	   2503 C
+	   2504         IF(II.LT.15)THEN
+	   2505 C
+	   2506           IF(SCI( 2 ).EDB( II ).BitRate)THEN		! High bit rate
+	   2507             MESTART2=101
+	   2508           ELSE                                          ! Low bit rate
+	   2509             MESTART2=47
+	   2510           ENDIF
+	   2511 C     
+	   2512           DO 170 JJ = 0,7
+	   2513             SWICS_RATE(1).EDB(II).RATE(JJ+MESTART) = SWICS_RATE(2).EDB(II).RATE(JJ+MESTART2)
+	   2514  170      CONTINUE
+	   2515 C
+	   2516 C Adjust quality flags for Matrix Elements 0-121. Note that this depends on
+	   2517 C LOGICAL*1 being equivalent to BYTE.
+	   2518 C
+	   2519           SCI(1).EDB(II).SW_ME1_Qual = SCI(2).EDB(II).SW_ME1_Qual
+	   2520 C
+	   2521 C Spin 15 is an unusual one. Bytes MESTART and MESTART+1 hold Matrix Elements
+	   2522 C 120, and 121, which are shifted by one science record, while bytes MESTART+2
+	   2523 C to MESTART+7 hold Matrix Elements 122-127, which are shifted by two science
+	   2524 C records.
+	   2525 C
+	   2526         ELSEIF(II.EQ.15)THEN
+	   2527 C
+	   2528           IF(SCI( 2 ).EDB( 15 ).BitRate)THEN		! High bit rate
+	   2529             MESTART2=101
+	   2530           ELSE                                          ! Low bit rate
+	   2531             MESTART2=47
+	   2532           ENDIF
+	   2533 C
+	   2534           SWICS_RATE(1).EDB(15).RATE(MESTART+1) = SWICS_RATE(2).EDB(15).RATE(MESTART2+1)
+	   2535           SWICS_RATE(1).EDB(15).RATE(MESTART+2) = SWICS_RATE(2).EDB(15).RATE(MESTART2+2)
+	   2536 C
+	   2537           IF(SCI( 3 ).EDB( 15 ).BitRate)THEN		! High bit rate
+	   2538             MESTART2=101
+	   2539           ELSE                                          ! Low bit rate
+	   2540             MESTART2=47
+	   2541           ENDIF
+	   2542 C
+	   2543           DO 180 JJ = 2,7
+	   2544             SWICS_RATE(1).EDB(15).RATE(JJ+MESTART) = SWICS_RATE(3).EDB(15).RATE(JJ+MESTART2)
+	   2545  180      CONTINUE
+	   2546         ELSE
+	   2547 C
+	   2548 C The remaining spins (16-59) hold Matrix Elements 128-479, which are all
+	   2549 C shifted by 2 science records.
+	   2550 C
+	   2551           IF(SCI( 3 ).EDB( II ).BitRate)THEN		! High bit rate
+	   2552             MESTART2=101
+	   2553           ELSE                                          ! Low bit rate
+	   2554             MESTART2=47
+	   2555           ENDIF
+	   2556 C
+	   2557           DO 190 JJ = 0,7
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   8
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2558             SWICS_RATE(1).EDB(II).RATE(JJ+MESTART) = SWICS_RATE(3).EDB(II).RATE(JJ+MESTART2)
+	   2559  190      CONTINUE
+	   2560 C
+	   2561 C Adjust quality flags for Matrix Elements 122-479. Note that this depends on
+	   2562 C LOGICAL*1 being equivalent to BYTE.
+	   2563 C
+	   2564           SCI(1).EDB(II).SW_ME2_Qual = SCI(3).EDB(II).SW_ME2_Qual
+	   2565         ENDIF
+	   2566 200   CONTINUE
+	   2567 C
+	   2568 C Shift MASS data. Loop over the 60 spins in a science record. Since some rates
+	   2569 C are read out 1 spin after accumulation, and some are read out 2 spins after
+	   2570 C accumulation, we have several possible conditions.
+	   2571 C
+	   2572       DO 300 II = 0, 59
+	   2573         IF(II.LT.59)THEN
+	   2574 C
+	   2575 C Sectored Engineering Rates (bytes 4-10) and Basic Rates (bytes 11-14) are
+	   2576 C read out 1 spin after accumulation. Shift them back by one spin.
+	   2577 C
+	   2578           DO 210 JJ = 4, 14
+	   2579             MASS_RATE( 1 ).EDB( II ).RATE(JJ) = MASS_RATE( 1 ).EDB( II + 1 ).RATE(JJ)
+	   2580  210      CONTINUE
+	   2581 C
+	   2582 C Adjust quality flags for Sectored Engineering Rates and for Basic Rates. Note
+	   2583 C that this depends on LOGICAL*1 being equivalent to BYTE.
+	   2584 C
+	   2585           SCI(1).EDB(II).MA_SER_Qual = SCI(1).EDB(II+1).MA_SER_Qual
+	   2586           SCI(1).EDB(II).MA_BR_Qual  = SCI(1).EDB(II+1).MA_BR_Qual
+	   2587 C
+	   2588 C PHA data is read out 1 spin after being accumulated also. Transfer MASS PHA
+	   2589 C data from spin II+1 to spin II.
+	   2590 C
+	   2591           MASS_PHA( 1 ).C_MA_PHA( II ) = MASS_PHA( 1 ).C_MA_PHA( II + 1 )
+	   2592 C
+	   2593 C Adjust the # of PHA words for this spin to reflect the change
+	   2594 C
+	   2595           SCI( 1 ).EDB( II ).MASS_Len = SCI( 1 ).EDB( II + 1 ).MASS_Len
+	   2596 C
+	   2597 C Adjust quality flags for PHA. Note that this depends on LOGICAL*1 being
+	   2598 C equivalent to BYTE.
+	   2599 C
+	   2600           SCI(1).EDB(II).MA_P_Qual = SCI(1).EDB(II+1).MA_P_Qual
+	   2601         ENDIF
+	   2602 C
+	   2603         IF(II.LT.58)THEN
+	   2604 C
+	   2605 C Unsectored Engineering Rates (bytes 0-3) are read out 2 spins after
+	   2606 C accumulation.  Shift them back by two spins.
+	   2607 C
+	   2608           DO 220 JJ = 0, 3
+	   2609             MASS_RATE( 1 ).EDB( II ).RATE(JJ) = MASS_RATE( 1 ).EDB( II + 2 ).RATE(JJ)
+	   2610  220      CONTINUE
+	   2611 C
+	   2612 C Adjust quality flags for Unsectored Engineering Rates. Note that this depends
+	   2613 C on LOGICAL*1 being equivalent to BYTE.
+	   2614 C
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page   9
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2615           SCI(1).EDB(II).MA_UER_Qual = SCI(1).EDB(II+2).MA_UER_Qual
+	   2616 C
+	   2617 C Matrix Rates(bytes 15-24) are read out 2 spins after accumulation. Shift them
+	   2618 C back by two spins.
+	   2619 C
+	   2620           DO 230 JJ = 15,24
+	   2621             MASS_RATE( 1 ).EDB( II ).RATE(JJ) = MASS_RATE( 1 ).EDB( II + 2 ).RATE(JJ)
+	   2622  230      CONTINUE
+	   2623 C
+	   2624 C Adjust quality flags for Matrix Rates. Note that this depends on LOGICAL*1
+	   2625 C being equivalent to BYTE.
+	   2626 C
+	   2627           SCI(1).EDB(II).MA_MR_Qual = SCI(1).EDB(II+2).MA_MR_Qual
+	   2628         ENDIF
+	   2629 C
+	   2630         IF(II.GE.58)THEN
+	   2631 C
+	   2632 C When we near the boundary between science records, the process is the same,
+	   2633 C but the indexing is somewhat different. As before, sectored Engineering Rates
+	   2634 C (bytes 0-3) are read out 2 spins after accumulation; but now, in the process
+	   2635 C of shifting them back by two spins, we reach into the next science record.
+	   2636 C
+	   2637           DO 250 JJ = 0, 3
+	   2638             MASS_RATE( 1 ).EDB( II ).RATE(JJ) = MASS_RATE( 2 ).EDB( II-58 ).RATE(JJ)
+	   2639  250      CONTINUE
+	   2640 C
+	   2641 C Adjust quality flags for Unsectored Engineering Rates. Note that this depends
+	   2642 C on LOGICAL*1 being equivalent to BYTE.
+	   2643 C
+	   2644           SCI(1).EDB(II).MA_SER_Qual = SCI(2).EDB(II-58).MA_SER_Qual
+	   2645 C
+	   2646           DO 260 JJ = 15, 24
+	   2647 C
+	   2648 C When we near the boundary between science records, the process is the same,
+	   2649 C but the indexing is somewhat different. As before, Matrix Rates(bytes 15-24)
+	   2650 C are read out 2 spins after accumulation; but now, in the process of shifting
+	   2651 C them back by two spins, we reach into the next science record.
+	   2652 C
+	   2653             MASS_RATE( 1 ).EDB( II ).RATE(JJ) = MASS_RATE( 2 ).EDB( II-58 ).RATE(JJ)
+	   2654  260      CONTINUE
+	   2655 C
+	   2656 C Adjust quality flags for Matrix Rates. Note that this depends on LOGICAL*1
+	   2657 C being equivalent to BYTE.
+	   2658 C
+	   2659           SCI(1).EDB(II).MA_MR_Qual = SCI(2).EDB(II-58).MA_MR_Qual
+	   2660         ENDIF
+	   2661 C
+	   2662         IF(II.EQ.59)THEN
+	   2663 C
+	   2664 C When we near the boundary between science records, the process is the same,
+	   2665 C but the indexing is somewhat different. As before, Sectored Engineering Rates
+	   2666 C (bytes 4-10) and Basic Rates (bytes 11-14) are read out 1 spin after
+	   2667 C accumulation; but now, in the process of shifting them back by one spin, we
+	   2668 C reach into the next science record.
+	   2669 C
+	   2670           DO 280 JJ = 4, 14
+	   2671             MASS_RATE( 1 ).EDB( 59 ).RATE(JJ) = MASS_RATE( 2 ).EDB( 0 ).RATE(JJ)
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  10
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2672  280      CONTINUE
+	   2673 C
+	   2674 C Adjust quality flags for Sectored Engineering Rates and Basic Rates. Note
+	   2675 C that this depends on LOGICAL*1 being equivalent to BYTE.
+	   2676 C
+	   2677           SCI(1).EDB(59).MA_SER_Qual = SCI(2).EDB(0).MA_SER_Qual
+	   2678           SCI(1).EDB(59).MA_BR_Qual = SCI(2).EDB(0).MA_BR_Qual
+	   2679 C
+	   2680 C When we near the boundary between science records, the process is the same,
+	   2681 C but the indexing is somewhat different. As before, PHA data is read out 1
+	   2682 C spin after being accumulated; but now, in the process of shifting them back
+	   2683 C by one spin, we reach into the next science record.
+	   2684 C
+	   2685           MASS_PHA( 1 ).C_MA_PHA( 59 ) = MASS_PHA( 2 ).C_MA_PHA( 0 )
+	   2686 C
+	   2687 C Adjust the # of PHA words for this spin to reflect the change
+	   2688 C
+	   2689           SCI( 1 ).EDB( 59 ).MASS_Len = SCI( 2 ).EDB( 0 ).MASS_Len
+	   2690 C
+	   2691 C Adjust quality flags for PHA. Note that this depends on LOGICAL*1 being
+	   2692 C equivalent to BYTE.
+	   2693 C
+	   2694           SCI(1).EDB(59).MA_P_Qual = SCI(2).EDB(0).MA_P_Qual
+	   2695         ENDIF
+	   2696  300  CONTINUE
+	   2697 C
+	   2698 C Shift STICS data. Loop over the 60 spins in a science record. Since some
+	   2699 C rates are read out 1 spin after accumulation, and some are read out 2 spins
+	   2700 C after accumulation we have several possible conditions. Also, the format of
+	   2701 C STICS data is dependent on the bit rate.
+	   2702 C
+	   2703 
+	   2704       II=0
+	   2705       DO 500 WHILE(II .LE. 59)
+	   2706 C
+	   2707 C The number of spins by which the data must be shifted depends on bit rate and
+	   2708 C the type of rate. In high bit rate, there is data in each spin, so rates have
+	   2709 C to be shifted by one or two spins, depending on type. In low bit rate, there
+	   2710 C is data in every other spin (since this program is called only after
+	   2711 C WIND_CONCATENATE_STICS) so that the rates have to be shifted by 2 or 4 spins,
+	   2712 C depending on type.  When we near the boundary between science records, the
+	   2713 C process is the same, but the indexing is somewhat different; in the process
+	   2714 C of shifting back we may reach into the next science record.
+	   2715 C
+	   2716 C INC1 is the number to be added to II (the spin counter) to get the spin
+	   2717 C number of the next record. INC2 is the number to be added to II+INC1 (the
+	   2718 C spin counter of the next record) to get the spin number of the record after
+	   2719 C that.
+	   2720 C
+	   2721         INC1 = INCREMENT(II)
+	   2722         INC2 = INCREMENT(II+INC1)
+	   2723 C
+	   2724 C NEXTSPIN is the spin number of the next spin which contains data. The MODULO
+	   2725 C 60 is neccesary because the last few spins in a science record may need data
+	   2726 C from the low numbered spins of the next science record. NEXTSPIN2 is similar,
+	   2727 C but it points to the next spin containing data after NEXTSPIN.
+	   2728 C
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  11
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2729 C RECNO, and RECNO2 are the numbers of the science records containing NEXTSPIN
+	   2730 C and NEXTSPIN2, respectively.
+	   2731 C
+	   2732         NEXTSPIN=MOD(II+INC1,60)
+	   2733         NEXTSPIN2=MOD(II+INC1+INC2,60)
+	   2734         RECNO=(II+INC1)/60+1
+	   2735         RECNO2=(II+INC1+INC2)/60+1
+	   2736 C
+	   2737 C High Resolution Rates (bytes 0-95), Sectored Matrix Rates (bytes 96-119) and
+	   2738 C Basic Rates (bytes 120-143) are read out 1 spin after accumulation (2 spins 
+	   2739 C at low bit rate). Shift them back by one spin (2 spins at LBR).
+	   2740 C
+	   2741         DO 400 JJ = 0, 143
+	   2742           STICS_RATE(1).EDB( II ).RATE(JJ) = STICS_RATE(RECNO).EDB( NEXTSPIN ).RATE(JJ)
+	   2743  400    CONTINUE
+	   2744 C
+	   2745 C Adjust quality flags for High Resolution Rates, Sectored Matrix Rates, and
+	   2746 C Basic Rates.  Note that this depends on LOGICAL*1 being equivalent to BYTE.
+	   2747 C
+	   2748         SCI(1).EDB( II ).ST_HMR_Qual = SCI(RECNO).EDB( NEXTSPIN ).ST_HMR_Qual
+	   2749         SCI(1).EDB( II ).ST_SMR_Qual = SCI(RECNO).EDB( NEXTSPIN ).ST_SMR_Qual
+	   2750         SCI(1).EDB( II ).ST_BR_Qual  = SCI(RECNO).EDB( NEXTSPIN ).ST_BR_Qual
+	   2751 C
+	   2752 C Omnidirectional Matrix Rates (bytes 144-163), and Engineering Rates (bytes
+	   2753 C 164-178) are read out 2 spins after accumulation. Shift them back by two
+	   2754 C spins.
+	   2755 C
+	   2756         DO 420 JJ = 144, 178
+	   2757           STICS_RATE(1).EDB(II).RATE(JJ) = STICS_RATE(RECNO2).EDB( NEXTSPIN2 ).RATE(JJ)
+	   2758  420    CONTINUE
+	   2759 C
+	   2760 C Adjust quality flags for Omnidirectional Matrix Rates and Engineering Rates.
+	   2761 C Note that this depends on LOGICAL*1 being equivalent to BYTE.
+	   2762 C
+	   2763         SCI(1).EDB(II).ST_OMR_Qual = SCI(RECNO2).EDB( NEXTSPIN2 ).ST_OMR_Qual
+	   2764         SCI(1).EDB(II).ST_ER_Qual  = SCI(RECNO2).EDB( NEXTSPIN2 ).ST_ER_Qual
+	   2765 C
+	   2766 C Its possible for good data to be shifted into a spin that originally
+	   2767 C contained no data. If this happens, reset the RATE_Size variable for the
+	   2768 C appropriate instrument. The spin was missing if its RATE_Size is 0; good data
+	   2769 C was shifted into it if one of its data quality flags is good (meaning 0).
+	   2770 C
+	   2771         IF(SCI(1).EDB(II).SWICS_RATE_Size.EQ.0)THEN
+	   2772           IF(.NOT.SCI(1).EDB(II).SW_BR_Qual)SCI(1).EDB(II).SWICS_RATE_Size  = SWICS_N_RATE_Size
+	   2773           IF(.NOT.SCI(1).EDB(II).SW_MR_Qual)SCI(1).EDB(II).SWICS_RATE_Size  = SWICS_N_RATE_Size
+	   2774           IF(.NOT.SCI(1).EDB(II).SW_ME1_Qual)SCI(1).EDB(II).SWICS_RATE_Size = SWICS_N_RATE_Size
+	   2775           IF(.NOT.SCI(1).EDB(II).SW_ME2_Qual)SCI(1).EDB(II).SWICS_RATE_Size = SWICS_N_RATE_Size
+	   2776           IF(.NOT.SCI(1).EDB(II).SW_ER_Qual)SCI(1).EDB(II).SWICS_RATE_Size  = SWICS_N_RATE_Size
+	   2777         ENDIF
+	   2778         IF(SCI(1).EDB(II).STICS_RATE_Size.EQ.0)THEN
+	   2779           IF(.NOT.SCI(1).EDB(II).ST_HMR_Qual)SCI(1).EDB(II).STICS_RATE_Size = STICS_N_RATE_Size
+	   2780           IF(.NOT.SCI(1).EDB(II).ST_SMR_Qual)SCI(1).EDB(II).STICS_RATE_Size = STICS_N_RATE_Size
+	   2781           IF(.NOT.SCI(1).EDB(II).ST_BR_Qual)SCI(1).EDB(II).STICS_RATE_Size  = STICS_N_RATE_Size
+	   2782           IF(.NOT.SCI(1).EDB(II).ST_OMR_Qual)SCI(1).EDB(II).STICS_RATE_Size = STICS_N_RATE_Size
+	   2783           IF(.NOT.SCI(1).EDB(II).ST_ER_Qual)SCI(1).EDB(II).STICS_RATE_Size  = STICS_N_RATE_Size
+	   2784         ENDIF
+	   2785 C
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  12
+1.8                                                              9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2786 C Increment spin counter
+	   2787 C
+	   2788         II=II+INC1
+	   2789 C
+	   2790  500  CONTINUE
+	   2791 C
+	   2792 C Shift STICS PHA data. Since STICS PHA data are always shifted by one spin
+	   2793 C (regardless of bit rate), and since the STICS PHA have not yet been
+	   2794 C concatenated, there is potentially PHA in each and every spin.
+	   2795 C
+	   2796       DO 600 II = 0, 59
+	   2797 C
+	   2798 C NEXTSPIN_PHA is the spin number of the next spin which contains PHA data. The
+	   2799 C MODULO 60 is neccesary because the last few spins in a science record may
+	   2800 C need data from the low numbered spins of the next science record. Since the
+	   2801 C PHA data have not been concatenated yet, INC1=INC2=1 always when calculating
+	   2802 C NEXTSPIN_PHA and RECNO_PHA.
+	   2803 C
+	   2804 C RECNO_PHA is the number of the science record containing NEXTSPIN_PHA
+	   2805 C
+	   2806         NEXTSPIN_PHA=MOD(II+1,60)
+	   2807         RECNO_PHA=(II+1)/60+1
+	   2808 C
+	   2809 C PHA data is read out 1 spin after being accumulated, regardless of bitrate. 
+	   2810 C Transfer STICS PHA data from spin II+1 to spin II.
+	   2811 C
+	   2812         STICS_PHA( 1 ).C_ST_PHA( II ) = STICS_PHA( RECNO_PHA ).C_ST_PHA( NEXTSPIN_PHA )
+	   2813 C
+	   2814 C Adjust the # of PHA words for this spin to reflect the change
+	   2815 C
+	   2816         SCI( 1 ).EDB( II ).STICS_Len = SCI( RECNO_PHA ).EDB( NEXTSPIN_PHA ).STICS_Len
+	   2817 C
+	   2818 C Adjust quality flags for PHA. Note that this depends on LOGICAL*1 being
+	   2819 C equivalent to BYTE.
+	   2820 C
+	   2821         SCI(1).EDB( II ).ST_P_Qual = SCI(RECNO_PHA).EDB( NEXTSPIN_PHA ).ST_P_Qual
+	   2822 C
+	   2823  600  CONTINUE
+	   2824 C
+	   2825       RETURN
+	   2826 C
+	   2827       END
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  13
+1.8                             Symbol Table                     9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  48 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                               10464   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 168 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 L0_RECORD                               38 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               470010
+
+
+ENTRY POINTS
+
+    Address   Type  Name           
+                                   
+  3-00000000        WIND_SHIFT_DATA
+
+
+VARIABLES
+
+    Address   Type  Name                  Address   Type  Name                  Address   Type  Name             
+                                                                                                                 
+REG-00000013  I*4   ACTIVE_PHA_RANGE  REG-00000012  L*4   LOWHIGH             6-00000000  I*4   SFPERBLOCK       
+  6-00000006  L*1   BITRATE             6-00000008  L*1   MASSPOWER           9-00000010  I*2   SPHAID           
+  0-00000090  L*4   CODE_C              1-0000001C  I*4   MASS_RATE_SIZE      9-00000022  I*2   SPHANUM          
+  9-00000006  I*2   COREID              9-0000000C  I*2   MCOREID             6-00000010  I*4   SPINCOUNT        
+  9-00000018  I*2   CORENUM             9-0000001E  I*2   MCORENUM            6-00000009  L*1   STICSPOWER       
+  5-0006EEBC  I*4   EDBSET              6-0000000C  I*4   MEASSPIN            1-00000020  I*4   STICS_H_RATE_SIZE
+  1-00000018  I*4   EDB_CORE_SIZE       0-00000058  I*4   MESTART             1-00000024  I*4   STICS_N_RATE_SIZE
+  0-0000005C  I*4   ERSTART           REG-########  I*4   MESTART2            2-00000008  I*4   STICS_RATE_SIZE  
+  0-0000008C  I*4   ERSTART2            9-00000012  I*2   MPHAID              6-00000004  L*1   SUBS_ID          
+  6-00000005  L*1   HDBFLAG             9-00000024  I*2   MPHANUM             0-0000000C# I*4   SUM              
+  9-00000002  I*2   HDBRECID            0-00000054  I*4   MRSTART             0-00000008# I*4   SUM2             
+  9-00000014  I*2   HDBRECNUM           0-00000088  I*4   MRSTART2            6-00000007  L*1   SWICSPOWER       
+REG-00000009  L*4   HIGHLOW             0-00000014# I*4   NEXTSPIN            1-00000028  I*4   SWICS_H_RATE_SIZE
+  9-00000004  I*2   HKRECID           REG-########  I*4   NEXTSPIN2           1-0000002C  I*4   SWICS_N_RATE_SIZE
+  9-00000016  I*2   HKRECNUM          REG-00000014  I*4   NEXTSPIN_PHA        2-0000000C  I*4   SWICS_RATE_SIZE  
+REG-00000013  I*4   HOUSEKEEPING        6-0000000A  L*1   RAMCHECK            9-00000008  I*2   WCOREID          
+  0-00000010# I*4   II                  0-00000050# I*4   RECNO               9-0000001A  I*2   WCORENUM         
+REG-0000000A  I*4   INC1              REG-########  I*4   RECNO2              9-0000000E  I*2   WPHAID           
+REG-00000000  I*4   INC2              REG-00000007  I*4   RECNO_PHA           9-00000020  I*2   WPHANUM          
+REG-########  I*4   ITEMP               9-00000000  I*2   RECORDID                                               
+REG-########  I*4   JJ                  9-0000000A  I*2   SCOREID                                                
+REG-00000000  I*4   KK                  9-0000001C  I*2   SCORENUM                                               
+
+
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  14
+1.8                             Symbol Table                     9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  2-00000010  I*4   APHASTART           12  (3)
+  5-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  7-000003CC  I*4   HDBTIME2            24  (2, 3)
+  8-00000CF0  I*4   HKLOCI             300  (75)
+  8-00000E1C  I*4   HKLOCJ             300  (75)
+  8-00000CE4  I*4   HKSET               12  (3)
+  6-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  7-00000000  HDB         HDBSTR             972  (3)
+  8-00000000  HKEEP       HKEEP             3300  (3)
+  5-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  5-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  5-00000000  SCI         CORE             22152  (3)
+  5-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  5-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  5-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  5-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label     Address   Label     Address   Label
+                                                                                                                       
+      **       5      3-00000000   60     3-00000000   170    3-00000000   210    3-00000000   260    3-00000000   420 
+  3-00000000   10     3-00000000   110    3-00000000   180    3-00000000   220    3-00000000   280        **       500 
+  3-00000000   20     3-00000000   120    3-00000000   190    3-00000000   230    3-00001B48   300    3-00000000   600 
+  3-00000000   40     3-00000000   130    3-000011DC   200    3-00000000   250    3-00000000   400                     
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                    Type  Name                    Type  Name                 
+                                                                                         
+  I*4   INCREMENT               I*1   WIND_COMPRESS           I*4   WIND_DECOMPRESS      
+
+WIND_SHIFT_DATA                                                 30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  15
+1.8                             Symbol Table                     9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   2828 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+	   2829       INTEGER FUNCTION INCREMENT(SPIN)
+	   2830 C
+	   2831 C Given a spin number, this function returns the value that must be added to it
+	   2832 C to point to the next spin that contains SWICS data. This value is strictly
+	   2833 C and simply dependent on bit rate. At high bit rate, there is data in the next
+	   2834 C spin, so the increment is 1.  At low bit rate, there is no data in the next
+	   2835 C spin (by the time that this routine has been called the data from pairs of
+	   2836 C spins has already been concatenated, and data appears only in alternate
+	   2837 C spins, so increment is 2.
+	   2838 C
+	   2839       INCLUDE 'INC_DIR:EDB.INC/NOLIST'
+
+INCREMENT                                                       30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  16
+1.8                             Symbol Table                     9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+	   3615       INTEGER*4 SPIN,NEXTSPIN,RECNO
+	   3616 C      
+	   3617 C
+	   3618 C NEXTSPIN is the spin number of the next spin which contains data. The MODULO
+	   3619 C 60 is neccesary because the last few spins in a science record may need data
+	   3620 C from the low- numbered spins of the next science record. RECNO is the number
+	   3621 C of the science record containing NEXTSPIN.
+	   3622 C
+	   3623       NEXTSPIN=MOD( SPIN , 60)
+	   3624       RECNO= SPIN/60 + 1
+	   3625 C
+	   3626       IF(SCI( RECNO ).EDB( NEXTSPIN ).BitRate)THEN
+	   3627         INCREMENT=1
+	   3628       ELSE
+	   3629         INCREMENT=2
+	   3630       ENDIF
+	   3631 C
+	   3632       RETURN
+	   3633       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  48 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                               10464   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 168 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 L0_RECORD                               38 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               470010
+
+
+ENTRY POINTS
+
+    Address   Type  Name     
+                             
+  3-000027E8  I*4   INCREMENT
+
+
+VARIABLES
+
+    Address   Type  Name                  Address   Type  Name                  Address   Type  Name             
+                                                                                                                 
+  6-00000006  L*1   BITRATE             6-0000000A  L*1   RAMCHECK            2-00000000  I*4   STICS_RATE_SIZE  
+  5-0006EEBC  I*4   EDBSET            REG-00000012  I*4   RECNO               6-00000004  L*1   SUBS_ID          
+  1-00000000  I*4   EDB_CORE_SIZE       6-00000000  I*4   SFPERBLOCK          6-00000007  L*1   SWICSPOWER       
+  6-00000005  L*1   HDBFLAG                 **      I*4   SPIN                1-00000010  I*4   SWICS_H_RATE_SIZE
+  6-00000008  L*1   MASSPOWER           6-00000010  I*4   SPINCOUNT           1-00000014  I*4   SWICS_N_RATE_SIZE
+  1-00000004  I*4   MASS_RATE_SIZE      6-00000009  L*1   STICSPOWER          2-00000004  I*4   SWICS_RATE_SIZE  
+  6-0000000C  I*4   MEASSPIN            1-00000008  I*4   STICS_H_RATE_SIZE                                      
+REG-00000000  I*4   NEXTSPIN            1-0000000C  I*4   STICS_N_RATE_SIZE                                      
+
+INCREMENT                                                       30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  17
+1.8                             Symbol Table                     9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  5-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  7-000003CC  I*4   HDBTIME2            24  (2, 3)
+  8-00000CF0  I*4   HKLOCI             300  (75)
+  8-00000E1C  I*4   HKLOCJ             300  (75)
+  8-00000CE4  I*4   HKSET               12  (3)
+  6-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  7-00000000  HDB         HDBSTR             972  (3)
+  8-00000000  HKEEP       HKEEP             3300  (3)
+  5-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  5-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  5-00000000  SCI         CORE             22152  (3)
+  5-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  5-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  5-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  5-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+INCREMENT                                                       30-NOV-1995 14:17:39    DEC Fortran V6.2-508                Page  18
+1.8                             Symbol Table                     9-FEB-1995 20:43:31    [WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.FOR;82
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.LIS;103
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_SHIFT_DATA.OBJ;42
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          5.66 seconds
+  Elapsed time:      7.80 seconds
+  Pagefaults:         919
+  I/O Count:           65

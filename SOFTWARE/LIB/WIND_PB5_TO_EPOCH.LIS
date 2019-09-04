@@ -1,0 +1,239 @@
+WIND_PB5_TO_EPOCH                                               21-APR-1995 15:27:40    DEC Fortran V6.2-508                Page   1
+                                                                20-APR-1995 16:25:15    [WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.FOR;4
+
+	      1       SUBROUTINE WIND_PB5_TO_EPOCH ( SCClock, EPOCH, STATUS )
+	      2 C
+	      3 C WIND_PB5_TO_EPOCH 
+	      4 C
+	      5 C	This version:	19-APR-1995
+	      6 C
+	      7 C PURPOSE: Routine to convert time expressed in PB5-code
+	      8 C	   into EPOCH format (milliseconds AD, 1-JAN-1)
+	      9 C
+	     10 C UNIT TYPE: SUBROUTINE
+	     11 C
+	     12 C INVOCATION METHOD: CALL WIND_PB5_TO_EPOCH (	SCClock,
+	     13 C						EPOCH,
+	     14 C						STATUS )
+	     15 C 
+	     16 C ARGUMENT LIST:
+	     17 C 
+	     18 C  NAME	                TYPE	USE	DESCRIPTION
+	     19 C  ----                 ----	---	-----------
+	     20 C  SCClock		I*4	 I	PB5 CODE IN 2 INTEGERS*4
+	     21 C  EPOCH		R*8	 O	CDF EPOCH FORMAT
+	     22 C  STATUS		I*4	 O	STATUS OF TIME REFORMATTING
+	     23 C 
+	     24 C FILE/RECORD REFERENCES: NONE
+	     25 C 
+	     26 C EXTERNAL VARIABLES: NONE
+	     27 C 
+	     28 C ABNORMAL TERMINATION CONDITIONS, ERROR MESSAGES:
+	     29 C
+	     30 C PB5-CODE structure
+	     31 C   First Integer*4 :
+	     32 C   bit  0 = msb	= 15 bits of Truncated Julian Day ( TJD )
+	     33 C   bit 15 = msb	= 17 bits of Seconds of Day
+	     34 C
+	     35 C   Second Integer*4 :
+	     36 C   bit  0 = msb	= 10 bits of Milliseconds of Seconds
+	     37 C   bit 10 = msb	= 10 bits of Microseconds of Seconds
+	     38 C   bit 20 = msb	=  5 bits of Binary Fraction of Microseconds ( 1/64 th )
+	     39 C
+	     40 C   bit notation for Integer*4 :  bit  0 = msb (  most significant bit ),
+	     41 C                                 bit 31 = lsb ( least significant bit )
+	     42 C 
+	     43 C ASSUMPTIONS, CONSTRAINTS, RESTRICTIONS:
+	     44 C	TIME OF S/C CLOCK IS ASSUMED TO BE BETWEEN 30-APR-1993 AND 17-SEP-2020
+	     45 C 
+	     46 C DEVELOPMENT HISTORY:
+	     47 C 
+	     48 C  Author       Date		Description of Change 
+	     49 C  --------	-----------	--------------------- 
+	     50 C  H. BROER	21-FEB-1994	ORIGINAL IMPLEMENTATION
+	     51 C  L. BLEAU     16-FEB-1995     add .5 in computing EPOCH time since Julian day
+	     52 C                               starts at noon; this makes it agree with the
+	     53 C				results of WIND_GREG_TO_EPOCH
+	     54 C  L. Bleau	19-APR-1995	remove modification of 16-FEB-1995, reverting
+	     55 C				routine to its previous state; add one day to
+	     56 C				make day count match CDF Epoch time; see comments
+	     57 C
+
+WIND_PB5_TO_EPOCH                                               21-APR-1995 15:27:40    DEC Fortran V6.2-508                Page   2
+                                                                20-APR-1995 16:25:15    [WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.FOR;4
+
+	     58 C NOTES: 
+	     59 C
+	     60 C This is a change from the earlier version of WIND_GREG_TO_EPOCH in that
+	     61 C previously all the work was done in the above-listed home-grown routines. 
+	     62 C Now it is done mainly by the CDF routine compute_EPOCH.  This eliminates the
+	     63 C 12 hour discrepancy between the CDF Epoch times and the Epoch times
+	     64 C previously calculated by this routine.
+	     65 C
+	     66 C In addition, the routine CNVRT_TO_FLOAT_JULIAN subtracted 12 hours from the
+	     67 C computed (floating point) Julian Day.  This was to reflect the fact that a
+	     68 C Julian Day, by definition, starts at noon.  The "Truncated Julian Day" used 
+	     69 C in the WIND Level Zero file starts at midnight, however.  This had resulted 
+	     70 C in the Epoch times produced by WIND_GREG_TO_EPOCH being 1/2 day less than the 
+	     71 C correct value.  This, too, has been fixed.  WIND_GREG_TO_EPOCH now produces a 
+	     72 C value which matches the CDF Epoch time value for the same day.
+	     73 C
+	     74 C
+	     75 C PDL:
+	     76 C
+	     77 C    SET status TO 1
+	     78 C    SEPARATE BP5 ELEMENTS
+	     79 C    ADD 2440000 TO TJD TO FORM JDN
+	     80 C    IF INPUT TJD IS LESS THAN 9106
+	     81 C    THEN
+	     82 C        ADD 10000 TO JDN
+	     83 C    ENDIF
+	     84 C    
+	     85 C    CALCULATE EPOCH
+	     86 C
+	     87 C    ADD 1 DAY TO ACCOUNT FOR YEAR 0 BEING LEAP YEAR
+	     88 C
+	     89 C    RETURN STATUS
+
+WIND_PB5_TO_EPOCH                                               21-APR-1995 15:27:40    DEC Fortran V6.2-508                Page   3
+                                                                20-APR-1995 16:25:15    [WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.FOR;4
+
+	     91       IMPLICIT NONE
+	     92 
+	     93       REAL*8	EPOCH		! OUTPUT: Time in milliseconds since 1-JAN-1 AD
+	     94 
+	     95       INTEGER*4 SCClock(2),	! INPUT:  S/C clock in PB5 CODE
+	     96      +		STATUS,		! OUTPUT: Status of process
+	     97      +		JDN,			! Julian Day Number
+	     98      +		MICSEC,			! 64th Milliseconds
+	     99      +		MSEC,			! Milliseconds
+	    100      +		SEC,			! Seconds
+	    101      +		TJD			! Truncated Julian Day
+	    102 C
+	    103 C  START OF EXECUTABLE CODE
+	    104 C
+	    105       STATUS	= 1
+	    106 C
+	    107 C    PARSE PB5 CODE
+	    108 C
+	    109       SEC	= JIAND(  SCCLOCK(1), '1FFFF'X ) 
+	    110       TJD	= JIAND( JISHFT( SCCLOCK(1), -17 ), '3FFF'X )
+	    111       MSEC	= JIAND( JISHFT( SCCLOCK(2), -22 ), '3FF'X )
+	    112       MICSEC	= JIAND( JISHFT( SCCLOCK(2), -12 ), '3FF'X )	! MICROSEC
+	    113 C
+	    114 C    EXPAND TRUNCATED JULIAN DAY to JULIAN DAY NUMBER
+	    115 C
+	    116       JDN	= TJD + 2440000		! JDN of 24-May-1968
+	    117 
+	    118       IF( TJD .LT. 9106 )   THEN	! TJD OF 30-APR-1993
+	    119           JDN	= JDN + 10000		! Base of 9-Oct-1995
+	    120       ENDIF
+	    121 C
+	    122 C   CALCULATE  EPOCH (in days) since Jan 1, 0 A.D. (aka 1 B.C.)
+	    123 C
+	    124       EPOCH	= JDN - 1721060
+	    125 C
+	    126 C The effect of the calculation performed by the CDF Epoch utility routines
+	    127 C assume year 0 A.D. is a leap year.  For that reason all dates after Feb 28, 0
+	    128 C A.D. will differ by one day from the CDF Epoch date.  Take that into account
+	    129 C here by adding 1 to the day count before converting to milliseconds.  In this 
+	    130 C way the EPOCH time produced by this routine will match the EPOCH times 
+	    131 C produced by CDF. 
+	    132 C
+	    133       EPOCH	= EPOCH + 1D0
+	    134 C
+	    135 C Convert EPOCH to Milliseconds since A.D.
+	    136 C
+	    137       EPOCH	= EPOCH * 864.D2 + SEC	! Convert days to seconds plus SEC
+	    138       EPOCH	= EPOCH * 1.D3 + MSEC	! Convert to milliseconds plus MSEC
+	    139       EPOCH	= EPOCH + MICSEC*1.D-3	! Add in microseconds
+	    140 
+	    141       RETURN
+	    142 
+	    143       END
+
+WIND_PB5_TO_EPOCH                                               21-APR-1995 15:27:40    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    20-APR-1995 16:25:15    [WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.FOR;4
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                 220   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  48 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  268
+
+
+ENTRY POINTS
+
+    Address   Type  Name             
+                                     
+  1-00000000        WIND_PB5_TO_EPOCH
+
+
+VARIABLES
+
+    Address   Type  Name       Address   Type  Name       Address   Type  Name       Address   Type  Name  
+                                                                                                           
+      **      R*8   EPOCH  REG-00000000  I*4   MICSEC REG-00000013  I*4   SEC    REG-00000001  I*4   TJD   
+REG-00000014  I*4   JDN    REG-00000010  I*4   MSEC         **      I*4   STATUS                           
+
+
+ARRAYS
+
+     Address  Type  Name           Bytes  Dimensions
+
+      **      I*4   SCCLOCK            8  (2)
+
+
+WIND_PB5_TO_EPOCH                                               21-APR-1995 15:27:40    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    20-APR-1995 16:25:15    [WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.FOR;4
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.LIS;7
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.OBJ;7
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.23 seconds
+  Elapsed time:      1.61 seconds
+  Pagefaults:         126
+  I/O Count:            9

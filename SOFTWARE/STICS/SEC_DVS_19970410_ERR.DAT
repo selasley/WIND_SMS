@@ -1,0 +1,8 @@
+ Errors found while generating the file :   SEC_DVS_19970410_FLX.He1 
+   Run time  11:09:57    6-AUG-99
+  DOY:HR:MN:SEC                  COMMENTS
+  100:05:04:47   Bad HDB found
+ Total Bad HDBs =  1
+ Total Invalid DVS =   0
+ Total Bad Speeds =   0     Good Speeds =          78.
+ Total Bad Basic Rates =    0     Total Good Basic Rates =        263

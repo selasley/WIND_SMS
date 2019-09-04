@@ -1,0 +1,33 @@
+WINDMSG                         Message definitions          21-APR-1995 16:15:59  Message A02-10                   Page   1
+                                                             10-MAR-1995 16:11:50  SMS1:[WIND.SOFTWARE.L1]WINDMSG.MSG;9        
+ 
+                                      1 .TITLE		WINDMSG
+                         00000817     2 .FACILITY	WIND,23 /PREFIX=WIND$_
+                                      3 
+                                      4 .SEVERITY	SUCCESS
+                                      5 .BASE	0
+                         08178001     6 SUCCESS		<normal successful completion>
+                                      7 
+                                      8 .SEVERITY	INFORMATIONAL
+                                      9 .BASE	10
+                         08178053    10 HDRFMT		<header version mismatch, not all header info available>
+                                     11 
+                                     12 .SEVERITY	WARNING
+                                     13 .BASE	30
+                         081780F0    14 FILEFMT		<L1 file format mismatch, some data can be lost>
+                         081780F8    15 BADRECLEN	<record length incorrect, possible bad file>
+                         08178100    16 EMPTY		<could not read header, L1 file is empty>
+                                     17 
+                                     18 .SEVERITY	ERROR
+                                     19 .BASE	50
+                         08178192    20 TOOMANY		<too many L1 files open>
+                         0817819A    21 INUSE		<this unit/data structure already in use>
+                         081781A2    22 OUTRANGE	<L1 unit is out of range>
+                         081781AA    23 INVHDRVER	<invalid header version>
+                         081781B2    24 FILNOTOPN	<L1 file not open>
+                         081781BA    25 FILNAMFMT	<L1 file name syntax error, cannot open next file>
+                         081781C2    26 BADFILEHDR	<unknown file header level, cannot interpret file>
+                         081781CA    27 NONEXTFILE	<cannot find next day's data set>
+
+There were 0 errors, 0 warnings, and 0 informational messages issued.
+MESSAGE/LIST WINDMSG.MSG

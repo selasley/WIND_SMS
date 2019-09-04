@@ -1,0 +1,3429 @@
+FIND_STATS                                                      21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   1
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	      1 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+	      2       PROGRAM WIND_HEALTH
+	      3 C This program reads housekeeping (HK and HDB) data and prints the data out.
+	      4 C Subcommutated data is printed out in tabular form, 1 table for every 64 science
+	      5 C records. For various analog housekeeping items, an average, a minimum,  and a 
+	      6 C maximum is found, and the number of times that the value is zero is counted.
+	      7 C DPU status items are taken from the last science record.
+	      8 C
+	      9 C Created 	27-APR-1995     JOHN PAQUETTE
+	     10 C
+	     11 C This version:   1.6    2-NOV-1995
+	     12 C
+	     13 C Revision history:
+	     14 C
+	     15 C       12-MAY-1995      J.PAQUETTE     added the following at Bob Lundgren's request: 
+	     16 C                                         1)do not count 0 values when finding min,max, 
+	     17 C                                           or average values; changed FIND_STATS
+	     18 C                                         2)change F16.6 formats to F12.2 for writing
+	     19 C                                           data 
+	     20 C                                         3)add commanded levels for certain items
+	     21 C                                         4)add CHK # to output
+	     22 C                                         5)add header to output file
+	     23 C                                         6)list subcommutation counter in table output
+	     24 C                                         7)corrected constants for some DPPS values 
+	     25 C                                         8)count and list # zero values
+	     26 C                                       also corrected a few errors in constants, variable
+	     27 C                                       names, etc
+	     28 C       17-MAY-1995     J.PAQUETTE      added various SC status and DPU status items
+	     29 C       22-MAY-1995     J.PAQUETTE      added MASS housekeeping items
+	     30 C       23-MAY-1995     J.PAQUETTE      only 1 page of subcommutated items
+	     31 C       25-MAY-1995     J.PAQUETTE      added STICS housekeeping items
+	     32 C	 2-NOV-1995	L. Bleau	added modifications made by Bob Lundgren:
+	     33 C					give English reason for reset cause
+	     34 C	 2-NOV-1995	L. Bleau	generate unique output filename, even
+	     35 C					for NRT L1 files, which have a number
+	     36 C					as an extension instead of a .DAT
+	     37 C
+	     38 CDEC$ IDENT  '1.6'
+	     39       INCLUDE	'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   2
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	    577       INCLUDE   'INC_DIR:L1FMT.INC/NOLIST'
+	    709       INCLUDE   '($RMSDEF)'
+	   1420       INTEGER INCOMPLETE/0/, NCHAR, FIRST_SR, LAST_SR, MR(2, 0:9), BR0_BR1_BORDER 
+	   1421       INTEGER*4 STATUS,L1_LUN/19/,MONTH,DAYOFMONTH,HK_COUNT,NUM_MF/0/,NUM_SR/0/, OFFSET/0/
+	   1422       INTEGER*4 STICS_TRIGGER_MODE, SSD_1_THRESHOLD, SSD_2_THRESHOLD, SSD_3_THRESHOLD
+	   1423       INTEGER*4 SWICS_TRIGGER_MODE, TAC_SLOPE, RESET_CAUSE
+	   1424       REAL*4 POLY, SPIN_PERIOD, MASS_HPS_MEAS_V, MASS_STOP_MCP_MEAS_V, MASS_START_MCP_MEAS_V
+	   1425       REAL*4 STICS_MCPPS_MEAS_V(0:5), STICS_TOFPS_MEAS_V, SWICS_PAPS_MEAS_V, SWICS_START_MCPPS_MEAS_V, 
+	   1426      &       SWICS_STOP_MCPPS_MEAS_V, SWICS_DPPS_MEAS_V
+	   1427       REAL*8 OLD_TIME
+	   1428       CHARACTER VERSION*5, RUN_TIME*8, RUN_DATE*9
+	   1429       CHARACTER*1 COMP_CODE(2), ASCII_NULL
+	   1430       CHARACTER*3 SWICS_COVER/'OFF'/, SWICS_HEATER/'OFF'/, STICS_COVER/'OFF'/, STICS_HEATER/'OFF'/, 
+	   1431      &            MASS_COVER/'OFF'/, MASS_MAIN/'OFF'/, STICS_MAIN/'OFF'/, SWICS_MAIN/'OFF'/,
+	   1432      &            MASS_HPS/'OFF'/, MASS_STOP_MCP/'OFF'/, MASS_START_MCP/'OFF'/, MASS_COM_ADPS/'OFF'/,
+	   1433      &            MASS_COM_DPPS /'OFF'/, STICS_MCPPS(0:5)/6*'OFF'/, STICS_TOFPS/'OFF'/, 
+	   1434      &            STICS_PLUS_DPPS/'OFF'/, STICS_MINUS_DPPS/'OFF'/, SSD_1_BIAS /'ON '/,
+	   1435      &            SSD_2_BIAS/'ON '/, SSD_3_BIAS/'ON '/, ENERGY_PREAMP_1/'OFF'/, ENERGY_PREAMP_2/'OFF'/,
+	   1436      &            ENERGY_PREAMP_3/'OFF'/, SWICS_DPPS_ENABLE/'OFF'/, SWICS_PAPS_ENABLE/'OFF'/,
+	   1437      &            SWICS_START_MCPPS_ENABLE/'OFF'/, SWICS_STOP_MCPPS_ENABLE/'OFF'/
+	   1438       CHARACTER*6 STICS_CONFIG/'Normal'/, STICS_SNAPSHOT/'Normal'/, SWICS_CONFIG/'Normal'/, 
+	   1439      &            SWICS_SNAPSHOT/'Normal'/, MASS_CONFIG/'Normal'/, MASS_SNAPSHOT/'Normal'/,
+	   1440      &            LOAD_CONFIG/'Normal'/, LOAD_SNAPSHOT/'Normal'/
+	   1441       CHARACTER*16 MASS_SUN_SECTOR_DEFINITIONS, SWICS_SUN_SECTOR_DEFINITIONS
+	   1442       CHARACTER*80 L1FILENAME, OUTPUTFILENAME, FULL_L1_NAME, DEVDIR
+	   1443       CHARACTER*13 RESET_CAUSE_TEXT(0:3)/
+	   1444      &            'Power on',
+	   1445      &            'Latchup',
+	   1446      &            'Under voltage',
+	   1447      &            'Watchdog'/
+	   1448       CHARACTER*132 LINE
+	   1449       INTEGER UNIT_TABLE(0:2,3)/52,53,54,53,52,54,54,52,53/
+	   1450       LOGICAL CODE_C,CODE_C2,STARTFOUND,ENDFOUND,COMPARE_TIME_GE,GOODSPIN
+	   1451       LOGICAL RANGE_BIT_SET, FIRSTFOUND/.FALSE./
+	   1452       INTEGER I,J,K,L,N,NN,CNTR,ITEMP,NAMELEN,DECOM_CNTR, VALUE, VALUE2, KK, MM, NEW_HK
+	   1453       INTEGER DEVDIR_LEN, NCH, IPOS
+	   1454       REAL*4  SWICS_DPPS_OUTV(0:59), MASS_ADPS_OUTV(0:59), MASS_DPPS_OUTV(0:59),       ! Subcommutated
+	   1455      &        STICS_PLUSDPPS_OUTV(0:59), STICS_MINUSDPPS_OUTV(0:59)                    ! quantities
+	   1456       INTEGER SWICS_PAPS_CL, SWICS_Start_MCPPS_CL, SWICS_Stop_MCPPS_CL, MASS_HPS_CL,
+	   1457      &        MASS_Start_MCPPS_CL, MASS_Stop_MCPPS_CL, STICS_MCPPS_0_CL, STICS_MCPPS_1_CL,
+	   1458      &        STICS_MCPPS_2_CL, STICS_MCPPS_3_CL, STICS_MCPPS_4_CL, STICS_MCPPS_5_CL,
+	   1459      &        STICS_TOFPS_MCPPS_6_CL
+	   1460       REAL*4  SWICS_PAPS_CV, SWICS_Start_MCPPS_CV, SWICS_Stop_MCPPS_CV, MASS_HPS_CV,
+	   1461      &        MASS_Start_MCPPS_CV, MASS_Stop_MCPPS_CV, STICS_MCPPS_0_CV, STICS_MCPPS_1_CV,
+	   1462      &        STICS_MCPPS_2_CV, STICS_MCPPS_3_CV, STICS_MCPPS_4_CV, STICS_MCPPS_5_CV,
+	   1463      &        STICS_TOFPS_MCPPS_6_CV
+	   1464 C
+	   1465       STRUCTURE/HOUSEKEEPING_STATS/
+	   1466         REAL MIN/255./,MAX/1./,AVER
+	   1467         INTEGER NZERO/0/
+	   1468       END STRUCTURE
+	   1469 C
+	   1470       RECORD /CORE/ SCI
+	   1471       RECORD /HDBstr/ HDB,LAST_GOOD_HDB
+	   1472       RECORD /ST_RATE/ STICS_RATE
+	   1473       RECORD /ST_PHA/ STICS_PHA
+	   1474       RECORD /HKEEP/ HK
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   3
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1475       RECORD /T/ START, END, FIRST, LAST
+	   1476       RECORD /HOUSEKEEPING_STATS/ DPU_TEMP, SWICS_GET, MASS_GET, STICS_SSD_TEMP, STICS_AEH_TEMP,
+	   1477      &                            DPU_28V, DPU_5P2V_S, DPU_5P2V_P, DPU_10V, DPU_TEMP_PIFA,
+	   1478      &                            DPU_TEMP_CTLW, SWICS_PLUS28V_PRIM_CURR, SWICS_PLUS5V,
+	   1479      &                            SWICS_PLUS5I, SWICS_MINUS5V, SWICS_PLUS8V, SWICS_PLUS8I,
+	   1480      &                            SWICS_20V, SWICS_20I, SWICS_LVPS_28V, SWICS_DPPS_28I,
+	   1481      &                            SWICS_PAPS_28I, SWICS_PAPS_OUTV, SWICS_PLUS5V_PR,
+	   1482      &                            SWICS_PLUS5I_PR, SWICS_MINUS5V_PR, SWICS_MINUS5I_PR,
+	   1483      &                            SWICS_PLUS12V_PR, SWICS_PLUS12I_PR, SWICS_MINUS12V_PR,
+	   1484      &                            SWICS_MINUS12I_PR, SWICS_SSD_BIASV_PR, SWICS_START_MCPPSV_PR,
+	   1485      &                            SWICS_STOP_MCPPSV_PR, SWICS_SSD_TEMP_PR, SWICS_BET_PR,
+	   1486      &                            MASS_PLUS28I, MASS_PLUS5V, MASS_PLUS5I, MASS_MINUS5V,
+	   1487      &                            MASS_PLUS8V, MASS_LVPS28V, MASS_ADPS28V, MASS_DPPS28I,
+	   1488      &                            MASS_AET, MASS_PLUS5V_AR, MASS_PLUS5I_AR, MASS_MINUS5V_AR,
+	   1489      &                            MASS_MINUS5I_AR, MASS_PLUS6V_AR, MASS_PLUS6I_AR,
+	   1490      &                            MASS_PLUS12V_AR, MASS_MINUS12V_AR, MASS_LVPS28V_AR,
+	   1491      &                            MASS_HPS_MCPPS_28I_AR, MASS_HPS_OUTV_AR, MASS_START_MCPPSV_AR,
+	   1492      &                            MASS_STOP_MCPPSV_AR, STICS_28I, STICS_PLUS5V, STICS_MINUS5V,
+	   1493      &                            STICS_PLUS6V, STICS_MINUS6V,STICS_PLUS12V, STICS_MINUS12V,
+	   1494      &                            STICS_MCPPS28I, STICS_DPPS28I, STICS_SSD_BIASV,
+	   1495      &                            STICS_MCPPS0_OUTV, STICS_MCPPS1_OUTV, STICS_MCPPS2_OUTV,
+	   1496      &                            STICS_MCPPS3_OUTV, STICS_MCPPS4_OUTV, STICS_MCPPS5_OUTV,
+	   1497      &                            STICS_TOFPS_OUTV, STICS_T1_AEHT, STICS_T2_FHOPT, STICS_T3_SSDT,
+	   1498      &                            STICS_T4_BPT
+	   1499 C
+	   1500       ASCII_NULL = CHAR(0)
+	   1501 C
+	   1502 C Get input L1 filename
+	   1503 C
+	   1504       L1FILENAME = 'DATA_DIR:WI*L1*.DAT'
+	   1505       CALL WIND_GET_FILENAME(L1FILENAME, STATUS)
+	   1506       IF(STATUS.NE.1)STOP
+	   1507 C
+	   1508 C Prompt user for start and stop times
+	   1509 C
+	   1510       TYPE 10
+	   1511   10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$)
+	   1512       ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+	   1513       IF(START.YEAR.NE.0)THEN
+	   1514 C
+	   1515 C Convert month and day to day of year.
+	   1516 C
+	   1517         CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+	   1518         IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+	   1519         IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+	   1520         TYPE 12
+	   1521   12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$)
+	   1522         ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+	   1523 C
+	   1524 C Convert month and day to day of year.
+	   1525 C
+	   1526         CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+	   1527         IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+	   1528         IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+	   1529       ELSE
+	   1530         END.YEAR=3000
+	   1531       ENDIF
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   4
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1532 C
+	   1533 C Open L1 file for input, and read first SR, Core, and STICS records.
+	   1534 C
+	   1535       CALL WIND_L1_OPEN( L1_LUN, L1FILENAME, L1_FILE_HEADER, STATUS)
+	   1536       IF (STATUS .NE. 1) GOTO 9010
+	   1537       INQUIRE(FILE=L1FILENAME,NAME=FULL_L1_NAME)
+	   1538       NAMELEN = INDEX(FULL_L1_NAME,' ') - 1
+	   1539       IF (NAMELEN .LT. 1) NAMELEN=LEN(FULL_L1_NAME)
+	   1540   13  CALL WIND_L1_READ_SR( L1_LUN, CNTR, L1_SR_HEADER, STATUS )
+	   1541       IF(STATUS.EQ.RMS$_EOF)GO TO 900
+	   1542       IF (STATUS .NE. 1) GOTO 9020
+	   1543       IF(L1_SR_HEADER.NVALID.NE.60)THEN
+	   1544         INCOMPLETE = INCOMPLETE + 1
+	   1545       ELSE
+	   1546         IF(.NOT.FIRSTFOUND)THEN
+	   1547           FIRST_SR = L1_SR_HEADER.SR_COUNT
+	   1548           FIRST = HDB.SC_TIME
+	   1549           FIRSTFOUND=.TRUE.
+	   1550         ENDIF
+	   1551         LAST_SR = L1_SR_HEADER.SR_COUNT
+	   1552         LAST = HDB.SC_TIME
+	   1553       ENDIF
+	   1554       CALL WIND_L1_GET_BASIC( L1_LUN, SCI, STATUS)
+	   1555 C
+	   1556       IF (STATUS .NE. 1) GOTO 9030
+	   1557 C
+	   1558 C Construct output filename
+	   1559 C
+	   1560 C
+	   1561 C Create output file each time to keep info from diffrent runs separate
+	   1562 C Construct output filename from the L1 filename and make it reside in the
+	   1563 C current directory.  Change the file extension to .DMP for most
+	   1564 C cases.  For NRT data, where the extension is not .DAT but serves to
+	   1565 C distinguish different data sets, make the extension part of the filename (see
+	   1566 C case 2 below) and add .DMP as the new extension.
+	   1567 C
+	   1568 C 1)  WI_L1_SMS_yyyymmdd_Vvv.DAT   WI_L1_SMS_yyyymmdd_Vvv.DMP
+	   1569 C 2)  WI_L1_SMS_yyyymmdd_Vvv.kkkk  WI_L1_SMS_yyyymmdd_Vvv_kkkk.DMP
+	   1570 C 3)  yymmdd_Vvv.DAT               yymmdd_Vvv.DMP
+	   1571 C
+	   1572 	  OUTPUTFILENAME = L1FILENAME
+	   1573 	  IPOS = INDEX( OUTPUTFILENAME, ';' )		! strip off version #
+	   1574 	  IF (IPOS .NE. 0) OUTPUTFILENAME(IPOS:) = ' '
+	   1575 	  NCH = INDEX( OUTPUTFILENAME, ' ') - 1		! get # of chars
+	   1576 	  IF (IPOS .EQ. -1) NCH = LEN(OUTPUTFILENAME)
+	   1577 	  IPOS = INDEX( OUTPUTFILENAME, ']' )		! extract device, directory
+	   1578 	  IF (IPOS .NE. 0) THEN
+	   1579 	    DEVDIR = OUTPUTFILENAME(1:IPOS)		! save device/directory
+	   1580 	    DEVDIR_LEN = IPOS
+	   1581 	    OUTPUTFILENAME = OUTPUTFILENAME(IPOS+1:)
+	   1582 	    NCH = NCH - IPOS
+	   1583 	  ELSE
+	   1584 	    DEVDIR = '[]'
+	   1585 	    DEVDIR_LEN = 2
+	   1586 	  ENDIF
+	   1587 	  IPOS = INDEX( OUTPUTFILENAME, '.' )		! locate file type
+	   1588 	  IF (IPOS .EQ. 0) THEN				! none, add one
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   5
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1589 	    OUTPUTFILENAME(NCH+1:NCH+4) = '.DMP'
+	   1590 	    IPOS = NCH + 1
+	   1591 	    NCH = NCH + 4
+	   1592 	  ELSE						! if .DAT just replace
+	   1593 	    IF (OUTPUTFILENAME(IPOS:IPOS+3) .EQ. '.DAT' .AND. IPOS+3 .EQ. NCH) THEN
+	   1594 	      OUTPUTFILENAME(IPOS:IPOS+3) = '.DMP'
+	   1595 	      NCH = IPOS + 3
+	   1596 	    ELSE					! not .DAT, keep file type
+	   1597 	      OUTPUTFILENAME(IPOS:IPOS) = '_'		! combine it with filename
+	   1598 	      OUTPUTFILENAME(NCH+1:NCH+4) = '.DMP'	! and use standard file type
+	   1599 	      IPOS = NCH + 1
+	   1600 	      NCH = NCH + 4
+	   1601 	    ENDIF
+	   1602 	  ENDIF
+	   1603 c	type *,'report name = "',outputfilename(1:nch),'"'
+	   1604 c	type *,'device/direcory = "',devdir(1:devdir_len),'"'
+	   1605 C
+	   1606 C      OUTPUTFILENAME = L1FILENAME
+	   1607 C      KK = INDEX(OUTPUTFILENAME, ']')
+	   1608 C      MM = INDEX(OUTPUTFILENAME(KK+1:), '.')
+	   1609 C      IF (MM .NE. 0) THEN
+	   1610 C        OUTPUTFILENAME(KK+MM:) = '.DMP'
+	   1611 C      ELSE
+	   1612 C        MM = INDEX(OUTPUTFILENAME(KK+1:), ' ')
+	   1613 C        OUTPUTFILENAME(KK+MM:) = '.DMP'
+	   1614 C      ENDIF
+	   1615 C      NCH = KK+MM+3
+	   1616 C
+	   1617 C Open output file
+	   1618 C
+	   1619       OPEN(UNIT=11, NAME=OUTPUTFILENAME(1:NCH), STATUS='NEW')
+	   1620 C
+	   1621 C Find first good spin, get year, and DOY from it.
+	   1622 C
+	   1623       N=0
+	   1624       GOODSPIN=.FALSE.
+	   1625       DO 14 WHILE(.NOT.GOODSPIN)
+	   1626         K=N/32+1
+	   1627         NN=MOD(N,31)
+	   1628         GOODSPIN=BTEST(L1_SR_HEADER.PRESENT(K),NN)
+	   1629         N=N+1             
+	   1630         IF(N.GT.59)GOTO 13 ! This SCI-REC all bad; get next
+	   1631   14  CONTINUE
+	   1632 c      N=N-1
+	   1633 C
+	   1634 C Write dummy header as placeholder
+	   1635 C
+	   1636       WRITE(11,50)
+	   1637  50   FORMAT(15X,'WIND SMS Daily Health Check - WIND_HEALTH Output')
+	   1638       WRITE(11,52)
+	   1639  52   FORMAT(10X,58('-'))
+	   1640       WRITE(11,55)L1FILENAME
+	   1641  55   FORMAT(5X,'Input File:',4X,A)
+	   1642       WRITE(11,57)VERSION, RUN_TIME, RUN_DATE
+	   1643  57   FORMAT(5X,'Program Name: WIND_HEALTH       Version:',A5,7X,'Run Date: ',A8,1X,A9)
+	   1644       WRITE(11,60) FIRST_SR, FIRST.HR, FIRST.MIN, FIRST.SEC
+	   1645  60   FORMAT(5X,'First complete science record: ',I8,7X,'Time: ',I2,':',I2.2,':',I2.2)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   6
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1646       WRITE(11,65) LAST_SR, LAST.HR, LAST.MIN, LAST.SEC
+	   1647  65   FORMAT(5X,'Last complete science record:  ',I8,7X,'Time: ',I2,':',I2.2,':',I2.2)
+	   1648       WRITE(11,70)CNTR-INCOMPLETE,INCOMPLETE
+	   1649  70   FORMAT(5X,'Number of complete science records: ',I3,7X,'Number incomplete: ',I3)
+	   1650       WRITE(11,75)
+	   1651  75   FORMAT()
+	   1652 C
+	   1653 C Set flags for start and stop
+	   1654 C
+	   1655       STARTFOUND=.FALSE.
+	   1656       ENDFOUND=.FALSE.
+	   1657 C
+	   1658 C Get the Basic Core data
+	   1659 C
+	   1660  100  CALL WIND_L1_GET_BASIC( L1_LUN, SCI, STATUS)
+	   1661       IF (STATUS .NE. 1) GOTO 9030
+	   1662 C                                         
+	   1663 C Get Housekeeping Data Block
+	   1664 C
+	   1665       CALL WIND_L1_GET_HDB( L1_LUN, HDB, STATUS)
+	   1666       IF (STATUS .NE. 1) GOTO 9050
+	   1667       IF(IAND(HDB.DAT(5),3).EQ.3)OFFSET = IAND(HDB.DAT(166), 255)
+	   1668       IF(HDB.QUAL.EQ.0)LAST_GOOD_HDB = HDB
+	   1669 C
+	   1670 C Get Fixed Housekeeping Data
+	   1671 C
+	   1672       CALL WIND_L1_GET_HK( L1_LUN, HK, HK_COUNT,STATUS)
+	   1673       IF (STATUS .NE. 1) GOTO 9060
+	   1674 C
+	   1675 C Get STICS rates (need the last byte)
+	   1676 C
+	   1677       CALL WIND_L1_GET_STICS( L1_LUN, STICS_RATE, STICS_PHA, STATUS )
+	   1678       IF (STATUS .NE. 1) GOTO 9080
+	   1679 C
+	   1680 C Compare time read to start time. If the time read is greater than or equal to the user-
+	   1681 C specified start time, then begin processing data.
+	   1682 C
+	   1683       IF(.NOT.STARTFOUND)THEN
+	   1684         STARTFOUND=COMPARE_TIME_GE(SCI.EDB(0).SC_TIME,START)
+	   1685       ENDIF
+	   1686       IF(STARTFOUND)THEN
+	   1687         NUM_SR = NUM_SR + 1
+	   1688 C
+	   1689 C Compare time read to end time. If time read is greater than the user-specified end time,
+	   1690 C we're done. Go to the part of the code that closes files and STOP's program.
+	   1691 C
+	   1692         ENDFOUND=COMPARE_TIME_GE(SCI.EDB(0).SC_TIME,END)
+	   1693         IF(ENDFOUND)GO TO 900
+	   1694 C
+	   1695 C The first five quantities are formatted by the space craft, and are only available in the
+	   1696 C HK. The loop below loops over HK's
+	   1697 C
+	   1698         NEW_HK = 1
+	   1699         IF( HK.HKSET(1).EPOCH .EQ. OLD_TIME )NEW_HK = 2
+	   1700         DO 200 I = NEW_HK, HK_COUNT
+	   1701 C
+	   1702           NUM_MF = NUM_MF + 1
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   7
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1703 C
+	   1704 C Get DPU Temp (Passive)
+	   1705 C
+	   1706           VALUE = HK.HKSET(I).HK(1).BVAL
+	   1707           VALUE2 = IAND(VALUE, 255)
+	   1708           CALL FIND_STATS(VALUE2,DPU_TEMP)
+	   1709 C
+	   1710 C Get SWICS Gnd Electronics Temp (Passive)
+	   1711 C
+	   1712           VALUE  = HK.HKSET(I).HK(2).BVAL
+	   1713           VALUE2 = IAND(VALUE, 255)
+	   1714           CALL FIND_STATS(VALUE2,SWICS_GET)
+	   1715 C
+	   1716 C Get MASS Gnd Electronics Temp (Passive)
+	   1717 C
+	   1718           VALUE = HK.HKSET(I).HK(3).BVAL
+	   1719           VALUE2 = IAND(VALUE, 255)
+	   1720           CALL FIND_STATS(VALUE2,MASS_GET)
+	   1721 C
+	   1722 C Get STICS SSD Temp (Passive)
+	   1723 C
+	   1724           VALUE = HK.HKSET(I).HK(4).BVAL
+	   1725           VALUE2 = IAND(VALUE, 255)
+	   1726           CALL FIND_STATS(VALUE2,STICS_SSD_TEMP)
+	   1727 C
+	   1728 C Get STICS AE Housing Temp (Passive)
+	   1729 C
+	   1730           VALUE = HK.HKSET(I).HK(5).BVAL
+	   1731           VALUE2 = IAND(VALUE, 255)
+	   1732           CALL FIND_STATS(VALUE2,STICS_AEH_TEMP)
+	   1733 C
+	   1734  200    CONTINUE
+	   1735 C
+	   1736 C Get DPU 28 V Primary Current
+	   1737 C
+	   1738         VALUE = HDB.DAT(215)
+	   1739         VALUE2 = IAND(VALUE, 255)
+	   1740         CALL FIND_STATS(VALUE2,DPU_28V)
+	   1741 C
+	   1742 C Get DPU 5.2 V (Switched) Voltage
+	   1743 C
+	   1744         VALUE = HDB.DAT(216)
+	   1745         VALUE2 = IAND(VALUE, 255)
+	   1746         CALL FIND_STATS(VALUE2,DPU_5P2V_S)
+	   1747 C
+	   1748 C Get DPU 5.2 V (Permanent) Voltage
+	   1749 C
+	   1750         VALUE = HDB.DAT(217)
+	   1751         VALUE2 = IAND(VALUE, 255)
+	   1752         CALL FIND_STATS(VALUE2,DPU_5P2V_P)
+	   1753 C
+	   1754 C Get DPU 10 V Voltage
+	   1755 C
+	   1756         VALUE = HDB.DAT(218)
+	   1757         VALUE2 = IAND(VALUE, 255)
+	   1758         CALL FIND_STATS(VALUE2,DPU_10V)
+	   1759 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   8
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1760 C Get DPU Temperature, PIF_A
+	   1761 C
+	   1762         VALUE = HDB.DAT(219)
+	   1763         VALUE2 = IAND(VALUE, 255)
+	   1764         CALL FIND_STATS(VALUE2,DPU_TEMP_PIFA)
+	   1765 C
+	   1766 C Get DPU Temperature, CTL_W
+	   1767 C
+	   1768         VALUE = HDB.DAT(220)
+	   1769         VALUE2 = IAND(VALUE, 255)
+	   1770         CALL FIND_STATS(VALUE2, DPU_TEMP_CTLW)
+	   1771 C
+	   1772 C Get SWICS +28 V Primary Current (Gnd Ref)
+	   1773 C
+	   1774         VALUE = HDB.DAT(90)
+	   1775         VALUE2 = IAND(VALUE, 255)
+	   1776         CALL FIND_STATS(VALUE2, SWICS_PLUS28V_PRIM_CURR)
+	   1777 C
+	   1778 C Get SWICS +5 V Voltage (Gnd Ref)
+	   1779 C
+	   1780         VALUE = HDB.DAT(94)
+	   1781         VALUE2 = IAND(VALUE, 255)
+	   1782         CALL FIND_STATS(VALUE2, SWICS_PLUS5V)
+	   1783 C
+	   1784 C Get SWICS +5 V Current (Gnd Ref)
+	   1785 C
+	   1786         VALUE = HDB.DAT(93)
+	   1787         VALUE2 = IAND(VALUE, 255)
+	   1788         CALL FIND_STATS(VALUE2, SWICS_PLUS5I)
+	   1789 C
+	   1790 C Get SWICS -5 V Voltage (Gnd Ref)
+	   1791 C
+	   1792         VALUE = HDB.DAT(95)
+	   1793         VALUE2 = IAND(VALUE, 255)
+	   1794         CALL FIND_STATS(VALUE2, SWICS_MINUS5V)
+	   1795 C
+	   1796 C Get SWICS +8 V Voltage (Gnd Ref)
+	   1797 C
+	   1798         VALUE = HDB.DAT(92)
+	   1799         VALUE2 = IAND(VALUE, 255)
+	   1800         CALL FIND_STATS(VALUE2, SWICS_PLUS8V)
+	   1801 C
+	   1802 C Get SWICS +8 V Current (Gnd Ref)
+	   1803 C
+	   1804         VALUE = HDB.DAT(91)
+	   1805         VALUE2 = IAND(VALUE, 255)
+	   1806         CALL FIND_STATS(VALUE2, SWICS_PLUS8I)
+	   1807 C
+	   1808 C Get SWICS 20 V Voltage (Gnd Ref)
+	   1809 C
+	   1810         VALUE = HDB.DAT(67)
+	   1811         VALUE2 = IAND(VALUE, 255)
+	   1812         CALL FIND_STATS(VALUE2, SWICS_20V)
+	   1813 C
+	   1814 C Get SWICS 20 V Current (Gnd Ref)
+	   1815 C
+	   1816         VALUE = HDB.DAT(66)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page   9
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1817         VALUE2 = IAND(VALUE, 255)
+	   1818         CALL FIND_STATS(VALUE2, SWICS_20I)
+	   1819 C
+	   1820 C Get SWICS LVPS 28 V Voltage (Gnd Ref)
+	   1821 C
+	   1822         VALUE = HDB.DAT(69)
+	   1823         VALUE2 = IAND(VALUE, 255)
+	   1824         CALL FIND_STATS(VALUE2, SWICS_LVPS_28V)
+	   1825 C
+	   1826 C Get SWICS DPPS 28 V Current (Gnd Ref)
+	   1827 C
+	   1828         VALUE = HDB.DAT(71)
+	   1829         VALUE2 = IAND(VALUE, 255)
+	   1830         CALL FIND_STATS(VALUE2, SWICS_DPPS_28I)
+	   1831 C
+	   1832 C Get SWICS PAPS 28 V Current (Gnd Ref)
+	   1833 C
+	   1834         VALUE = HDB.DAT(68)
+	   1835         VALUE2 = IAND(VALUE, 255)
+	   1836         CALL FIND_STATS(VALUE2, SWICS_PAPS_28I)
+	   1837 C
+	   1838 C Get SWICS PAPS Output Voltage (Gnd Ref)
+	   1839 C
+	   1840         VALUE = HDB.DAT(70)
+	   1841         VALUE2 = IAND(VALUE, 255)
+	   1842         CALL FIND_STATS(VALUE2, SWICS_PAPS_OUTV)
+	   1843 C
+	   1844 C Get SWICS +5 V Voltage (PAPS Ref)
+	   1845 C
+	   1846         VALUE = HDB.DAT(73)
+	   1847         VALUE2 = IAND(VALUE, 255)
+	   1848         CALL FIND_STATS(VALUE2, SWICS_PLUS5V_PR)
+	   1849 C
+	   1850 C Get SWICS +5 V Current (PAPS Ref)
+	   1851 C
+	   1852         VALUE = HDB.DAT(74)
+	   1853         VALUE2 = IAND(VALUE, 255)
+	   1854         CALL FIND_STATS(VALUE2, SWICS_PLUS5I_PR)
+	   1855 C
+	   1856 C Get SWICS -5 V Voltage (PAPS Ref)
+	   1857 C
+	   1858         VALUE = HDB.DAT(75)
+	   1859         VALUE2 = IAND(VALUE, 255)
+	   1860         CALL FIND_STATS(VALUE2, SWICS_MINUS5V_PR)
+	   1861 C
+	   1862 C Get SWICS -5 V Current (PAPS Ref)
+	   1863 C
+	   1864         VALUE = HDB.DAT(76)
+	   1865         VALUE2 = IAND(VALUE, 255)
+	   1866         CALL FIND_STATS(VALUE2, SWICS_MINUS5I_PR)
+	   1867 C
+	   1868 C Get SWICS +12 V Voltage (PAPS Ref)
+	   1869 C
+	   1870         VALUE = HDB.DAT(82)
+	   1871         VALUE2 = IAND(VALUE, 255)
+	   1872         CALL FIND_STATS(VALUE2, SWICS_PLUS12V_PR)
+	   1873 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  10
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1874 C Get SWICS +12 V Current (PAPS Ref)
+	   1875 C
+	   1876         VALUE = HDB.DAT(83)
+	   1877         VALUE2 = IAND(VALUE, 255)
+	   1878         CALL FIND_STATS(VALUE2, SWICS_PLUS12I_PR)
+	   1879 C
+	   1880 C Get -12 V Voltage (PAPS Ref)
+	   1881 C
+	   1882         VALUE = HDB.DAT(84)
+	   1883         VALUE2 = IAND(VALUE, 255)
+	   1884         CALL FIND_STATS(VALUE2, SWICS_MINUS12V_PR)
+	   1885 C
+	   1886 C Get SWICS -12 V Current (PAPS Ref)
+	   1887 C
+	   1888         VALUE = HDB.DAT(85)
+	   1889         VALUE2 = IAND(VALUE, 255)
+	   1890         CALL FIND_STATS(VALUE2, SWICS_MINUS12I_PR)
+	   1891 C
+	   1892 C Get SWICS SSD Bias Voltage (PAPS Ref)
+	   1893 C
+	   1894         VALUE = HDB.DAT(81)
+	   1895         VALUE2 = IAND(VALUE, 255)
+	   1896         CALL FIND_STATS(VALUE2, SWICS_SSD_BIASV_PR)
+	   1897 C
+	   1898 C Get SWICS Start MCPPS Voltage (PAPS Ref)
+	   1899 C
+	   1900         VALUE = HDB.DAT(77)
+	   1901         VALUE2 = IAND(VALUE, 255)
+	   1902         CALL FIND_STATS(VALUE2, SWICS_START_MCPPSV_PR)
+	   1903 C
+	   1904 C Get SWICS Stop MCPPS Voltage (PAPS Ref)
+	   1905 C
+	   1906         VALUE = HDB.DAT(78)
+	   1907         VALUE2 = IAND(VALUE, 255)
+	   1908         CALL FIND_STATS(VALUE2, SWICS_STOP_MCPPSV_PR)
+	   1909 C
+	   1910 C Get SWICS SSD Temp (PAPS Ref)
+	   1911 C
+	   1912         VALUE = HDB.DAT(79)
+	   1913         VALUE2 = IAND(VALUE, 255)
+	   1914         CALL FIND_STATS(VALUE2, SWICS_SSD_TEMP_PR)
+	   1915 C
+	   1916 C Get SWICS Bubble Elect Temp, (PAPS Ref)
+	   1917 C
+	   1918         VALUE = HDB.DAT(80)
+	   1919         VALUE2 = IAND(VALUE, 255)
+	   1920         CALL FIND_STATS(VALUE2, SWICS_BET_PR)
+	   1921 C
+	   1922 C Get MASS +28 V Primary Current (Gnd Ref)
+	   1923 C
+	   1924         VALUE = HDB.DAT(98)
+	   1925         VALUE2 = IAND(VALUE, 255)
+	   1926         CALL FIND_STATS(VALUE2, MASS_PLUS28I)
+	   1927 C
+	   1928 C Get MASS +5 V Voltage (Gnd Ref)
+	   1929 C
+	   1930         VALUE = HDB.DAT(103)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  11
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1931         VALUE2 = IAND(VALUE, 255)
+	   1932         CALL FIND_STATS(VALUE2, MASS_PLUS5V)
+	   1933 C
+	   1934 C Get MASS +5 V Current (Gnd Ref)
+	   1935 C
+	   1936         VALUE = HDB.DAT(97)
+	   1937         VALUE2 = IAND(VALUE, 255)
+	   1938         CALL FIND_STATS(VALUE2, MASS_PLUS5I)
+	   1939 C
+	   1940 C Get MASS -5 V Voltage (Gnd Ref)
+	   1941 C
+	   1942         VALUE = HDB.DAT(104)
+	   1943         VALUE2 = IAND(VALUE, 255)
+	   1944         CALL FIND_STATS(VALUE2, MASS_MINUS5V)
+	   1945 C
+	   1946 C Get MASS +8 V Voltage (Gnd Ref)
+	   1947 C
+	   1948         VALUE = HDB.DAT(102)
+	   1949         VALUE2 = IAND(VALUE, 255)
+	   1950         CALL FIND_STATS(VALUE2, MASS_PLUS8V)
+	   1951 C
+	   1952 C Get MASS LVPS 28 V Voltage (Gnd Ref)
+	   1953 C
+	   1954         VALUE = HDB.DAT(101)
+	   1955         VALUE2 = IAND(VALUE, 255)
+	   1956         CALL FIND_STATS(VALUE2, MASS_LVPS28V)
+	   1957 C
+	   1958 C Get MASS ADPS 28 V Current (Gnd Ref)
+	   1959 C
+	   1960         VALUE = HDB.DAT(100)
+	   1961         VALUE2 = IAND(VALUE, 255)
+	   1962         CALL FIND_STATS(VALUE2, MASS_ADPS28V)
+	   1963 C
+	   1964 C Get MASS DPPS 28 V Current (Gnd Ref)
+	   1965 C
+	   1966         VALUE = HDB.DAT(99)
+	   1967         VALUE2 = IAND(VALUE, 255)
+	   1968         CALL FIND_STATS(VALUE2, MASS_DPPS28I)
+	   1969 C
+	   1970 C Get MASS Analog Electronics Temp (Gnd Ref)
+	   1971 C
+	   1972         VALUE = HDB.DAT(105)
+	   1973         VALUE2 = IAND(VALUE, 255)
+	   1974         CALL FIND_STATS(VALUE2, MASS_AET)
+	   1975 C
+	   1976 C Get MASS +5 V Voltage (ADPS Ref)
+	   1977 C
+	   1978         VALUE = HDB.DAT(125)
+	   1979         VALUE2 = IAND(VALUE, 255)
+	   1980         CALL FIND_STATS(VALUE2, MASS_PLUS5V_AR)
+	   1981 C
+	   1982 C Get MASS +5 V Current (ADPS Ref)
+	   1983 C
+	   1984         VALUE = HDB.DAT(126)
+	   1985         VALUE2 = IAND(VALUE, 255)
+	   1986         CALL FIND_STATS(VALUE2, MASS_PLUS5I_AR)
+	   1987 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  12
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   1988 C Get MASS -5 V Voltage (ADPS Ref)
+	   1989 C
+	   1990         VALUE = HDB.DAT(128)
+	   1991         VALUE2 = IAND(VALUE, 255)
+	   1992         CALL FIND_STATS(VALUE2, MASS_MINUS5V_AR)
+	   1993 C
+	   1994 C Get MASS -5 V Current (ADPS Ref)
+	   1995 C
+	   1996         VALUE = HDB.DAT(127)
+	   1997         VALUE2 = IAND(VALUE, 255)
+	   1998         CALL FIND_STATS(VALUE2, MASS_MINUS5I_AR)
+	   1999 C
+	   2000 C Get MASS +6 V Voltage (ADPS Ref)
+	   2001 C
+	   2002         VALUE = HDB.DAT(123)
+	   2003         VALUE2 = IAND(VALUE, 255)
+	   2004         CALL FIND_STATS(VALUE2, MASS_PLUS6V_AR)
+	   2005 C
+	   2006 C Get MASS +6 V Current (ADPS Ref)
+	   2007 C
+	   2008         VALUE = HDB.DAT(124)
+	   2009         VALUE2 = IAND(VALUE, 255)
+	   2010         CALL FIND_STATS(VALUE2, MASS_PLUS6I_AR)
+	   2011 C
+	   2012 C Get MASS +12 V Voltage (ADPS Ref)
+	   2013 C
+	   2014         VALUE = HDB.DAT(122)
+	   2015         VALUE2 = IAND(VALUE, 255)
+	   2016         CALL FIND_STATS(VALUE2, MASS_PLUS12V_AR)
+	   2017 C
+	   2018 C Get MASS -12 V Voltage (ADPS Ref)
+	   2019 C
+	   2020         VALUE = HDB.DAT(129)
+	   2021         VALUE2 = IAND(VALUE, 255)
+	   2022         CALL FIND_STATS(VALUE2, MASS_MINUS12V_AR)
+	   2023 C
+	   2024 C Get MASS LVPS 28 V Voltage (ADPS Ref)
+	   2025 C
+	   2026         VALUE = HDB.DAT(121)
+	   2027         VALUE2 = IAND(VALUE, 255)
+	   2028         CALL FIND_STATS(VALUE2, MASS_LVPS28V_AR)
+	   2029 C
+	   2030 C Get MASS HPS & MCPPS 28V I (ADPS Ref)
+	   2031 C
+	   2032         VALUE = HDB.DAT(118)
+	   2033         VALUE2 = IAND(VALUE, 255)
+	   2034         CALL FIND_STATS(VALUE2, MASS_HPS_MCPPS_28I_AR)
+	   2035 C
+	   2036 C Get MASS HPS Output Voltage (ADPS Ref)
+	   2037 C
+	   2038         VALUE = HDB.DAT(117)
+	   2039         VALUE2 = IAND(VALUE, 255)
+	   2040         CALL FIND_STATS(VALUE2, MASS_HPS_OUTV_AR)
+	   2041 C
+	   2042 C Get MASS Start MCPPS Voltage (ADPS Ref)
+	   2043 C
+	   2044         VALUE = HDB.DAT(119)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  13
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2045         VALUE2 = IAND(VALUE, 255)
+	   2046         CALL FIND_STATS(VALUE2, MASS_START_MCPPSV_AR)
+	   2047 C
+	   2048 C Get MASS Stop MCPPS Voltage (ADPS Ref)
+	   2049 C
+	   2050         VALUE = HDB.DAT(120)
+	   2051         VALUE2 = IAND(VALUE, 255)
+	   2052         CALL FIND_STATS(VALUE2, MASS_STOP_MCPPSV_AR)
+	   2053 C
+	   2054 C Get STICS 28 V Primary Current
+	   2055 C
+	   2056         VALUE = HDB.DAT(49)
+	   2057         VALUE2 = IAND(VALUE, 255)
+	   2058         CALL FIND_STATS(VALUE2, STICS_28I)
+	   2059 C
+	   2060 C Get STICS +5 V Voltage
+	   2061 C
+	   2062         VALUE = HDB.DAT(45)
+	   2063         VALUE2 = IAND(VALUE, 255)
+	   2064         CALL FIND_STATS(VALUE2, STICS_PLUS5V)
+	   2065 C
+	   2066 C Get STICS -5 V Voltage
+	   2067 C
+	   2068         VALUE = HDB.DAT(46)
+	   2069         VALUE2 = IAND(VALUE, 255)
+	   2070         CALL FIND_STATS(VALUE2, STICS_MINUS5V)
+	   2071 C
+	   2072 C Get STICS +6 V Voltage
+	   2073 C
+	   2074         VALUE = HDB.DAT(43)
+	   2075         VALUE2 = IAND(VALUE, 255)
+	   2076         CALL FIND_STATS(VALUE2, STICS_PLUS6V)
+	   2077 C
+	   2078 C Get STICS -6 V Voltage
+	   2079 C
+	   2080         VALUE = HDB.DAT(44)
+	   2081         VALUE2 = IAND(VALUE, 255)
+	   2082         CALL FIND_STATS(VALUE2, STICS_MINUS6V)
+	   2083 C
+	   2084 C Get STICS +12 V Voltage
+	   2085 C
+	   2086         VALUE = HDB.DAT(47)
+	   2087         VALUE2 = IAND(VALUE, 255)
+	   2088         CALL FIND_STATS(VALUE2, STICS_PLUS12V)
+	   2089 C
+	   2090 C Get STICS -12 V Voltage
+	   2091 C
+	   2092         VALUE = HDB.DAT(50)
+	   2093         VALUE2 = IAND(VALUE, 255)
+	   2094         CALL FIND_STATS(VALUE2, STICS_MINUS12V)
+	   2095 C
+	   2096 C Get STICS MCPPS 28 V Current
+	   2097 C
+	   2098         VALUE = HDB.DAT(34)
+	   2099         VALUE2 = IAND(VALUE, 255)
+	   2100         CALL FIND_STATS(VALUE2, STICS_MCPPS28I)
+	   2101 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  14
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2102 C Get STICS DPPS 28 V Current
+	   2103 C
+	   2104         VALUE = HDB.DAT(35)
+	   2105         VALUE2 = IAND(VALUE, 255)
+	   2106         CALL FIND_STATS(VALUE2, STICS_DPPS28I)
+	   2107 C
+	   2108 C Get STICS SSD Bias Voltage
+	   2109 C
+	   2110         VALUE = HDB.DAT(48)
+	   2111         VALUE2 = IAND(VALUE, 255)
+	   2112         CALL FIND_STATS(VALUE2, STICS_SSD_BIASV)
+	   2113 C
+	   2114 C Get STICS MCPPS 0 Output Voltage
+	   2115 C
+	   2116         VALUE = HDB.DAT(27)
+	   2117         VALUE2 = IAND(VALUE, 255)
+	   2118         CALL FIND_STATS(VALUE2, STICS_MCPPS0_OUTV)
+	   2119 C
+	   2120 C Get STICS MCPPS 1 Output Voltage
+	   2121 C
+	   2122         VALUE = HDB.DAT(28)
+	   2123         VALUE2 = IAND(VALUE, 255)
+	   2124         CALL FIND_STATS(VALUE2, STICS_MCPPS1_OUTV)
+	   2125 C
+	   2126 C Get STICS MCPPS 2 Output Voltage
+	   2127 C
+	   2128         VALUE = HDB.DAT(29)
+	   2129         VALUE2 = IAND(VALUE, 255)
+	   2130         CALL FIND_STATS(VALUE2, STICS_MCPPS2_OUTV)
+	   2131 C
+	   2132 C Get STICS MCPPS 3 Output Voltage
+	   2133 C
+	   2134         VALUE = HDB.DAT(30)
+	   2135         VALUE2 = IAND(VALUE, 255)
+	   2136         CALL FIND_STATS(VALUE2, STICS_MCPPS3_OUTV)
+	   2137 C
+	   2138 C Get STICS MCPPS 4 Output Voltage
+	   2139 C
+	   2140         VALUE = HDB.DAT(31)
+	   2141         VALUE2 = IAND(VALUE, 255)
+	   2142         CALL FIND_STATS(VALUE2, STICS_MCPPS4_OUTV)
+	   2143 C
+	   2144 C Get STICS MCPPS 5 Output Voltage
+	   2145 C
+	   2146         VALUE = HDB.DAT(32)
+	   2147         VALUE2 = IAND(VALUE, 255)
+	   2148         CALL FIND_STATS(VALUE2, STICS_MCPPS5_OUTV)
+	   2149 C
+	   2150 C Get STICS TOFPS (MCPPS 6) Output Voltage
+	   2151 C
+	   2152         VALUE = HDB.DAT(33)
+	   2153         VALUE2 = IAND(VALUE, 255)
+	   2154         CALL FIND_STATS(VALUE2, STICS_TOFPS_OUTV)
+	   2155 C
+	   2156 C Get STICS T1, AE Housing Temp
+	   2157 C
+	   2158         VALUE = HDB.DAT(39)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  15
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2159         VALUE2 = IAND(VALUE, 255)
+	   2160         CALL FIND_STATS(VALUE2, STICS_T1_AEHT)
+	   2161 C
+	   2162 C Get STICS T2, Fairing/HOP Temp
+	   2163 C
+	   2164         VALUE = HDB.DAT(40)
+	   2165         VALUE2 = IAND(VALUE, 255)
+	   2166         CALL FIND_STATS(VALUE2, STICS_T2_FHOPT)
+	   2167 C
+	   2168 C Get STICS T3, SSD Temp
+	   2169 C
+	   2170         VALUE = HDB.DAT(41)
+	   2171         VALUE2 = IAND(VALUE, 255)
+	   2172         CALL FIND_STATS(VALUE2, STICS_T3_SSDT)
+	   2173 C
+	   2174 C Get STICS T4, Back Panel Temp
+	   2175 C
+	   2176         VALUE = HDB.DAT(42)
+	   2177         VALUE2 = IAND(VALUE, 255)
+	   2178         CALL FIND_STATS(VALUE2, STICS_T4_BPT)
+	   2179 C
+	   2180 C Get commanded levels. Don't need stats for these, as they shouldn't be 
+	   2181 C changing; just find last value which is nonzero( a data gap could give a 
+	   2182 C zero value).
+	   2183 C
+	   2184         SWICS_PAPS_CL = IAND(HDB.DAT(61), 255)
+	   2185         SWICS_PAPS_CV = 190.96 - 117.15 * SWICS_PAPS_CL 
+	   2186         SWICS_Start_MCPPS_CL = IAND(HDB.DAT(62), 255)
+	   2187         SWICS_Start_MCPPS_CV = 1.129 + 16.303 * SWICS_Start_MCPPS_CL 
+	   2188         SWICS_Stop_MCPPS_CL = IAND(HDB.DAT(63), 255)
+	   2189         SWICS_Stop_MCPPS_CV = 1.564 + 12.181 * SWICS_Stop_MCPPS_CL 
+	   2190         MASS_HPS_CL = IAND(HDB.DAT(110), 255)
+	   2191         MASS_HPS_CV = -19.5 + 132.08 * MASS_HPS_CL 
+	   2192         MASS_Start_MCPPS_CL = IAND(HDB.DAT(112), 255)
+	   2193         MASS_Start_MCPPS_CV = 12.2 + 18.294 * MASS_Start_MCPPS_CL 
+	   2194         MASS_Stop_MCPPS_CL = IAND(HDB.DAT(114), 255)
+	   2195         MASS_Stop_MCPPS_CV = 0.2 + 13.452 * MASS_Stop_MCPPS_CL 
+	   2196         STICS_MCPPS_0_CL = IAND(HDB.DAT(17), 255)
+	   2197         STICS_MCPPS_0_CV = -11.081 + 12.535 * STICS_MCPPS_0_CL 
+	   2198         STICS_MCPPS_1_CL = IAND(HDB.DAT(18), 255)
+	   2199         STICS_MCPPS_1_CV = -7.7568 + 12.535 * STICS_MCPPS_1_CL 
+	   2200         STICS_MCPPS_2_CL = IAND(HDB.DAT(19), 255)
+	   2201         STICS_MCPPS_2_CV = -9.4054 + 12.524 * STICS_MCPPS_2_CL
+	   2202         STICS_MCPPS_3_CL = IAND(HDB.DAT(20), 255)
+	   2203         STICS_MCPPS_3_CV  = -7.1081 + 12.526 * STICS_MCPPS_3_CL 
+	   2204         STICS_MCPPS_4_CL = IAND(HDB.DAT(21), 255)
+	   2205         STICS_MCPPS_4_CV = -8.5135 + 12.541* STICS_MCPPS_4_CL 
+	   2206         STICS_MCPPS_5_CL = IAND(HDB.DAT(22), 255)
+	   2207         STICS_MCPPS_5_CV = -10.081 + 12.565 * STICS_MCPPS_5_CL
+	   2208         STICS_TOFPS_MCPPS_6_CL  = IAND(HDB.DAT(23), 255)
+	   2209         STICS_TOFPS_MCPPS_6_CV = -3.0764 + 4.5362 * STICS_TOFPS_MCPPS_6_CL
+	   2210 C
+	   2211 C Subcommutated Quantities (i.e. those that come out only once per 64
+	   2212 C HDB's) are to be put into tables. Min, Max, and Average are not calculated
+	   2213 C for them.
+	   2214 C
+	   2215 C The last 5 bits of the 5th byte of the HDB contain the number to be used as
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  16
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2216 C a decommutation counter; If the counter exceeds 59, these bytes are undefined,
+	   2217 C so do the following only if DECOM_CNTR is in the range 0-59
+	   2218 C
+	   2219         DECOM_CNTR = IAND(HDB.DAT(5), 63)
+	   2220         IF(DECOM_CNTR.LE.59)THEN
+	   2221 C
+	   2222 C For SWICS DPPS Output Voltage (Gnd Ref), we need to use bit 1 of hdb byte 89 to
+	   2223 C determine the range
+	   2224 C
+	   2225           VALUE = HDB.DAT(89)
+	   2226           VALUE2 = IAND(VALUE, 255)
+	   2227           RANGE_BIT_SET = BTEST(VALUE2, 1)
+	   2228 C
+	   2229           VALUE = HDB.DAT(72)
+	   2230           VALUE2 = IAND(VALUE, 255)
+	   2231           IF(DECOM_CNTR.LE.26)THEN
+	   2232 C          IF(RANGE_BIT_SET )THEN
+	   2233             SWICS_DPPS_OUTV(DECOM_CNTR) = -5.317E1 + 1.737E1*FLOAT(VALUE2)
+	   2234           ELSE
+	   2235             SWICS_DPPS_OUTV(DECOM_CNTR) = 7.858E-1 +  1.629*FLOAT(VALUE2)
+	   2236           ENDIF
+	   2237 C
+	   2238 C Get MASS ADPS Output Voltage (Gnd Ref)
+	   2239 C
+	   2240           VALUE = HDB.DAT(106)
+	   2241           VALUE2 = IAND(VALUE, 255)
+	   2242           MASS_ADPS_OUTV(DECOM_CNTR) = -6.634E3 + 3.4185E1*FLOAT(VALUE2)
+	   2243 C
+	   2244 C For MASS DPPS Output Voltage (Gnd Ref), we need to use bit 5 of hdb byte 107 to
+	   2245 C determine the range
+	   2246 C
+	   2247           VALUE = HDB.DAT(107)
+	   2248           VALUE2 = IAND(VALUE,255)
+	   2249           RANGE_BIT_SET = BTEST(VALUE2, 5)
+	   2250 C
+	   2251           VALUE = HDB.DAT(96)
+	   2252           VALUE2 = IAND(VALUE, 255)
+	   2253           IF(DECOM_CNTR.LE.25)THEN
+	   2254 C          IF(RANGE_BIT_SET )THEN
+	   2255             MASS_DPPS_OUTV(DECOM_CNTR) = 2.626 - 8.056*FLOAT(VALUE2)
+	   2256           ELSE
+	   2257             MASS_DPPS_OUTV(DECOM_CNTR) = -2.387 - 1.612*FLOAT(VALUE2)
+	   2258           ENDIF
+	   2259 C
+	   2260 C Get STICS +DPPS Output Voltage (12 bit field in bytes 36 and 37 of the HDB)
+	   2261 C
+	   2262           VALUE = IAND(HDB.DAT(36), 255)
+	   2263           VALUE = ISHFT(VALUE, 4)
+	   2264           VALUE2 = IAND(HDB.DAT(37), 240)
+	   2265           VALUE2 = ISHFT(VALUE2, -4)
+	   2266           VALUE = IOR(VALUE,VALUE2)
+	   2267           STICS_PLUSDPPS_OUTV(DECOM_CNTR) = -2.453E1 + 2.9562*FLOAT(VALUE)
+	   2268 C
+	   2269 C Get STICS -DPPS Output Voltage (12 bit field in bytes 37 and 38 of the HDB)
+	   2270 C
+	   2271           VALUE = HDB.DAT(38)
+	   2272           VALUE = IAND(VALUE, 255)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  17
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2273           VALUE2 = IAND(HDB.DAT(37), 15)
+	   2274           VALUE2 = ISHFT(VALUE2, 8)
+	   2275           VALUE = IOR(VALUE,VALUE2)
+	   2276           STICS_MINUSDPPS_OUTV(DECOM_CNTR) = -2.422E1 - 2.9791*FLOAT(VALUE)
+	   2277         ENDIF
+	   2278       ENDIF
+	   2279 C
+	   2280 C Read next Science Record
+	   2281 C
+	   2282       CALL WIND_L1_READ_SR( L1_LUN, CNTR, L1_SR_HEADER, STATUS )
+	   2283       IF(STATUS.EQ.RMS$_EOF)GO TO 900
+	   2284       IF (STATUS .NE. 1) GOTO 9020
+	   2285       IF(L1_SR_HEADER.NVALID.NE.60)THEN
+	   2286         INCOMPLETE = INCOMPLETE + 1
+	   2287       ELSE
+	   2288         IF(.NOT.FIRSTFOUND)THEN
+	   2289           FIRST_SR = L1_SR_HEADER.SR_COUNT
+	   2290           FIRST = HDB.SC_TIME
+	   2291           FIRSTFOUND=.TRUE.
+	   2292         ENDIF
+	   2293         LAST_SR = L1_SR_HEADER.SR_COUNT
+	   2294         LAST = HDB.SC_TIME
+	   2295       ENDIF
+	   2296 C
+	   2297       OLD_TIME = HK.HKSET(HK_COUNT).EPOCH
+	   2298       GO TO 100
+	   2299 C
+	   2300 C When the program reaches this point, we have a full set of subcommutated values
+	   2301 C (or, at any rate, as close to a full set as we're going to get). Print them out
+	   2302 C in tabular form.
+	   2303 C
+	   2304  900  CALL TIME(RUN_TIME)
+	   2305       CALL DATE(RUN_DATE)
+	   2306       CALL GET_IMAGE_INFO('VERS', VERSION, NCHAR)
+	   2307       WRITE(11,500)
+	   2308  500  FORMAT(/,5X,'SUBCOMM|   SWICS DPPS   |   MASS ADPS    |   MASS DPPS    |  STICS +DPPS   |  STICS -DPPS   |')
+	   2309       WRITE(11,510)
+	   2310  510  FORMAT(5X,'  NUM  | Output Voltage | Output Voltage | Output Voltage | Output Voltage | Output Voltage |')
+	   2311       WRITE(11,520)
+	   2312  520  FORMAT(5X,93('-'))
+	   2313       DO 600 I=0,59
+	   2314         WRITE(11,550) I, SWICS_DPPS_OUTV(I), MASS_ADPS_OUTV(I), MASS_DPPS_OUTV(I), 
+	   2315      &                    STICS_PLUSDPPS_OUTV(I), STICS_MINUSDPPS_OUTV(I)
+	   2316  550    FORMAT(7X,I2,3X,'|',5(2X,F12.2,2X,'|'))
+	   2317  600  CONTINUE      
+	   2318       WRITE(11,520)
+	   2319 C
+	   2320 C Write header
+	   2321 C
+	   2322       WRITE(11,950)
+	   2323  950  FORMAT('1','CHK         Parameter Identification            Minimum     Maximum     Average    # 0''s ',
+	   2324      &       '  Commanded Level    Commanded Voltage')
+	   2325       WRITE(11,970)
+	   2326  970  FORMAT(1X,127('-'))
+	   2327 C
+	   2328 C Compute averages, change to practical units, and print out (noncommutated)
+	   2329 C housekeeping data. Only do this if we have some nonzero values; otherwise
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  18
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2330 C set the average to 0. Do this for ...
+	   2331 C
+	   2332 C DPU Temp (Passive)
+	   2333 C
+	   2334       IF((NUM_MF - DPU_TEMP.NZERO).LE.0)THEN
+	   2335         DPU_TEMP.AVER = -999
+	   2336       ELSE
+	   2337         DPU_TEMP.AVER = DPU_TEMP.AVER / (NUM_MF - DPU_TEMP.NZERO)
+	   2338       ENDIF
+	   2339       CALL POLY( DPU_TEMP, 6.558508E2 ,-1.802378E1, 2.133615E-1, -1.295112E-3, 3.927925E-6, -4.754717E-9)
+	   2340       WRITE(11, 1000)'  0  DPU Temp (Passive)', DPU_TEMP.MIN, DPU_TEMP.MAX, DPU_TEMP.AVER, DPU_TEMP.NZERO
+	   2341 1000  FORMAT(1X,A,T45,3F12.2,5X,I3)
+	   2342 C
+	   2343 C SWICS Gnd Electronics Temp (Passive)
+	   2344 C
+	   2345       IF((NUM_MF - SWICS_GET.NZERO).LE.0)THEN
+	   2346         SWICS_GET.AVER = -999
+	   2347       ELSE
+	   2348         SWICS_GET.AVER = SWICS_GET.AVER / (NUM_MF - SWICS_GET.NZERO)
+	   2349       ENDIF
+	   2350       CALL POLY( SWICS_GET, 6.558508E2 ,-1.802378E1, 2.133615E-1, -1.295112E-3, 3.927925E-6, -4.754717E-9)
+	   2351       WRITE(11, 1000)'  1  SWICS Gnd Electronics Temp (Passive)', SWICS_GET.MIN, SWICS_GET.MAX, SWICS_GET.AVER, SWIC
+	   2351 S_GET.NZERO
+	   2352 C
+	   2353 C MASS Gnd Electronics Temp (Passive)
+	   2354 C
+	   2355       IF((NUM_MF - MASS_GET.NZERO).LE.0)THEN
+	   2356         MASS_GET.AVER = -999
+	   2357       ELSE
+	   2358         MASS_GET.AVER  = MASS_GET.AVER / (NUM_MF - MASS_GET.NZERO)
+	   2359       ENDIF
+	   2360       CALL POLY( MASS_GET, 6.558508E2 ,-1.802378E1, 2.133615E-1, -1.295112E-3, 3.927925E-6, -4.754717E-9)
+	   2361       WRITE(11, 1000)'  2  MASS Gnd Electronics Temp (Passive)', MASS_GET.MIN, MASS_GET.MAX, MASS_GET.AVER, MASS_GET
+	   2361 .NZERO
+	   2362 C
+	   2363 C STICS SSD Temp (Passive)
+	   2364 C
+	   2365       IF((NUM_MF - STICS_SSD_TEMP.NZERO).LE.0)THEN
+	   2366         STICS_SSD_TEMP.AVER = -999
+	   2367       ELSE
+	   2368         STICS_SSD_TEMP.AVER  = STICS_SSD_TEMP.AVER / (NUM_MF - STICS_SSD_TEMP.NZERO)
+	   2369       ENDIF
+	   2370       CALL POLY( STICS_SSD_TEMP, 6.558508E2 ,-1.802378E1, 2.133615E-1, -1.295112E-3, 3.927925E-6, -4.754717E-9)
+	   2371       WRITE(11, 1000)'  3  STICS SSD Temp (Passive)', STICS_SSD_TEMP.MIN, STICS_SSD_TEMP.MAX, STICS_SSD_TEMP.AVER,
+	   2372      &               STICS_SSD_TEMP.NZERO
+	   2373 C
+	   2374 C STICS AE Housing Temp (Passive)
+	   2375 C
+	   2376       IF((NUM_MF - STICS_AEH_TEMP.NZERO).LE.0)THEN
+	   2377         STICS_AEH_TEMP.AVER = -999
+	   2378       ELSE
+	   2379         STICS_AEH_TEMP.AVER  = STICS_AEH_TEMP.AVER  / (NUM_MF - STICS_AEH_TEMP.NZERO)
+	   2380       ENDIF
+	   2381       CALL POLY( STICS_AEH_TEMP, 6.558508E2 ,-1.802378E1, 2.133615E-1, -1.295112E-3, 3.927925E-6, -4.754717E-9)
+	   2382       WRITE(11, 1000)'  4  STICS AE Housing Temp (Passive)', STICS_AEH_TEMP.MIN, STICS_AEH_TEMP.MAX, STICS_AEH_TEMP.
+	   2382 AVER,
+	   2383      &               STICS_AEH_TEMP.NZERO
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  19
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2384 C
+	   2385 C DPU 28 V Primary Current
+	   2386 C
+	   2387       IF((NUM_SR - DPU_28V.NZERO).LE.0)THEN
+	   2388         DPU_28V.AVER = -999
+	   2389       ELSE
+	   2390         DPU_28V.AVER = DPU_28V.AVER / (NUM_SR - DPU_28V.NZERO)
+	   2391       ENDIF
+	   2392       CALL POLY( DPU_28V, 0.0, 2.040, 0.0, 0.0, 0.0, 0.0)
+	   2393       WRITE(11, 1000)'  5  DPU 28 V Primary Current', DPU_28V.MIN, DPU_28V.MAX, DPU_28V.AVER, DPU_28V.NZERO
+	   2394 C
+	   2395 C DPU 5.2 V (Switched) Voltage
+	   2396 C
+	   2397       IF((NUM_SR - DPU_5P2V_S.NZERO).LE.0)THEN
+	   2398         DPU_5P2V_S.AVER = -999
+	   2399       ELSE
+	   2400         DPU_5P2V_S.AVER = DPU_5P2V_S.AVER / (NUM_SR - DPU_5P2V_S.NZERO)
+	   2401       ENDIF
+	   2402       CALL POLY( DPU_5P2V_S, 0.0, 2.500E-2 , 0.0, 0.0, 0.0, 0.0)
+	   2403       WRITE(11, 1000)'  6  DPU 5.2 V (Switched) Voltage', DPU_5P2V_S.MIN, DPU_5P2V_S.MAX, DPU_5P2V_S.AVER, DPU_5P2V_
+	   2403 S.NZERO
+	   2404 C
+	   2405 C DPU 5.2 V (Permanent) Voltage
+	   2406 C
+	   2407       IF((NUM_SR - DPU_5P2V_P.NZERO).LE.0)THEN
+	   2408         DPU_5P2V_P.AVER = -999
+	   2409       ELSE
+	   2410         DPU_5P2V_P.AVER = DPU_5P2V_P.AVER / (NUM_SR - DPU_5P2V_P.NZERO)
+	   2411       ENDIF
+	   2412       CALL POLY( DPU_5P2V_P, 0.0, 2.500E-2 , 0.0, 0.0, 0.0, 0.0)
+	   2413       WRITE(11, 1000)'  7  DPU 5.2 V (Permanent) Voltage', DPU_5P2V_P.MIN, DPU_5P2V_P.MAX, DPU_5P2V_P.AVER, DPU_5P2V
+	   2413 _P.NZERO
+	   2414 C
+	   2415 C DPU 10 V Voltage
+	   2416 C
+	   2417       IF((NUM_SR - DPU_10V.NZERO).LE.0)THEN
+	   2418         DPU_10V.AVER = -999
+	   2419       ELSE
+	   2420         DPU_10V.AVER = DPU_10V.AVER / (NUM_SR - DPU_10V.NZERO)
+	   2421       ENDIF
+	   2422       CALL POLY( DPU_10V, 0.0, 5.000E-2 , 0.0, 0.0, 0.0, 0.0)
+	   2423       WRITE(11, 1000)'  8  DPU 10 V Voltage', DPU_10V.MIN, DPU_10V.MAX, DPU_10V.AVER, DPU_10V.NZERO
+	   2424 C
+	   2425 C DPU Temperature, PIF_A
+	   2426 C
+	   2427       IF((NUM_SR - DPU_TEMP_PIFA.NZERO).LE.0)THEN
+	   2428         DPU_TEMP_PIFA.AVER = -999
+	   2429       ELSE
+	   2430         DPU_TEMP_PIFA.AVER = DPU_TEMP_PIFA.AVER / (NUM_SR - DPU_TEMP_PIFA.NZERO)
+	   2431       ENDIF
+	   2432       CALL POLY( DPU_TEMP_PIFA, 1.437601E2, -3.224279, 4.848285E-2, -4.101237E-4, 1.682762E-6, -2.660079E-9)
+	   2433       WRITE(11, 1000)'  9  DPU Temperature, PIF_A', DPU_TEMP_PIFA.MIN, DPU_TEMP_PIFA.MAX, DPU_TEMP_PIFA.AVER, DPU_TE
+	   2433 MP_PIFA.NZERO
+	   2434 C
+	   2435 C DPU Temperature, CTL_W
+	   2436 C
+	   2437       IF((NUM_SR - DPU_TEMP_CTLW.NZERO).LE.0)THEN
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  20
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2438         DPU_TEMP_CTLW.AVER = -999
+	   2439       ELSE
+	   2440         DPU_TEMP_CTLW.AVER = DPU_TEMP_CTLW.AVER / (NUM_SR - DPU_TEMP_CTLW.NZERO)
+	   2441       ENDIF
+	   2442       CALL POLY( DPU_TEMP_CTLW, 1.437601E2, -3.224279, 4.848285E-2, -4.101237E-4, 1.682762E-6, -2.660079E-9)
+	   2443       WRITE(11, 1000)'     DPU Temperature, CTL_W', DPU_TEMP_CTLW.MIN, DPU_TEMP_CTLW.MAX, DPU_TEMP_CTLW.AVER, DPU_TE
+	   2443 MP_CTLW.NZERO
+	   2444 C
+	   2445 C SWICS +28 V Primary Current (Gnd Ref)
+	   2446 C
+	   2447       IF((NUM_SR - SWICS_PLUS28V_PRIM_CURR.NZERO).LE.0)THEN
+	   2448         SWICS_PLUS28V_PRIM_CURR.AVER = -999
+	   2449       ELSE
+	   2450         SWICS_PLUS28V_PRIM_CURR.AVER = SWICS_PLUS28V_PRIM_CURR.AVER / (NUM_SR - SWICS_PLUS28V_PRIM_CURR.NZERO)
+	   2451       ENDIF
+	   2452       CALL POLY( SWICS_PLUS28V_PRIM_CURR, 0.0, 1.030 , 0.0, 0.0, 0.0, 0.0)
+	   2453       WRITE(11, 1000)' 10  SWICS +28 V Primary Current (Gnd Ref)', SWICS_PLUS28V_PRIM_CURR.MIN, SWICS_PLUS28V_PRIM_C
+	   2453 URR.MAX, 
+	   2454      &               SWICS_PLUS28V_PRIM_CURR.AVER, SWICS_PLUS28V_PRIM_CURR.NZERO
+	   2455 C
+	   2456 C SWICS +5 V Voltage (Gnd Ref)
+	   2457 C
+	   2458       IF((NUM_SR - SWICS_PLUS5V.NZERO).LE.0)THEN
+	   2459         SWICS_PLUS5V.AVER = -999
+	   2460       ELSE
+	   2461         SWICS_PLUS5V.AVER = SWICS_PLUS5V.AVER / (NUM_SR - SWICS_PLUS5V.NZERO)
+	   2462       ENDIF
+	   2463       CALL POLY( SWICS_PLUS5V, 0.0, 2.500E-2, 0.0, 0.0, 0.0, 0.0)
+	   2464       WRITE(11, 1000)' 11  SWICS +5 V Voltage (Gnd Ref)', SWICS_PLUS5V.MIN, SWICS_PLUS5V.MAX, SWICS_PLUS5V.AVER, SWI
+	   2464 CS_PLUS5V.NZERO
+	   2465 C
+	   2466 C SWICS +5 V Current (Gnd Ref)
+	   2467 C
+	   2468       IF((NUM_SR - SWICS_PLUS5I.NZERO).LE.0)THEN
+	   2469         SWICS_PLUS5I.AVER = -999
+	   2470       ELSE
+	   2471         SWICS_PLUS5I.AVER = SWICS_PLUS5I.AVER / (NUM_SR - SWICS_PLUS5I.NZERO)
+	   2472       ENDIF
+	   2473       CALL POLY( SWICS_PLUS5I, 0.0, 5.000E-1 , 0.0, 0.0, 0.0, 0.0)
+	   2474       WRITE(11, 1000)' 12  SWICS +5 V Current (Gnd Ref)', SWICS_PLUS5I.MIN, SWICS_PLUS5I.MAX, SWICS_PLUS5I.AVER, SWI
+	   2474 CS_PLUS5I.NZERO
+	   2475 C
+	   2476 C SWICS -5 V Voltage (Gnd Ref)
+	   2477 C
+	   2478       IF((NUM_SR - SWICS_MINUS5V.NZERO).LE.0)THEN
+	   2479         SWICS_MINUS5V.AVER = -999
+	   2480       ELSE
+	   2481         SWICS_MINUS5V.AVER = SWICS_MINUS5V.AVER / (NUM_SR - SWICS_MINUS5V.NZERO)
+	   2482       ENDIF
+	   2483       CALL POLY( SWICS_MINUS5V, 0.0, -2.500E-2, 0.0, 0.0, 0.0, 0.0)
+	   2484       WRITE(11, 1000)' 13  SWICS -5 V Voltage (Gnd Ref)', SWICS_MINUS5V.MIN, SWICS_MINUS5V.MAX, 
+	   2485      &               SWICS_MINUS5V.AVER, SWICS_MINUS5V.NZERO
+	   2486 C
+	   2487 C SWICS +8 V Voltage (Gnd Ref)
+	   2488 C
+	   2489       IF((NUM_SR - SWICS_PLUS8V.NZERO).LE.0)THEN
+	   2490         SWICS_PLUS8V.AVER = -999
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  21
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2491       ELSE
+	   2492         SWICS_PLUS8V.AVER = SWICS_PLUS8V.AVER / (NUM_SR - SWICS_PLUS8V.NZERO)
+	   2493       ENDIF
+	   2494       CALL POLY( SWICS_PLUS8V, 0.0, 4.000E-2, 0.0, 0.0, 0.0, 0.0)
+	   2495       WRITE(11, 1000)' 14  SWICS +8 V Voltage (Gnd Ref)', SWICS_PLUS8V.MIN, SWICS_PLUS8V.MAX, SWICS_PLUS8V.AVER, SWI
+	   2495 CS_PLUS8V.NZERO
+	   2496 C
+	   2497 C SWICS +8 V Current (Gnd Ref)
+	   2498 C
+	   2499       IF((NUM_SR - SWICS_PLUS8I.NZERO).LE.0)THEN
+	   2500         SWICS_PLUS8I.AVER = -999
+	   2501       ELSE
+	   2502         SWICS_PLUS8I.AVER = SWICS_PLUS8I.AVER / (NUM_SR - SWICS_PLUS8I.NZERO)
+	   2503       ENDIF
+	   2504       CALL POLY( SWICS_PLUS8I, 0.0, 2.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   2505       WRITE(11, 1000)'     SWICS +8 V Current (Gnd Ref)', SWICS_PLUS8I.MIN, SWICS_PLUS8I.MAX, SWICS_PLUS8I.AVER, SWI
+	   2505 CS_PLUS8I.NZERO
+	   2506 C
+	   2507 C SWICS 20 V Voltage (Gnd Ref)
+	   2508 C
+	   2509       IF((NUM_SR - SWICS_20V.NZERO).LE.0)THEN
+	   2510         SWICS_20V.AVER = -999
+	   2511       ELSE
+	   2512         SWICS_20V.AVER = SWICS_20V.AVER / (NUM_SR - SWICS_20V.NZERO)
+	   2513       ENDIF
+	   2514       CALL POLY( SWICS_20V, -4.0E-1, 1.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   2515       WRITE(11, 1000)' 15  SWICS 20 V Voltage (Gnd Ref)', SWICS_20V.MIN, SWICS_20V.MAX, SWICS_20V.AVER, SWICS_20V.NZ
+	   2515 ERO
+	   2516 C
+	   2517 C SWICS 20 V Current (Gnd Ref)
+	   2518 C
+	   2519       IF((NUM_SR - SWICS_20I.NZERO).LE.0)THEN
+	   2520         SWICS_20I.AVER = -999
+	   2521       ELSE
+	   2522         SWICS_20I.AVER = SWICS_20I.AVER / (NUM_SR - SWICS_20I.NZERO)
+	   2523       ENDIF
+	   2524       CALL POLY( SWICS_20I, -1.675, 9.990E-1, 0.0, 0.0, 0.0, 0.0)
+	   2525       WRITE(11, 1000)' 16  SWICS 20 V Current (Gnd Ref)', SWICS_20I.MIN, SWICS_20I.MAX, SWICS_20I.AVER, SWICS_20I.NZ
+	   2525 ERO
+	   2526 C
+	   2527 C SWICS LVPS 28 V Voltage (Gnd Ref)
+	   2528 C
+	   2529       IF((NUM_SR - SWICS_LVPS_28V.NZERO).LE.0)THEN
+	   2530         SWICS_LVPS_28V.AVER = -999
+	   2531       ELSE
+	   2532         SWICS_LVPS_28V.AVER = SWICS_LVPS_28V.AVER / (NUM_SR - SWICS_LVPS_28V.NZERO)
+	   2533       ENDIF
+	   2534       CALL POLY( SWICS_LVPS_28V, -7.143E-1, 1.429E-1, 0.0, 0.0, 0.0, 0.0)
+	   2535       WRITE(11, 1000)' 17  SWICS LVPS 28 V Voltage (Gnd Ref)', SWICS_LVPS_28V.MIN, SWICS_LVPS_28V.MAX, 
+	   2536      &               SWICS_LVPS_28V.AVER, SWICS_LVPS_28V.NZERO
+	   2537 C
+	   2538 C SWICS DPPS 28 V Current (Gnd Ref)
+	   2539 C
+	   2540       IF((NUM_SR - SWICS_DPPS_28I.NZERO).LE.0)THEN
+	   2541         SWICS_DPPS_28I.AVER = -999
+	   2542       ELSE
+	   2543         SWICS_DPPS_28I.AVER = SWICS_DPPS_28I.AVER / (NUM_SR - SWICS_DPPS_28I.NZERO)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  22
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2544       ENDIF
+	   2545       CALL POLY( SWICS_DPPS_28I, -3.864E-1, 2.078E-1, 0.0, 0.0, 0.0, 0.0)
+	   2546       WRITE(11, 1000)' 18  SWICS DPPS 28 V Current (Gnd Ref)', SWICS_DPPS_28I.MIN, SWICS_DPPS_28I.MAX, 
+	   2547      &               SWICS_DPPS_28I.AVER, SWICS_DPPS_28I.NZERO
+	   2548 C
+	   2549 C SWICS PAPS 28 V Current (Gnd Ref)
+	   2550 C
+	   2551       IF((NUM_SR - SWICS_PAPS_28I.NZERO).LE.0)THEN
+	   2552         SWICS_PAPS_28I.AVER = -999
+	   2553       ELSE
+	   2554         SWICS_PAPS_28I.AVER = SWICS_PAPS_28I.AVER / (NUM_SR - SWICS_PAPS_28I.NZERO)
+	   2555       ENDIF
+	   2556       CALL POLY( SWICS_PAPS_28I, -8.454E-1, 2.065E-1, 0.0, 0.0, 0.0, 0.0)
+	   2557       WRITE(11, 1000)' 19  SWICS PAPS 28 V Current (Gnd Ref)', SWICS_PAPS_28I.MIN, SWICS_PAPS_28I.MAX, 
+	   2558      &               SWICS_PAPS_28I.AVER, SWICS_PAPS_28I.NZERO
+	   2559 C
+	   2560 C SWICS PAPS Output Voltage (Gnd Ref)
+	   2561 C
+	   2562       IF((NUM_SR - SWICS_PAPS_OUTV.NZERO).LE.0)THEN
+	   2563         SWICS_PAPS_OUTV.AVER = -999
+	   2564       ELSE
+	   2565         SWICS_PAPS_OUTV.AVER = SWICS_PAPS_OUTV.AVER / (NUM_SR - SWICS_PAPS_OUTV.NZERO)
+	   2566       ENDIF
+	   2567       CALL POLY( SWICS_PAPS_OUTV, 4.453E1, -1.464E2, 0.0, 0.0, 0.0, 0.0)
+	   2568       WRITE(11, 1100)' 20  SWICS PAPS Output Voltage (Gnd Ref)', SWICS_PAPS_OUTV.MIN, SWICS_PAPS_OUTV.MAX, 
+	   2569      &               SWICS_PAPS_OUTV.AVER, SWICS_PAPS_OUTV.NZERO, SWICS_PAPS_CL, SWICS_PAPS_CV
+	   2570 1100  FORMAT(1X,A,T45,3F12.2,5X,I3,10X,I5,6X,F12.2)
+	   2571 C
+	   2572 C SWICS +5 V Voltage (PAPS Ref)
+	   2573 C
+	   2574       IF((NUM_SR - SWICS_PLUS5V_PR.NZERO).LE.0)THEN
+	   2575         SWICS_PLUS5V_PR.AVER = -999
+	   2576       ELSE
+	   2577         SWICS_PLUS5V_PR.AVER = SWICS_PLUS5V_PR.AVER / (NUM_SR - SWICS_PLUS5V_PR.NZERO)
+	   2578       ENDIF
+	   2579       CALL POLY( SWICS_PLUS5V_PR, 0.0, 2.483E-2, 0.0, 0.0, 0.0, 0.0)
+	   2580       WRITE(11, 1000)' 21  SWICS +5 V Voltage (PAPS Ref)', SWICS_PLUS5V_PR.MIN, SWICS_PLUS5V_PR.MAX,  
+	   2581      &               SWICS_PLUS5V_PR.AVER, SWICS_PLUS5V_PR.NZERO
+	   2582 C
+	   2583 C SWICS +5 V Current (PAPS Ref)
+	   2584 C
+	   2585       IF((NUM_SR - SWICS_PLUS5I_PR.NZERO).LE.0)THEN
+	   2586         SWICS_PLUS5I_PR.AVER = -999
+	   2587       ELSE
+	   2588         SWICS_PLUS5I_PR.AVER = SWICS_PLUS5I_PR.AVER / (NUM_SR - SWICS_PLUS5I_PR.NZERO)
+	   2589       ENDIF
+	   2590       CALL POLY( SWICS_PLUS5I_PR, 0.0, 7.176E-1, 0.0, 0.0, 0.0, 0.0)
+	   2591       WRITE(11, 1000)' 22  SWICS +5 V Current (PAPS Ref)', SWICS_PLUS5I_PR.MIN, SWICS_PLUS5I_PR.MAX,  
+	   2592      &               SWICS_PLUS5I_PR.AVER, SWICS_PLUS5I_PR.NZERO
+	   2593 C
+	   2594 C SWICS -5 V Voltage (PAPS Ref)
+	   2595 C
+	   2596       IF((NUM_SR - SWICS_MINUS5V_PR.NZERO).LE.0)THEN
+	   2597         SWICS_MINUS5V_PR.AVER = -999
+	   2598       ELSE
+	   2599         SWICS_MINUS5V_PR.AVER = SWICS_MINUS5V_PR.AVER / (NUM_SR - SWICS_MINUS5V_PR.NZERO)
+	   2600       ENDIF
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  23
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2601       CALL POLY( SWICS_MINUS5V_PR, 0.0, -2.488E-2, 0.0, 0.0, 0.0, 0.0)
+	   2602       WRITE(11, 1000)' 23  SWICS -5 V Voltage (PAPS Ref)', SWICS_MINUS5V_PR.MIN, SWICS_MINUS5V_PR.MAX, 
+	   2603      &               SWICS_MINUS5V_PR.AVER, SWICS_MINUS5V_PR.NZERO
+	   2604 C
+	   2605 C SWICS -5 V Current (PAPS Ref)
+	   2606 C
+	   2607       IF((NUM_SR - SWICS_MINUS5I_PR.NZERO).LE.0)THEN
+	   2608         SWICS_MINUS5I_PR.AVER = -999
+	   2609       ELSE
+	   2610         SWICS_MINUS5I_PR.AVER = SWICS_MINUS5I_PR.AVER / (NUM_SR - SWICS_MINUS5I_PR.NZERO)
+	   2611       ENDIF
+	   2612       CALL POLY( SWICS_MINUS5I_PR, 0.0, 7.353E-1, 0.0, 0.0, 0.0, 0.0)
+	   2613       WRITE(11, 1000)' 24  SWICS -5 V Current (PAPS Ref)', SWICS_MINUS5I_PR.MIN, SWICS_MINUS5I_PR.MAX, 
+	   2614      &               SWICS_MINUS5I_PR.AVER, SWICS_MINUS5I_PR.NZERO
+	   2615 C
+	   2616 C SWICS +12 V Voltage (PAPS Ref)
+	   2617 C
+	   2618       IF((NUM_SR - SWICS_PLUS12V_PR.NZERO).LE.0)THEN
+	   2619         SWICS_PLUS12V_PR.AVER = -999
+	   2620       ELSE
+	   2621         SWICS_PLUS12V_PR.AVER = SWICS_PLUS12V_PR.AVER / (NUM_SR - SWICS_PLUS12V_PR.NZERO)
+	   2622       ENDIF
+	   2623       CALL POLY( SWICS_PLUS12V_PR, 0.0, 5.977E-2, 0.0, 0.0, 0.0, 0.0)
+	   2624       WRITE(11, 1000)' 25  SWICS +12 V Voltage (PAPS Ref)', SWICS_PLUS12V_PR.MIN, SWICS_PLUS12V_PR.MAX, 
+	   2625      &               SWICS_PLUS12V_PR.AVER, SWICS_PLUS12V_PR.NZERO
+	   2626 C
+	   2627 C SWICS +12 V Current (PAPS Ref)
+	   2628 C
+	   2629       IF((NUM_SR - SWICS_PLUS12I_PR.NZERO).LE.0)THEN
+	   2630         SWICS_PLUS12I_PR.AVER = -999
+	   2631       ELSE
+	   2632         SWICS_PLUS12I_PR.AVER = SWICS_PLUS12I_PR.AVER / (NUM_SR - SWICS_PLUS12I_PR.NZERO)
+	   2633       ENDIF
+	   2634       CALL POLY( SWICS_PLUS12I_PR, 0.0, 6.625E-1, 0.0, 0.0, 0.0, 0.0)
+	   2635       WRITE(11, 1000)' 26  SWICS +12 V Current (PAPS Ref)', SWICS_PLUS12I_PR.MIN, SWICS_PLUS12I_PR.MAX, 
+	   2636      &               SWICS_PLUS12I_PR.AVER, SWICS_PLUS12I_PR.NZERO
+	   2637 C
+	   2638 C -12 V Voltage (PAPS Ref)
+	   2639 C
+	   2640       IF((NUM_SR - SWICS_MINUS12V_PR.NZERO).LE.0)THEN
+	   2641         SWICS_MINUS12V_PR.AVER = -999
+	   2642       ELSE
+	   2643         SWICS_MINUS12V_PR.AVER = SWICS_MINUS12V_PR.AVER / (NUM_SR - SWICS_MINUS12V_PR.NZERO)
+	   2644       ENDIF
+	   2645       CALL POLY( SWICS_MINUS12V_PR, 0.0, -5.917E-2, 0.0, 0.0, 0.0, 0.0)
+	   2646       WRITE(11, 1000)' 27  -12 V Voltage (PAPS Ref)', SWICS_MINUS12V_PR.MIN, SWICS_MINUS12V_PR.MAX, 
+	   2647      &               SWICS_MINUS12V_PR.AVER, SWICS_MINUS12V_PR.NZERO
+	   2648 C
+	   2649 C SWICS -12 V Current (PAPS Ref)
+	   2650 C
+	   2651       IF((NUM_SR - SWICS_MINUS12I_PR.NZERO).LE.0)THEN
+	   2652         SWICS_MINUS12I_PR.AVER = -999
+	   2653       ELSE
+	   2654         SWICS_MINUS12I_PR.AVER = SWICS_MINUS12I_PR.AVER / (NUM_SR - SWICS_MINUS12I_PR.NZERO)
+	   2655       ENDIF
+	   2656       CALL POLY( SWICS_MINUS12I_PR, 0.0, 1.484E-1, 0.0, 0.0, 0.0, 0.0)
+	   2657       WRITE(11, 1000)' 28  SWICS -12 V Current (PAPS Ref)', SWICS_MINUS12I_PR.MIN, SWICS_MINUS12I_PR.MAX, 
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  24
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2658      &               SWICS_MINUS12I_PR.AVER, SWICS_MINUS12I_PR.NZERO
+	   2659 C
+	   2660 C SWICS SSD Bias Voltage (PAPS Ref)
+	   2661 C
+	   2662       IF((NUM_SR - SWICS_SSD_BIASV_PR.NZERO).LE.0)THEN
+	   2663         SWICS_SSD_BIASV_PR.AVER = -999
+	   2664       ELSE
+	   2665         SWICS_SSD_BIASV_PR.AVER = SWICS_SSD_BIASV_PR.AVER / (NUM_SR - SWICS_SSD_BIASV_PR.NZERO)
+	   2666       ENDIF
+	   2667       CALL POLY( SWICS_SSD_BIASV_PR, 0, 0.5, 0.0, 0.0, 0.0, 0.0)
+	   2668       WRITE(11, 1000)'     SWICS SSD Bias Voltage (PAPS Ref)', SWICS_SSD_BIASV_PR.MIN, SWICS_SSD_BIASV_PR.MAX, 
+	   2669      &               SWICS_SSD_BIASV_PR.AVER, SWICS_SSD_BIASV_PR.NZERO
+	   2670 C
+	   2671 C SWICS Start MCPPS Voltage (PAPS Ref)
+	   2672 C
+	   2673       IF((NUM_SR - SWICS_START_MCPPSV_PR.NZERO).LE.0)THEN
+	   2674         SWICS_START_MCPPSV_PR.AVER = -999
+	   2675       ELSE
+	   2676         SWICS_START_MCPPSV_PR.AVER = SWICS_START_MCPPSV_PR.AVER / (NUM_SR - SWICS_START_MCPPSV_PR.NZERO)
+	   2677       ENDIF
+	   2678       CALL POLY( SWICS_START_MCPPSV_PR, -4.610, 1.864E1, 0.0, 0.0, 0.0, 0.0)
+	   2679       WRITE(11, 1100)'     SWICS Start MCPPS Voltage (PAPS Ref)', SWICS_START_MCPPSV_PR.MIN, SWICS_START_MCPPSV_PR.M
+	   2679 AX, 
+	   2680      &               SWICS_START_MCPPSV_PR.AVER, SWICS_START_MCPPSV_PR.NZERO, SWICS_Start_MCPPS_CL, SWICS_Start_MCPP
+	   2680 S_CV 
+	   2681 C
+	   2682 C SWICS Stop MCPPS Voltage (PAPS Ref)
+	   2683 C
+	   2684       IF((NUM_SR - SWICS_STOP_MCPPSV_PR.NZERO).LE.0)THEN
+	   2685         SWICS_STOP_MCPPSV_PR.AVER = -999
+	   2686       ELSE
+	   2687         SWICS_STOP_MCPPSV_PR.AVER = SWICS_STOP_MCPPSV_PR.AVER / (NUM_SR - SWICS_STOP_MCPPSV_PR.NZERO)
+	   2688       ENDIF
+	   2689       CALL POLY( SWICS_STOP_MCPPSV_PR, 4.650, 1.356E1, 0.0, 0.0, 0.0, 0.0)
+	   2690       WRITE(11, 1100)'     SWICS Stop MCPPS Voltage (PAPS Ref)', SWICS_STOP_MCPPSV_PR.MIN, SWICS_STOP_MCPPSV_PR.MAX,
+	   2690  
+	   2691      &               SWICS_STOP_MCPPSV_PR.AVER, SWICS_STOP_MCPPSV_PR.NZERO, SWICS_Stop_MCPPS_CL, SWICS_Stop_MCPPS_CV
+	   2691  
+	   2692 C
+	   2693 C SWICS SSD Temp (PAPS Ref)
+	   2694 C
+	   2695       IF((NUM_SR - SWICS_SSD_TEMP_PR.NZERO).LE.0)THEN
+	   2696         SWICS_SSD_TEMP_PR.AVER = -999
+	   2697       ELSE
+	   2698         SWICS_SSD_TEMP_PR.AVER = SWICS_SSD_TEMP_PR.AVER / (NUM_SR - SWICS_SSD_TEMP_PR.NZERO)
+	   2699       ENDIF
+	   2700       CALL POLY( SWICS_SSD_TEMP_PR, 7.886257E1, -1.848392, 2.143749E-2, -1.483171E-4, 5.149126E-7, -7.140936E-10)
+	   2701       WRITE(11, 1000)' 29  SWICS SSD Temp (PAPS Ref)', SWICS_SSD_TEMP_PR.MIN, SWICS_SSD_TEMP_PR.MAX, 
+	   2702      &               SWICS_SSD_TEMP_PR.AVER, SWICS_SSD_TEMP_PR.NZERO
+	   2703 C
+	   2704 C SWICS Bubble Elect Temp, (PAPS Ref)
+	   2705 C
+	   2706       IF((NUM_SR - SWICS_BET_PR.NZERO).LE.0)THEN
+	   2707         SWICS_BET_PR.AVER = -999
+	   2708       ELSE
+	   2709         SWICS_BET_PR.AVER = SWICS_BET_PR.AVER / (NUM_SR - SWICS_BET_PR.NZERO)
+	   2710       ENDIF
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  25
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2711       CALL POLY( SWICS_BET_PR, 7.886257E1, -1.848392, 2.143749E-2, -1.483171E-4, 5.149126E-7, -7.140936E-10)
+	   2712       WRITE(11, 1000)'     SWICS Bubble Elect Temp, (PAPS Ref)', SWICS_BET_PR.MIN, SWICS_BET_PR.MAX, 
+	   2713      &               SWICS_BET_PR.AVER, SWICS_BET_PR.NZERO
+	   2714 C
+	   2715 C MASS +28 V Primary Current (Gnd Ref)
+	   2716 C
+	   2717       IF((NUM_SR - MASS_PLUS28I.NZERO).LE.0)THEN
+	   2718         MASS_PLUS28I.AVER = -999
+	   2719       ELSE
+	   2720         MASS_PLUS28I.AVER = MASS_PLUS28I.AVER / (NUM_SR - MASS_PLUS28I.NZERO)
+	   2721       ENDIF
+	   2722       CALL POLY( MASS_PLUS28I, 0.0, 1.050, 0.0, 0.0, 0.0, 0.0)
+	   2723       WRITE(11, 1000)' 30  MASS +28 V Primary Current (Gnd Ref)', MASS_PLUS28I.MIN, MASS_PLUS28I.MAX, 
+	   2724      &               MASS_PLUS28I.AVER, MASS_PLUS28I.NZERO
+	   2725 C
+	   2726 C MASS +5 V Voltage (Gnd Ref)
+	   2727 C
+	   2728       IF((NUM_SR - MASS_PLUS5V.NZERO).LE.0)THEN
+	   2729         MASS_PLUS5V.AVER = -999
+	   2730       ELSE
+	   2731         MASS_PLUS5V.AVER = MASS_PLUS5V.AVER / (NUM_SR - MASS_PLUS5V.NZERO)
+	   2732       ENDIF
+	   2733       CALL POLY( MASS_PLUS5V, 0.0, 2.500E-2, 0.0, 0.0, 0.0, 0.0 )
+	   2734       WRITE(11, 1000)' 31  MASS +5 V Voltage (Gnd Ref)', MASS_PLUS5V.MIN, MASS_PLUS5V.MAX, MASS_PLUS5V.AVER, MASS_PL
+	   2734 US5V.NZERO
+	   2735 C
+	   2736 C MASS +5 V Current (Gnd Ref)
+	   2737 C
+	   2738       IF((NUM_SR - MASS_PLUS5I.NZERO).LE.0)THEN
+	   2739         MASS_PLUS5I.AVER = -999
+	   2740       ELSE
+	   2741         MASS_PLUS5I.AVER = MASS_PLUS5I.AVER / (NUM_SR - MASS_PLUS5I.NZERO)
+	   2742       ENDIF
+	   2743       CALL POLY( MASS_PLUS5I, 0.0, 5.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   2744       WRITE(11, 1000)' 32  MASS +5 V Current (Gnd Ref)', MASS_PLUS5I.MIN, MASS_PLUS5I.MAX, MASS_PLUS5I.AVER, MASS_PL
+	   2744 US5I.NZERO
+	   2745 C
+	   2746 C MASS -5 V Voltage (Gnd Ref)
+	   2747 C
+	   2748       IF((NUM_SR - MASS_MINUS5V.NZERO).LE.0)THEN
+	   2749         MASS_MINUS5V.AVER = -999
+	   2750       ELSE
+	   2751         MASS_MINUS5V.AVER = MASS_MINUS5V.AVER / (NUM_SR - MASS_MINUS5V.NZERO)
+	   2752       ENDIF
+	   2753       CALL POLY( MASS_MINUS5V, 0.0, -2.500E-2, 0.0, 0.0, 0.0, 0.0)
+	   2754       WRITE(11, 1000)' 33  MASS -5 V Voltage (Gnd Ref)', MASS_MINUS5V.MIN, MASS_MINUS5V.MAX, MASS_MINUS5V.AVER, MASS
+	   2754 _MINUS5V.NZERO
+	   2755 C
+	   2756 C MASS +8 V Voltage (Gnd Ref)
+	   2757 C
+	   2758       IF((NUM_SR - MASS_PLUS8V.NZERO).LE.0)THEN
+	   2759         MASS_PLUS8V.AVER = -999
+	   2760       ELSE
+	   2761         MASS_PLUS8V.AVER = MASS_PLUS8V.AVER / (NUM_SR - MASS_PLUS8V.NZERO)
+	   2762       ENDIF
+	   2763       CALL POLY( MASS_PLUS8V, 0.0, 4.000E-2, 0.0, 0.0, 0.0, 0.0)
+	   2764       WRITE(11, 1000)' 34  MASS +8 V Voltage (Gnd Ref)', MASS_PLUS8V.MIN, MASS_PLUS8V.MAX, MASS_PLUS8V.AVER, MASS_PL
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  26
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2764 US8V.NZERO
+	   2765 C
+	   2766 C MASS LVPS 28 V Voltage (Gnd Ref)
+	   2767 C
+	   2768       IF((NUM_SR - MASS_LVPS28V.NZERO).LE.0)THEN
+	   2769         MASS_LVPS28V.AVER = -999
+	   2770       ELSE
+	   2771         MASS_LVPS28V.AVER = MASS_LVPS28V.AVER / (NUM_SR - MASS_LVPS28V.NZERO)
+	   2772       ENDIF
+	   2773       CALL POLY( MASS_LVPS28V, 0.0, 1.400E-1, 0.0, 0.0, 0.0, 0.0)
+	   2774       WRITE(11, 1000)' 35  MASS LVPS 28 V Voltage (Gnd Ref)', MASS_LVPS28V.MIN, MASS_LVPS28V.MAX, 
+	   2775      &               MASS_LVPS28V.AVER, MASS_LVPS28V.NZERO
+	   2776 C
+	   2777 C MASS ADPS 28 V Current (Gnd Ref)
+	   2778 C
+	   2779       IF((NUM_SR - MASS_ADPS28V.NZERO).LE.0)THEN
+	   2780         MASS_ADPS28V.AVER = -999
+	   2781       ELSE
+	   2782         MASS_ADPS28V.AVER = MASS_ADPS28V.AVER / (NUM_SR - MASS_ADPS28V.NZERO)
+	   2783       ENDIF
+	   2784       CALL POLY( MASS_ADPS28V, 0.0, 2.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   2785       WRITE(11, 1000)' 36  MASS ADPS 28 V Current (Gnd Ref)', MASS_ADPS28V.MIN, MASS_ADPS28V.MAX, 
+	   2786      &               MASS_ADPS28V.AVER, MASS_ADPS28V.NZERO
+	   2787 C
+	   2788 C MASS DPPS 28 V Current (Gnd Ref)
+	   2789 C
+	   2790       IF((NUM_SR - MASS_DPPS28I.NZERO).LE.0)THEN
+	   2791         MASS_DPPS28I.AVER = -999
+	   2792       ELSE
+	   2793         MASS_DPPS28I.AVER = MASS_DPPS28I.AVER / (NUM_SR - MASS_DPPS28I.NZERO)
+	   2794       ENDIF
+	   2795       CALL POLY( MASS_DPPS28I, 0.0, 2.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   2796       WRITE(11, 1000)' 38  MASS DPPS 28 V Current (Gnd Ref)', MASS_DPPS28I.MIN, MASS_DPPS28I.MAX, 
+	   2797      &               MASS_DPPS28I.AVER, MASS_DPPS28I.NZERO
+	   2798 C
+	   2799 C MASS Analog Electronics Temp (Gnd Ref)
+	   2800 C
+	   2801       IF((NUM_SR - MASS_AET.NZERO).LE.0)THEN
+	   2802         MASS_AET.AVER = -999
+	   2803       ELSE
+	   2804         MASS_AET.AVER = MASS_AET.AVER / (NUM_SR - MASS_AET.NZERO)
+	   2805       ENDIF
+	   2806       CALL POLY( MASS_AET, 7.886257E1, -1.848392, 2.143749E-2, -1.483171E-4, 5.149126E-7, -7.140936E-10)
+	   2807       WRITE(11, 1000)' 39  MASS Analog Electronics Temp (Gnd Ref)', MASS_AET.MIN, MASS_AET.MAX, MASS_AET.AVER, MASS_
+	   2807 AET.NZERO
+	   2808 C
+	   2809 C MASS +5 V Voltage (ADPS Ref)
+	   2810 C
+	   2811       IF((NUM_SR - MASS_PLUS5V_AR.NZERO).LE.0)THEN
+	   2812         MASS_PLUS5V_AR.AVER = -999
+	   2813       ELSE
+	   2814         MASS_PLUS5V_AR.AVER = MASS_PLUS5V_AR.AVER / (NUM_SR - MASS_PLUS5V_AR.NZERO)
+	   2815       ENDIF
+	   2816       CALL POLY( MASS_PLUS5V_AR, 0.0, 2.500E-2, 0.0, 0.0, 0.0, 0.0)
+	   2817       WRITE(11, 1000)' 40  MASS +5 V Voltage (ADPS Ref)', MASS_PLUS5V_AR.MIN, MASS_PLUS5V_AR.MAX, 
+	   2818      &               MASS_PLUS5V_AR.AVER, MASS_PLUS5V_AR.NZERO
+	   2819 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  27
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2820 C MASS +5 V Current (ADPS Ref)
+	   2821 C
+	   2822       IF((NUM_SR - MASS_PLUS5I_AR.NZERO).LE.0)THEN
+	   2823         MASS_PLUS5I_AR.AVER = -999
+	   2824       ELSE
+	   2825         MASS_PLUS5I_AR.AVER = MASS_PLUS5I_AR.AVER / (NUM_SR - MASS_PLUS5I_AR.NZERO)
+	   2826       ENDIF
+	   2827       CALL POLY( MASS_PLUS5I_AR, 0.0, 1.000, 0.0, 0.0, 0.0, 0.0)
+	   2828       WRITE(11, 1000)' 41  MASS +5 V Current (ADPS Ref)', MASS_PLUS5I_AR.MIN, MASS_PLUS5I_AR.MAX, 
+	   2829      &               MASS_PLUS5I_AR.AVER, MASS_PLUS5I_AR.NZERO
+	   2830 C
+	   2831 C MASS -5 V Voltage (ADPS Ref)
+	   2832 C
+	   2833       IF((NUM_SR - MASS_MINUS5V_AR.NZERO).LE.0)THEN
+	   2834         MASS_MINUS5V_AR.AVER = -999
+	   2835       ELSE
+	   2836         MASS_MINUS5V_AR.AVER = MASS_MINUS5V_AR.AVER / (NUM_SR - MASS_MINUS5V_AR.NZERO)
+	   2837       ENDIF
+	   2838       CALL POLY( MASS_MINUS5V_AR, 0.0, -2.500E-2, 0.0, 0.0, 0.0, 0.0)
+	   2839       WRITE(11, 1000)' 42  MASS -5 V Voltage (ADPS Ref)', MASS_MINUS5V_AR.MIN, MASS_MINUS5V_AR.MAX, 
+	   2840      &               MASS_MINUS5V_AR.AVER, MASS_MINUS5V_AR.NZERO
+	   2841 C
+	   2842 C MASS -5 V Current (ADPS Ref)
+	   2843 C
+	   2844       IF((NUM_SR - MASS_MINUS5I_AR.NZERO).LE.0)THEN
+	   2845         MASS_MINUS5I_AR.AVER = -999
+	   2846       ELSE
+	   2847         MASS_MINUS5I_AR.AVER = MASS_MINUS5I_AR.AVER / (NUM_SR - MASS_MINUS5I_AR.NZERO)
+	   2848       ENDIF
+	   2849       CALL POLY( MASS_MINUS5I_AR, 0.0, 1.000, 0.0, 0.0, 0.0, 0.0)
+	   2850       WRITE(11, 1000)' 43  MASS -5 V Current (ADPS Ref)', MASS_MINUS5I_AR.MIN, MASS_MINUS5I_AR.MAX, 
+	   2851      &               MASS_MINUS5I_AR.AVER, MASS_MINUS5I_AR.NZERO
+	   2852 C
+	   2853 C MASS +6 V Voltage (ADPS Ref)
+	   2854 C
+	   2855       IF((NUM_SR - MASS_PLUS6V_AR.NZERO).LE.0)THEN
+	   2856         MASS_PLUS6V_AR.AVER = -999
+	   2857       ELSE
+	   2858         MASS_PLUS6V_AR.AVER = MASS_PLUS6V_AR.AVER / (NUM_SR - MASS_PLUS6V_AR.NZERO)
+	   2859       ENDIF
+	   2860       CALL POLY( MASS_PLUS6V_AR, 0.0, 3.000E-2, 0.0, 0.0, 0.0, 0.0)
+	   2861       WRITE(11, 1000)' 44  MASS +6 V Voltage (ADPS Ref)', MASS_PLUS6V_AR.MIN, MASS_PLUS6V_AR.MAX, 
+	   2862      &               MASS_PLUS6V_AR.AVER, MASS_PLUS6V_AR.NZERO
+	   2863 C
+	   2864 C MASS +6 V Current (ADPS Ref)
+	   2865 C
+	   2866       IF((NUM_SR - MASS_PLUS6I_AR.NZERO).LE.0)THEN
+	   2867         MASS_PLUS6I_AR.AVER = -999
+	   2868       ELSE
+	   2869         MASS_PLUS6I_AR.AVER = MASS_PLUS6I_AR.AVER / (NUM_SR - MASS_PLUS6I_AR.NZERO)
+	   2870       ENDIF
+	   2871       CALL POLY( MASS_PLUS6I_AR, 0.0, 1.000, 0.0, 0.0, 0.0, 0.0)
+	   2872       WRITE(11, 1000)' 45  MASS +6 V Current (ADPS Ref)', MASS_PLUS6I_AR.MIN, MASS_PLUS6I_AR.MAX, 
+	   2873      &               MASS_PLUS6I_AR.AVER, MASS_PLUS6I_AR.NZERO
+	   2874 C
+	   2875 C MASS +12 V Voltage (ADPS Ref)
+	   2876 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  28
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2877       IF((NUM_SR - MASS_PLUS12V_AR.NZERO).LE.0)THEN
+	   2878         MASS_PLUS12V_AR.AVER = -999
+	   2879       ELSE
+	   2880         MASS_PLUS12V_AR.AVER = MASS_PLUS12V_AR.AVER / (NUM_SR - MASS_PLUS12V_AR.NZERO)
+	   2881       ENDIF
+	   2882       CALL POLY( MASS_PLUS12V_AR, 0.0, 6.000E-2, 0.0, 0.0, 0.0, 0.0)
+	   2883       WRITE(11, 1000)' 46  MASS +12 V Voltage (ADPS Ref)', MASS_PLUS12V_AR.MIN, MASS_PLUS12V_AR.MAX, 
+	   2884      &               MASS_PLUS12V_AR.AVER, MASS_PLUS12V_AR.NZERO
+	   2885 C
+	   2886 C MASS -12 V Voltage (ADPS Ref)
+	   2887 C
+	   2888       IF((NUM_SR - MASS_MINUS12V_AR.NZERO).LE.0)THEN
+	   2889         MASS_MINUS12V_AR.AVER = -999
+	   2890       ELSE
+	   2891         MASS_MINUS12V_AR.AVER = MASS_MINUS12V_AR.AVER / (NUM_SR - MASS_MINUS12V_AR.NZERO)
+	   2892       ENDIF
+	   2893       CALL POLY( MASS_MINUS12V_AR, 0.0, -6.000E-2, 0.0, 0.0, 0.0, 0.0)
+	   2894       WRITE(11, 1000)' 47  MASS -12 V Voltage (ADPS Ref)', MASS_MINUS12V_AR.MIN, MASS_MINUS12V_AR.MAX, 
+	   2895      &               MASS_MINUS12V_AR.AVER, MASS_MINUS12V_AR.NZERO
+	   2896 C
+	   2897 C MASS LVPS 28 V Voltage (ADPS Ref)
+	   2898 C
+	   2899       IF((NUM_SR - MASS_LVPS28V_AR.NZERO).LE.0)THEN
+	   2900         MASS_LVPS28V_AR.AVER = -999
+	   2901       ELSE
+	   2902         MASS_LVPS28V_AR.AVER = MASS_LVPS28V_AR.AVER / (NUM_SR - MASS_LVPS28V_AR.NZERO)
+	   2903       ENDIF
+	   2904       CALL POLY( MASS_LVPS28V_AR, 0.0, 1.400E-1, 0.0, 0.0, 0.0, 0.0)
+	   2905       WRITE(11, 1000)' 48  MASS LVPS 28 V Voltage (ADPS Ref)', MASS_LVPS28V_AR.MIN, MASS_LVPS28V_AR.MAX, 
+	   2906      &               MASS_LVPS28V_AR.AVER, MASS_LVPS28V_AR.NZERO
+	   2907 C
+	   2908 C MASS HPS & MCPPS 28V I (ADPS Ref)
+	   2909 C
+	   2910       IF((NUM_SR - MASS_HPS_MCPPS_28I_AR.NZERO).LE.0)THEN
+	   2911         MASS_HPS_MCPPS_28I_AR.AVER = -999
+	   2912       ELSE
+	   2913         MASS_HPS_MCPPS_28I_AR.AVER = MASS_HPS_MCPPS_28I_AR.AVER / (NUM_SR - MASS_HPS_MCPPS_28I_AR.NZERO)
+	   2914       ENDIF
+	   2915       CALL POLY( MASS_HPS_MCPPS_28I_AR, 0.0, 2.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   2916       WRITE(11, 1000)' 49  MASS HPS & MCPPS 28V I (ADPS Ref)', MASS_HPS_MCPPS_28I_AR.MIN, MASS_HPS_MCPPS_28I_AR.MAX,
+	   2917      &                MASS_HPS_MCPPS_28I_AR.AVER , MASS_HPS_MCPPS_28I_AR.NZERO
+	   2918 C
+	   2919 C MASS HPS Output Voltage (ADPS Ref)
+	   2920 C
+	   2921       IF((NUM_SR - MASS_HPS_OUTV_AR.NZERO).LE.0)THEN
+	   2922         MASS_HPS_OUTV_AR.AVER = -999
+	   2923       ELSE
+	   2924         MASS_HPS_OUTV_AR.AVER = MASS_HPS_OUTV_AR.AVER / (NUM_SR - MASS_HPS_OUTV_AR.NZERO)
+	   2925       ENDIF
+	   2926       CALL POLY( MASS_HPS_OUTV_AR, -3.428E1, 1.5285E2, 0.0, 0.0, 0.0, 0.0)
+	   2927       WRITE(11, 1100)' 50  MASS HPS Output Voltage (ADPS Ref)', MASS_HPS_OUTV_AR.MIN, MASS_HPS_OUTV_AR.MAX, 
+	   2928      &               MASS_HPS_OUTV_AR.AVER, MASS_HPS_OUTV_AR.NZERO, MASS_HPS_CL, MASS_HPS_CV 
+	   2929 C
+	   2930 C MASS Start MCPPS Voltage (ADPS Ref)
+	   2931 C
+	   2932       IF((NUM_SR - MASS_START_MCPPSV_AR.NZERO).LE.0)THEN
+	   2933         MASS_START_MCPPSV_AR.AVER = -999
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  29
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2934       ELSE
+	   2935         MASS_START_MCPPSV_AR.AVER = MASS_START_MCPPSV_AR.AVER / (NUM_SR - MASS_START_MCPPSV_AR.NZERO)
+	   2936       ENDIF
+	   2937       CALL POLY( MASS_START_MCPPSV_AR, 1.310E1, 1.431E1, 0.0, 0.0, 0.0, 0.0)
+	   2938       WRITE(11, 1100)'     MASS Start MCPPS Voltage (ADPS Ref)', MASS_START_MCPPSV_AR.MIN, MASS_START_MCPPSV_AR.MAX,
+	   2939      &               MASS_START_MCPPSV_AR.AVER , MASS_START_MCPPSV_AR.NZERO, MASS_Start_MCPPS_CL, MASS_Start_MCPPS_C
+	   2939 V 
+	   2940 C
+	   2941 C MASS Stop MCPPS Voltage (ADPS Ref)
+	   2942 C
+	   2943       IF((NUM_SR - MASS_STOP_MCPPSV_AR.NZERO).LE.0)THEN
+	   2944         MASS_STOP_MCPPSV_AR.AVER = -999
+	   2945       ELSE
+	   2946         MASS_STOP_MCPPSV_AR.AVER = MASS_STOP_MCPPSV_AR.AVER / (NUM_SR - MASS_STOP_MCPPSV_AR.NZERO)
+	   2947       ENDIF
+	   2948       CALL POLY( MASS_STOP_MCPPSV_AR, 0.0, 3.065E1, 0.0, 0.0, 0.0, 0.0)
+	   2949       WRITE(11, 1100)'     MASS Stop MCPPS Voltage (ADPS Ref)', MASS_STOP_MCPPSV_AR.MIN, MASS_STOP_MCPPSV_AR.MAX,
+	   2950      &                MASS_STOP_MCPPSV_AR.AVER, MASS_STOP_MCPPSV_AR.NZERO, MASS_Stop_MCPPS_CL, MASS_Stop_MCPPS_CV
+	   2951 C
+	   2952 C STICS 28 V Primary Current
+	   2953 C
+	   2954       IF((NUM_SR - STICS_28I.NZERO).LE.0)THEN
+	   2955         STICS_28I.AVER = -999
+	   2956       ELSE
+	   2957         STICS_28I.AVER = STICS_28I.AVER / (NUM_SR - STICS_28I.NZERO)
+	   2958       ENDIF
+	   2959       CALL POLY( STICS_28I, 0.0, 2.040, 0.0, 0.0, 0.0, 0.0)
+	   2960       WRITE(11, 1000)' 51  STICS 28 V Primary Current', STICS_28I.MIN, STICS_28I.MAX, STICS_28I.AVER, STICS_28I.NZER
+	   2960 O
+	   2961 C
+	   2962 C STICS +5 V Voltage
+	   2963 C
+	   2964       IF((NUM_SR - STICS_PLUS5V.NZERO).LE.0)THEN
+	   2965         STICS_PLUS5V.AVER = -999
+	   2966       ELSE
+	   2967         STICS_PLUS5V.AVER = STICS_PLUS5V.AVER / (NUM_SR - STICS_PLUS5V.NZERO)
+	   2968       ENDIF
+	   2969       CALL POLY( STICS_PLUS5V, 0.0, 2.455E-2, 0.0, 0.0, 0.0, 0.0)
+	   2970       WRITE(11, 1000)' 52  STICS +5 V Voltage', STICS_PLUS5V.MIN, STICS_PLUS5V.MAX, STICS_PLUS5V.AVER, STICS_PLUS5V.
+	   2970 NZERO
+	   2971 C
+	   2972 C STICS -5 V Voltage
+	   2973 C
+	   2974       IF((NUM_SR - STICS_MINUS5V.NZERO).LE.0)THEN
+	   2975         STICS_MINUS5V.AVER = -999
+	   2976       ELSE
+	   2977         STICS_MINUS5V.AVER = STICS_MINUS5V.AVER / (NUM_SR - STICS_MINUS5V.NZERO)
+	   2978       ENDIF
+	   2979       CALL POLY( STICS_MINUS5V, 0.0, -2.451E-2, 0.0, 0.0, 0.0, 0.0)
+	   2980       WRITE(11, 1000)' 53  STICS -5 V Voltage', STICS_MINUS5V.MIN, STICS_MINUS5V.MAX, STICS_MINUS5V.AVER, STICS_MINU
+	   2980 S5V.NZERO
+	   2981 C
+	   2982 C STICS +6 V Voltage
+	   2983 C
+	   2984       IF((NUM_SR - STICS_PLUS6V.NZERO).LE.0)THEN
+	   2985         STICS_PLUS6V.AVER = -999
+	   2986       ELSE
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  30
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   2987         STICS_PLUS6V.AVER = STICS_PLUS6V.AVER / (NUM_SR - STICS_PLUS6V.NZERO)
+	   2988       ENDIF
+	   2989       CALL POLY( STICS_PLUS6V, 0.0, 2.876E-2, 0.0, 0.0, 0.0, 0.0)
+	   2990       WRITE(11, 1000)' 54  STICS +6 V Voltage', STICS_PLUS6V.MIN, STICS_PLUS6V.MAX, STICS_PLUS6V.AVER, STICS_PLUS6V.
+	   2990 NZERO
+	   2991 C
+	   2992 C STICS -6 V Voltage
+	   2993 C
+	   2994       IF((NUM_SR - STICS_MINUS6V.NZERO).LE.0)THEN
+	   2995         STICS_MINUS6V.AVER = -999
+	   2996       ELSE
+	   2997         STICS_MINUS6V.AVER = STICS_MINUS6V.AVER / (NUM_SR - STICS_MINUS6V.NZERO)
+	   2998       ENDIF
+	   2999       CALL POLY( STICS_MINUS6V, 0.0, -2.898E-2, 0.0, 0.0, 0.0, 0.0)
+	   3000       WRITE(11, 1000)' 55  STICS -6 V Voltage', STICS_MINUS6V.MIN, STICS_MINUS6V.MAX, STICS_MINUS6V.AVER, STICS_MINU
+	   3000 S6V.NZERO
+	   3001 C
+	   3002 C STICS +12 V Voltage
+	   3003 C
+	   3004       IF((NUM_SR - STICS_PLUS12V.NZERO).LE.0)THEN
+	   3005         STICS_PLUS12V.AVER = -999
+	   3006       ELSE
+	   3007         STICS_PLUS12V.AVER = STICS_PLUS12V.AVER / (NUM_SR - STICS_PLUS12V.NZERO)
+	   3008       ENDIF
+	   3009       CALL POLY( STICS_PLUS12V, 0.0, 5.837E-2, 0.0, 0.0, 0.0, 0.0)
+	   3010       WRITE(11, 1000)' 56  STICS +12 V Voltage', STICS_PLUS12V.MIN, STICS_PLUS12V.MAX, STICS_PLUS12V.AVER, STICS_PLU
+	   3010 S12V.NZERO
+	   3011 C
+	   3012 C STICS -12 V Voltage
+	   3013 C
+	   3014       IF((NUM_SR - STICS_MINUS12V.NZERO).LE.0)THEN
+	   3015         STICS_MINUS12V.AVER = -999
+	   3016       ELSE
+	   3017         STICS_MINUS12V.AVER = STICS_MINUS12V.AVER / (NUM_SR - STICS_MINUS12V.NZERO)
+	   3018       ENDIF
+	   3019       CALL POLY( STICS_MINUS12V, 0.0, -5.880E-2, 0.0, 0.0, 0.0, 0.0)
+	   3020       WRITE(11, 1000)' 57  STICS -12 V Voltage', STICS_MINUS12V.MIN, STICS_MINUS12V.MAX, STICS_MINUS12V.AVER, STICS_
+	   3020 MINUS12V.NZERO
+	   3021 C
+	   3022 C STICS MCPPS 28 V Current
+	   3023 C
+	   3024       IF((NUM_SR - STICS_MCPPS28I.NZERO).LE.0)THEN
+	   3025         STICS_MCPPS28I.AVER = -999
+	   3026       ELSE
+	   3027         STICS_MCPPS28I.AVER = STICS_MCPPS28I.AVER / (NUM_SR - STICS_MCPPS28I.NZERO)
+	   3028       ENDIF
+	   3029       CALL POLY( STICS_MCPPS28I, 0.0, 5.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   3030       WRITE(11, 1000)' 58  STICS MCPPS 28 V Current', STICS_MCPPS28I.MIN, STICS_MCPPS28I.MAX, 
+	   3031      &               STICS_MCPPS28I.AVER, STICS_MCPPS28I.NZERO
+	   3032 C
+	   3033 C STICS DPPS 28 V Current
+	   3034 C
+	   3035       IF((NUM_SR - STICS_DPPS28I.NZERO).LE.0)THEN
+	   3036         STICS_DPPS28I.AVER = -999
+	   3037       ELSE
+	   3038         STICS_DPPS28I.AVER = STICS_DPPS28I.AVER / (NUM_SR - STICS_DPPS28I.NZERO)
+	   3039       ENDIF
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  31
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3040       CALL POLY( STICS_DPPS28I, 0.0, 5.000E-1, 0.0, 0.0, 0.0, 0.0)
+	   3041       WRITE(11, 1000)' 59  STICS DPPS 28 V Current', STICS_DPPS28I.MIN, STICS_DPPS28I.MAX, STICS_DPPS28I.AVER, STICS
+	   3041 _DPPS28I.NZERO
+	   3042 C
+	   3043 C STICS SSD Bias Voltage
+	   3044 C
+	   3045       IF((NUM_SR - STICS_SSD_BIASV.NZERO).LE.0)THEN
+	   3046         STICS_SSD_BIASV.AVER = -999
+	   3047       ELSE
+	   3048         STICS_SSD_BIASV.AVER = STICS_SSD_BIASV.AVER / (NUM_SR - STICS_SSD_BIASV.NZERO)
+	   3049       ENDIF
+	   3050       CALL POLY( STICS_SSD_BIASV, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0)
+	   3051       WRITE(11, 1000)'     STICS SSD Bias Voltage', STICS_SSD_BIASV.MIN, STICS_SSD_BIASV.MAX, 
+	   3052      &               STICS_SSD_BIASV.AVER, STICS_SSD_BIASV.NZERO
+	   3053 C
+	   3054 C STICS MCPPS 0 Output Voltage
+	   3055 C
+	   3056       IF((NUM_SR - STICS_MCPPS0_OUTV.NZERO).LE.0)THEN
+	   3057         STICS_MCPPS0_OUTV.AVER = -999
+	   3058       ELSE
+	   3059         STICS_MCPPS0_OUTV.AVER = STICS_MCPPS0_OUTV.AVER / (NUM_SR - STICS_MCPPS0_OUTV.NZERO)
+	   3060       ENDIF
+	   3061       CALL POLY( STICS_MCPPS0_OUTV, -7.806, 1.959E1, 0.0, 0.0, 0.0, 0.0)
+	   3062       WRITE(11, 1100)'     STICS MCPPS 0 Output Voltage', STICS_MCPPS0_OUTV.MIN, STICS_MCPPS0_OUTV.MAX, 
+	   3063      &               STICS_MCPPS0_OUTV.AVER, STICS_MCPPS0_OUTV.NZERO, STICS_MCPPS_0_CL, STICS_MCPPS_0_CV 
+	   3064 C
+	   3065 C STICS MCPPS 1 Output Voltage
+	   3066 C
+	   3067       IF((NUM_SR - STICS_MCPPS1_OUTV.NZERO).LE.0)THEN
+	   3068         STICS_MCPPS1_OUTV.AVER = -999
+	   3069       ELSE
+	   3070         STICS_MCPPS1_OUTV.AVER = STICS_MCPPS1_OUTV.AVER / (NUM_SR - STICS_MCPPS1_OUTV.NZERO)
+	   3071       ENDIF
+	   3072       CALL POLY( STICS_MCPPS1_OUTV, -3.475, 1.950E1, 0.0, 0.0, 0.0, 0.0)
+	   3073       WRITE(11, 1100)'     STICS MCPPS 1 Output Voltage', STICS_MCPPS1_OUTV.MIN, STICS_MCPPS1_OUTV.MAX, 
+	   3074      &               STICS_MCPPS1_OUTV.AVER, STICS_MCPPS1_OUTV.NZERO, STICS_MCPPS_1_CL, STICS_MCPPS_1_CV 
+	   3075 C
+	   3076 C STICS MCPPS 2 Output Voltage
+	   3077 C
+	   3078       IF((NUM_SR - STICS_MCPPS2_OUTV.NZERO).LE.0)THEN
+	   3079         STICS_MCPPS2_OUTV.AVER = -999
+	   3080       ELSE
+	   3081         STICS_MCPPS2_OUTV.AVER = STICS_MCPPS2_OUTV.AVER / (NUM_SR - STICS_MCPPS2_OUTV.NZERO)
+	   3082       ENDIF
+	   3083       CALL POLY( STICS_MCPPS2_OUTV, -9.405, 1.957E1, 0.0, 0.0, 0.0, 0.0)
+	   3084       WRITE(11, 1100)'     STICS MCPPS 2 Output Voltage', STICS_MCPPS2_OUTV.MIN, STICS_MCPPS2_OUTV.MAX, 
+	   3085      &               STICS_MCPPS2_OUTV.AVER, STICS_MCPPS2_OUTV.NZERO, STICS_MCPPS_2_CL, STICS_MCPPS_2_CV 
+	   3086 C
+	   3087 C STICS MCPPS 3 Output Voltage
+	   3088 C
+	   3089       IF((NUM_SR - STICS_MCPPS3_OUTV.NZERO).LE.0)THEN
+	   3090         STICS_MCPPS3_OUTV.AVER = -999
+	   3091       ELSE
+	   3092         STICS_MCPPS3_OUTV.AVER = STICS_MCPPS3_OUTV.AVER / (NUM_SR - STICS_MCPPS3_OUTV.NZERO)
+	   3093       ENDIF
+	   3094       CALL POLY( STICS_MCPPS3_OUTV, -1.950E1, 1.984E1, 0.0, 0.0, 0.0, 0.0)
+	   3095       WRITE(11, 1100)'     STICS MCPPS 3 Output Voltage', STICS_MCPPS3_OUTV.MIN, STICS_MCPPS3_OUTV.MAX, 
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  32
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3096      &               STICS_MCPPS3_OUTV.AVER, STICS_MCPPS3_OUTV.NZERO, STICS_MCPPS_3_CL, STICS_MCPPS_3_CV 
+	   3097 C
+	   3098 C STICS MCPPS 4 Output Voltage
+	   3099 C
+	   3100       IF((NUM_SR - STICS_MCPPS4_OUTV.NZERO).LE.0)THEN
+	   3101         STICS_MCPPS4_OUTV.AVER = -999
+	   3102       ELSE
+	   3103         STICS_MCPPS4_OUTV.AVER = STICS_MCPPS4_OUTV.AVER / (NUM_SR - STICS_MCPPS4_OUTV.NZERO)
+	   3104       ENDIF
+	   3105       CALL POLY( STICS_MCPPS4_OUTV, -1.436E1, 1.984E1, 0.0, 0.0, 0.0, 0.0)
+	   3106       WRITE(11, 1100)'     STICS MCPPS 4 Output Voltage', STICS_MCPPS4_OUTV.MIN, STICS_MCPPS4_OUTV.MAX, 
+	   3107      &               STICS_MCPPS4_OUTV.AVER, STICS_MCPPS4_OUTV.NZERO, STICS_MCPPS_4_CL, STICS_MCPPS_4_CV 
+	   3108 C
+	   3109 C STICS MCPPS 5 Output Voltage
+	   3110 C
+	   3111       IF((NUM_SR - STICS_MCPPS5_OUTV.NZERO).LE.0)THEN
+	   3112         STICS_MCPPS5_OUTV.AVER = -999
+	   3113       ELSE
+	   3114         STICS_MCPPS5_OUTV.AVER = STICS_MCPPS5_OUTV.AVER / (NUM_SR - STICS_MCPPS5_OUTV.NZERO)
+	   3115       ENDIF
+	   3116       CALL POLY( STICS_MCPPS5_OUTV, -7.293, 1.969E1, 0.0, 0.0, 0.0, 0.0)
+	   3117       WRITE(11, 1100)'     STICS MCPPS 5 Output Voltage', STICS_MCPPS5_OUTV.MIN, STICS_MCPPS5_OUTV.MAX, 
+	   3118      &               STICS_MCPPS5_OUTV.AVER, STICS_MCPPS5_OUTV.NZERO, STICS_MCPPS_5_CL, STICS_MCPPS_5_CV 
+	   3119 C
+	   3120 C STICS TOFPS (MCPPS 6) Output Voltage
+	   3121 C
+	   3122       IF((NUM_SR - STICS_TOFPS_OUTV.NZERO).LE.0)THEN
+	   3123         STICS_TOFPS_OUTV.AVER = -999
+	   3124       ELSE
+	   3125         STICS_TOFPS_OUTV.AVER = STICS_TOFPS_OUTV.AVER / (NUM_SR - STICS_TOFPS_OUTV.NZERO)
+	   3126       ENDIF
+	   3127       CALL POLY( STICS_TOFPS_OUTV, -5.518, 1.961E1, 0.0, 0.0, 0.0, 0.0)
+	   3128       WRITE(11, 1100)'     STICS TOFPS (MCPPS 6) Output Voltage', STICS_TOFPS_OUTV.MIN, STICS_TOFPS_OUTV.MAX,
+	   3129      &                STICS_TOFPS_OUTV.AVER, STICS_TOFPS_OUTV.NZERO, STICS_TOFPS_MCPPS_6_CL, STICS_TOFPS_MCPPS_6_CV 
+	   3130 C
+	   3131 C STICS T1, AE Housing Temp
+	   3132 C
+	   3133       IF((NUM_SR - STICS_T1_AEHT.NZERO).LE.0)THEN
+	   3134         STICS_T1_AEHT.AVER = -999
+	   3135       ELSE
+	   3136         STICS_T1_AEHT.AVER = STICS_T1_AEHT.AVER / (NUM_SR - STICS_T1_AEHT.NZERO)
+	   3137       ENDIF
+	   3138       CALL POLY( STICS_T1_AEHT, 7.886257E1, -1.848392, 2.143749E-2, -1.483171E-4, 5.149126E-7, -7.140936E-10)
+	   3139       WRITE(11, 1000)' 60  STICS T1, AE Housing Temp', STICS_T1_AEHT.MIN, STICS_T1_AEHT.MAX, 
+	   3140      &               STICS_T1_AEHT.AVER, STICS_T1_AEHT.NZERO
+	   3141 C
+	   3142 C STICS T2, Fairing/HOP Temp
+	   3143 C
+	   3144       IF((NUM_SR - STICS_T2_FHOPT.NZERO).LE.0)THEN
+	   3145         STICS_T2_FHOPT.AVER = -999
+	   3146       ELSE
+	   3147         STICS_T2_FHOPT.AVER = STICS_T2_FHOPT.AVER / (NUM_SR - STICS_T2_FHOPT.NZERO)
+	   3148       ENDIF
+	   3149       CALL POLY( STICS_T2_FHOPT, 7.886257E1, -1.848392, 2.143749E-2, -1.483171E-4, 5.149126E-7, -7.140936E-10)
+	   3150       WRITE(11, 1000)'     STICS T2, Fairing/HOP Temp', STICS_T2_FHOPT.MIN, STICS_T2_FHOPT.MAX, 
+	   3151      &               STICS_T2_FHOPT.AVER, STICS_T2_FHOPT.NZERO
+	   3152 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  33
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3153 C STICS T3, SSD Temp
+	   3154 C
+	   3155       IF((NUM_SR - STICS_T3_SSDT.NZERO).LE.0)THEN
+	   3156         STICS_T3_SSDT.AVER = -999
+	   3157       ELSE
+	   3158         STICS_T3_SSDT.AVER = STICS_T3_SSDT.AVER / (NUM_SR - STICS_T3_SSDT.NZERO)
+	   3159       ENDIF
+	   3160       CALL POLY( STICS_T3_SSDT, 7.886257E1, -1.848392, 2.143749E-2, -1.483171E-4, 5.149126E-7, -7.140936E-10)
+	   3161       WRITE(11, 1000)' 61  STICS T3, SSD Temp', STICS_T3_SSDT.MIN, STICS_T3_SSDT.MAX, STICS_T3_SSDT.AVER, STICS_T3_S
+	   3161 SDT.NZERO
+	   3162 C
+	   3163 C STICS T4, Back Panel Temp
+	   3164 C
+	   3165       IF((NUM_SR - STICS_T4_BPT.NZERO).LE.0)THEN
+	   3166         STICS_T4_BPT.AVER = -999
+	   3167       ELSE
+	   3168         STICS_T4_BPT.AVER = STICS_T4_BPT.AVER / (NUM_SR - STICS_T4_BPT.NZERO)
+	   3169       ENDIF
+	   3170       CALL POLY( STICS_T4_BPT, 7.886257E1, -1.848392, 2.143749E-2, -1.483171E-4, 5.149126E-7, -7.140936E-10)
+	   3171       WRITE(11, 1000)'     STICS T4, Back Panel Temp', STICS_T4_BPT.MIN, STICS_T4_BPT.MAX, STICS_T4_BPT.AVER, STICS_
+	   3171 T4_BPT.NZERO
+	   3172 C
+	   3173 C From last good HDB, write Spacecraft Status information. First, Telemetry Format...
+	   3174 C
+	   3175       WRITE(11, 1500)
+	   3176 1500  FORMAT(/,10X,'SPACECRAFT AND DPU STATUS ITEMS',/)
+	   3177 C      
+	   3178 C Build the next output line internally in the character variable LINE.  It
+	   3179 C will contain the telemetry format, telemetry rate, and spin rate.
+	   3180 C
+	   3181       HDB = LAST_GOOD_HDB
+	   3182       IF(BTEST(HDB.DAT(2), 6))THEN
+	   3183         WRITE(LINE, 2000)
+	   3184 2000    FORMAT(1X,'     Telemetry Format: Science Mode ')
+	   3185       ELSE
+	   3186         WRITE(LINE, 2010)
+	   3187 2010    FORMAT(1X,'     Telemetry Format: Maneuver Mode')
+	   3188       ENDIF
+	   3189 C
+	   3190 C...then Telemetry Rate
+	   3191 C
+	   3192       IF(BTEST(HDB.DAT(2), 7))THEN
+	   3193         WRITE(LINE(38:), 2100)
+	   3194 2100    FORMAT(1X,'     Telemetry Rate 11130 BPS')
+	   3195       ELSE
+	   3196         WRITE(LINE(38:), 2110)
+	   3197 2110    FORMAT(1X,'     Telemetry Rate 5565 BPS ')
+	   3198       ENDIF
+	   3199 C
+	   3200 C Get spin period by taking (start time of spin 59 - start time of spin 0)/59, 
+	   3201 C convert it from ms to sec, and write it out
+	   3202 C
+	   3203       SPIN_PERIOD = (SCI.EDB(59).EPOCH - SCI.EDB(0).EPOCH)/59000.0
+	   3204       WRITE(LINE(68:), 2200) SPIN_PERIOD
+	   3205 2200  FORMAT(1X,'     Spin Rate: ',F5.2)
+	   3206 C
+	   3207 C Now output the line we've built internally
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  34
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3208 C
+	   3209       WRITE(11, 2205) LINE(1:89)
+	   3210 2205  FORMAT(A)
+	   3211 C
+	   3212 C DPU status Items: 
+	   3213 C
+	   3214       WRITE(11,2300) IAND(HDB.DAT(188), 63)
+	   3215 2300  FORMAT(1X,'     Reset Counter: ',I2)
+	   3216 C
+	   3217       RESET_CAUSE = ISHFT(IAND(HDB.DAT(188), 192), -6)
+	   3218       WRITE(11,2310) RESET_CAUSE, RESET_CAUSE_TEXT(RESET_CAUSE)
+	   3219 2310  FORMAT(1X,'     Last Reset Cause: ',I2,' = ',A)
+	   3220 C
+	   3221       WRITE(11,2320)  IAND(HDB.DAT(236), 15)
+	   3222 2320  FORMAT(1X,'     Latchup Counter - Main: ',I2)
+	   3223 C
+	   3224       WRITE(11,2330) IAND(HDB.DAT(234), 15)
+	   3225 2330  FORMAT(1X,'     Latchup Counter for Memory: ',I2)
+	   3226 C
+	   3227       WRITE(11,2340) ISHFT(IAND(HDB.DAT(234), 240), -4)
+	   3228 2340  FORMAT(1X,'     Latchup Counter for MP: ',I2)
+	   3229 C
+	   3230       WRITE(11,2350) IAND(HDB.DAT(235), 15)
+	   3231 2350  FORMAT(1X,'     Latchup Counter for SWICS Classification',I2)
+	   3232 C
+	   3233       WRITE(11,2360) ISHFT(IAND(HDB.DAT(235), 240), -4)
+	   3234 2360  FORMAT(1X,'     Latchup Counter for STICS Classification: ',I2)
+	   3235 C
+	   3236       WRITE(11,2370) ISHFT(IAND(HDB.DAT(236), 240), -4)
+	   3237 2370  FORMAT(1X,'     Latchup Counter for MASS Classification: ',I2)
+	   3238 C
+	   3239       WRITE(11,2400) IAND(HDB.DAT(169), 255)
+	   3240 2400  FORMAT(1X,'     RAM Error Counter: ',I2)
+	   3241 C
+	   3242       WRITE(11,2410) IAND(HDB.DAT(170), 255)
+	   3243 2410  FORMAT(1X,'     ROM Error Counter: ',I2)
+	   3244 C
+	   3245       IF(BTEST(HDB.DAT(186),3))THEN
+	   3246         WRITE(11, 2500)
+	   3247 2500    FORMAT(1X,'     PROM Bank Selection: B')
+	   3248       ELSE
+	   3249         WRITE(11, 2510)
+	   3250 2510    FORMAT(1X,'     PROM Bank Selection: A')
+	   3251       ENDIF
+	   3252 C
+	   3253       IF(BTEST(HDB.DAT(186),4))THEN
+	   3254         WRITE(11, 2520)
+	   3255 2520    FORMAT(1X,'     PROM Toggle Mode Enabled')
+	   3256       ELSE
+	   3257         WRITE(11, 2530)
+	   3258 2530    FORMAT(1X,'     PROM Toggle Mode Disabled')
+	   3259       ENDIF
+	   3260 C
+	   3261       IF(BTEST(HDB.DAT(190),6))THEN
+	   3262         WRITE(11, 2600)
+	   3263 2600    FORMAT(1X,'     Program Patch Active')
+	   3264       ELSE
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  35
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3265         WRITE(11, 2610)
+	   3266 2610    FORMAT(1X,'     Program Patch Inactive')
+	   3267       ENDIF
+	   3268 C
+	   3269       WRITE(11, 2700) IAND(HDB.DAT(176), 255)
+	   3270 2700  FORMAT(1X,'     Valid Command Counter: ', I3)
+	   3271       WRITE(11, 2710) IAND(HDB.DAT(180), 255)
+	   3272 2710  FORMAT(1X,'     Invalid Command Counter: ', I3)
+	   3273 C
+	   3274       IF(BTEST(HDB.DAT(221),4))THEN
+	   3275         WRITE(11, 2800)
+	   3276 2800    FORMAT(1X,'     Command Repetition for SWICS: Enabled')
+	   3277       ELSE
+	   3278         WRITE(11, 2810)
+	   3279 2810    FORMAT(1X,'     Command Repetition for SWICS: Disabled')
+	   3280       ENDIF
+	   3281 C
+	   3282       IF(BTEST(HDB.DAT(221),3))THEN
+	   3283         WRITE(11, 2820)
+	   3284 2820    FORMAT(1X,'     Command Repetition for MASS: Enabled')
+	   3285       ELSE
+	   3286         WRITE(11, 2830)
+	   3287 2830    FORMAT(1X,'     Command Repetition for MASS: Disabled')
+	   3288       ENDIF
+	   3289 C
+	   3290       IF(BTEST(HDB.DAT(221),5))THEN
+	   3291         WRITE(11, 2840)
+	   3292 2840    FORMAT(1X,'     Command Repetition for STICS: Enabled')
+	   3293       ELSE
+	   3294         WRITE(11, 2850)
+	   3295 2850    FORMAT(1X,'     Command Repetition for STICS: Disabled')
+	   3296       ENDIF
+	   3297 C
+	   3298       IF(BTEST(HDB.DAT(189),7))THEN
+	   3299         WRITE(11, 2900)
+	   3300 2900    FORMAT(1X,'     High Voltage Reconfiguration with HV')
+	   3301       ELSE
+	   3302         WRITE(11, 2910)
+	   3303 2910    FORMAT(1X,'     High Voltage Reconfiguration without HV')
+	   3304       ENDIF
+	   3305 C
+	   3306       WRITE(11,3000) IAND(HDB.DAT(165), 15), OFFSET
+	   3307 3000  FORMAT(1X,'     Sun Sector/Offset: ',I2,'/',I3)
+	   3308 C
+	   3309       IF(BTEST(HDB.DAT(190),0))THEN
+	   3310         WRITE(11, 3020)
+	   3311 3020    FORMAT(1X,'     Sun Sector Clock Source: Internal')
+	   3312       ELSE
+	   3313         WRITE(11, 3030)
+	   3314 3030    FORMAT(1X,'     Sun Sector Clock Source: External')
+	   3315       ENDIF
+	   3316 C
+	   3317       IF(BTEST(HDB.DAT(190),3))THEN
+	   3318         WRITE(11, 3040)
+	   3319 3040    FORMAT(1X,'     Sun Sector Clock Lost')
+	   3320       ELSE
+	   3321         WRITE(11, 3050)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  36
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3322 3050    FORMAT(1X,'     Sun Sector Clock OK')
+	   3323       ENDIF
+	   3324 C
+	   3325       IF(BTEST(HDB.DAT(190),4))THEN
+	   3326         WRITE(11, 3060)
+	   3327 3060    FORMAT(1X,'     Sun Pulse Lost')
+	   3328       ELSE
+	   3329         WRITE(11, 3070)
+	   3330 3070    FORMAT(1X,'     Sun Pulse OK')
+	   3331       ENDIF
+	   3332 C
+	   3333 C Prepare Power Switch Status Table
+	   3334 C
+	   3335       IF(BTEST(HDB.DAT(173),0))STICS_COVER  = 'ON '
+	   3336       IF(BTEST(HDB.DAT(173),1))STICS_HEATER = 'ON '
+	   3337       IF(BTEST(HDB.DAT(173),2))SWICS_COVER  = 'ON '
+	   3338       IF(BTEST(HDB.DAT(173),3))SWICS_HEATER = 'ON '
+	   3339       IF(BTEST(HDB.DAT(173),4))MASS_COVER   = 'ON '
+	   3340       IF(BTEST(HDB.DAT(173),5))STICS_MAIN   = 'ON '
+	   3341       IF(BTEST(HDB.DAT(173),6))SWICS_MAIN   = 'ON ' 
+	   3342       IF(BTEST(HDB.DAT(173),7))MASS_MAIN    = 'ON '
+	   3343 C
+	   3344 C Print Power Switch Status Table
+	   3345 C
+	   3346       WRITE(11,3100) STICS_MAIN, STICS_COVER, STICS_HEATER , SWICS_MAIN, SWICS_COVER, SWICS_HEATER, 
+	   3347      &               MASS_MAIN, MASS_COVER
+	   3348 3100  FORMAT(1X,//,15X,'POWER SWITCH STATUS'//,11X,'|  Main Power  |  Cover Power | Heater Power |',/,
+	   3349      &       5X,'----------------------------------------------------',/,
+	   3350      &       5X,'STICS |      ',A3,'     |      ',A3,'     |      ',A3,'     |',/,
+	   3351      &       5X,'SWICS |      ',A3,'     |      ',A3,'     |      ',A3,'     |',/,
+	   3352      &       5X,'MASS  |      ',A3,'     |      ',A3,'     |       -      |')
+	   3353 C
+	   3354 C Prepare table of Configuration Errors
+	   3355 C
+	   3356       IF(BTEST(HDB.DAT(187),0))STICS_CONFIG   = 'Error '
+	   3357       IF(BTEST(HDB.DAT(187),1))STICS_SNAPSHOT = 'Error '
+	   3358       IF(BTEST(HDB.DAT(187),2))SWICS_CONFIG   = 'Error '
+	   3359       IF(BTEST(HDB.DAT(187),3))SWICS_SNAPSHOT = 'Error '
+	   3360       IF(BTEST(HDB.DAT(187),4))MASS_CONFIG    = 'Error '
+	   3361       IF(BTEST(HDB.DAT(187),5))MASS_SNAPSHOT  = 'Error '
+	   3362       IF(BTEST(HDB.DAT(187),6))LOAD_CONFIG    = 'Error '
+	   3363       IF(BTEST(HDB.DAT(187),7))LOAD_SNAPSHOT  = 'Error '
+	   3364 C
+	   3365 C Print table of Configuration Errors
+	   3366 C
+	   3367       WRITE(11,3200) STICS_CONFIG, STICS_SNAPSHOT, SWICS_CONFIG, SWICS_SNAPSHOT, MASS_CONFIG, 
+	   3368      &               MASS_SNAPSHOT, LOAD_CONFIG, LOAD_SNAPSHOT 
+	   3369 3200  FORMAT(1X,//,10X,'CONFIGURATION ERRORS'//,11X,'| Configuration |    Snapshot   |',/,
+	   3370      &       5X,'--------------------------------------',/,
+	   3371      &       5X, 'STICS |     ',A6,'    |     ',A6,'    |',/,5X,'SWICS |     ',A6,'    |     ',A6,'    |',/,
+	   3372      &       5X, 'MASS  |     ',A6,'    |     ',A6,'    |',/,5X,'LOAD  |     ',A6,'    |     ',A6,'    |')
+	   3373 C
+	   3374 C MASS status items
+	   3375 C
+	   3376       WRITE(11, 3500)
+	   3377 3500  FORMAT(///,10X,'MASS STATUS ITEMS',/)
+	   3378 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  37
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3379       IF(BTEST(HDB.DAT(107),0))MASS_HPS       = 'ON '
+	   3380       IF(BTEST(HDB.DAT(107),1))MASS_STOP_MCP  = 'ON '
+	   3381       IF(BTEST(HDB.DAT(107),2))MASS_START_MCP = 'ON '
+	   3382       IF(BTEST(HDB.DAT(107),3))MASS_COM_ADPS  = 'ON '
+	   3383       IF(BTEST(HDB.DAT(107),4))MASS_COM_DPPS  = 'ON '
+	   3384 C      
+	   3385       MASS_HPS_MEAS_V = -3.428E1 + 1.5285E2 * IAND(HDB.DAT(117), 255)
+	   3386       MASS_STOP_MCP_MEAS_V = 3.065E1 * IAND(HDB.DAT(120), 255)
+	   3387       MASS_START_MCP_MEAS_V = 1.310E1 + 1.431E1 * IAND(HDB.DAT(119), 255)
+	   3388 C
+	   3389       WRITE(11, 4000) MASS_HPS, IAND(HDB.DAT(111), 255), IAND(HDB.DAT(110), 255), MASS_HPS_MEAS_V,
+	   3390      &                MASS_STOP_MCP, IAND(HDB.DAT(115), 255), IAND(HDB.DAT(114), 255), MASS_STOP_MCP_MEAS_V, 
+	   3391      &                MASS_START_MCP, IAND(HDB.DAT(113), 255), IAND(HDB.DAT(112), 255), MASS_START_MCP_MEAS_V, 
+	   3392      &                MASS_COM_ADPS, IAND(HDB.DAT(232), 255), IAND(HDB.DAT(233), 255), 
+	   3393      &                MASS_COM_DPPS
+	   3394 4000  FORMAT(1X,//,10X, '       ENABLE    LIMIT     LEVEL   MEASURED VOLTAGE',/,
+	   3395      &       5X,  '--------------------------------------------------------',/,
+	   3396      &       5X,  'HPS       |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3397      &       5X,  'STOP MCP  |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3398      &       5X,  'START MCP |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3399      &       5X,  'ADPS      |  ',A3,'   | ',I3,',',I3,' |    -    |        -      |',/,
+	   3400      &       5X,  'DPPS      |  ',A3,'   |    -    |    -    |        -      |',/)
+	   3401 C
+	   3402       IF(BTEST(HDB.DAT(109),6))THEN
+	   3403         WRITE(11, 4100)
+	   3404 4100    FORMAT(1X,'     ADPS automatic calculation: ON')
+	   3405       ELSE
+	   3406         WRITE(11, 4110)
+	   3407 4110    FORMAT(1X,'     ADPS automatic calculation: OFF')
+	   3408       ENDIF
+	   3409 C
+	   3410       IF(BTEST(HDB.DAT(130),0))THEN
+	   3411         WRITE(11, 4120)
+	   3412 4120    FORMAT(1X,'     ADPS stepping sequence: RAM')
+	   3413       ELSE
+	   3414         WRITE(11, 4130)
+	   3415 4130    FORMAT(1X,'     ADPS stepping sequence: ROM')
+	   3416       ENDIF
+	   3417 C
+	   3418       IF(BTEST(HDB.DAT(130),6))THEN
+	   3419         WRITE(11, 4140)
+	   3420 4140    FORMAT(1X,'     ADPS table: Fixed')
+	   3421       ELSE
+	   3422         WRITE(11, 4150)
+	   3423 4150    FORMAT(1X,'     ADPS table: Not Fixed')
+	   3424       ENDIF
+	   3425 C
+	   3426       IF(BTEST(HDB.DAT(130),1))THEN
+	   3427         WRITE(11, 4160)
+	   3428 4160    FORMAT(1X,'     DPPS stepping sequence: RAM')
+	   3429       ELSE
+	   3430         WRITE(11, 4170)
+	   3431 4170    FORMAT(1X,'     DPPS stepping sequence: ROM')
+	   3432       ENDIF
+	   3433 C
+	   3434       WRITE(11, 4200) IAND(HDB.DAT(133), 255)
+	   3435 4200  FORMAT(1X,'     FSR limit for stop reversal: ',I3)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  38
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3436 C
+	   3437       IF(BTEST(HDB.DAT(223),0))THEN
+	   3438         WRITE(11, 4300)
+	   3439 4300    FORMAT(1X,'     Discharge occurred')
+	   3440       ELSE
+	   3441         WRITE(11, 4310)
+	   3442 4310    FORMAT(1X,'     No discharge')
+	   3443       ENDIF
+	   3444 C
+	   3445       IF(BTEST(HDB.DAT(130),5))THEN
+	   3446         WRITE(11, 4400)
+	   3447 4400    FORMAT(1X,'     Internal callibrator: Active')
+	   3448       ELSE
+	   3449         WRITE(11, 4410)
+	   3450 4410    FORMAT(1X,'     Internal Callibrator: Inactive')
+	   3451       ENDIF
+	   3452 C
+	   3453       WRITE(11, 4420) IAND(HDB.DAT(116), 15)
+	   3454 4420  FORMAT(1X,'     Callibrator level: ',I2)
+	   3455 C
+	   3456       IF(BTEST(HDB.DAT(130),4))THEN
+	   3457         WRITE(11, 4500)
+	   3458 4500    FORMAT(1X,'     Test tables: Active')
+	   3459       ELSE
+	   3460         WRITE(11, 4510)
+	   3461 4510    FORMAT(1X,'     Test tables: Inactive')
+	   3462       ENDIF
+	   3463 C
+	   3464       IF(BTEST(HDB.DAT(130),7))THEN
+	   3465         WRITE(11, 4600)
+	   3466 4600    FORMAT(1X,'     Command Echo Check: Enabled')
+	   3467       ELSE
+	   3468         WRITE(11, 4610)
+	   3469 4610    FORMAT(1X,'     Command Echo Check: Disabled')
+	   3470       ENDIF
+	   3471 C
+	   3472       IF(BTEST(HDB.DAT(130),3))THEN
+	   3473         WRITE(11, 4700)
+	   3474 4700    FORMAT(1X,'     PHA FIFO mode: Enabled')
+	   3475       ELSE
+	   3476         WRITE(11, 4710)
+	   3477 4710    FORMAT(1X,'     PHA FIFO mode: Disabled')
+	   3478       ENDIF
+	   3479 C
+	   3480       IF(BTEST(HDB.DAT(116),5))THEN
+	   3481         WRITE(11, 4800)
+	   3482 4800    FORMAT(1X,'     Stop preamp power: OFF')
+	   3483       ELSE
+	   3484         WRITE(11, 4810)
+	   3485 4810    FORMAT(1X,'     Stop preamp power: ON')
+	   3486       ENDIF
+	   3487 C
+	   3488       IF(BTEST(HDB.DAT(116),6))THEN
+	   3489         WRITE(11, 4820)
+	   3490 4820    FORMAT(1X,'     Start preamp 1 power: OFF')
+	   3491       ELSE
+	   3492         WRITE(11, 4830)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  39
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3493 4830    FORMAT(1X,'     Start preamp 1 power: ON')
+	   3494       ENDIF
+	   3495 C
+	   3496       IF(BTEST(HDB.DAT(116),7))THEN
+	   3497         WRITE(11, 4840)
+	   3498 4840    FORMAT(1X,'     Start preamp 2 power: OFF')
+	   3499       ELSE
+	   3500         WRITE(11, 4850)
+	   3501 4850    FORMAT(1X,'     Start preamp 2 power: ON')
+	   3502       ENDIF
+	   3503 C
+	   3504       IF(BTEST(HDB.DAT(172),0))THEN
+	   3505         WRITE(11, 4900)
+	   3506 4900    FORMAT(1X,'     Multiple Stops: Enabled')
+	   3507       ELSE
+	   3508         WRITE(11, 4910)
+	   3509 4910    FORMAT(1X,'     Multiple Stops: Disabled')
+	   3510       ENDIF
+	   3511 C
+	   3512       IF(BTEST(HDB.DAT(172),1))THEN
+	   3513         WRITE(11, 4920)
+	   3514 4920    FORMAT(1X,'     Multiple Starts: Enabled')
+	   3515       ELSE
+	   3516         WRITE(11, 4930)
+	   3517 4930    FORMAT(1X,'     Multiple Starts: Disabled')
+	   3518       ENDIF
+	   3519 C
+	   3520       MASS_SUN_SECTOR_DEFINITIONS='0000000000000000'
+	   3521       DO 5000 I=1,8
+	   3522         IF(BTEST(HDB.DAT(132), I-1)) MASS_SUN_SECTOR_DEFINITIONS(I:I)='1'
+	   3523 5000  CONTINUE
+	   3524       DO 5010 I=1,8
+	   3525         IF(BTEST(HDB.DAT(131), I-1)) MASS_SUN_SECTOR_DEFINITIONS(I+8:I+8)='1'
+	   3526 5010  CONTINUE
+	   3527       WRITE(11, 5020)MASS_SUN_SECTOR_DEFINITIONS
+	   3528 5020  FORMAT(1X,'     MASS sun sector definition: ', A)
+	   3529 C
+	   3530 C Create Matrix Rate table 
+	   3531 C
+	   3532       DO 5100 I=0, 9
+	   3533         CALL MVBITS(HDB.DAT(134+3*I), 0, 8, MR(1, I), 4)
+	   3534         CALL MVBITS(HDB.DAT(135+3*I), 4, 4, MR(1, I), 0)
+	   3535         CALL MVBITS(HDB.DAT(135+3*I), 0, 4, MR(2, I), 8)
+	   3536         CALL MVBITS(HDB.DAT(136+3*I), 0, 8, MR(2, I), 0)
+	   3537 5100  CONTINUE
+	   3538 C
+	   3539       WRITE(11, 5110) MR
+	   3540 5110  FORMAT(1X,/,5X,'MATRIX RATE BORDERS',/,10X, 'LOWER     UPPER',/,
+	   3541      &       5X,  '---------------------',/,
+	   3542      &       5X,  'MR0 | ',I4,'  | ',I4,'  |',/,
+	   3543      &       5X,  'MR1 | ',I4,'  | ',I4,'  |',/,
+	   3544      &       5X,  'MR2 | ',I4,'  | ',I4,'  |',/,
+	   3545      &       5X,  'MR3 | ',I4,'  | ',I4,'  |',/,
+	   3546      &       5X,  'MR4 | ',I4,'  | ',I4,'  |',/,
+	   3547      &       5X,  'MR5 | ',I4,'  | ',I4,'  |',/,
+	   3548      &       5X,  'MR6 | ',I4,'  | ',I4,'  |',/,
+	   3549      &       5X,  'MR7 | ',I4,'  | ',I4,'  |',/,
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  40
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3550      &       5X,  'MR8 | ',I4,'  | ',I4,'  |',/,
+	   3551      &       5X,  'MR9 | ',I4,'  | ',I4,'  |',/,
+	   3552      &       5X,  '---------------------',/)
+	   3553 C
+	   3554       CALL MVBITS(HDB.DAT(164), 0, 8, BR0_BR1_BORDER, 4)
+	   3555       CALL MVBITS(HDB.DAT(165), 4, 4, BR0_BR1_BORDER, 0)
+	   3556 C
+	   3557       WRITE(11, 5120) BR0_BR1_BORDER
+	   3558 5120  FORMAT(1X,'     BR0/BR1 border: ',I4)
+	   3559 C
+	   3560       IF(BTEST(HDB.DAT(189),4))THEN
+	   3561         COMP_CODE(1) = 'C'
+	   3562       ELSE
+	   3563         COMP_CODE(1) = 'A'
+	   3564       ENDIF
+	   3565 C
+	   3566       IF(BTEST(HDB.DAT(189),5))THEN
+	   3567         COMP_CODE(2) = 'C'
+	   3568       ELSE
+	   3569         COMP_CODE(2) = 'A'
+	   3570       ENDIF
+	   3571 C
+	   3572       WRITE(11, 5200) COMP_CODE
+	   3573 5200  FORMAT(1X,'     Compression code for rate groups 1 and 2: ',A,',', A) 
+	   3574 C
+	   3575 C STICS status items
+	   3576 C
+	   3577       WRITE(11, 5300)
+	   3578 5300  FORMAT(//,10X,'STICS STATUS ITEMS',/)
+	   3579 C
+	   3580       DO 5400 I=0,5
+	   3581         IF(BTEST(HDB.DAT(24),I))STICS_MCPPS(I) = 'ON '
+	   3582 5400  CONTINUE
+	   3583 C     
+	   3584       IF(BTEST(HDB.DAT(24),6))STICS_TOFPS  = 'ON '
+	   3585       IF(BTEST(HDB.DAT(24),7))STICS_PLUS_DPPS  = 'ON '
+	   3586       IF(BTEST(HDB.DAT(25),0))STICS_MINUS_DPPS  = 'ON '
+	   3587 C      
+	   3588       STICS_MCPPS_MEAS_V(0) = -7.806   + 1.959E1 * IAND(HDB.DAT(27), 255)
+	   3589       STICS_MCPPS_MEAS_V(1) = -3.475   + 1.950E1 * IAND(HDB.DAT(28), 255)
+	   3590       STICS_MCPPS_MEAS_V(2) = -9.405   + 1.957E1 * IAND(HDB.DAT(29), 255)
+	   3591       STICS_MCPPS_MEAS_V(3) = -1.950E1 + 1.984E1 * IAND(HDB.DAT(30), 255)
+	   3592       STICS_MCPPS_MEAS_V(4) = -1.436E1 + 1.984E1 * IAND(HDB.DAT(31), 255)
+	   3593       STICS_MCPPS_MEAS_V(5) = -7.293   + 1.969E1 * IAND(HDB.DAT(32), 255)
+	   3594       STICS_TOFPS_MEAS_V    = -5.518   + 1.961E1 * IAND(HDB.DAT(33), 255)
+	   3595 C
+	   3596       WRITE(11, 5500) STICS_PLUS_DPPS, 
+	   3597      &                STICS_MINUS_DPPS,
+	   3598      &                STICS_MCPPS(0), IAND(HDB.DAT(10), 255), IAND(HDB.DAT(17), 255), STICS_MCPPS_MEAS_V(0), 
+	   3599      &                STICS_MCPPS(1), IAND(HDB.DAT(11), 255), IAND(HDB.DAT(18), 255), STICS_MCPPS_MEAS_V(1), 
+	   3600      &                STICS_MCPPS(2), IAND(HDB.DAT(12), 255), IAND(HDB.DAT(19), 255), STICS_MCPPS_MEAS_V(2), 
+	   3601      &                STICS_MCPPS(3), IAND(HDB.DAT(13), 255), IAND(HDB.DAT(20), 255), STICS_MCPPS_MEAS_V(3), 
+	   3602      &                STICS_MCPPS(4), IAND(HDB.DAT(14), 255), IAND(HDB.DAT(21), 255), STICS_MCPPS_MEAS_V(4), 
+	   3603      &                STICS_MCPPS(5), IAND(HDB.DAT(15), 255), IAND(HDB.DAT(22), 255), STICS_MCPPS_MEAS_V(5), 
+	   3604      &                STICS_TOFPS, IAND(HDB.DAT(16), 255), IAND(HDB.DAT(23), 255), STICS_TOFPS_MEAS_V
+	   3605 5500  FORMAT(1X,//,10X, '       ENABLE    LIMIT     LEVEL   MEASURED VOLTAGE',/,
+	   3606      &       5X,  '--------------------------------------------------------',/,
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  41
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3607      &       5X,  '+DPPS     |  ',A3,'   |    -    |    -    |        -      |',/,
+	   3608      &       5X,  '-DPPS     |  ',A3,'   |    -    |    -    |        -      |',/,
+	   3609      &       5X,  'MCPPS 0   |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3610      &       5X,  'MCPPS 1   |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3611      &       5X,  'MCPPS 2   |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3612      &       5X,  'MCPPS 3   |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3613      &       5X,  'MCPPS 4   |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3614      &       5X,  'MCPPS 5   |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/,
+	   3615      &       5X,  'TOFPS(6)  |  ',A3,'   |   ',I3,'   |   ', I3,'   |',F12.2,'   |',/)
+	   3616 C
+	   3617       IF(ISHFT(IAND(HDB.DAT(25),192), -6).EQ.0)THEN
+	   3618         WRITE(11, 5600)
+	   3619 5600    FORMAT(1X,'     DPPS Stepping Sequence: ROM, Fine Mode')
+	   3620       ELSEIF(ISHFT(IAND(HDB.DAT(25),192), -6).EQ.1)THEN
+	   3621         WRITE(11, 5610)
+	   3622 5610    FORMAT(1X,'     DPPS Stepping Sequence: ROM, Medium Mode')
+	   3623       ELSEIF(ISHFT(IAND(HDB.DAT(25),192), -6).EQ.2)THEN
+	   3624         WRITE(11, 5620)
+	   3625 5620    FORMAT(1X,'     DPPS Stepping Sequence: ROM, Fast Mode')
+	   3626       ELSEIF(ISHFT(IAND(HDB.DAT(25),192), -6).EQ.3)THEN
+	   3627         WRITE(11, 5630)
+	   3628 5630    FORMAT(1X,'     DPPS Stepping Sequence: RAM Table')
+	   3629       ENDIF
+	   3630 C
+	   3631       IF(BTEST(HDB.DAT(26),1))THEN
+	   3632         WRITE(11, 5700)
+	   3633 5700    FORMAT(1X,'     Internal Callibrator power: ON')
+	   3634       ELSE
+	   3635         WRITE(11, 5710)
+	   3636 5710    FORMAT(1X,'     Internal Callibrator power: OFF')
+	   3637       ENDIF
+	   3638 C
+	   3639       IF(BTEST(HDB.DAT(26),0))THEN
+	   3640         WRITE(11, 5720)
+	   3641 5720    FORMAT(1X,'     Auto Callibrate Sequence: Enabled')
+	   3642       ELSE
+	   3643         WRITE(11, 5730)
+	   3644 5730    FORMAT(1X,'     Auto Callibrate Sequence: Disabled')
+	   3645       ENDIF
+	   3646 C
+	   3647       IF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.0)THEN
+	   3648         WRITE(11, 5740)
+	   3649 5740    FORMAT(1X,'     Commanded Time Callibrator Level: 300 ns')
+	   3650       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.1)THEN
+	   3651         WRITE(11, 5750)
+	   3652 5750    FORMAT(1X,'     Commanded Time Callibrator Level: 280 ns')
+	   3653       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.2)THEN
+	   3654         WRITE(11, 5760)
+	   3655 5760    FORMAT(1X,'     Commanded Time Callibrator Level: 260 ns')
+	   3656       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.3)THEN
+	   3657         WRITE(11, 5770)
+	   3658 5770    FORMAT(1X,'     Commanded Time Callibrator Level: 240 ns')
+	   3659       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.4)THEN
+	   3660         WRITE(11, 5780)
+	   3661 5780    FORMAT(1X,'     Commanded Time Callibrator Level: 220 ns')
+	   3662       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.5)THEN
+	   3663         WRITE(11, 5790)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  42
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3664 5790    FORMAT(1X,'     Commanded Time Callibrator Level: 200 ns')
+	   3665       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.6)THEN
+	   3666         WRITE(11, 5800)
+	   3667 5800    FORMAT(1X,'     Commanded Time Callibrator Level: 180 ns')
+	   3668       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.7)THEN
+	   3669         WRITE(11, 5810)
+	   3670 5810    FORMAT(1X,'     Commanded Time Callibrator Level: 160 ns')
+	   3671       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.8)THEN
+	   3672         WRITE(11, 5820)
+	   3673 5820    FORMAT(1X,'     Commanded Time Callibrator Level: 140 ns')
+	   3674       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.9)THEN
+	   3675         WRITE(11, 5830)
+	   3676 5830    FORMAT(1X,'     Commanded Time Callibrator Level: 120 ns')
+	   3677       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.10)THEN
+	   3678         WRITE(11, 5840)
+	   3679 5840    FORMAT(1X,'     Commanded Time Callibrator Level: 100 ns')
+	   3680       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.11)THEN
+	   3681         WRITE(11, 5850)
+	   3682 5850    FORMAT(1X,'     Commanded Time Callibrator Level: 80 ns')
+	   3683       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.12)THEN
+	   3684         WRITE(11, 5860)
+	   3685 5860    FORMAT(1X,'     Commanded Time Callibrator Level: 60 ns')
+	   3686       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.13)THEN
+	   3687         WRITE(11, 5870)
+	   3688 5870    FORMAT(1X,'     Commanded Time Callibrator Level: 40 ns')
+	   3689       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.14)THEN
+	   3690         WRITE(11, 5880)
+	   3691 5880    FORMAT(1X,'     Commanded Time Callibrator Level: 20 ns')
+	   3692       ELSEIF(ISHFT(IAND(HDB.DAT(53), 60), -2).EQ.15)THEN
+	   3693         WRITE(11, 5890)
+	   3694 5890    FORMAT(1X,'     Commanded Time Callibrator Level: Invalid')
+	   3695       ENDIF
+	   3696 C
+	   3697       WRITE(11, 6000) ZEXT(HDB.DAT(54))
+	   3698 6000  FORMAT(1X,'     Energy Callibrator Level: ',I3) 
+	   3699 C
+	   3700       IF(BTEST(HDB.DAT(26),7))THEN
+	   3701         WRITE(11, 6100)
+	   3702 6100    FORMAT(1X,'     Command Echo Check: Enabled')
+	   3703       ELSE
+	   3704         WRITE(11, 6110)
+	   3705 6110    FORMAT(1X,'     Command Echo Check: Disabled')
+	   3706       ENDIF
+	   3707 C
+	   3708       IF(BTEST(HDB.DAT(26),2))THEN
+	   3709         WRITE(11, 6200)
+	   3710 6200    FORMAT(1X,'     Rate Mode: Low')
+	   3711       ELSE
+	   3712         WRITE(11, 6210)
+	   3713 6210    FORMAT(1X,'     Rate Mode: High')
+	   3714       ENDIF
+	   3715 C
+	   3716       IF(BTEST(HDB.DAT(221),7))THEN
+	   3717         WRITE(11, 6230)
+	   3718 6230    FORMAT(1X,'     PHA FIFO Mode: Enabled')
+	   3719       ELSE
+	   3720         WRITE(11, 6240)
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  43
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3721 6240    FORMAT(1X,'     PHA FIFO Mode: Disabled')
+	   3722       ENDIF
+	   3723 C
+	   3724       IF(BTEST(STICS_RATE.EDB(0).RATE(179),7))THEN
+	   3725         WRITE(11, 6250)
+	   3726 6250    FORMAT(1X,'     Data Mode: Diagnostic(TGS)')
+	   3727       ELSE
+	   3728         WRITE(11, 6260)
+	   3729 6260    FORMAT(1X,'     Data Mode: Normal')
+	   3730       ENDIF
+	   3731 C
+	   3732       IF(BTEST(HDB.DAT(26),3))THEN
+	   3733         WRITE(11, 6270)
+	   3734 6270    FORMAT(1X,'     Main SSD Bias: OFF')
+	   3735       ELSE
+	   3736         WRITE(11, 6280)
+	   3737 6280    FORMAT(1X,'     Main SSD Bias: ON')
+	   3738       ENDIF
+	   3739 C
+	   3740       IF(BTEST(HDB.DAT(55),2))THEN
+	   3741         WRITE(11, 6300)
+	   3742 6300    FORMAT(1X,'     Time Preamp "Telescope 1": ON')
+	   3743       ELSE
+	   3744         WRITE(11, 6310)
+	   3745 6310    FORMAT(1X,'     Time Preamp "Telescope 1": OFF')
+	   3746       ENDIF
+	   3747 C
+	   3748       IF(BTEST(HDB.DAT(55),3))THEN
+	   3749         WRITE(11, 6320)
+	   3750 6320    FORMAT(1X,'     Time Preamp Start 3: ON')
+	   3751       ELSE
+	   3752         WRITE(11, 6330)
+	   3753 6330    FORMAT(1X,'     Time Preamp Start 3: OFF')
+	   3754       ENDIF
+	   3755 C
+	   3756       IF(BTEST(HDB.DAT(55),4))THEN
+	   3757         WRITE(11, 6340)
+	   3758 6340    FORMAT(1X,'     Time Preamp Start 4: ON')
+	   3759       ELSE
+	   3760         WRITE(11, 6350)
+	   3761 6350    FORMAT(1X,'     Time Preamp Start 4: OFF')
+	   3762       ENDIF
+	   3763 C
+	   3764       IF(BTEST(HDB.DAT(55),1))THEN
+	   3765         WRITE(11, 6360)
+	   3766 6360    FORMAT(1X,'     Time Preamps "Telescope 3": ON')
+	   3767       ELSE
+	   3768         WRITE(11, 6370)
+	   3769 6370    FORMAT(1X,'     Time Preamps "Telescope 3": OFF')
+	   3770       ENDIF
+	   3771 C
+	   3772       IF(BTEST(HDB.DAT(55),0))THEN
+	   3773         WRITE(11, 6380)
+	   3774 6380    FORMAT(1X,'     Time Preamp Stop 2: ON')
+	   3775       ELSE
+	   3776         WRITE(11, 6390)
+	   3777 6390    FORMAT(1X,'     Time Preamp Stop 2: OFF')
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  44
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3778       ENDIF
+	   3779 C
+	   3780       IF(BTEST(HDB.DAT(53),0))THEN
+	   3781         WRITE(11, 6400)
+	   3782 6400    FORMAT(1X,'     Multiple Starts: Enabled')
+	   3783       ELSE
+	   3784         WRITE(11, 6410)
+	   3785 6410    FORMAT(1X,'     Multiple Starts: Disabled')
+	   3786       ENDIF
+	   3787 C
+	   3788       IF(BTEST(HDB.DAT(53),1))THEN
+	   3789         WRITE(11, 6420)
+	   3790 6420    FORMAT(1X,'     Multiple Stops: Enabled')
+	   3791       ELSE
+	   3792         WRITE(11, 6430)
+	   3793 6430    FORMAT(1X,'     Multiple Stops: Disabled')
+	   3794       ENDIF
+	   3795 C
+	   3796       CALL MVBITS(HDB.DAT(25), 1, 3, STICS_TRIGGER_MODE, 0)
+	   3797       IF(STICS_TRIGGER_MODE.EQ.0)THEN
+	   3798         WRITE(11, 6500)
+	   3799 6500    FORMAT(1X,'     Trigger Mode: 0 = En')
+	   3800       ELSEIF(STICS_TRIGGER_MODE.EQ.1)THEN
+	   3801         WRITE(11, 6510)
+	   3802 6510    FORMAT(1X,'     Trigger Mode: 1 = Tn')
+	   3803       ELSEIF(STICS_TRIGGER_MODE.EQ.2)THEN
+	   3804         WRITE(11, 6520)
+	   3805 6520    FORMAT(1X,'     Trigger Mode: 2 = (Tn & !En)|(Tn & En)')
+	   3806       ELSEIF(STICS_TRIGGER_MODE.EQ.3)THEN
+	   3807         WRITE(11, 6530)
+	   3808 6530    FORMAT(1X,'     Trigger Mode: 3 = Tn & En')
+	   3809       ELSEIF(STICS_TRIGGER_MODE.EQ.4)THEN
+	   3810         WRITE(11, 6540)
+	   3811 6540    FORMAT(1X,'     Trigger Mode: 4 = E|T')
+	   3812       ELSEIF(STICS_TRIGGER_MODE.EQ.5)THEN
+	   3813         WRITE(11, 6550)
+	   3814 6550    FORMAT(1X,'     Trigger Mode: 5 = (E & !T)|(Tn & !E)|(Tn & En)')
+	   3815       ELSEIF(STICS_TRIGGER_MODE.EQ.6)THEN
+	   3816         WRITE(11, 6560)
+	   3817 6560    FORMAT(1X,'     Trigger Mode: 6 = Cal & (E|T)')
+	   3818       ELSEIF(STICS_TRIGGER_MODE.EQ.7)THEN
+	   3819         WRITE(11, 6570)
+	   3820 6570    FORMAT(1X,'     Trigger Mode: 7 = (E & !T)|(Tn & En)')
+	   3821       ENDIF
+	   3822 C
+	   3823       IF(BTEST(HDB.DAT(189),0))THEN
+	   3824         COMP_CODE(1) = 'C'
+	   3825       ELSE
+	   3826         COMP_CODE(1) = 'A'
+	   3827       ENDIF
+	   3828 C
+	   3829       IF(BTEST(HDB.DAT(189),1))THEN
+	   3830         COMP_CODE(2) = 'C'
+	   3831       ELSE
+	   3832         COMP_CODE(2) = 'A'
+	   3833       ENDIF
+	   3834 C
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  45
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3835       WRITE(11, 6600) COMP_CODE
+	   3836 6600  FORMAT(1X,'     Compression code for rate groups 1 and 2: ',A,',', A) 
+	   3837 C
+	   3838       IF(BTEST(HDB.DAT(26), 4)) SSD_1_BIAS = 'OFF'      ! For the SSD biases, 0 = ON
+	   3839       IF(BTEST(HDB.DAT(26), 5)) SSD_2_BIAS = 'OFF'      ! and 1 = OFF, unlike most
+	   3840       IF(BTEST(HDB.DAT(26), 6)) SSD_3_BIAS = 'OFF'      ! of the other bit quantities
+	   3841       IF(BTEST(HDB.DAT(55), 5)) ENERGY_PREAMP_1 = 'ON '
+	   3842       IF(BTEST(HDB.DAT(55), 6)) ENERGY_PREAMP_2 = 'ON '
+	   3843       IF(BTEST(HDB.DAT(55), 7)) ENERGY_PREAMP_3 = 'ON '
+	   3844       CALL MVBITS(HDB.DAT(51), 2, 6, SSD_1_THRESHOLD, 0)
+	   3845       CALL MVBITS(HDB.DAT(51), 0, 2, SSD_2_THRESHOLD, 4)
+	   3846       CALL MVBITS(HDB.DAT(52), 4, 4, SSD_2_THRESHOLD, 0)
+	   3847       CALL MVBITS(HDB.DAT(52), 0, 4, SSD_3_THRESHOLD, 2)
+	   3848       CALL MVBITS(HDB.DAT(53), 6, 2, SSD_3_THRESHOLD, 0)
+	   3849       WRITE(11, 6700) SSD_1_BIAS, ENERGY_PREAMP_1, SSD_1_THRESHOLD,
+	   3850      &                SSD_2_BIAS, ENERGY_PREAMP_2, SSD_2_THRESHOLD,
+	   3851      &                SSD_3_BIAS, ENERGY_PREAMP_3, SSD_3_THRESHOLD
+	   3852 6700  FORMAT(1X,//,10X, '         BIAS    PREAMP POWER   THRESHOLD LEVEL',/,
+	   3853      &       5X,  '-----------------------------------------------------',/,
+	   3854      &       5X,  'SSD 1     |   ',A3,'   |      ',A3,'     |      ', I3,'       |',/,
+	   3855      &       5X,  'SSD 2     |   ',A3,'   |      ',A3,'     |      ', I3,'       |',/,
+	   3856      &       5X,  'SSD 3     |   ',A3,'   |      ',A3,'     |      ', I3,'       |',/)
+	   3857 C     
+	   3858 C SWICS Status Items
+	   3859 C
+	   3860       WRITE(11, 7000)
+	   3861 7000  FORMAT(//,10X,'SWICS STATUS ITEMS',/)
+	   3862 C
+	   3863       IF(BTEST(HDB.DAT(59),3))SWICS_DPPS_ENABLE  = 'ON '
+	   3864       IF(BTEST(HDB.DAT(58),7))SWICS_PAPS_ENABLE = 'ON '
+	   3865       IF(BTEST(HDB.DAT(58),4))SWICS_START_MCPPS_ENABLE = 'ON '
+	   3866       IF(BTEST(HDB.DAT(58),5))SWICS_STOP_MCPPS_ENABLE = 'ON '
+	   3867 C      
+	   3868       SWICS_PAPS_MEAS_V        = 4.453E1 - 1.464E2 * ZEXT(HDB.DAT(70))
+	   3869       SWICS_START_MCPPS_MEAS_V = -4.610  + 1.864E1 * ZEXT(HDB.DAT(77))
+	   3870       SWICS_STOP_MCPPS_MEAS_V  = 4.650   + 1.356E1 * ZEXT(HDB.DAT(78))
+	   3871 C
+	   3872       WRITE(11, 7100) SWICS_DPPS_ENABLE, 
+	   3873      &                SWICS_PAPS_ENABLE, ZEXT(HDB.DAT(222)), ZEXT(HDB.DAT(61)), SWICS_PAPS_MEAS_V, 
+	   3874      &                SWICS_START_MCPPS_ENABLE, ZEXT(HDB.DAT(64)), ZEXT(HDB.DAT(62)), SWICS_START_MCPPS_MEAS_V, 
+	   3875      &                SWICS_STOP_MCPPS_ENABLE, ZEXT(HDB.DAT(65)), ZEXT(HDB.DAT(63)), SWICS_START_MCPPS_MEAS_V
+	   3876 7100  FORMAT(1X,//,10X, '         ENABLE    LIMIT     LEVEL   MEASURED VOLTAGE',/,
+	   3877      &       5X,  '--------------------------------------------------------',/,
+	   3878      &       5X,  'DPPS        |  ',A3,'   |    -    |    -    |        -      |',/,
+	   3879      &       5X,  'PAPS        |  ',A3,'   |   ',I3,'   |   ',I3,'   |',F12.2,'   |',/,
+	   3880      &       5X,  'START MCPPS |  ',A3,'   |   ',I3,'   |   ',I3,'   |',F12.2,'   |',/,
+	   3881      &       5X,  'STOP MCPPS  |  ',A3,'   |   ',I3,'   |   ',I3,'   |',F12.2,'   |',/)
+	   3882 C
+	   3883       IF(BTEST(HDB.DAT(89),0))THEN
+	   3884         WRITE(11, 7200)
+	   3885 7200    FORMAT(1X,'     DPPS Stepping Sequence: RAM')
+	   3886       ELSE
+	   3887         WRITE(11, 7210)
+	   3888 7210    FORMAT(1X,'     DPPS Stepping Sequence: ROM')
+	   3889       ENDIF
+	   3890 C
+	   3891       IF(BTEST(HDB.DAT(89),2))THEN
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  46
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3892         WRITE(11, 7300)
+	   3893 7300    FORMAT(1X,'     Discharge Indicator: Discharge')
+	   3894       ELSE
+	   3895         WRITE(11, 7310)
+	   3896 7310    FORMAT(1X,'     Discharge Indicator: No Discharge')
+	   3897       ENDIF
+	   3898 C
+	   3899       IF(BTEST(HDB.DAT(89),5))THEN
+	   3900         WRITE(11, 7400)
+	   3901 7400    FORMAT(1X,'     Callibration: Active')
+	   3902       ELSE
+	   3903         WRITE(11, 7410)
+	   3904 7410    FORMAT(1X,'     Callibration: Not Active')
+	   3905       ENDIF
+	   3906 C
+	   3907       WRITE(11, 7500)ZEXT(HDB.DAT(57))
+	   3908 7500  FORMAT(1X,'     Energy Callibrator Level: ',I3) 
+	   3909 C
+	   3910       WRITE(11, 7510)IAND(HDB.DAT(58), 15)
+	   3911 7510  FORMAT(1X,'     Time Callibrator Level: ',I2) 
+	   3912 C
+	   3913       IF(BTEST(HDB.DAT(58),6))THEN
+	   3914         WRITE(11, 7600)
+	   3915 7600    FORMAT(1X,'     Main  SSD Bias: OFF')
+	   3916       ELSE
+	   3917         WRITE(11, 7610)
+	   3918 7610    FORMAT(1X,'     Main  SSD Bias: ON ')
+	   3919       ENDIF
+	   3920 C
+	   3921       DO 7640 I=1,3
+	   3922         IF(BTEST(HDB.DAT(56),I-1))THEN
+	   3923           WRITE(11, 7620) I
+	   3924 7620      FORMAT(1X,'     SSD ',I1,' Preamp and Bias: ON ')
+	   3925         ELSE
+	   3926           WRITE(11, 7630) I
+	   3927 7630      FORMAT(1X,'     SSD ',I1,' Preamp and Bias: OFF')
+	   3928         ENDIF
+	   3929 7640  CONTINUE
+	   3930 C
+	   3931       IF(BTEST(HDB.DAT(56),3))THEN
+	   3932         WRITE(11, 7700)
+	   3933 7700    FORMAT(1X,'     Energy Threshold: High')
+	   3934       ELSE
+	   3935         WRITE(11, 7710)
+	   3936 7710    FORMAT(1X,'     Energy Threshold: Low')
+	   3937       ENDIF
+	   3938 C
+	   3939       CALL MVBITS(HDB.DAT(56), 4, 4, TAC_SLOPE, 0)
+	   3940       IF(TAC_SLOPE.EQ.1)THEN
+	   3941         WRITE(11, 7800)
+	   3942 7800    FORMAT(1X,'     TAC Slope: Nominal')
+	   3943       ELSEIF(TAC_SLOPE.EQ.5)THEN
+	   3944         WRITE(11, 7810)
+	   3945 7810    FORMAT(1X,'     TAC Slope: -10%')
+	   3946       ELSEIF(TAC_SLOPE.EQ.7)THEN
+	   3947         WRITE(11, 7820)
+	   3948 7820    FORMAT(1X,'     TAC Slope: +10%')
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  47
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   3949       ELSEIF(TAC_SLOPE.EQ.9)THEN
+	   3950         WRITE(11, 7830)
+	   3951 7830    FORMAT(1X,'     TAC Slope: +5%')
+	   3952       ELSEIF(TAC_SLOPE.EQ.13)THEN
+	   3953         WRITE(11, 7840)
+	   3954 7840    FORMAT(1X,'     TAC Slope: -5%')
+	   3955       ELSE
+	   3956         WRITE(11, 7850)
+	   3957 7850    FORMAT(1X,'     TAC Slope: Invalid')
+	   3958       ENDIF
+	   3959 C
+	   3960       SWICS_TRIGGER_MODE = IAND(HDB.DAT(59), 7)
+	   3961       IF(SWICS_TRIGGER_MODE.EQ.0)THEN
+	   3962         WRITE(11, 7900)
+	   3963 7900    FORMAT(1X,'     Trigger Mode: 0 = E OR T')
+	   3964       ELSEIF(SWICS_TRIGGER_MODE.EQ.1)THEN
+	   3965         WRITE(11, 7910)
+	   3966 7910    FORMAT(1X,'     Trigger Mode: 1 = E ')
+	   3967       ELSEIF(SWICS_TRIGGER_MODE.EQ.2)THEN
+	   3968         WRITE(11, 7920)
+	   3969 7920    FORMAT(1X,'     Trigger Mode: 2 = E AND T ') 
+	   3970       ELSEIF(SWICS_TRIGGER_MODE.EQ.3)THEN
+	   3971         WRITE(11, 7930)
+	   3972 7930    FORMAT(1X,'     Trigger Mode: 3 = T') 
+	   3973       ELSEIF(SWICS_TRIGGER_MODE.EQ.4)THEN
+	   3974         WRITE(11, 7940)
+	   3975 7940    FORMAT(1X,'     Trigger Mode: 4 = E OR T During Callibration Cycle') 
+	   3976       ELSEIF(SWICS_TRIGGER_MODE.EQ.5)THEN
+	   3977         WRITE(11, 7950)
+	   3978 7950    FORMAT(1X,'     Trigger Mode: 5 = E During Callibration Cycle') 
+	   3979       ELSEIF(SWICS_TRIGGER_MODE.EQ.6)THEN
+	   3980         WRITE(11, 7960)
+	   3981 7960    FORMAT(1X,'     Trigger Mode: 6 = E AND T During Callibration Cycle') 
+	   3982       ELSEIF(SWICS_TRIGGER_MODE.EQ.7)THEN
+	   3983         WRITE(11, 7970)
+	   3984 7970    FORMAT(1X,'     Trigger Mode: 7 = T During Callibration Cycle') 
+	   3985       ENDIF
+	   3986 C
+	   3987       IF(BTEST(HDB.DAT(59),7))THEN
+	   3988         WRITE(11, 8000)
+	   3989 8000    FORMAT(1X,'     Command Error Check: ON ')
+	   3990       ELSE
+	   3991         WRITE(11, 8010)
+	   3992 8010    FORMAT(1X,'     Command Error Check: OFF')
+	   3993       ENDIF
+	   3994 C
+	   3995       SWICS_SUN_SECTOR_DEFINITIONS='0000000000000000'
+	   3996       DO 8100 I=1,8
+	   3997         IF(BTEST(HDB.DAT(86), I-1)) SWICS_SUN_SECTOR_DEFINITIONS(I:I)='1'
+	   3998 8100  CONTINUE
+	   3999       DO 8110 I=1,8
+	   4000         IF(BTEST(HDB.DAT(87), I-1)) SWICS_SUN_SECTOR_DEFINITIONS(I+8:I+8)='1'
+	   4001 8110  CONTINUE
+	   4002       WRITE(11, 8120)SWICS_SUN_SECTOR_DEFINITIONS
+	   4003 8120  FORMAT(1X,'     SWICS sun sector definition: ', A)
+	   4004 C
+	   4005       WRITE(11, 8200)ZEXT(HDB.DAT(88))
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  48
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   4006 8200  FORMAT(1X,'     Compressed FSR Limit for Step Reversal: ',I3) 
+	   4007 C
+	   4008       IF(BTEST(HDB.DAT(89),4))THEN
+	   4009         WRITE(11, 8300)
+	   4010 8300    FORMAT(1X,'     Reversal Stepping Mode: Rate Counting Stopped After Reversal Stepping ')
+	   4011       ELSE
+	   4012         WRITE(11, 8310)
+	   4013 8310    FORMAT(1X,'     Reversal Stepping Mode: Rate Counting Continued After Reversal Stepping ')
+	   4014       ENDIF
+	   4015 C
+	   4016       IF(BTEST(HDB.DAT(89),6))THEN
+	   4017         WRITE(11, 8400)
+	   4018 8400    FORMAT(1X,'     PHA FIFO Mode: Enabled')
+	   4019       ELSE
+	   4020         WRITE(11, 8410)
+	   4021 8410    FORMAT(1X,'     PHA FIFO Mode: Disabled')
+	   4022       ENDIF
+	   4023 C
+	   4024       IF(BTEST(HDB.DAT(89),7))THEN
+	   4025         WRITE(11, 8500)
+	   4026 8500    FORMAT(1X,'     Test Tables: Active')
+	   4027       ELSE
+	   4028         WRITE(11, 8510)
+	   4029 8510    FORMAT(1X,'     Test Tables: Inactive')
+	   4030       ENDIF
+	   4031 C
+	   4032       IF(BTEST(HDB.DAT(189),2))THEN
+	   4033         COMP_CODE(1) = 'C'
+	   4034       ELSE
+	   4035         COMP_CODE(1) = 'A'
+	   4036       ENDIF
+	   4037 C
+	   4038       IF(BTEST(HDB.DAT(189),3))THEN
+	   4039         COMP_CODE(2) = 'C'
+	   4040       ELSE
+	   4041         COMP_CODE(2) = 'A'
+	   4042       ENDIF
+	   4043 C
+	   4044       WRITE(11, 5200) COMP_CODE
+	   4045 C
+	   4046 C Write actual header, overwriting the dummy that was written at the beginning of the file.
+	   4047 C This is done by closing and reopening the file, then using REWRITE
+	   4048 C
+	   4049       CLOSE(UNIT=11)                            ! Close output file
+	   4050       OPEN(UNIT=11, NAME=OUTPUTFILENAME, STATUS='OLD')
+	   4051       READ(11,*)
+	   4052       REWRITE(11,50)
+	   4053       READ(11,*)
+	   4054       REWRITE(11,52)
+	   4055       READ(11,*)
+	   4056       REWRITE(11,55)L1FILENAME
+	   4057       READ(11,*)
+	   4058       REWRITE(11,57)VERSION, RUN_TIME, RUN_DATE
+	   4059       READ(11,*)
+	   4060       REWRITE(11,60) FIRST_SR, FIRST.HR, FIRST.MIN, FIRST.SEC
+	   4061       READ(11,*)
+	   4062       REWRITE(11,65) LAST_SR, LAST.HR, LAST.MIN, LAST.SEC
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  49
+1.6                                                             21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   4063       READ(11,*)
+	   4064       REWRITE(11,70)CNTR-INCOMPLETE,INCOMPLETE
+	   4065 C
+	   4066 C Close files and STOP
+	   4067 C
+	   4068       CALL WIND_L1_CLOSE( L1_LUN, STATUS )      ! Close input file
+	   4069       IF (STATUS .NE. 1) GOTO 9090
+	   4070       CLOSE(UNIT=11)                            ! Close output file
+	   4071       STOP
+	   4072 C
+	   4073 C Come here for errors
+	   4074 C
+	   4075 9010  TYPE *,'ERROR OPENING L1 FILE; STATUS=',STATUS
+	   4076       STOP
+	   4077 9020  TYPE *,'ERROR READING SCIENCE RECORD ',CNTR,'; STATUS=',STATUS
+	   4078       STOP
+	   4079 9030  TYPE *,'ERROR GETTING BASIC CORE; STATUS=',STATUS
+	   4080       STOP
+	   4081 9050  TYPE *,'ERROR GETTING HDB; STATUS=',STATUS
+	   4082       STOP
+	   4083 9060  TYPE *,'ERROR GETTING HK DATA; STATUS=',STATUS
+	   4084       STOP
+	   4085 9080  TYPE *,'ERROR GETTING STICS DATA; STATUS=',STATUS
+	   4086       STOP
+	   4087 9090  TYPE *,'ERROR CLOSING L1 FILE; STATUS=',STATUS
+	   4088       STOP
+	   4089       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                1676 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                59084 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                             13808 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                               69336   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                4992 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+  7 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               149544
+
+
+ENTRY POINTS
+
+    Address   Type  Name       
+                               
+  4-00000000        WIND_HEALTH
+
+
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  50
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+VARIABLES
+
+    Address   Type  Name                             Address   Type  Name                        
+                                                                                                 
+  2-00000020  CHAR  ASCII_NULL                     2-000000D0  I*4   N                           
+  2-00000054  I*4   BR0_BR1_BORDER                 2-000000E0  I*4   NAMELEN                     
+  2-000000D8  I*4   CNTR                           2-00000100  I*4   NCH                         
+  2-000000A8  L*4   CODE_C                         2-00000048  I*4   NCHAR                       
+  2-000000AC  L*4   CODE_C2                        2-000000F8  I*4   NEW_HK                      
+  2-00000060  I*4   DAYOFMONTH                     2-000000D4  I*4   NN                          
+  2-000000E4  I*4   DECOM_CNTR                     1-00000118  I*4   NUM_MF                      
+  2-000002A8  CHAR  DEVDIR                         1-0000011C  I*4   NUM_SR                      
+  2-000000FC  I*4   DEVDIR_LEN                     1-00000120  I*4   OFFSET                      
+  2-000000B4  L*4   ENDFOUND                       2-00000000  R*8   OLD_TIME                    
+  1-00000098  CHAR  ENERGY_PREAMP_1                2-00000208  CHAR  OUTPUTFILENAME              
+  1-000000A0  CHAR  ENERGY_PREAMP_2                2-000000BC  L*4   RANGE_BIT_SET               
+  1-000000A8  CHAR  ENERGY_PREAMP_3                2-00000080  I*4   RESET_CAUSE                 
+  1-00000124  L*4   FIRSTFOUND                     2-00000170  CHAR  RUN_DATE                    
+  2-0000004C  I*4   FIRST_SR                       2-00000010  CHAR  RUN_TIME                    
+  2-00000258  CHAR  FULL_L1_NAME                   2-00000084  R*4   SPIN_PERIOD                 
+  2-000000B8  L*4   GOODSPIN                       1-00000080  CHAR  SSD_1_BIAS                  
+  2-00000064  I*4   HK_COUNT                       2-0000006C  I*4   SSD_1_THRESHOLD             
+  2-000000C0  I*4   I                              1-00000088  CHAR  SSD_2_BIAS                  
+  1-00000110  I*4   INCOMPLETE                     2-00000070  I*4   SSD_2_THRESHOLD             
+  2-00000104  I*4   IPOS                           1-00000090  CHAR  SSD_3_BIAS                  
+  2-000000DC  I*4   ITEMP                          2-00000074  I*4   SSD_3_THRESHOLD             
+  2-000000C4  I*4   J                              2-000000B0  L*4   STARTFOUND                  
+  2-000000C8  I*4   K                              2-00000058  I*4   STATUS                      
+  2-000000F0  I*4   KK                             1-000000D0  CHAR  STICS_CONFIG                
+  2-000000CC  I*4   L                              1-00000010  CHAR  STICS_COVER                 
+  2-000001B8  CHAR  L1FILENAME                     1-00000018  CHAR  STICS_HEATER                
+  1-00000114  I*4   L1_LUN                         1-00000030  CHAR  STICS_MAIN                  
+  2-00000050  I*4   LAST_SR                        2-00000120  I*4   STICS_MCPPS_0_CL            
+  2-000002F8  CHAR  LINE                           2-00000154  R*4   STICS_MCPPS_0_CV            
+  1-00000100  CHAR  LOAD_CONFIG                    2-00000124  I*4   STICS_MCPPS_1_CL            
+  1-00000108  CHAR  LOAD_SNAPSHOT                  2-00000158  R*4   STICS_MCPPS_1_CV            
+  1-00000058  CHAR  MASS_COM_ADPS                  2-00000128  I*4   STICS_MCPPS_2_CL            
+  1-00000060  CHAR  MASS_COM_DPPS                  2-0000015C  R*4   STICS_MCPPS_2_CV            
+  1-000000F0  CHAR  MASS_CONFIG                    2-0000012C  I*4   STICS_MCPPS_3_CL            
+  1-00000020  CHAR  MASS_COVER                     2-00000160  R*4   STICS_MCPPS_3_CV            
+  1-00000040  CHAR  MASS_HPS                       2-00000130  I*4   STICS_MCPPS_4_CL            
+  2-00000114  I*4   MASS_HPS_CL                    2-00000164  R*4   STICS_MCPPS_4_CV            
+  2-00000148  R*4   MASS_HPS_CV                    2-00000134  I*4   STICS_MCPPS_5_CL            
+  2-00000088  R*4   MASS_HPS_MEAS_V                2-00000168  R*4   STICS_MCPPS_5_CV            
+  1-00000028  CHAR  MASS_MAIN                      1-00000078  CHAR  STICS_MINUS_DPPS            
+  1-000000F8  CHAR  MASS_SNAPSHOT                  1-00000070  CHAR  STICS_PLUS_DPPS             
+  1-00000050  CHAR  MASS_START_MCP                 1-000000D8  CHAR  STICS_SNAPSHOT              
+  2-00000118  I*4   MASS_START_MCPPS_CL            1-00000068  CHAR  STICS_TOFPS                 
+  2-0000014C  R*4   MASS_START_MCPPS_CV            2-00000138  I*4   STICS_TOFPS_MCPPS_6_CL      
+  2-00000090  R*4   MASS_START_MCP_MEAS_V          2-0000016C  R*4   STICS_TOFPS_MCPPS_6_CV      
+  1-00000048  CHAR  MASS_STOP_MCP                  2-00000094  R*4   STICS_TOFPS_MEAS_V          
+  2-0000011C  I*4   MASS_STOP_MCPPS_CL             2-00000068  I*4   STICS_TRIGGER_MODE          
+  2-00000150  R*4   MASS_STOP_MCPPS_CV             1-000000E0  CHAR  SWICS_CONFIG                
+  2-0000008C  R*4   MASS_STOP_MCP_MEAS_V           1-00000000  CHAR  SWICS_COVER                 
+  2-00000180  CHAR  MASS_SUN_SECTOR_DEFINITIONS    1-000000B0  CHAR  SWICS_DPPS_ENABLE           
+  2-000000F4  I*4   MM                             2-000000A4  R*4   SWICS_DPPS_MEAS_V           
+  2-0000005C  I*4   MONTH                          1-00000008  CHAR  SWICS_HEATER                
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  51
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+    Address   Type  Name                             Address   Type  Name                        
+                                                                                                 
+  1-00000038  CHAR  SWICS_MAIN                     2-00000144  R*4   SWICS_STOP_MCPPS_CV         
+  2-00000108  I*4   SWICS_PAPS_CL                  1-000000C8  CHAR  SWICS_STOP_MCPPS_ENABLE     
+  2-0000013C  R*4   SWICS_PAPS_CV                  2-000000A0  R*4   SWICS_STOP_MCPPS_MEAS_V     
+  1-000000B8  CHAR  SWICS_PAPS_ENABLE              2-00000190  CHAR  SWICS_SUN_SECTOR_DEFINITIONS
+  2-00000098  R*4   SWICS_PAPS_MEAS_V              2-00000078  I*4   SWICS_TRIGGER_MODE          
+  1-000000E8  CHAR  SWICS_SNAPSHOT                 2-0000007C  I*4   TAC_SLOPE                   
+  2-0000010C  I*4   SWICS_START_MCPPS_CL           2-000000E8  I*4   VALUE                       
+  2-00000140  R*4   SWICS_START_MCPPS_CV           2-000000EC  I*4   VALUE2                      
+  1-000000C0  CHAR  SWICS_START_MCPPS_ENABLE       2-00000008  CHAR  VERSION                     
+  2-0000009C  R*4   SWICS_START_MCPPS_MEAS_V                                                     
+  2-00000110  I*4   SWICS_STOP_MCPPS_CL                                                          
+
+
+RECORDS
+
+    Address   Name                     Structure                 Bytes
+                                                                      
+  1-000001F8  DPU_10V                  HOUSEKEEPING_STATS           16
+  1-000001C8  DPU_28V                  HOUSEKEEPING_STATS           16
+  1-000001E8  DPU_5P2V_P               HOUSEKEEPING_STATS           16
+  1-000001D8  DPU_5P2V_S               HOUSEKEEPING_STATS           16
+  1-00000178  DPU_TEMP                 HOUSEKEEPING_STATS           16
+  1-00000218  DPU_TEMP_CTLW            HOUSEKEEPING_STATS           16
+  1-00000208  DPU_TEMP_PIFA            HOUSEKEEPING_STATS           16
+  2-00000030  END                      T                             8
+  2-00000038  FIRST                    T                             8
+  2-00002058  HDB                      HDBSTR                      324
+  2-0000DD78  HK                       HKEEP                      1100
+  7-00000000  L1_FILE_HEADER           ST_L1_FILE_HEADER           400
+  7-00000190  L1_SR_HEADER             ST_L1_SR_HEADER             244
+  2-00000040  LAST                     T                             8
+  2-000021A0  LAST_GOOD_HDB            HDBSTR                      324
+  1-00000418  MASS_ADPS28V             HOUSEKEEPING_STATS           16
+  1-00000438  MASS_AET                 HOUSEKEEPING_STATS           16
+  1-00000428  MASS_DPPS28I             HOUSEKEEPING_STATS           16
+  1-00000198  MASS_GET                 HOUSEKEEPING_STATS           16
+  1-000004D8  MASS_HPS_MCPPS_28I_AR    HOUSEKEEPING_STATS           16
+  1-000004E8  MASS_HPS_OUTV_AR         HOUSEKEEPING_STATS           16
+  1-00000408  MASS_LVPS28V             HOUSEKEEPING_STATS           16
+  1-000004C8  MASS_LVPS28V_AR          HOUSEKEEPING_STATS           16
+  1-000004B8  MASS_MINUS12V_AR         HOUSEKEEPING_STATS           16
+  1-00000478  MASS_MINUS5I_AR          HOUSEKEEPING_STATS           16
+  1-000003E8  MASS_MINUS5V             HOUSEKEEPING_STATS           16
+  1-00000468  MASS_MINUS5V_AR          HOUSEKEEPING_STATS           16
+  1-000004A8  MASS_PLUS12V_AR          HOUSEKEEPING_STATS           16
+  1-000003B8  MASS_PLUS28I             HOUSEKEEPING_STATS           16
+  1-000003D8  MASS_PLUS5I              HOUSEKEEPING_STATS           16
+  1-00000458  MASS_PLUS5I_AR           HOUSEKEEPING_STATS           16
+  1-000003C8  MASS_PLUS5V              HOUSEKEEPING_STATS           16
+  1-00000448  MASS_PLUS5V_AR           HOUSEKEEPING_STATS           16
+  1-00000498  MASS_PLUS6I_AR           HOUSEKEEPING_STATS           16
+  1-00000488  MASS_PLUS6V_AR           HOUSEKEEPING_STATS           16
+  1-000003F8  MASS_PLUS8V              HOUSEKEEPING_STATS           16
+  1-000004F8  MASS_START_MCPPSV_AR     HOUSEKEEPING_STATS           16
+  1-00000508  MASS_STOP_MCPPSV_AR      HOUSEKEEPING_STATS           16
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  52
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+    Address   Name                     Structure                 Bytes
+                                                                      
+  2-00000380  SCI                      CORE                       7384
+  2-00000028  START                    T                             8
+  1-00000518  STICS_28I                HOUSEKEEPING_STATS           16
+  1-000001B8  STICS_AEH_TEMP           HOUSEKEEPING_STATS           16
+  1-00000598  STICS_DPPS28I            HOUSEKEEPING_STATS           16
+  1-000005B8  STICS_MCPPS0_OUTV        HOUSEKEEPING_STATS           16
+  1-000005C8  STICS_MCPPS1_OUTV        HOUSEKEEPING_STATS           16
+  1-00000588  STICS_MCPPS28I           HOUSEKEEPING_STATS           16
+  1-000005D8  STICS_MCPPS2_OUTV        HOUSEKEEPING_STATS           16
+  1-000005E8  STICS_MCPPS3_OUTV        HOUSEKEEPING_STATS           16
+  1-000005F8  STICS_MCPPS4_OUTV        HOUSEKEEPING_STATS           16
+  1-00000608  STICS_MCPPS5_OUTV        HOUSEKEEPING_STATS           16
+  1-00000578  STICS_MINUS12V           HOUSEKEEPING_STATS           16
+  1-00000538  STICS_MINUS5V            HOUSEKEEPING_STATS           16
+  1-00000558  STICS_MINUS6V            HOUSEKEEPING_STATS           16
+  2-00004E08  STICS_PHA                ST_PHA                    36720
+  1-00000568  STICS_PLUS12V            HOUSEKEEPING_STATS           16
+  1-00000528  STICS_PLUS5V             HOUSEKEEPING_STATS           16
+  1-00000548  STICS_PLUS6V             HOUSEKEEPING_STATS           16
+  2-000022E8  STICS_RATE               ST_RATE                   11040
+  1-000005A8  STICS_SSD_BIASV          HOUSEKEEPING_STATS           16
+  1-000001A8  STICS_SSD_TEMP           HOUSEKEEPING_STATS           16
+  1-00000628  STICS_T1_AEHT            HOUSEKEEPING_STATS           16
+  1-00000638  STICS_T2_FHOPT           HOUSEKEEPING_STATS           16
+  1-00000648  STICS_T3_SSDT            HOUSEKEEPING_STATS           16
+  1-00000658  STICS_T4_BPT             HOUSEKEEPING_STATS           16
+  1-00000618  STICS_TOFPS_OUTV         HOUSEKEEPING_STATS           16
+  1-00000298  SWICS_20I                HOUSEKEEPING_STATS           16
+  1-00000288  SWICS_20V                HOUSEKEEPING_STATS           16
+  1-000003A8  SWICS_BET_PR             HOUSEKEEPING_STATS           16
+  1-000002B8  SWICS_DPPS_28I           HOUSEKEEPING_STATS           16
+  1-00000188  SWICS_GET                HOUSEKEEPING_STATS           16
+  1-000002A8  SWICS_LVPS_28V           HOUSEKEEPING_STATS           16
+  1-00000358  SWICS_MINUS12I_PR        HOUSEKEEPING_STATS           16
+  1-00000348  SWICS_MINUS12V_PR        HOUSEKEEPING_STATS           16
+  1-00000318  SWICS_MINUS5I_PR         HOUSEKEEPING_STATS           16
+  1-00000258  SWICS_MINUS5V            HOUSEKEEPING_STATS           16
+  1-00000308  SWICS_MINUS5V_PR         HOUSEKEEPING_STATS           16
+  1-000002C8  SWICS_PAPS_28I           HOUSEKEEPING_STATS           16
+  1-000002D8  SWICS_PAPS_OUTV          HOUSEKEEPING_STATS           16
+  1-00000338  SWICS_PLUS12I_PR         HOUSEKEEPING_STATS           16
+  1-00000328  SWICS_PLUS12V_PR         HOUSEKEEPING_STATS           16
+  1-00000228  SWICS_PLUS28V_PRIM_CURR  HOUSEKEEPING_STATS           16
+  1-00000248  SWICS_PLUS5I             HOUSEKEEPING_STATS           16
+  1-000002F8  SWICS_PLUS5I_PR          HOUSEKEEPING_STATS           16
+  1-00000238  SWICS_PLUS5V             HOUSEKEEPING_STATS           16
+  1-000002E8  SWICS_PLUS5V_PR          HOUSEKEEPING_STATS           16
+  1-00000278  SWICS_PLUS8I             HOUSEKEEPING_STATS           16
+  1-00000268  SWICS_PLUS8V             HOUSEKEEPING_STATS           16
+  1-00000368  SWICS_SSD_BIASV_PR       HOUSEKEEPING_STATS           16
+  1-00000398  SWICS_SSD_TEMP_PR        HOUSEKEEPING_STATS           16
+  1-00000378  SWICS_START_MCPPSV_PR    HOUSEKEEPING_STATS           16
+  1-00000388  SWICS_STOP_MCPPSV_PR     HOUSEKEEPING_STATS           16
+
+
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  53
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+ARRAYS
+
+     Address  Type  Name                        Bytes  Dimensions
+
+  2-00000018  CHAR  COMP_CODE                       2  (2)
+  2-0000E308  R*4   MASS_ADPS_OUTV                240  (0:59)
+  2-0000E3F8  R*4   MASS_DPPS_OUTV                240  (0:59)
+  2-0000E1C8  I*4   MR                             80  (2, 0:9)
+  1-00000140  CHAR  RESET_CAUSE_TEXT               52  (0:3)
+  1-00000128  CHAR  STICS_MCPPS                    18  (0:5)
+  2-000001A0  R*4   STICS_MCPPS_MEAS_V             24  (0:5)
+  2-0000E5D8  R*4   STICS_MINUSDPPS_OUTV          240  (0:59)
+  2-0000E4E8  R*4   STICS_PLUSDPPS_OUTV           240  (0:59)
+  2-0000E218  R*4   SWICS_DPPS_OUTV               240  (0:59)
+  1-00000668  I*4   UNIT_TABLE                     36  (0:2, 3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label     Address   Label     Address   Label
+                                                                                                                       
+      **       10         **       2340       **       4120       **       5300       **       6260       **       7500
+      **       12         **       2350       **       4130   4-0000D1C8   5400       **       6270       **       7510
+  4-000005B8   13         **       2360       **       4140       **       5500       **       6280       **       7600
+  4-00000BD8   14         **       2370       **       4150       **       5600       **       6300       **       7610
+      **       50         **       2400       **       4160       **       5610       **       6310       **       7620
+      **       52         **       2410       **       4170       **       5620       **       6320       **       7630
+      **       55         **       2500       **       4200       **       5630       **       6330   4-0000F59C   7640
+      **       57         **       2510       **       4300       **       5700       **       6340       **       7700
+      **       60         **       2520       **       4310       **       5710       **       6350       **       7710
+      **       65         **       2530       **       4400       **       5720       **       6360       **       7800
+      **       70         **       2600       **       4410       **       5730       **       6370       **       7810
+      **       75         **       2610       **       4420       **       5740       **       6380       **       7820
+  4-0000100C   100        **       2700       **       4500       **       5750       **       6390       **       7830
+  4-0000144C   200        **       2710       **       4510       **       5760       **       6400       **       7840
+      **       500        **       2800       **       4600       **       5770       **       6410       **       7850
+      **       510        **       2810       **       4610       **       5780       **       6420       **       7900
+      **       520        **       2820       **       4700       **       5790       **       6430       **       7910
+      **       550        **       2830       **       4710       **       5800       **       6500       **       7920
+  4-0000371C   600        **       2840       **       4800       **       5810       **       6510       **       7930
+  4-00003450   900        **       2850       **       4810       **       5820       **       6520       **       7940
+      **       950        **       2900       **       4820       **       5830       **       6530       **       7950
+      **       970        **       2910       **       4830       **       5840       **       6540       **       7960
+      **       1000       **       3000       **       4840       **       5850       **       6550       **       7970
+      **       1100       **       3020       **       4850       **       5860       **       6560       **       8000
+      **       1500       **       3030       **       4900       **       5870       **       6570       **       8010
+      **       2000       **       3040       **       4910       **       5880       **       6600   4-0000FB48   8100
+      **       2010       **       3050       **       4920       **       5890       **       6700   4-0000FC00   8110
+      **       2100       **       3060       **       4930       **       6000       **       7000       **       8120
+      **       2110       **       3070   4-0000CC28   5000       **       6100       **       7100       **       8200
+      **       2200       **       3100   4-0000CCE4   5010       **       6110       **       7200       **       8300
+      **       2205       **       3200       **       5020       **       6200       **       7210       **       8310
+      **       2300       **       3500   4-0000CF14   5100       **       6210       **       7300       **       8400
+      **       2310       **       4000       **       5110       **       6230       **       7310       **       8410
+      **       2320       **       4100       **       5120       **       6240       **       7400       **       8500
+      **       2330       **       4110       **       5200       **       6250       **       7410       **       8510
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  54
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  4-000104C0   9010   4-0000330C   9030   4-0000321C   9060   4-00010448   9090
+  4-00003384   9020   4-00003294   9050   4-000031A4   9080                    
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                                Type  Name                                Type  Name                             
+                                                                                                                             
+        CNVRT_T_YRMONDAY_TO_YEARDAY               WIND_GET_FILENAME                         WIND_L1_GET_STICS                
+  L*4   COMPARE_TIME_GE                           WIND_L1_CLOSE                             WIND_L1_OPEN                     
+        FIND_STATS                                WIND_L1_GET_BASIC                         WIND_L1_READ_SR                  
+        GET_IMAGE_INFO                            WIND_L1_GET_HDB                                                            
+  R*4   POLY                                      WIND_L1_GET_HK                                                             
+
+WIND_HEALTH                                                     21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  55
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   4090 C-------------------------------------------------------------------------------------------------------------------
+	   4090 ------------
+	   4091       SUBROUTINE POLY(X,C0,C1,C2,C3,C4,C5)
+	   4092 C This function computes a polynomial of up to 5th order in each component
+	   4093 C of the X structure. The polynomials' values are retuned in x also
+	   4094 C-------------------------------------------------------------------------------------------------------------------
+	   4094 ------------
+	   4095       REAL C0,C1,C2,C3,C4,C5,TEMP
+	   4096       STRUCTURE/HOUSEKEEPING_STATS/
+	   4097         REAL MIN,MAX,AVER
+	   4098         INTEGER NZERO
+	   4099       END STRUCTURE
+	   4100       RECORD /HOUSEKEEPING_STATS/ X
+	   4101 C
+	   4102 C Evaluate polynomial of minimum, maximum, and average values of X. Return 0 for the 
+	   4103 C average if X is negative.
+	   4104 C
+	   4105       X.MIN = C0 + C1*X.MIN + C2*X.MIN**2 + C3*X.MIN**3 + C4*X.MIN**4 + C5*X.MIN**5
+	   4106       X.MAX = C0 + C1*X.MAX + C2*X.MAX**2 + C3*X.MAX**3 + C4*X.MAX**4 + C5*X.MAX**5
+	   4107       IF(X.AVER.GE.0)THEN
+	   4108         X.AVER = C0 + C1*X.AVER + C2*X.AVER**2 + C3*X.AVER**3 + C4*X.AVER**4 + C5*X.AVER**5
+	   4109       ELSE
+	   4110         X.AVER = 0
+	   4111       ENDIF
+	   4112 C
+	   4113 C The polynomials used for WIND housekeeping are monotonic, so that the polynomial 
+	   4114 C evaluated at X.MIN is still an extremum. However, if the polynomial is monotonically
+	   4115 C DECREASING, the minimum and the maximum will exchange places. Allow for this below.
+	   4116 C
+	   4117       IF(X.MIN.GT.X.MAX)THEN
+	   4118         TEMP = X.MIN
+	   4119         X.MIN = X.MAX
+	   4120         X.MAX = TEMP
+	   4121       ENDIF
+	   4122 C
+	   4123       RETURN
+	   4124       END
+
+POLY                                                            21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  56
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                1676 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                59084 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                             13808 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                               69336   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                4992 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+  7 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               149544
+
+
+ENTRY POINTS
+
+    Address   Type  Name
+                        
+  4-0001079C        POLY
+
+
+VARIABLES
+
+    Address   Type  Name     Address   Type  Name     Address   Type  Name     Address   Type  Name
+                                                                                                   
+      **      R*4   C0         **      R*4   C2         **      R*4   C4     2-0000E6C8  R*4   TEMP
+      **      R*4   C1         **      R*4   C3         **      R*4   C5                           
+
+
+RECORDS
+
+    Address   Name  Structure                 Bytes
+                                                   
+      **      X     HOUSEKEEPING_STATS           16
+
+POLY                                                            21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  57
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+	   4125 C-------------------------------------------------------------------------------------------------------------------
+	   4125 ------------
+	   4126       SUBROUTINE FIND_STATS(INPUT,STATS)
+	   4127 C This subroutine finds the minimum,maxixmum, and sum of variable. These are
+	   4128 C stored in a structure.
+	   4129 C-------------------------------------------------------------------------------------------------------------------
+	   4129 ------------
+	   4130       INTEGER*4 INPUT
+	   4131       STRUCTURE/HOUSEKEEPING_STATS/
+	   4132         REAL MIN,MAX,AVER
+	   4133         INTEGER NZERO
+	   4134       END STRUCTURE
+	   4135       RECORD /HOUSEKEEPING_STATS/ STATS
+	   4136 C
+	   4137 C compare to previously established min and max, and add to accumulator;
+	   4138 C do this iff value isn't 0. If value is 0, simply increment zero counter
+	   4139 C
+	   4140       IF(INPUT.EQ.0)THEN
+	   4141         STATS.NZERO =STATS.NZERO + 1
+	   4142       ELSE
+	   4143         IF(INPUT .LT. STATS.MIN) STATS.MIN = INPUT
+	   4144         IF(INPUT .GT. STATS.MAX) STATS.MAX = INPUT
+	   4145         STATS.AVER = STATS.AVER + INPUT
+	   4146       ENDIF
+	   4147 C
+	   4148       RETURN
+	   4149       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                1676 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                59084 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                             13808 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                               69336   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                4992 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+  7 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               149544
+
+
+ENTRY POINTS
+
+    Address   Type  Name      
+                              
+  4-00010D14        FIND_STATS
+
+
+
+FIND_STATS                                                      21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  58
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+VARIABLES
+
+    Address   Type  Name 
+                         
+      **      I*4   INPUT
+
+
+RECORDS
+
+    Address   Name   Structure                 Bytes
+                                                    
+      **      STATS  HOUSEKEEPING_STATS           16
+
+FIND_STATS                                                      21-NOV-1995 14:28:17    DEC Fortran V6.2-508                Page  59
+1.6                             Symbol Table                    21-NOV-1995 14:21:43    [WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(SYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.LIS;1
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.OBJ;2
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:         14.59 seconds
+  Elapsed time:     17.63 seconds
+  Pagefaults:        1616
+  I/O Count:          173

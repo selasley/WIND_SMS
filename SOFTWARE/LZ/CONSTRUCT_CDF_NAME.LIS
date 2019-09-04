@@ -1,0 +1,462 @@
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   1
+                                                                13-APR-1995 17:43:15    [WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.FOR;5
+
+	      1 	SUBROUTINE CONSTRUCT_CDF_NAME(lzname,dtype,cdfdir,cdfname,cdfnamelen)
+	      2 C
+	      3 C This subroutine accepts in the argument LZNAME a Level Zero filename and
+	      4 C constructs the name of the CDF file which contains the corresponding orbit
+	      5 C or attitude data.  This constructed filename is returned in the argument
+	      6 C CDFNAME.  The number of characters in CDFNAME is returned in the argument
+	      7 C CDFNAMELEN. 
+	      8 C
+	      9 C If the argument CDFDIR is not blank its contents will be used for the entire
+	     10 C device and directory parts of the constructed CDF filename.
+	     11 C
+	     12 C If the argument CDFDIR is empty (all blanks) test the flag FROM_CD, which was
+	     13 C set to indicate if the LZ file's device is a CDROM or not.  If it is set, use
+	     14 C the same device name and a hard-coded directory name of [DATA.WI.DEF.OR] or
+	     15 C [DATA.WI.DEF.AT], depending on the value of the argument DTYPE, which can be
+	     16 C 'OR' or 'AT'..  If FROM_CD is not set (ie, the LZ file is on a normal disk),
+	     17 C use the logical name WIND_OR_DATA (or WIND_AT_DATA) as the CDF's device and
+	     18 C directory name.
+	     19 C
+	     20 C Note: The file type of .CDF is not added to the constructed filename, since
+	     21 C the CDF_OPEN routine requires it not be present.  If the caller wishes to do
+	     22 C an INQUIRE or OPEN the string '.CDF' should first be stored in CDFNAME at
+	     23 C offset CDFNAMELEN+1 through CDFNAMELEN+4.
+	     24 C
+	     25 C The possible input strings for LZNAME are:
+	     26 C   1)  device:[directory.subdirectory]WI_LZ_SMS_yyyymmdd_Vvv.DAT
+	     27 C   2)  device:WI_LZ_SMS_yyyymmdd_Vvv.DAT
+	     28 C   3)  [directory.subdirectory]WI_LZ_SMS_yyyymmdd_Vvv.DAT
+	     29 C   4)  WI_LZ_SMS_yyyymmdd_Vvv.DAT
+	     30 C   5)  device:[directory.subdirectory]yymmddvv.DAT
+	     31 C   6)  device:yymmddvv.DAT
+	     32 C   7)  [directory.subdirectory]yymmddvv.DAT
+	     33 C   8)  yymmddvv.DAT
+	     34 C
+	     35 C In addition, the LZ file can be either on hard disk or on CDROM.  If on disk
+	     36 C it can take on any of the above forms; if on CDROM, however, it will always
+	     37 C take on form 5.
+	     38 C
+	     39 C If CDFDIR is blank the constructed filename for each case would be:
+	     40 C   1)  device:[directory.subdirectory]WI_xx_DEF_yyyymmdd_Vvv
+	     41 C   2)  device:WI_xx_DEF_yyyymmdd_Vvv
+	     42 C   3)  [directory.subdirectory]WI_xx_DEF_yyyymmdd_Vvv
+	     43 C   4)  WI_xx_DEF_yyyymmdd_Vvv
+	     44 C   5)  device:[directory.subdirectory]yymmddvv
+	     45 C   6)  device:yymmddvv
+	     46 C   7)  [directory.subdirectory]yymmddvv
+	     47 C   8)  yymmddvv
+	     48 C In each of these cases the device and directory of the LZ file are retained.
+	     49 C The xx is the data type given in the argument DTYPE.  xx can be either OR or
+	     50 C AT, for orbit or attitude data.
+	     51 C
+	     52 C If CDFDIR is not blank the constructed filename would be:
+	     53 C   1)  device:[directory.subdirectory]WI_xx_DEF_yyyymmdd_Vvv
+	     54 C   2)  device:[directory.subdirectory]yymmddvv
+	     55 C Here the string   "device:[directory.subdirectory]"  represents the contents
+	     56 C of CDFDIR.  xx once again is the argument DTYPE (either OR or AT).
+	     57 C
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   2
+                                                                13-APR-1995 17:43:15    [WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.FOR;5
+
+	     58 C  This version:   1.1  12-APR-1995
+	     59 C
+	     60 C  Created:
+	     61 C       Larry Bleau    6-APR-1995
+	     62 C
+	     63 C Modification history:
+	     64 C 1.1	12-APR-1995	LRB	added dtype argument, changed to generate
+	     65 C				filenames on CD if LZ file is on CD
+	     66 C
+	     67 CDEC$	IDENT '1.1'
+	     68 	IMPLICIT NONE
+	     69 	INCLUDE 'INC_DIR:L1INFO.INC/NOLIST'
+	     97 	CHARACTER*(*) lzname,cdfdir,cdfname
+	     98 	CHARACTER*2 dtype
+	     99 	INTEGER cdfnamelen
+	    100 C
+	    101         INCLUDE 'INC_DIR:L1FMT.INC'
+    1	    102 C+
+    1	    103 C 
+    1	    104 C FUNCTIONAL DESCRIPTION:       
+    1	    105 C 
+    1	    106 C    This include file contains definitions for the Level 1 file format.
+    1	    107 C    Specifiically, it contains the definitions for the file and Science Record
+    1	    108 C    headers.
+    1	    109 C
+    1	    110 C COMMON BLOCKS:
+    1	    111 C  
+    1	    112 C     L1_HEADERS      contains one copy each of the file header and the Science
+    1	    113 C                     Record header
+    1	    114 C  
+    1	    115 C 
+    1	    116 C AUTHOR(S): 
+    1	    117 C 
+    1	    118 C        L. Bleau
+    1	    119 C 
+    1	    120 C Created: 
+    1	    121 C 
+    1	    122 C        12-OCT-1994    L. Bleau
+    1	    123 C 
+    1	    124 C This version:    6-APR-1995
+    1	    125 C 
+    1	    126 C Revised:
+    1	    127 C 
+    1	    128 C        Date     | Name  | Description
+    1	    129 C ----------------+-------+-----------------------------------------------------
+    1	    130 C 13-OCT-1994     |  LRB  | added fields to file header
+    1	    131 C 20-OCT-1994     |  LRB  | changed name of sci rec header structure from
+    1	    132 C                           L1_SR_HEADER to ST_L1_SR_HEADER
+    1	    133 C  2-NOV-1994     |  LRB  | added sr_count to ST_L1_SR_HEADER structure def
+    1	    134 C 15-DEC-1994     |  LRB  | added L1_records, EDB_count, EDB_lost, and EDB_skip
+    1	    135 C                           fields to L1 file header 
+    1	    136 C  8-MAR-1995     |  LRB  | added program_vers field to file header
+    1	    137 C  6-APR-1995     |  LRB  | added gsm, gse, and attitude fields to science
+    1	    138 C                           record header; added structure EPHEMERIS
+    1	    139 C
+    1	    140 C-
+    1	    141       STRUCTURE /ST_L1_FILE_HEADER/
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   3
+1.1                                                             12-APR-1995 19:08:44    SMS1:[WIND.SOFTWARE.INC]L1FMT.INC;29
+
+    1	    142           UNION
+    1	    143           MAP
+    1	    144               CHARACTER*4     ident/'HDRF'/
+    1	    145               CHARACTER*2     header_vers       ! header version
+    1	    146               CHARACTER*72    input_file        ! name of input file
+    1	    147               CHARACTER*2     medium            ! input medium code:
+    1	    148                                                 ! 'DK' = disk
+    1	    149                                                 ! 'CD' = cd-rom
+    1	    150               CHARACTER*3     credate_doy       ! input file creation date, day
+    1	    151                                                 ! of year 
+    1	    152               CHARACTER*4     credate_year      ! input file creation date, year
+    1	    153               CHARACTER*11    credate           ! input file creation date
+    1	    154                                                 ! 'DD-MMM-YYYY'
+    1	    155               CHARACTER*23    date_of_EXE       ! version of program which wrote
+    1	    156                                                 ! the L1 file
+    1	    157               CHARACTER*1     hw_type           ! system hardware type which ran
+    1	    158                                                 ! program: 'V' = VAX, 'A' = AXP
+    1	    159               CHARACTER*11    run_date          ! program run date 'DD-MMM-YYYY'
+    1	    160               CHARACTER*20    start_time        ! user-specified start time
+    1	    161                                                 ! 'DD-MMM-YYYY HH:MM:SS'
+    1	    162               CHARACTER*20    stop_time         ! user-specified stop time
+    1	    163                                                 ! 'DD-MMM-YYYY HH:MM:SS'
+    1	    164               CHARACTER*3     comment_len       ! length of user comment
+    1	    165               CHARACTER*80    comment           ! user-supplied comment
+    1	    166               CHARACTER*4     L1_records        ! number of L1 records in file
+    1	    167               CHARACTER*6     EDB_count         ! number of good EDBs (spins) stored
+    1	    168               CHARACTER*6     EDB_lost          ! number of EDBs (spins) lost
+    1	    169               CHARACTER*6     EDB_skip          ! number of EDBs (spins) skipped
+    1	    170               CHARACTER*5     program_vers      ! version of WIND_CD_READ program
+    1	    171               CHARACTER*1     eph_avail		! 'T' = orbit and attitude info
+    1	    172 						! in sci rec hdr; 'F' = not there
+    1	    173               CHARACTER*116   spare             ! makes total size 400 bytes
+    1	    174           END MAP
+    1	    175           MAP
+    1	    176               CHARACTER*400   c_all             ! references entire structure
+    1	    177           END MAP
+    1	    178           END UNION
+    1	    179       END STRUCTURE    !ST_L1_FILE_HDR
+    1	    180 
+    1	    181 
+    1	    182       STRUCTURE /EPHEMERIS/		! structure to describe spacecraft 
+    1	    183 					! position in some coordinate system
+    1	    184           REAL*8           x
+    1	    185           REAL*8           y
+    1	    186           REAL*8           z
+    1	    187       END STRUCTURE    !EPHEMERIS
+    1	    188 
+    1	    189       STRUCTURE /ATTITUDE/		! structure to describe spacecraft 
+    1	    190 					! attitude (orientation)
+    1	    191 	  REAL*4	   r_asc
+    1	    192 	  REAL*4	   decl
+    1	    193       END STRUCTURE    !ATTITUDE
+    1	    194 
+    1	    195       STRUCTURE /ST_L1_SR_HEADER/
+    1	    196           UNION
+    1	    197           MAP
+    1	    198               CHARACTER*4     ident/'HDRR'/
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   4
+1.1                                                             12-APR-1995 19:08:44    SMS1:[WIND.SOFTWARE.INC]L1FMT.INC;29
+
+    1	    199               INTEGER*4       nvalid            ! number of valid spins
+    1	    200               INTEGER*4       present(2)        ! spin presence flags (bit coded)
+    1	    201               INTEGER*4       bitrate_code      ! bit rate code:
+    1	    202                                                 ! 0 = no valid spins
+    1	    203                                                 ! 1 = all valid spins low bit rate
+    1	    204                                                 ! 2 = all valid spins high bit rate
+    1	    205                                                 ! 3 = mixed low and high bit rate
+    1	    206               INTEGER*4       sr_count          ! Sci Rec counter extracted from
+    1	    207                                                 ! HDB (24 bits)
+    1	    208               INTEGER*4       zero_swics_pha(2) ! zero SWICS PHA word flags (bit coded)
+    1	    209               INTEGER*4       zero_mass_pha(2)  ! zero MASS PHA word flags (bit coded)
+    1	    210               INTEGER*4       zero_stics_pha(2) ! zero STICS PHA word flags (bit coded)
+    1	    211               RECORD /EPHEMERIS/ gci_pos	! GCI position coordinates
+    1	    212               RECORD /EPHEMERIS/ gci_vel	! velocity in GCI coords
+    1	    213               RECORD /EPHEMERIS/ gse_pos	! GSE position coordinates
+    1	    214               RECORD /EPHEMERIS/ gse_vel	! velocity in GSE coords
+    1	    215               RECORD /EPHEMERIS/ gsm_pos	! GSM position coordinates
+    1	    216               RECORD /EPHEMERIS/ gsm_vel	! velocity in GSM coords
+    1	    217               RECORD /EPHEMERIS/ gci_sun_vector	! sunvector in GCI coords
+    1	    218               RECORD /ATTITUDE/ gci_att		! GCI attitude of spacecraft in RA, DECL
+    1	    219               RECORD /ATTITUDE/ gse_att		! GSE attitude of spacecraft in RA, DECL
+    1	    220               RECORD /ATTITUDE/ gsm_att		! GSM attitude of spacecraft in RA, DECL
+    1	    221 	      REAL*4          spin_rate		! body spin rate
+    1	    222           END MAP
+    1	    223           MAP
+    1	    224               CHARACTER*244   c_all             ! references entire structure
+    1	    225           END MAP
+    1	    226           END UNION
+    1	    227       END STRUCTURE    !ST_L1_SR_HEADER
+    1	    228 
+    1	    229       COMMON /L1_HEADERS/ l1_file_header, l1_sr_header
+    1	    230 
+    1	    231       RECORD /ST_L1_FILE_HEADER/ l1_file_header
+    1	    232       RECORD /ST_L1_SR_HEADER/ l1_sr_header
+	    233         INCLUDE 'INC_DIR:L1_HDR_INFO.INC'
+    1	    234 C
+    1	    235 C Hold common block and record declarations for various information which will
+    1	    236 C eventually be stored in the file or science record header.
+    1	    237 C
+    1	    238       COMMON /EPHDATA/
+    1	    239      +		EPH_EPOCH,		! Epoch times from orbit file
+    1	    240      +		GCI_POS,		! GCI position
+    1	    241      +		GCI_VEL,		! GCI velocity
+    1	    242      +		GSE_POS,		! GSE position
+    1	    243      +		GSE_VEL,		! GSE velocity
+    1	    244      +		GSM_POS,		! GSM position
+    1	    245      +		GSM_VEL,		! GSM velocity
+    1	    246      +		GCI_SUN_VECTOR,		! sun vector
+    1	    247      +		GCI_ATT,		! attitude info
+    1	    248      +		GSE_ATT,		! attitude info
+    1	    249      +		GSM_ATT,		! attitude info
+    1	    250      +		SPIN_RATE		! body spin rate
+    1	    251 
+    1	    252       REAL*8	EPH_EPOCH(144)		! Epoch times from orbit file
+    1	    253 
+    1	    254       REAL*4	SPIN_RATE(144)		! body spin rate
+    1	    255 
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   5
+1.1                                                             12-APR-1995 19:01:17    SMS1:[WIND.SOFTWARE.INC]L1_HDR_INFO.INC;9
+
+    1	    256       RECORD /EPHEMERIS/ GCI_POS(144)	! GCI position
+    1	    257       RECORD /EPHEMERIS/ GCI_VEL(144)	! GCI velocity
+    1	    258       RECORD /EPHEMERIS/ GSE_POS(144)	! GSE position
+    1	    259       RECORD /EPHEMERIS/ GSE_VEL(144)	! GSE velocity
+    1	    260       RECORD /EPHEMERIS/ GSM_POS(144)	! GSM position
+    1	    261       RECORD /EPHEMERIS/ GSM_VEL(144)	! GSM velocity
+    1	    262       RECORD /EPHEMERIS/ GCI_SUN_VECTOR(144) ! sun vector
+    1	    263 
+    1	    264       RECORD /ATTITUDE/ GCI_ATT(144)	! attitude info
+    1	    265       RECORD /ATTITUDE/ GSE_ATT(144)	! attitude info
+    1	    266       RECORD /ATTITUDE/ GSM_ATT(144)	! attitude info
+	    267 	CHARACTER devdir*120,cdftemp*40
+	    268 	INTEGER cdfdirlen,pos,pos2,devdirlen,namelen,nch
+	    269 C
+	    270 C Find end of directory or device name; the filename starts immediately after
+	    271 C this.  Save position for later.
+	    272 C
+	    273 	pos = INDEX(lzname, ']')
+	    274 	pos2 = INDEX(lzname, ':')
+	    275 	IF (pos .eq. 0) pos = pos2
+	    276 C
+	    277 C Check if lzname starts with 'WI_LZ'.  If it does we have a long format
+	    278 C filename; copy the filename into cdftemp and change the LZ to an OR or AT,
+	    279 C depending on the contents of dtype.  Also change the descriptor part of the
+	    280 C filename from 'SMS' to 'DEF'.  If it does not start with 'WI_LZ' assume
+	    281 C we have a short filename and just copy the name.  If it's neither of these 
+	    282 C formats all bets are off.
+	    283 C
+	    284 	IF (lzname(pos+1:pos+5) .eq. 'WI_LZ' .or.
+	    285      *	    lzname(pos+1:pos+5) .eq. 'wi_lz')     THEN
+	    286 	  cdftemp = lzname(pos+1:pos+22)
+	    287 	  cdftemp(4:5) = dtype
+	    288 	  cdftemp(7:9) = 'DEF'
+	    289 	  namelen = 22
+	    290 	ELSE
+	    291 	  cdftemp = lzname(pos+1:pos+8)
+	    292 	  namelen = 8
+	    293 	ENDIF
+	    294 C
+	    295 C Check if cdfdir is all blank.  If so extract device name and determine if it
+	    296 C is a CDROM or not.  If it is from a CDROM, use the same device name and a
+	    297 C hard-coded directory name.  If it is not from a CDROM (ie, it is from a
+	    298 C normal disk), translate the logical name WIND_OR_DATA (or WIND_AT_DATA) and
+	    299 C use it as the device and directory name.  
+	    300 C
+	    301 	IF (cdfdir .eq. ' ') THEN
+	    302 	  IF (from_cd) THEN
+	    303 	    devdir = lzname(1:pos2) // '[DATA.WI.DEF.' // dtype // ']'
+	    304 	    devdirlen = pos2 + 16
+	    305 	  ELSE
+	    306 	    devdir = 'WIND_' // dtype // '_DATA:'
+	    307 	    devdirlen = 13
+	    308 	  ENDIF
+	    309 C
+	    310 C cdfdir was not blank, so use its contents as the CDF file's device and
+	    311 C directory name
+	    312 C
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   6
+1.1                                                             13-APR-1995 17:43:15    [WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.FOR;5
+
+	    313 	ELSE
+	    314 	  devdirlen = INDEX(cdfdir, ' ') - 1
+	    315 	  IF (devdirlen .eq. -1) devdirlen = LEN(cdfdir)
+	    316 	  devdir = cdfdir(1:devdirlen)
+	    317 	ENDIF
+	    318 C
+	    319 C devdir now contains the correct device and directory to use for the CDF
+	    320 C filename, and cdftemp contains the filename proper.  The lengths of these
+	    321 C strings are devdirlen and namelen, respectively.  If devdirlen is 0 that
+	    322 C means don't use any device or directory name.
+	    323 C
+	    324 C Construct the final CDF filename and compute its length.
+	    325 C
+	    326 	cdfnamelen = devdirlen + namelen
+	    327 	cdfname = ' '
+	    328 	IF (cdfnamelen .gt. LEN(cdfname)) THEN
+	    329 	  TYPE *,'CDFNAME ARGUMENT TO CONSTRUCT_CDF_NAME IS TOO SHORT!!'
+	    330 	  RETURN
+	    331 	ENDIF
+	    332 C
+	    333 	IF (devdirlen .ne. 0) THEN
+	    334 	  cdfname = devdir(1:devdirlen) // cdftemp(1:namelen)
+	    335 	ELSE
+	    336 	  cdfname = cdftemp(1:namelen)
+	    337 	ENDIF
+	    338 C
+	    339 	RETURN
+	    340 	END
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   7
+1.1                             Symbol Table                    13-APR-1995 17:43:15    [WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.FOR;5
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                  168 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                1392   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 262 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  4 L1INFO                                  40 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  5 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 EPHDATA                              29376 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                31882
+
+
+ENTRY POINTS
+
+    Address   Type  Name              
+                                      
+  2-00000000        CONSTRUCT_CDF_NAME
+
+
+VARIABLES
+
+    Address   Type  Name                    Address   Type  Name                    Address   Type  Name               
+                                                                                                                       
+      **      CHAR  CDFDIR              REG-00000007  I*4   DEVDIRLEN                 **      CHAR  LZNAME             
+  1-00000000  I*4   CDFDIRLEN                 **      CHAR  DTYPE               REG-00000009  I*4   NAMELEN            
+      **      CHAR  CDFNAME               4-00000008  I*4   EDB_LOST              1-00000004  I*4   NCH                
+      **      I*4   CDFNAMELEN            4-0000000C  I*4   EDB_SKIP              4-0000001C  L*4   NEW_SCI_REC        
+  1-00000008  CHAR  CDFTEMP               4-00000010  I*4   EDB_SUM             REG-00000007  I*4   POS                
+  4-00000014  I*4   CURR_SCI_REC_NUMBER   4-00000020  L*4   EPH_AVAIL           REG-00000001  I*4   POS2               
+  4-00000018  I*4   CURR_SPIN             4-00000024  L*4   FROM_CD               4-00000000  I*4   SCI_REC_CNTR       
+  1-00000030  CHAR  DEVDIR                4-00000004  I*4   L1_RECS_WRITTEN                                            
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes
+                                                            
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400
+  5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  6-00000000  R*8   EPH_EPOCH         1152  (144)
+  6-00007080  R*4   SPIN_RATE          576  (144)
+
+
+
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   8
+1.1                             Symbol Table                    13-APR-1995 17:43:15    [WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.FOR;5
+
+RECORD ARRAYS
+
+    Address   Name            Structure         Bytes  Dimensions
+
+  6-00006300  GCI_ATT         ATTITUDE          1152  (144)
+  6-00000480  GCI_POS         EPHEMERIS         3456  (144)
+  6-00005580  GCI_SUN_VECTOR  EPHEMERIS         3456  (144)
+  6-00001200  GCI_VEL         EPHEMERIS         3456  (144)
+  6-00006780  GSE_ATT         ATTITUDE          1152  (144)
+  6-00001F80  GSE_POS         EPHEMERIS         3456  (144)
+  6-00002D00  GSE_VEL         EPHEMERIS         3456  (144)
+  6-00006C00  GSM_ATT         ATTITUDE          1152  (144)
+  6-00003A80  GSM_POS         EPHEMERIS         3456  (144)
+  6-00004800  GSM_VEL         EPHEMERIS         3456  (144)
+
+
+CONSTRUCT_CDF_NAME                                              13-APR-1995 17:43:19    DEC Fortran V6.2-508                Page   9
+1.1                             Symbol Table                    13-APR-1995 17:43:15    [WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.FOR;5
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.LIS;4
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]CONSTRUCT_CDF_NAME.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.53 seconds
+  Elapsed time:      2.35 seconds
+  Pagefaults:         149
+  I/O Count:           28

@@ -1,0 +1,758 @@
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   1
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	      1         SUBROUTINE MASS_SPEED(HDB,MASS_RATE,                !input
+	      2      .            PROT_SPEED,PROT_UNCER,ALPH_SPEED,ALPH_UNCER) !output
+	      3 c
+	      4 c       ************************************************************************
+	      5 c       *** This program uses a level one WIND file to determine the solar   ***
+	      6 c       *** wind speed using both the proton and alpha particle peaks in the ***
+	      7 c       *** DPPS versus FSR plot.                                            ***
+	      8 c       ************************************************************************
+	      9 c
+	     10 c       author: Michael R. Collier                date: 13 December 1994
+	     11 c       date: 15 December 1994   -added kappa function fitting in place of
+	     12 c                                 Guassian fitting for the H and alpha peaks.
+	     13 c                                 didn't work well so went back to Gaussians
+	     14 c       date: 19 December 1994   -added routines to concentrate fitting on
+	     15 c                                 just proton and helium peaks
+	     16 c       date: 21 December 1994   -corrected compression mode output values,
+	     17 c                                 orig. had output backwards although data
+	     18 c                                 decompression was still done correctly
+	     19 c       date: 22 December 1994   -implemented fitting in square root of E/Q
+	     20 c                                 rather than in E/Q
+	     21 c       date:  3 January  1995   -implemented saved results from earlier fits
+	     22 c                                 when a singular matrix is obtained
+	     23 c       date: 19 January  1995   -implemented check on helium speed to elim.
+	     24 c                                 very rare overflow error in fitting
+	     25 c       date:  1 February 1995   -added check on a5 and a6 in function routine
+	     26 c                                 to elim overflow error in day 26 1995 data
+	     27 c       date: 24 February 1995   -corrected sqrt error
+	     28 c       date: 19 April    1995   -added output file with helium stats in it
+	     29 c       date: 24 April    1995   -added factor of 1.28 into helium density to
+	     30 c                                 account for DPPS spacing over acceptance
+	     31 c       date: 17 August   1995   -changed dimension of "covar" and "alpha"
+	     32 c   				  from 1000 to 10
+	     33 c       date:  3 April    1996   -added check on a2 and a3 in function routine
+	     34 c                                 to elim overflow error in day 30 1996 data
+	     35 c       compile for/check=(nounderflow,bounds)/warn=decl/extend sw_speed
+	     36 c
+	     37 c       link sw_speed,lib_dir:wind_lib/lib,lib_dir:l1lib/lib,
+	     38 c            [wind.software.l1]compare_time,mrqmin_sw,mrqcof_sw,covsrt_sw,
+	     39 c            gaussj_sw
+	     40 c
+	     41 c       notes: 1. the E/Q value for the analyzer assumes E/Q=0.5156*
+	     42 c                 (1.05135)^dpps step as per an e-mail message from Dr.
+	     43 c                 Hamilton dated 29 November 1994
+	     44 c              2. mrqmin_sw and gaussj_sw are modified mrqmin and gaussj to
+	     45 c                 transfer the flag sm_flag which indicates a singular matrix
+	     46 c                 if set.
+	     47 c              3. if there is no identifiable helium peak, the proton peak
+	     48 c                 will be fit and results read to file with the helium amp.
+	     49 c                 zeroed and other para set to 1e6. If a singular matrix error
+	     50 c                 occurs anywhere in the three fits performed, then both H and
+	     51 c                 He amplitudes will be zeroed and other para set to 1e6.
+	     52 c              4. minimum proton velocity: 314 km/s
+	     53 c                 minimum helium velocity: 222 km/s
+	     54 c              5. The sqrt error corrected on 24 February 1995 appears to affect
+	     55 c                 the fits by a few km/s in both the convective and thermal
+	     56 c                 speeds.
+	     57 c
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   2
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	     58 c
+	     59 c
+	     60 c       *** required include files ***
+	     61 c
+	     62         include 'inc_dir:edbdef.inc/nolist'   ! required include files for data
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   3
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	    600         include 'inc_dir:l1fmt.inc/nolist'    ! structures req. by call prog.
+	    732         include '($rmsdef)'
+	   1443 c
+	   1444         record /core/ sci   ! receives basic core data assoc w/current sr
+	   1445         record /hdbstr/ hdb
+	   1446         record /ma_rate/ mass_rate   ! receives data on rates from MASS sensor
+	   1447         record /ma_pha/ mass_pha  ! receives data on tof's from the mass sensor
+	   1448         record /t/ start, end, time(0:59)   ! allow sixty steps in time variable
+	   1449 c
+	   1450 c       notes: 1. time is structure type t. data from the call wind_l1_get_basic
+	   1451 c                 routine is deposited into this structure.
+	   1452 c
+	   1453 c
+	   1454 c
+	   1455 c       *** initialize variables ***
+	   1456 c
+	   1457         character l1_file_name*80,   ! contains the name of the input l1 file
+	   1458      2            comp_mode*1        ! compression mode a or c
+	   1459         integer*4 status,            ! non-zero indicates an i/o error
+	   1460      2            ios,               ! non-zero indicates i/o error on write
+	   1461      3            sr_num,            ! number of the science record read
+	   1462      4            status_sr,         ! science record status flag
+	   1463      5            status_ma,         ! mass read routine status flag
+	   1464      6            status_ba,         ! basic core data read status
+	   1465      7            status_hk,         ! house keeping data read status
+	   1466      8            val_spin,          ! number of valid spins in science record
+	   1467      9            i,j,k,l,           ! looping variables
+	   1468      1            dpps_cyc(0:59),    ! dpps step corresponding to s/c spin num
+	   1469      2            spin_num,          ! spacecraft spin number
+	   1470      3            itemp,             ! temp I*4 for converting byte variables
+	   1471      4            rates(0:59,27),    ! contains decompressed mass rates/cycle
+	   1472      5            wind_decompress,   ! decompresses the compressed MASS rates
+	   1473      6            nca,               ! variables that the fitting routine uses
+	   1474      7            lista(6),          ! numbers the parameters for fitting
+	   1475      8            iter,              ! number of iterations in curve fit routine
+	   1476      9            fit_elements,      ! total number of data elements fit
+	   1477      1            i_max_loc,         ! element location for maximum FSR2 counts
+	   1478      2            he_pk_strt_ch,     ! starting helium peak channel
+	   1479      3            he_fit_elements,   ! number of helium elements fit
+	   1480      4            he_tot,            ! total number of helium elements in peak
+	   1481      5            he_adps_step       ! the adps step of the fit helium peak
+	   1482         logical   code,              ! comp mode-set is mode c, clear is mode a
+	   1483      2            start_flag,        ! set to true when the start time found
+	   1484      3            end_flag,          ! true indicates terminate reading file
+	   1485      4            compare_time_ge,   ! routine is true if first time .ge. second
+	   1486      5            sm_flag,           ! returned true indicates sing matrix error
+	   1487      6            first_elem_flag,   ! false indicates first he elem not found
+	   1488      7            he_sp_flag         ! true indicates unreasonable He speed
+	   1489         real*4    x(60),y(60),sig(60),   ! fit variables-x,y, and uncertainty
+	   1490      2            a(6),                  ! the parameters to be fit
+	   1491      3            covar(10,10),      ! working space for fitting routine
+	   1492      4            alpha(10,10),      ! working space for fitting routine
+	   1493      5            chisqr,                ! chi-squared for fit
+	   1494      6            alamda,                ! <0 on intial call, final call =0
+	   1495      7            max_cnt,               ! contains maximum counts in array
+	   1496      8            max_loc,               ! contains E/Q location of maximum
+	   1497      9            prot_speed,            ! proton speed from E/Q mean
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   4
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1498      1            prot_uncer,            ! uncert. on proton speed from width
+	   1499      2            alph_speed,            ! alpha speed from E/Q mean
+	   1500      3            alph_uncer,            ! uncert. on alpha speed from width
+	   1501      4            fwhm,                  ! holds proton FWHM of the distribution
+	   1502      5            he_max_cnt,            ! contains maximum helium counts
+	   1503      6            he_max_loc,            ! contains E/Q location of maximum
+	   1504      7            he_pk_strt_eq,         ! starting helium pk E/Q location
+	   1505      8            factor,                ! frac of He fwhm searched on left
+	   1506      9            he_x(60),he_y(60),
+	   1507      1            he_sig(60),            ! the helium E/Q, FSR2 rates, and sigma
+	   1508      2            save_H_a1,
+	   1509      3            save_H_a2,
+	   1510      4            save_H_a3,             ! proton prelim. fit res. saved
+	   1511      5            save_He_a4,            ! (in case of sing. matrix error)
+	   1512      6            save_He_a5,
+	   1513      7            save_He_a6,            ! helium prelim. fit res. saved
+	   1514      8            he_e_tot,              ! tot helium energy for eff. calc.
+	   1515      9            eta_st_eta_h,          ! product of the start and sphere eff.
+	   1516      1            alph_den               ! alpha particle density
+	   1517         external  funcs,             ! subroutine to evaluate fitting function
+	   1518      2            mrqmin             ! first subroutine of the fitting program
+	   1519 c
+	   1520 c       notes: 1. rates(xx,2) contains FSR2
+	   1521 c
+	   1522 c
+	   1523            do spin_num=0,59   ! determine DPPS steps for each s/c spin number
+	   1524               itemp=mass_rate.edb(spin_num).rate(25)
+	   1525               dpps_cyc(spin_num)=ibits(itemp,0,6)
+	   1526 c             --- bit 7 is calibration mode status, bits 0-5 are DPPS step ---
+	   1527 c             ---ibits expects an I*2 or I*4 and ...rate(25) is a byte     ---
+	   1528 c             ---setting to itemp before ibits converts it to corr form    ---
+	   1529            enddo
+	   1530 c
+	   1531            itemp = hdb.bdh.dat(189)   ! compression codes for all MASS rates
+	   1532            code = btest(itemp,4)      ! are in the hdb byte 189 bit 4
+	   1533            if (code .eq. .true.)  comp_mode='c'
+	   1534            if (code .eq. .false.) comp_mode='a'
+	   1535 c
+	   1536            do spin_num=0,59
+	   1537            do i=0,24   ! only decompress rates (i.e. only up to 24 not 26)
+	   1538               rates(spin_num,i+1) = wind_decompress(
+	   1539      2                              mass_rate.edb(spin_num).rate(i),code)
+	   1540 c             ---one routine decompresses both modes a and c---
+	   1541            enddo
+	   1542            rates(spin_num,26) = mass_rate.edb(spin_num).rate(25)   ! dpps step
+	   1543            rates(spin_num,27) = mass_rate.edb(spin_num).rate(26)   ! adps step
+	   1544            enddo
+	   1545 c
+	   1546 c
+	   1547 c       ***find the distribution maximum and location ***
+	   1548 c
+	   1549         max_cnt = -1   ! contains maximum FSR2 counts
+	   1550         max_loc =  1   ! contains the location of the maximum FSR2 counts
+	   1551         do i=0,59
+	   1552            if (rates(59-i,2) .gt. max_cnt) then   ! if a loc w/counts gt max_cnt
+	   1553               max_cnt = rates(59-i,2)   ! then set max_cnt to the new value
+	   1554               max_loc = 0.5156*(1.05135)**i   ! and save E/Q where stored
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   5
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1555               i_max_loc = i    ! save element number of max_cnt
+	   1556            endif
+	   1557         enddo
+	   1558 c
+	   1559 c
+	   1560 c       *** determine the half width for protons ***
+	   1561 c
+	   1562         i = i_max_loc
+	   1563         do while ((rates(59-i,2) .gt. max_cnt/2.0) .and.
+	   1564      2            (i .le. 59))   ! search for HWHM of dist
+	   1565            i = i+1   ! search to the right of the peak for element with half max
+	   1566         enddo
+	   1567         fwhm = 2*(0.5156*(1.05135)**i-max_loc)   ! fwhm holds the H FWHM in E/Q
+	   1568 c
+	   1569 c
+	   1570 c       *** load up array one fwhm around the proton peak ***
+	   1571 c
+	   1572         fit_elements = 0  ! counts the number of elements to be fit
+	   1573         i = 0
+	   1574         do while ( (0.5156*(1.05135)**i .le. max_loc+fwhm/2.0) .and.
+	   1575      2             (i .le. 59) )
+	   1576 c       ---look within one fwhm of the proton peak for data to be fit---
+	   1577            if ((0.5156*(1.05135)**i .ge. max_loc-fwhm/2.0) .and.
+	   1578      2         (0.5156*(1.05135)**i .le. max_loc+fwhm/2.0) .and.   ! within fwhm
+	   1579      3         (rates(59-i,2) .ne. 0) .and.   ! and FSR2 rate non-zero
+	   1580      4         (i .le. 59)) then   
+	   1581               fit_elements = fit_elements + 1   ! increment number of fit elem
+	   1582               x(fit_elements)=0.5156*(1.05135)**i   ! E/Q value
+	   1583               y(fit_elements)=rates(59-i,2)
+	   1584               sig(fit_elements)=(rates(59-i,2))**0.5
+	   1585             endif
+	   1586             i = i+1   ! increment i in preparation for next step
+	   1587         enddo
+	   1588 c
+	   1589 c
+	   1590 c       *** estimate the fitting parameters ***
+	   1591 c
+	   1592         a(3) = fwhm**2/22.2/max_loc  ! derived approximation
+	   1593         a(1) = max_cnt*a(3)**0.5*2.5066283/max_loc
+	   1594         a(2) = max_loc
+	   1595 c
+	   1596         a(6) = 1e6
+	   1597         a(4) = 0
+	   1598         a(5) = 1e6      ! fix amplitude of helium fit at zero to do proton
+	   1599 c
+	   1600 c
+	   1601 c       *** fit the proton peak ***
+	   1602 c
+	   1603         nca = 7
+	   1604         alamda = -1
+	   1605         lista(1) = 1  ! adjust the first three of the parameters
+	   1606         lista(2) = 2
+	   1607         lista(3) = 3  
+	   1608         lista(4) = 4 
+	   1609         lista(5) = 5 
+	   1610         lista(6) = 6
+	   1611 c
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   6
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1612         iter = 0   ! reset the iteration counter
+	   1613         sm_flag = .false.   ! true indicates a singular matrix error
+	   1614         do while ((alamda .lt. 1e4) .and. (iter .lt. 1000) .and.
+	   1615      2            (fit_elements .ge. 3))
+	   1616 c
+	   1617            call mrqmin(x,y,sig,fit_elements,a,6,lista,3,covar,alpha,
+	   1618      2                 nca,chisqr,funcs,alamda,sm_flag,max_cnt,max_loc,
+	   1619      3                 fwhm,he_max_cnt)   
+	   1620 c                      ---fit_ele data pts, 3 fit para, 3 parameters adjusted---
+	   1621 c                      ---sm_flag returned set if singular matrix error  ---
+	   1622            if (sm_flag .eq. .true.) then   ! indicates a singular matrix problem
+	   1623               type *,'singular matrix 1'
+	   1624               a(1)=0
+	   1625               a(2)=5.2245e6
+	   1626               a(3)=5.2245e6   ! these values will set speed/width to 1e6 to flag
+	   1627               a(4)=0
+	   1628               a(5)=1.0437e7
+	   1629               a(6)=1.0437e7   ! these values will set speed/width to 1e6 to flag
+	   1630               iter = 1000   ! exit loop
+	   1631            endif
+	   1632 c
+	   1633            iter = iter + 1   ! increment the iteration counter
+	   1634         enddo
+	   1635 c
+	   1636 c
+	   1637 c       *** find a reasonable helium peak ***
+	   1638 c
+	   1639 c       --- section 1: search for everything within fac of fwhm either side---
+	   1640 c
+	   1641         he_tot = 0   ! total number of helium elements fit
+	   1642         do while ( (0.5156*(1.05135)**i .le. 4*max_loc) .and.
+	   1643      2             (i .le. 59) )   ! make sure not past end of array
+	   1644            if ((0.5156*(1.05135)**i .ge. 2*max_loc-fwhm/0.50) .and.
+	   1645      2         (0.5156*(1.05135)**i .le. 4*max_loc) .and. 
+	   1646      3         (rates(59-i,2) .ne. 0)) then   ! FSR2 rate non-zero
+	   1647               he_tot = he_tot + 1   ! increment total in helium peak
+	   1648               he_x(he_tot) = 0.5156*(1.05135)**i   ! sqrt(E/Q) of hel dat
+	   1649               he_y(he_tot) = rates(59-i,2)         ! FSR2 cnts of helium datum
+	   1650            endif
+	   1651            i = i+1   ! increment i
+	   1652         enddo
+	   1653 c
+	   1654 c       --- section 2: find the maximum in the helium array ---
+	   1655 c
+	   1656         he_max_cnt = -1   ! for comparison, set initial value low
+	   1657         do j=1,he_tot   ! cycle through all the elements
+	   1658            if (he_y(j) .gt. he_max_cnt) then   ! if new maximum found then
+	   1659               he_max_cnt = he_y(j)   ! set the variable equal to its value
+	   1660            endif
+	   1661         enddo
+	   1662 c
+	   1663 c       --- section 3: eliminate maxima at the edges ---
+	   1664 c
+	   1665         if ((he_max_cnt .eq. he_y(1)) .or.
+	   1666      2      (he_max_cnt .eq. max_cnt)) then   ! indicates a maxima at the edge
+	   1667            do while((he_max_cnt .eq. he_y(1)) .or. (he_max_cnt .eq. max_cnt))
+	   1668               do j=1,he_tot-1   ! cycle through all helium elements save one
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   7
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1669                  he_x(j)=he_x(j+1)   ! move every element down one in the array
+	   1670                  he_y(j)=he_y(j+1)
+	   1671               enddo
+	   1672               he_tot=he_tot-1        ! decrease total number of elements by one
+	   1673 c             --- recalculate the maximum value ---
+	   1674               he_max_cnt = -1   ! for comparison, set initial value low
+	   1675               do j=1,he_tot   ! cycle through all the elements
+	   1676                  if (he_y(j) .gt. he_max_cnt) then   ! if new maximum found then
+	   1677                     he_max_cnt = he_y(j)   ! set the variable equal to its value
+	   1678                  endif
+	   1679               enddo
+	   1680 c
+	   1681            enddo
+	   1682         endif
+	   1683 c
+	   1684 c       --- section 4: calculate helium sigmas ---
+	   1685 c       
+	   1686         do j=1,he_tot
+	   1687            he_sig(j) = he_y(j)**0.5
+	   1688         enddo
+	   1689 c
+	   1690 c
+	   1691 c       *** estimate the fitting parameters ***
+	   1692 c
+	   1693         if (sm_flag .eq. .false.) then   ! only change values if no sing. matrix
+	   1694         if (he_tot .gt. 0) then   ! if there's an iden. he peak
+	   1695            a(6) = fwhm**2/22.2/(2*max_loc)  ! derived approximation
+	   1696            a(4) = he_max_cnt*a(3)**0.5*2.5066283/(2*max_loc)
+	   1697            a(5) = 2*max_loc
+	   1698         elseif (he_tot .eq. 0) then   ! if no peak, set amplitude to zero
+	   1699            a(4)=0
+	   1700            a(5)=1.0437e7
+	   1701            a(6)=1.0437e7   ! these values will set speed/width to 1e6 to flag
+	   1702         endif
+	   1703         endif
+	   1704 c
+	   1705 c
+	   1706 c       *** fit the helium peak ***
+	   1707 c
+	   1708         if (he_tot .gt. 0) then   ! only fit the he if there's an ident. peak
+	   1709         nca = 7
+	   1710         alamda = -1
+	   1711         lista(1)=4
+	   1712         lista(2)=5
+	   1713         lista(3)=6
+	   1714         lista(4)=1
+	   1715         lista(5)=2
+	   1716         lista(6)=3    ! set up the lista array to fit the helium data a4-a6
+	   1717 c
+	   1718         iter = 0   ! reset the iteration counter
+	   1719         do while ((alamda .lt. 1e4) .and. (iter .lt. 1000) .and.
+	   1720      2            (sm_flag .eq. .false.) .and.   ! no singular matrix
+	   1721      3            (he_tot .ge. 3))
+	   1722 c
+	   1723            call mrqmin(he_x,he_y,he_sig,he_tot,a,6,lista,3,covar,
+	   1724      2                    alpha,nca,chisqr,funcs,alamda,sm_flag,max_cnt,max_loc,
+	   1725      3                    fwhm,he_max_cnt)   
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   8
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1726 c                      ---fit_ele data pts, 3 fit para, 3 parameters adjusted---
+	   1727 c                      ---sm_flag returned set if singular matrix error  ---
+	   1728 c          --- check for reasonable helium speed ---
+	   1729            he_sp_flag = .false.   ! originally assume He speed reasonable
+	   1730            if ((a(5) .lt. 0.5) .or. (a(5) .gt. 13.0)) then   ! a(5) is He speed
+	   1731               he_sp_flag = .true.   ! flag indicates an unreasonable He speed
+	   1732               sm_flag = .true.
+	   1733            endif   ! helium fit peak out of range of energy per charge analyzer
+	   1734            if (sm_flag .eq. .true.) then   ! indicates a singular matrix problem
+	   1735 c             if (he_sp_flag .eq. .false.) type *,'singular matrix 2'
+	   1736 c             if (he_sp_flag .eq. .true.)  type *,'unreasonable He speed'
+	   1737               a(1)=0
+	   1738               a(2)=5.2245e6
+	   1739               a(3)=5.2245e6   ! these values will set speed/width to 1e6 to flag
+	   1740               a(4)=0
+	   1741               a(5)=1.0437e7
+	   1742               a(6)=1.0437e7   ! these values will set speed/width to 1e6 to flag
+	   1743               iter = 1000   ! exit loop
+	   1744            endif
+	   1745 c
+	   1746            iter = iter + 1   ! increment the iteration counter
+	   1747         enddo
+	   1748         endif   ! endif for only fit the helium if iden. peak
+	   1749 c
+	   1750 c       --- section 4: insert into the standard fitting array ---
+	   1751 c
+	   1752         do j = fit_elements+1,fit_elements+he_tot
+	   1753            x(j) = he_x(j-fit_elements)
+	   1754            y(j) = he_y(j-fit_elements)
+	   1755            sig(j) = (he_y(j-fit_elements))**0.5
+	   1756         enddo
+	   1757         fit_elements = fit_elements+he_tot   ! increase number of fit elements
+	   1758 c
+	   1759 c
+	   1760 c       *** perform fitting ***
+	   1761 c
+	   1762         if (he_tot .gt. 0) then   ! only fit again if data have been added
+	   1763         nca = 7
+	   1764         alamda = -1
+	   1765         do i=1,6   ! adjust all of the parameters
+	   1766            lista(i)=i
+	   1767         enddo
+	   1768 c
+	   1769         iter = 0   ! reset the iteration counter
+	   1770         do while ((alamda .lt. 1e4) .and. (iter .lt. 1000) .and.
+	   1771      2            (sm_flag .eq. .false.) .and.
+	   1772      3            (fit_elements .ge. 3))
+	   1773 c
+	   1774            call mrqmin(x,y,sig,fit_elements,a,6,lista,6,covar,alpha,
+	   1775      2                 nca,chisqr,funcs,alamda,sm_flag,max_cnt,max_loc,
+	   1776      3                 fwhm,he_max_cnt)   
+	   1777 c                      ---fit_ele data pts, 6 fit para, 6 parameters adjusted---
+	   1778 c                      ---sm_flag returned set if singular matrix error  ---
+	   1779            if (sm_flag .eq. .true.) then   ! indicates a singular matrix problem
+	   1780               type *,'singular matrix 3'
+	   1781               a(1)=0
+	   1782               a(2)=5.2245e6
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page   9
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1783               a(3)=5.2245e6   ! these values will set speed/width to 1e6 to flag
+	   1784               a(4)=0
+	   1785               a(5)=1.0437e7
+	   1786               a(6)=1.0437e7   ! these values will set speed/width to 1e6 to flag
+	   1787               iter = 1000   ! exit loop
+	   1788            endif
+	   1789 c
+	   1790            iter = iter + 1   ! increment the iteration counter
+	   1791         enddo
+	   1792         endif   ! endif for only fit again if data have been added
+	   1793 c
+	   1794         prot_speed = 437.74*a(2)**0.5  ! proton speed in km/s
+	   1795         prot_uncer = 437.74*a(3)**0.5  ! uncertainty on proton speed in km/s
+	   1796         alph_speed = 309.53*a(5)**0.5  ! alpha speed in km/s
+	   1797         alph_uncer = 309.53*a(6)**0.5  ! uncertainty on alpha speed in km/s
+	   1798 
+	   1799 
+	   1800            if ((sm_flag .eq. .false.) .and. (he_sp_flag .eq. .false.) .and.
+	   1801      2         (he_tot .gt. 3) .and.
+	   1802      3         (nint(alog(a(5)/0.5156)/0.050075) .ge. 0) .and.
+	   1803      4         (nint(alog(a(5)/0.5156)/0.050075) .le. 59)) then
+	   1804 c          --- start if for only if no sing. matrix and no speed flag and
+	   1805 c              enough of a helium peak and dpps step is in range ---
+	   1806            he_adps_step = rates(59-nint(alog(a(5)/0.5156)/0.050075),27)
+	   1807 c          --- a(5) is E/Q of the helium peak, nint conv. to dpps step ---
+	   1808            if (he_adps_step .lt. 0) he_adps_step=he_adps_step+256   ! neg num
+	   1809            if (he_adps_step .lt. 11) he_adps_step = 11
+	   1810            if (he_adps_step .gt. 160) he_adps_step = 160   ! assumed limits
+	   1811            he_e_tot = 2*a(5) - 2*(2.054-0.0322*he_adps_step)
+	   1812            eta_st_eta_h = 0.442*(1-exp(-0.162*he_e_tot))
+	   1813            alph_den = 28.125*50.0*3.23e-8*2.86*1.28*a(4)/eta_st_eta_h
+	   1814 c          --- the individual factors correspond to:
+	   1815 c              28.125  - 1/duty cycle = 1/(4*3.2/360)
+	   1816 c              50.0    - v/delta v
+	   1817 c              3.23e-8 - conversion from sart(E/Q) to km/s for helium
+	   1818 c              2.86    - 1/area of sphere ---
+	   1819 c              1.28    - DPPS spacing/DPPS passband width
+	   1820            endif   ! endif for no singular matrix, no speed flag, enough of
+	   1821 c                  ! a helium peak and the dpps is in range
+	   1822 c
+	   1823 c
+	   1824         RETURN
+	   1825         END
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page  10
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                63376 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT *32
+  2 $CODE$                                6260   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 408 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  4 L1_HEADERS                             648 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                70692
+
+
+ENTRY POINTS
+
+    Address   Type  Name      
+                              
+  2-00000000        MASS_SPEED
+
+
+VARIABLES
+
+    Address   Type  Name                Address   Type  Name                Address   Type  Name           
+                                                                                                           
+  0-00000070  R*4   ALAMDA            1-00000078  R*4   HE_MAX_LOC            **      R*4   PROT_UNCER     
+      **      R*4   ALPH_DEN          1-00000054  I*4   HE_PK_STRT_CH     1-00000090  R*4   SAVE_HE_A4     
+      **      R*4   ALPH_SPEED        1-0000007C  R*4   HE_PK_STRT_EQ     1-00000094  R*4   SAVE_HE_A5     
+      **      R*4   ALPH_UNCER        1-0000006C  L*4   HE_SP_FLAG        1-00000098  R*4   SAVE_HE_A6     
+  1-00000070  R*4   CHISQR            0-00000038  I*4   HE_TOT            1-00000084  R*4   SAVE_H_A1      
+  0-00000060  L*4   CODE            REG-########  I*4   I                 1-00000088  R*4   SAVE_H_A2      
+  1-00000064  L*4   COMPARE_TIME_GE   1-0000002C  I*4   IOS               1-0000008C  R*4   SAVE_H_A3      
+  1-00000020  CHAR  COMP_MODE       REG-########  I*4   ITEMP             0-00000074  L*4   SM_FLAG        
+  1-00000060  L*4   END_FLAG        REG-########  I*4   ITER            REG-########  I*4   SPIN_NUM       
+      **      R*4   ETA_ST_ETA_H      1-00000050  I*4   I_MAX_LOC         1-00000030  I*4   SR_NUM         
+  1-00000080  R*4   FACTOR          REG-########  I*4   J                 1-0000005C  L*4   START_FLAG     
+  1-00000068  L*4   FIRST_ELEM_FLAG   1-00000048  I*4   K                 1-00000028  I*4   STATUS         
+  0-0000003C# I*4   FIT_ELEMENTS      1-0000004C  I*4   L                 1-0000003C  I*4   STATUS_BA      
+  0-00000068  R*4   FWHM              1-0000ED90  CHAR  L1_FILE_NAME      1-00000040  I*4   STATUS_HK      
+REG-00000008  I*4   HE_ADPS_STEP      0-00000060  R*4   MAX_CNT           1-00000038  I*4   STATUS_MA      
+      **      R*4   HE_E_TOT          0-00000064  R*4   MAX_LOC           1-00000034  I*4   STATUS_SR      
+  1-00000058  I*4   HE_FIT_ELEMENTS   0-0000006C  I*4   NCA               1-00000044  I*4   VAL_SPIN       
+  1-00000074# R*4   HE_MAX_CNT            **      R*4   PROT_SPEED                                         
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+  1-00000018  END             T                            8       **      MASS_RATE       MA_RATE                   1920
+      **      HDB             HDBSTR                     328   1-00001A20  SCI             CORE                      7688
+  4-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400   1-00000010  START           T                            8
+  4-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            248                                                             
+  1-00003828  MASS_PHA        MA_PHA                   45960                                                             
+
+
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page  11
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+ARRAYS
+
+     Address  Type  Name            Bytes  Dimensions
+
+  1-000000B4  R*4   A                  24  (6)
+  1-0000F330  R*4   ALPHA             400  (10, 10)
+  1-0000F1A0  R*4   COVAR             400  (10, 10)
+  1-0000EDE0  I*4   DPPS_CYC          240  (0:59)
+  1-0000F6A0  R*4   HE_SIG            240  (60)
+  1-0000F4C0  R*4   HE_X              240  (60)
+  1-0000F5B0  R*4   HE_Y              240  (60)
+  1-0000009C  I*4   LISTA              24  (6)
+  1-000000D0  I*4   RATES            6480  (0:59, 27)
+  1-0000F0B0  R*4   SIG               240  (60)
+  1-0000EED0  R*4   X                 240  (60)
+  1-0000EFC0  R*4   Y                 240  (60)
+
+
+
+RECORD ARRAYS
+
+    Address   Name  Structure         Bytes  Dimensions
+
+  1-0000EBB0  TIME  T                  480  (0:59)
+
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                    Type  Name                    Type  Name                 
+                                                                                         
+        FUNCS                         MRQMIN                  I*4   WIND_DECOMPRESS      
+
+MASS_SPEED                                                      20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page  12
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1826 c
+	   1827 c**********************************************************************************
+	   1828 c       *** subroutine funcs for the fitting program ***
+	   1829 c
+	   1830         subroutine funcs(x,a,y,dyda,na,max_cnt,max_loc,fwhm,he_max_cnt)
+	   1831 c
+	   1832         real*4     x, y,           ! x and y values to be evaluated
+	   1833      2             a(6), dyda(6),  ! fitted parameters and their derivatives
+	   1834      3             max_cnt,        ! maximum counts (protons) in array
+	   1835      4             max_loc,        ! location in E/Q of the maximum counts
+	   1836      5             fwhm,           ! fwhm in E/Q of the proton peak
+	   1837      6             he_max_cnt      ! maximum counts in the helium peak
+	   1838         integer*4  na,             ! variable used in the fitting routine
+	   1839      2             i,j,k,l         ! variables for use in looping
+	   1840 c
+	   1841        do i = 1,6   ! assure that all fit parameters remain positive
+	   1842           a(i) = abs(a(i))
+	   1843        enddo
+	   1844 c
+	   1845 c      --- keep the values within reasonable bounds ---
+	   1846 c
+	   1847         if (a(2) .gt. 1e18) a(2)=1e18
+	   1848         if (a(3) .gt. 1e18) a(3)=1e18
+	   1849         if (a(5) .gt. 1e18) a(5)=1e18
+	   1850         if (a(6) .gt. 1e18) a(6)=1e18   ! to avoid overflow errors
+	   1851 c
+	   1852 c       if ( (a(2) .lt. 1e6) .and. (a(2) .lt. 0.5) ) a(2)=0.5
+	   1853 c       if ( (a(2) .lt. 1e6) .and. (a(2) .gt. 10) ) a(2)=10
+	   1854 c       if ( (a(3) .lt. 1e6) .and. (a(3) .lt. 0.5) ) a(3)=0.5
+	   1855 c       if ( (a(3) .lt. 1e6) .and. (a(3) .gt. 10) ) a(3)=10
+	   1856 c       if ( (a(5) .lt. 1e6) .and. (a(5) .lt. 0.5) ) a(5)=0.5
+	   1857 c       if ( (a(5) .lt. 1e6) .and. (a(5) .gt. 10) ) a(5)=10
+	   1858 c       if ( (a(6) .lt. 1e6) .and. (a(6) .lt. 0.5) ) a(6)=0.5
+	   1859 c       if ( (a(6) .lt. 1e6) .and. (a(6) .gt. 10) ) a(6)=10
+	   1860 c
+	   1861 c       if (a(1) .gt. 2*max_cnt*(fwhm/2.35**0.5)*2.5066283) 
+	   1862 c     2     a(1)=max_cnt*(fwhm/2.35**0.5)*2.5066283   ! amp lim
+	   1863 c       if (a(2) .gt. 10) a(2)=max_loc        ! mean must be less than E/Q range
+	   1864 c       if (a(3) .gt. 10) a(3)=fwhm**2/2.35   ! width must be less than E/Q range
+	   1865 c       if (a(4) .ne. 0) then   ! a(4)=0 implies fitting only the proton peak
+	   1866 c          if (a(4) .gt. he_max_cnt*(fwhm/2.35**0.5)*2.5066283) 
+	   1867 c     2    a(4)=he_max_cnt*(fwhm/2.35**0.5)*2.5066283 ! amp lim
+	   1868 c          if (a(5) .gt. 10) a(5)=2*max_loc   ! mean must be less than E/Q range
+	   1869 c          if (a(6) .gt. 10) a(6)=fwhm**2/2.35! width must be less than E/Q range
+	   1870 c       endif
+	   1871 c
+	   1872 c      --- evaluate the function ---
+	   1873 c
+	   1874        y =(a(1)*exp(-(x-2*x**0.5*a(2)**0.5+a(2))/2/a(3))/(a(3)**0.5*2.5066283) +
+	   1875      2     a(4)*exp(-(x-2*x**0.5*a(5)**0.5+a(5))/2/a(6))/(a(6)**0.5*2.5066283))
+	   1876      3     *x   ! delta(E/Q) prop to E/Q
+	   1877 c
+	   1878 c    
+	   1879 c      ---first Gaussian function derivatives---
+	   1880 c
+	   1881        dyda(1) = x*exp(-(x-2*x**0.5*a(2)**0.5+a(2))/2/a(3))/
+	   1882      2           (a(3)**0.5*2.5066283)
+
+FUNCS                                                           20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page  13
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+	   1883        dyda(2) = ( ((x/a(2))**0.5-1)/(2*a(3)) )*
+	   1884      2           ( x*a(1)*exp(-(x-2*x**0.5*a(2)**0.5+a(2))/(2*a(3))) ) /
+	   1885      2           (a(3)**0.5*2.5066283)
+	   1886        dyda(3) = -( x*a(1)*exp(-(x-2*x**0.5*a(2)**0.5+a(2))/(2*a(3))) ) /
+	   1887      2           (a(3)**1.5*2*2.5066283) + 
+	   1888      3            ( x*a(1)*exp(-(x-2*x**0.5*a(2)**0.5+a(2))/(2*a(3))) ) /
+	   1889      4           (a(3)**0.5*2.5066283) *
+	   1890      5           ( (x-2*a(2)**0.5*x**0.5+a(2))/(2*a(3)**2) )
+	   1891 c
+	   1892 c    
+	   1893 c      ---second Gaussian function derivatives---
+	   1894 c
+	   1895        dyda(4) = x*exp(-(x-2*x**0.5*a(5)**0.5+a(5))/2/a(6))/
+	   1896      2           (a(6)**0.5*2.5066283)*x
+	   1897        dyda(5) = ( ((x/a(5))**0.5-1)/(2*a(6)) )*
+	   1898      2           ( x*a(4)*exp(-(x-2*x**0.5*a(5)**0.5+a(5))/(2*a(6))) ) /
+	   1899      2           (a(6)**0.5*2.5066283)*x
+	   1900        dyda(6) = -( x*a(4)*exp(-(x-2*x**0.5*a(5)**0.5+a(5))/(2*a(6))) ) /
+	   1901      2           (a(6)**1.5*2*2.5066283) + 
+	   1902      3            ( x*a(4)*exp(-(x-2*x**0.5*a(5)**0.5+a(5))/(2*a(6))) ) /
+	   1903      4           (a(6)**0.5*2.5066283) *
+	   1904      5           ( (x-2*a(5)**0.5*x**0.5+a(5))/(2*a(6)**2) )*x
+	   1905 c
+	   1906         return
+	   1907         end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                63376 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT *32
+  2 $CODE$                                6260   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 408 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  4 L1_HEADERS                             648 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                70692
+
+
+ENTRY POINTS
+
+    Address   Type  Name 
+                         
+  2-00001360        FUNCS
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                                                           
+      **      R*4   FWHM         1-00000000  I*4   J                **      R*4   MAX_CNT          **      R*4   X         
+      **      R*4   HE_MAX_CNT   1-00000004  I*4   K                **      R*4   MAX_LOC          **      R*4   Y         
+REG-00000001  I*4   I            1-00000008  I*4   L                **      I*4   NA                                       
+
+
+
+FUNCS                                                           20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page  14
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+ARRAYS
+
+     Address  Type  Name        Bytes  Dimensions
+
+      **      R*4   A              24  (6)
+      **      R*4   DYDA           24  (6)
+
+
+FUNCS                                                           20-DEC-1996 01:39:17    DEC Fortran V6.2-508                Page  15
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]MASS_SW_SPEED.FOR;12
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,BOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]MASS_SW_SPEED.LIS;24
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]MASS_SW_SPEED.OBJ;22
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          3.84 seconds
+  Elapsed time:      8.93 seconds
+  Pagefaults:         365
+  I/O Count:           34

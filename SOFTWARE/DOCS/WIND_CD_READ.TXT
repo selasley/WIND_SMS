@@ -1,0 +1,127 @@
+                              RUNNING WIND_CD_READ
+________________________________________________________________________________
+WHAT IS WIND_CD_READ?
+WIND_CD_READ is the program that processes the Level Zero data files from
+Goddard into Level 1 files.  Its source can be found on UMSMS on SMS1: in the
+directory [WIND.SOFTWARE.LZ], and the most recent debugged copy of the
+executable is in WIND_EXE:.
+WHAT ARE WIND_CD_READ'S INPUTS AND OUTPUTS?
+The input Level Zero data files are in a directory pointed to by the logical
+name WIND_LZ_DATA:, which currently evaluates to SMSDISK2:[WIND.LZDATA].  The
+output Level 1 data files are placed into the directory pointed to by the
+logical name WIND_L1_DATA:, which is currently SMSDISK3:[WIND.L1DATA].  The
+attitude and orbit CDF data files are in directories pointed to by the logical
+names WIND_AT_DATA: and WIND_OR_DATA:, respectively.
+WHAT ARE WIND_CD_READ'S OPTIONS?
+Some of WIND_CD_READ's actions are governed by user-settable options, rather
+than prompts.  This is done so the same procedure and set of prompts can be
+used in several different ways.  The options currently available are setting
+diagnostic level, NRT mode operation, PRINTLZ mode operation, batch mode
+operation, filling the file header comment field, and requiring ephemeris data.
+    Diagnostic Level
+    The logical name WIND_DIAG is used to set the diagnostic level for
+    WIND_CD_READ.  It should be set to an unsigned integer in the range 1-5.  A
+    lower value will cause WIND_CD_READ to generate more diagnostic output.  A
+    value of 5, which is the default value, produces the minimal amount of
+    output.
+    NRT Mode Operation
+    WIND_CD_READ can also process NRT data files.  Since these files reside in
+    a different directory on UMSMS and contain certain anomalies different code
+    paths are used in certain sections of the program.  If the logical name
+    WIND_NRT_MODE is defined WIND_CD_READ will change its behavior to operate
+    correctly on NRT data.  The default action is to assume the input is a
+    Level Zero (LZ) file.
+    PRINTLZ Mode Operation
+    WIND_CD_READ can also be used as a diagnostic tool to dump Level Zero
+    files.  If operated in this mode WIND_CD_READ does not produce a Level 1
+    file, but instead produces a (rather large) file containing ASCII dumps of
+    each EDB and HDB.  The output file is named the same as the input LZ file
+    but is given a file type of .DMP .  If WIND_CD_READ is renamed (or copied)
+    to PRINTLZ.EXE and run under that name it assumes it is to operate in
+    PRINTLZ mode.
+    Batch Job Mode
+    This flag is set automatically by WIND_CD_READ.  It detects if the program
+    is being run interactively or as part of a batch job.  This information is
+    used by  WIND_CD_READ in how it formats some of its messages.
+    File Header Comment
+    WIND_CD_READ allows the user to place an arbitrary comment string into the
+    file header of the L1 being being generated.  This is done by using the
+    logical name WIND_COMMENT.  If WIND_COMMENT is defined its translated value
+    is stored in the file header and the comment length field is set
+    accordingly; if it is not defined no comment is put in the header and the
+    comment length field is set to zero. 
+    Require Ephemeris Data
+    WIND_CD_READ automatically checks for Ephemeris data (attitude and orbit
+    data files).  If these files are present selected data from each are
+    written to the record header of each L1 record.  If either of these files
+    is missing WIND_CD_READ normally omits both the attitude and orbit data but
+    processes the Level Zero file nonetheless.  If the logical name
+    WIND_HALT_NO_EPH is defined WIND_CD_READ will stop if either of the
+    attitude or orbit data files cannot be read.  This is useful if the user
+    wants to ensure each generated L1 file contains attitude and orbit data.
+HOW TO RUN WIND_CD_READ
+Enter the command 
+	$ RUN WIND_EXE:WIND_CD_READ
+Most of the inputs to WIND_CD_READ program rely on default values (shown
+between slashes, /thus/), so the user does not have to enter too many values.
+When WIND_CD_READ is run, the following message is displayed:
+                            +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+                            |                                 |
+                            +          WIND_CD_READ           +
+                            |                                 |
+                            +             created             +
+                            |                                 |
+                            +      6-DEC-1994 18:18:49.76     +
+                            |                                 |
+                            +           Version 5.0           +
+                            |                                 |
+                            +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+        IS THIS THE VERSION YOU WANT ?/Yes/
+The default is shown between the slashes, so simply hit return and you will 
+be prompted for the input file name:
+        LZ-FILENAME = 
+        FILENAME = /DATA_DIR:WI*LZ*.DAT/ 
+You may enter a specific filename (including directory spec) or simply press
+return.  If you do the latter, a menu of all the files meeting the pattern
+between the slashes will come up, as shown below:
+          1  SMSDISK2:[WIND.LZDATA]WI_LZ_SMS_19941114_V02.DAT;1
+          2  SMSDISK2:[WIND.LZDATA]WI_LZ_SMS_19941125_V02.DAT;1
+          3  SMSDISK2:[WIND.LZDATA]WI_LZ_SMS_19941202_V02.DAT;1
+Enter selection # (or q=quit, r=redisplay, <return>=show more): 
+If there are too many files to fit on one page, then return will cause more to 
+be displayed.  If you enter a number, the indicated file will be used, and the
+program will ask you to confirm your choice:
+        EXPLICIT FILENAME = SMSDISK2:[WIND.LZDATA]WI_LZ_SMS_19941114_V02.DAT;1
+        IS THIS OKAY ?/Yes/ 
+Simply hit return.  The program then begins to read the Level Zero data and
+reports the file's record size.  At this point it also accesses the Ephemeris
+data, if it is available.  If it is not available an additional message will be
+displayed.
+         Record_Size =  10800
+        Ephemeris data unavailable.  The program will continue unless interrupted 
+WIND_CD_READ now queries you about the Level 1 name.  The L1 file will have the
+same name as the Level 0 file except "L1" will replace "LZ", as shown below. 
+This can be overridden.  If you wish a different Level 1 file name, then enter
+it at the prompt below.  Otherwise, just press return again.
+        L1-FILENAME = SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941114_V02.DAT;1
+        FILENAME = /SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941114_V02.DAT;1/ 
+Next, WIND_CD_READ asks for confirmation of the L1 file name.  If a version
+of the L1 file does not exist WIND_CD_READ will inform you of this.  Simply
+hit return. 
+        EXPLICIT FILENAME = SMSDISK2:[WIND.L1DATA]WI_L1_SMS_19941114_V02.DAT;1
+        IS THIS OKAY ?/Yes/ 
+If a version of the L1 file already exists WIND_CD_READ will report that it
+is creating a new file.  The program then opens the L1 file.  If necessary
+WIND_CD_READ will automatically swap the two parts of the spacecraft clock
+and inform of its action. 
+        NEW VERSION OF L1 FILE BEING CREATED  
+        THIS_YEAR, SC_Year =        1995        2010
+        SC clock parts will be swapped               
+Next the program asks you what time reference that you prefer.  If you are 
+going to process the whole file, the answer to this question is moot. 
+Otherwise press return to get UT.
+Do you prefer S/C clock ?/No/ 
+Then you are prompted for a start time.  Specify a negative number for the
+whole file.
+         STARTING YEAR IS (NEG = ALL DATA ON FILE) /1993/ 
+Input is now complete.  The program will process the data file. 

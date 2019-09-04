@@ -1,0 +1,130 @@
+CNVRT_YRMONDAY_TO_YEARDAY                                       21-APR-1995 15:26:55    DEC Fortran V6.2-508                Page   1
+                                                                 9-DEC-1994 18:37:13    CNVRT_YRMONDAY_TO_YEARDAY.FOR;1
+
+	      1       subroutine CNVRT_YRMONDAY_TO_YEARDAY( iyr, imo, iday, iday_yr )
+	      2 c     subroutine to convert from year, month, day to year day of year.
+	      3 c
+	      4 C      4-APR-94    H.BROER   enhanced to conform with the Gregorian calender
+	      5 c
+	      6       IMPLICIT NONE
+	      7 
+	      8       INTEGER*4	IYR,		! INPUT:  year
+	      9      :		IMO,		!	  month
+	     10      :		IDAY,		!	  day of month
+	     11      :		IDAY_YR,	! OUTPUT: day of year
+	     12      :        	IMOL(12),	! internal array
+	     13      :		IMONL(12)	! internal array
+	     14 
+	     15       LOGICAL*1	IYRL
+	     16 C
+	     17       data imol/ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 /
+	     18       data imonl/0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 /
+	     19 C
+	     20       iyrl = .FALSE.
+	     21       IF( MOD( iyr, 4 ) .EQ. 0 )   THEN
+	     22           IF( MOD( iyr, 100 ) .NE. 0 )   THEN
+	     23               iyrl = .TRUE.
+	     24           ELSE
+	     25               IF( MOD( iyr, 400 ) .EQ. 0 )	iyrl = .TRUE.
+	     26           END IF
+	     27       END IF
+	     28 
+	     29       if( iyrl ) then
+	     30           iday_yr	= imol(  imo ) + iday
+	     31       else
+	     32           iday_yr	= imonl( imo ) + iday
+	     33       end if
+	     34 
+	     35 c      write( 6, * )	iyr, imo, iday, iday_yr
+	     36 
+	     37       return
+	     38 
+	     39       end
+
+CNVRT_YRMONDAY_TO_YEARDAY                                       21-APR-1995 15:26:55    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                     9-DEC-1994 18:37:13    CNVRT_YRMONDAY_TO_YEARDAY.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  96 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 216   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  32 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  344
+
+
+ENTRY POINTS
+
+    Address   Type  Name                     
+                                             
+  2-00000000        CNVRT_YRMONDAY_TO_YEARDAY
+
+
+VARIABLES
+
+    Address   Type  Name        Address   Type  Name        Address   Type  Name   
+                                                                                   
+      **      I*4   IDAY          **      I*4   IMO     REG-00000000  L*1   IYRL   
+      **      I*4   IDAY_YR       **      I*4   IYR                                
+
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+  1-00000000  I*4   IMOL            48  (12)
+  1-00000030  I*4   IMONL           48  (12)
+
+
+CNVRT_YRMONDAY_TO_YEARDAY                                       21-APR-1995 15:26:55    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     9-DEC-1994 18:37:13    CNVRT_YRMONDAY_TO_YEARDAY.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRMONDAY_TO_YEARDAY.LIS;7
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRMONDAY_TO_YEARDAY.OBJ;7
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.20 seconds
+  Elapsed time:      1.78 seconds
+  Pagefaults:         145
+  I/O Count:            9

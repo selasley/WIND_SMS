@@ -1,0 +1,277 @@
+NMNQ_COEFF                                                      25-JAN-1995 19:36:06    DEC Fortran V6.2-508                Page   1
+                                                                25-JAN-1995 19:35:45    SMS1:[WIND.SOFTWARE.STICS]NMNQ_COEFF.FOR;6
+
+	      1       SUBROUTINE NMNQ_COEFF(UNQ_MAX,UMQMAX,UMQMIN,    !user input
+	      2      .		            UNM_MAX,UMMAX, UMMIN,
+	      3      .                      EMIN,EMAX,TMIN,TMAX,      !return values
+	      4      .                      NQ_MAX,MQMAX,MQMIN,
+	      5      .                      NM_MAX,MMAX ,MMIN,
+	      6      .                      KM,KQ,
+	      7      .                      A,B,C1,C2A,C2B,D1,D2,E,
+	      8      .                      BREAK_C2, BREAK_MQ)
+	      9 C*******************************************************************
+	     10 C     This SUBROUTINE calculates coefficients for nm and nq        *
+	     11 C     parameters         					   *
+	     12 C     Original version 24 Jan 95 by ABG                            *
+	     13 C     History:							   *
+	     14 C                                                                  *
+	     15 c*******************************************************************
+	     16       IMPLICIT NONE
+	     17 
+	     18       REAL*4 A(6),	!mass coefficients
+	     19      .       B(6),      !NM coefficients
+	     20      .       C1,C2A,C2B	!mass/charge coefficients
+	     21 C			 C1= time of flight **2 of 1 keV proton
+	     22 C			 C2= carbon foil correction
+	     23       INTEGER*4 BREAK_C2  !NQ value of C2 break point (83)
+	     24       REAL*4    BREAK_MQ  !M/Q value of C2 break point (~11)
+	     25 
+	     26       REAL*4 D1,D2,	!E/Q coefficients, D1= analyzer constant
+	     27 C			                   D2= step resolution
+	     28      .       E(3)
+	     29 
+	     30       INTEGER*4 DEFAULT_NQ,DEFAULT_NM   !default dpu algorithm used
+	     31 
+	     32       REAL*4 EMIN, EMAX,		!min max energy and time
+	     33      .       TMIN, TMAX
+	     34 
+	     35       INTEGER*4  NM_MAX,  NQ_MAX, 	   !max bin values 
+	     36      .           UNM_MAX, UNQ_MAX, 	   !USER max bin values (-1 = use default)
+	     37      .           DNM_MAX/59/, DNQ_MAX/126/ !DPU default max bin values
+	     38 
+	     39       REAL*4 MMAX,  MMIN,    !measurable mass range in amu 
+	     40      .       MQMAX, MQMIN,   !measurable m/q range in amu/e
+	     41      .       UMMAX, UMMIN,   !USER measurable mass range in amu (-1 = use default)
+	     42      .       UMQMAX,UMQMIN,  !USER measurable m/q range in amu/e (-1 = use default)
+	     43      .       DMMAX  /95./, DMMIN  /0.5/,  !DPU DEFAULT measurable mass range in amu 
+	     44      .       DMQMAX /42./, DMQMIN /0.9/   !DPU DEFAULT measurable m/q range in amu/e        
+	     45 
+	     46       REAL*4  KM,KQ           !NM, NQ resolution parameters
+	     47 
+	     48       INTEGER*4 I,J,K
+	     49      
+	     50 C   ***********************************************************************
+	     51 C   *  Initialize constants with default dpu values (ref:  pages 345-349  *
+	     52 C   *  of WIND SMS COMMAND AND DATA FORMATS FOR THE SMS INSTRUMENT R.3.0) *
+	     53 C   ***********************************************************************	
+	     54 
+	     55       A(1) = 2.69575
+	     56       A(2) = -0.843766
+	     57       A(3) = -2.38009
+
+NMNQ_COEFF                                                      25-JAN-1995 19:36:06    DEC Fortran V6.2-508                Page   2
+                                                                25-JAN-1995 19:35:45    SMS1:[WIND.SOFTWARE.STICS]NMNQ_COEFF.FOR;6
+
+	     58       A(4) = 0.385641
+	     59       A(5) = 0.0513127
+	     60       A(6) = 0.0690096
+	     61 
+	     62 
+	     63       C1 = 1.9159E-05
+	     64       C2A= 1.5
+	     65       C2B= 2.5
+	     66       BREAK_C2 = 83
+	     67 C          m/q = MQmin *   kQ                     **(nq-1)
+	     68       BREAK_MQ = 0.9   * ( (42.0/0.9)**(1./126.) )**(83.-1.)
+	     69 
+	     70       D1 = 6.190722
+	     71       D2 = 1.1225857
+	     72 
+	     73       EMIN = 21.0
+	     74       EMAX = 2675.0
+	     75       TMIN = 11.0
+	     76       TMAX = 408.0
+	     77 
+	     78 C   ***********************************************************************
+	     79 C   *  determine if default (i.e., dpu) binning will be used, in whole or *
+	     80 C   *  in part, or not at all.  Otherwise user input for min, max, number *
+	     81 C   *  of bins will be used.                                              *
+	     82 C   ***********************************************************************
+	     83 
+	     84       DEFAULT_NQ = 0		!initialize flag for dpu default
+	     85       DEFAULT_NM = 0
+	     86       IF(UMMIN.LT.0.  .AND.  UMMAX.LT.0.   .AND.   UNM_MAX.LT.0)
+	     87      .   DEFAULT_NM = 1		!if true, dpu bins for nm to be used
+	     88       IF(UMQMAX.LT.0. .AND.  UMQMIN.LT.0.  .AND.   UNQ_MAX.LT.0) 
+	     89      .   DEFAULT_NQ = 1		!if true, dpu bins for nq to be used
+	     90 
+	     91       IF(UMMIN.LT.0.)  THEN
+	     92              MMIN = DMMIN
+	     93       ELSE
+	     94              MMIN = UMMIN
+	     95       ENDIF
+	     96 
+	     97       IF(UMMAX.LT.0.) THEN
+	     98               MMAX = DMMAX
+	     99       ELSE
+	    100               MMAX = UMMAX
+	    101       ENDIF
+	    102 
+	    103       IF(UMQMIN.LT.0.) THEN
+	    104               MQMIN = DMQMIN
+	    105       ELSE
+	    106               MQMIN = UMQMIN
+	    107       ENDIF
+	    108 
+	    109       IF(UMQMAX.LT.0.) THEN
+	    110               MQMAX = DMQMAX 
+	    111       ELSE
+	    112               MQMAX = UMQMAX
+	    113       ENDIF
+	    114 
+
+NMNQ_COEFF                                                      25-JAN-1995 19:36:06    DEC Fortran V6.2-508                Page   3
+                                                                25-JAN-1995 19:35:45    SMS1:[WIND.SOFTWARE.STICS]NMNQ_COEFF.FOR;6
+
+	    115       IF(UNM_MAX.LT.0) THEN
+	    116             NM_MAX = DNM_MAX
+	    117       ELSE
+	    118             NM_MAX = UNM_MAX +1   !(DPU formulas use overflow mass as nmmax)
+	    119       ENDIF
+	    120 
+	    121       IF(UNQ_MAX.LT.0) THEN
+	    122             NQ_MAX = DNQ_MAX
+	    123       ELSE
+	    124             NQ_MAX = UNQ_MAX
+	    125       ENDIF
+	    126 
+	    127 
+	    128 
+	    129 C  ************************************************************
+	    130 C  *              calculate binning parameters                *
+	    131 C  *              M(lower bound of Nm) = Mmin * kM**(Nm-1)    *
+	    132 C  *              M/Q(lower bound of Nq) = MQmin * kQ**(Nq-1) *
+	    133 C  ************************************************************
+	    134 
+	    135       KM = ( MMAX/MMIN )**(1./(FLOAT(NM_MAX)-1.))   !substract 1 from
+	    136 C                                                    nm_max (= overflow m)
+	    137       KQ = (MQMAX/MQMIN)**(1./FLOAT(NQ_MAX))
+	    138 
+	    139 
+	    140       IF (DEFAULT_NQ .EQ. 1) THEN
+	    141       	E(1) = -351.6997334
+	    142       	E(2) = 32.7867706
+	    143       	E(3) = 65.5735412
+	    144       ELSE
+	    145 	E(1) = 1. + (  (ALOG(C1) - ALOG(MQMIN))/ALOG(KQ) )
+	    146         E(2) = 1. / ALOG(KQ)
+	    147         E(3) = 2. / ALOG(KQ)
+	    148         BREAK_C2 = IFIX ( ALOG(BREAK_MQ/MQMIN) / ALOG(KQ) )
+	    149       END IF
+	    150 
+	    151       IF (DEFAULT_NM .EQ. 1) THEN
+	    152         B(1) = 38.4605
+	    153         B(2) = -9.32689
+	    154         B(3) = -26.3092
+	    155         B(4) = 4.26283
+	    156         B(5) = 0.567205
+	    157         B(6) = 0.762824
+	    158       ELSE
+	    159         B(1) = 1. + (  (A(1)-ALOG(MMIN)) / ALOG(KM) )
+	    160         B(2) = A(2) / ALOG(KM)
+	    161         B(3) = A(3) / ALOG(KM)
+	    162         B(4) = A(4) / ALOG(KM)
+	    163         B(5) = A(5) / ALOG(KM)
+	    164         B(6) = A(6) / ALOG(KM)
+	    165       ENDIF
+	    166 
+	    167       RETURN
+	    168       END
+
+NMNQ_COEFF                                                      25-JAN-1995 19:36:06    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    25-JAN-1995 19:35:45    SMS1:[WIND.SOFTWARE.STICS]NMNQ_COEFF.FOR;6
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   12 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                1140   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 200 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1376
+
+
+ENTRY POINTS
+
+    Address   Type  Name      
+                              
+  3-00000000        NMNQ_COEFF
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                                                           
+      **      I*4   BREAK_C2     1-0000000C  R*4   DMMIN            **      R*4   KM               **      R*4   UMMAX     
+      **      R*4   BREAK_MQ     1-00000010  R*4   DMQMAX           **      R*4   KQ               **      R*4   UMMIN     
+      **      R*4   C1           1-00000014  R*4   DMQMIN           **      R*4   MMAX             **      R*4   UMQMAX    
+      **      R*4   C2A          1-00000000  I*4   DNM_MAX          **      R*4   MMIN             **      R*4   UMQMIN    
+      **      R*4   C2B          1-00000004  I*4   DNQ_MAX          **      R*4   MQMAX            **      I*4   UNM_MAX   
+      **      R*4   D1               **      R*4   EMAX             **      R*4   MQMIN            **      I*4   UNQ_MAX   
+      **      R*4   D2               **      R*4   EMIN             **      I*4   NM_MAX                                   
+REG-00000007  I*4   DEFAULT_NM   2-00000000  I*4   I                **      I*4   NQ_MAX                                   
+REG-00000006  I*4   DEFAULT_NQ   2-00000004  I*4   J                **      R*4   TMAX                                     
+  1-00000008  R*4   DMMAX        2-00000008  I*4   K                **      R*4   TMIN                                     
+
+
+ARRAYS
+
+     Address  Type  Name        Bytes  Dimensions
+
+      **      R*4   A              24  (6)
+      **      R*4   B              24  (6)
+      **      R*4   E              12  (3)
+
+
+NMNQ_COEFF                                                      25-JAN-1995 19:36:06    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    25-JAN-1995 19:35:45    SMS1:[WIND.SOFTWARE.STICS]NMNQ_COEFF.FOR;6
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]NMNQ_COEFF.LIS;4
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]NMNQ_COEFF.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.53 seconds
+  Elapsed time:      2.22 seconds
+  Pagefaults:         184
+  I/O Count:            8

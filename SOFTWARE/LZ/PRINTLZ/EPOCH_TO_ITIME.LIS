@@ -1,0 +1,214 @@
+EPOCH_TO_ITIME                                                  23-FEB-1995 12:31:18    DEC Fortran V6.2-508                Page   1
+                                                                 9-FEB-1995 20:43:32    SMS1:[WIND.SOFTWARE.LZ]EPOCH_TO_ITIME.FOR;5
+
+	      1 	SUBROUTINE EPOCH_TO_ITIME( RTIME, Time, STATUS )
+	      2 C
+	      3 C	Convert the time given as a REAL*8 in milliseconds since 3-JAN-0000 B.C.
+	      4 C	into a structure of the following format:
+	      5 C
+	      6 C		      STRUCTURE /T/
+	      7 C		          INTEGER*2	YEAR,	DOY
+	      8 C		          BYTE		HR,	MIN,	SEC,	CSEC
+	      9 C		      END STRUCTURE ! /T/
+	     10 C
+	     11 C	This version:	9-FEB-1995
+	     12 C
+	     13 C  CREATION:
+	     14 C	15-JUN-1994	H.BROER	University of Maryland, Physics Department,
+	     15 C				Space Physics Group
+	     16 C	28-JUN-1994		regroup INPUT and OUTPUT
+	     17 C	 9-FEB-1995	L. Bleau	changed '!' to 'C' in program comments
+	     18 C	 9-FEB-1995	L. Bleau	change include stmt to use EDBDEF.INC
+	     19 C					and EDBVARS.INC instead of EDB.INC only
+	     20 C
+	     21 C------------------------------------------------------------------------------
+	     22 CDEC$	IDENT	'1.01'
+	     23 
+	     24       IMPLICIT NONE
+	     25 
+	     26       INCLUDE	'INC_DIR:EDBDEF.INC/NOLIST'
+
+EPOCH_TO_ITIME                                                  23-FEB-1995 12:31:18    DEC Fortran V6.2-508                Page   2
+1.01                                                             9-FEB-1995 20:43:32    SMS1:[WIND.SOFTWARE.LZ]EPOCH_TO_ITIME.FOR;5
+
+	    562       INCLUDE	'INC_DIR:EDBVARS.INC/NOLIST'
+
+EPOCH_TO_ITIME                                                  23-FEB-1995 12:31:18    DEC Fortran V6.2-508                Page   3
+1.01                                                             9-FEB-1995 20:43:32    SMS1:[WIND.SOFTWARE.LZ]EPOCH_TO_ITIME.FOR;5
+
+	    761 
+	    762       REAL*8	RTIME
+	    763 
+	    764       INTEGER*4	YEAR,
+	    765      +		DOY,
+	    766      +		HOUR,
+	    767      +		MINUTE,
+	    768      +		SECOND,
+	    769      +		CSEC,
+	    770      +		MILLIS,
+	    771      +		MICROS,
+	    772      +		STATUS
+	    773 
+	    774       RECORD /T/ Time
+	    775 
+	    776 
+	    777       CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, RTIME, STATUS )
+	    778 
+	    779       CSEC	= MOD( MILLIS/10, 100 )
+	    780       SECOND	= MOD( MILLIS/1000, 60 )
+	    781       MINUTE	= MOD( MILLIS/60000, 60 )
+	    782       HOUR	= MILLIS / 3600000
+	    783 
+	    784       Time.YEAR	= YEAR
+	    785       Time.DOY	= DOY
+	    786       Time.HR	= HOUR
+	    787       Time.MIN	= MINUTE
+	    788       Time.SEC	= SECOND
+	    789       Time.CSEC	= CSEC
+	    790 
+	    791       RETURN
+	    792 
+	    793       END
+
+EPOCH_TO_ITIME                                                  23-FEB-1995 12:31:18    DEC Fortran V6.2-508                Page   4
+1.01                            Symbol Table                     9-FEB-1995 20:43:32    SMS1:[WIND.SOFTWARE.LZ]EPOCH_TO_ITIME.FOR;5
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                 968   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 104 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               460416
+
+
+ENTRY POINTS
+
+    Address   Type  Name          
+                                  
+  3-00000000        EPOCH_TO_ITIME
+
+
+VARIABLES
+
+    Address   Type  Name                    Address   Type  Name                    Address   Type  Name               
+                                                                                                                       
+  7-00000006  L*1   BITRATE               7-00000008  L*1   MASSPOWER                 **      I*4   STATUS             
+REG-00000010  I*4   CSEC                  1-00000004  I*4   MASS_RATE_SIZE        7-00000009  L*1   STICSPOWER         
+  6-00000014  I*4   CURR_SCI_REC_NUMBER   7-0000000C  I*4   MEASSPIN              1-00000008  I*4   STICS_H_RATE_SIZE  
+  6-00000018  I*4   CURR_SPIN             2-00000014  I*4   MICROS                1-0000000C  I*4   STICS_N_RATE_SIZE  
+  2-0000000C  I*4   DOY                   2-00000010  I*4   MILLIS                2-00000000  I*4   STICS_RATE_SIZE    
+  5-0006EEBC  I*4   EDBSET              REG-00000000  I*4   MINUTE                7-00000004  L*1   SUBS_ID            
+  1-00000000  I*4   EDB_CORE_SIZE         6-0000001C  L*4   NEW_SCI_REC           7-00000007  L*1   SWICSPOWER         
+  6-00000008  I*4   EDB_LOST              7-0000000A  L*1   RAMCHECK              1-00000010  I*4   SWICS_H_RATE_SIZE  
+  6-0000000C  I*4   EDB_SKIP                  **      R*8   RTIME                 1-00000014  I*4   SWICS_N_RATE_SIZE  
+  6-00000010  I*4   EDB_SUM               6-00000000  I*4   SCI_REC_CNTR          2-00000004  I*4   SWICS_RATE_SIZE    
+  7-00000005  L*1   HDBFLAG             REG-00000001  I*4   SECOND                2-00000008  I*4   YEAR               
+REG-0000001A  I*4   HOUR                  7-00000000  I*4   SFPERBLOCK                                                 
+  6-00000004  I*4   L1_RECS_WRITTEN       7-00000010  I*4   SPINCOUNT                                                  
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes
+                                          
+      **      TIME  T                    8
+
+
+
+EPOCH_TO_ITIME                                                  23-FEB-1995 12:31:18    DEC Fortran V6.2-508                Page   5
+1.01                            Symbol Table                     9-FEB-1995 20:43:32    SMS1:[WIND.SOFTWARE.LZ]EPOCH_TO_ITIME.FOR;5
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  5-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  8-000003CC  I*4   HDBTIME2            24  (2, 3)
+  9-00000CF0  I*4   HKLOCI             300  (75)
+  9-00000E1C  I*4   HKLOCJ             300  (75)
+  9-00000CE4  I*4   HKSET               12  (3)
+  7-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  5-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  5-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  5-00000000  SCI         CORE             22152  (3)
+  5-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  5-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  5-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  5-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                    
+                                
+        WIND_EPOCH_TO_GREG      
+
+EPOCH_TO_ITIME                                                  23-FEB-1995 12:31:18    DEC Fortran V6.2-508                Page   6
+1.01                            Symbol Table                     9-FEB-1995 20:43:32    SMS1:[WIND.SOFTWARE.LZ]EPOCH_TO_ITIME.FOR;5
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]EPOCH_TO_ITIME.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]EPOCH_TO_ITIME.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.53 seconds
+  Elapsed time:      2.31 seconds
+  Pagefaults:         172
+  I/O Count:           15

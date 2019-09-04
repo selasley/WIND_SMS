@@ -1,0 +1,17 @@
+  STICS TIME, PHA and DPU M & M/Q TABLE LISTING
+  Run time  06:13:46    9-AUG-99
+         Input Level 1 Filename: SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19960418_V01.DAT;1
+  Clock selected: Wall     Trigger mode is   E                   
+  FIFO mode is OFF         TGS  mode is OFF
+  Telemetry mode is Science mode     
+  FILTERING CHOICES:
+          Voltage step selection =   0 to 31
+          Event type selection   =       ALL
+          Range selection        =     2 1 0
+          Range checking is OFF
+          Velocity range         =  260 to   1000
+          Selected Telescopes =   1, 2, 3  (-1=not selected)
+          Sectors     =   0 to 15
+          Telescope checking is ON 
+  Start Time:  19960418  06:00:00     End Time:  19960418  12:00:00
+       SR BR  Year  Day    Time    VS     E/Q    StopID   StartID/Range  Energy(Ed)  Sector  SSD-ID    ToF(Td)  START   RANGE      M/Q     MASS   NM   NQ  NRG

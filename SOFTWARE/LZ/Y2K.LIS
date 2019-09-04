@@ -1,0 +1,462 @@
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]CONCAT_LZ.FOR;20
+
+	LR_Beg_Year       = DR_Beg_Year            ! ATC: year-Beginning of Major Frame
+	LR_End_Year       = DR_Beg_Year            ! ATC: year-Beginning of Major Frame
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]EPOCH_TO_ITIME.FOR;5
+
+C		          INTEGER*2	YEAR,	DOY
+      INTEGER*4	YEAR,
+      CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, RTIME, STATUS )
+      Time.YEAR	= YEAR
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]ICSS_CNVRT_TO_EPOCH.FOR;1
+
+C INVOCATION METHOD: CALL ICSS_CNVRT_TO_EPOCH (YEAR,
+C                                              DAYOFYEAR,
+C  YEAR                  I*4       I     YEAR, e.g., 1992
+C  DAYORYEAR             I*4       I     DAY OF YEAR, e.g., 256
+C EXTERNAL REFERENCES: UTL_YRDY_YRMNDY  - CONVERT YEAR AND DAY TO YEAR
+C    ICSS_INVALID_INPUT_YEAR  - INVALID YEAR INPUT INTO PROGRAM
+C    ICSS_INVALID_INPUT_DAY   - INVALID DAY OF YEAR INPUT INTO PROGRAM
+C        CALL utl_yrdy_yrmndy TO CONVERT year AND dayofyear TO year, month,
+     #                                   year,       ! input
+     #                                   dayofyear,  ! input
+      INTEGER*4		year,
+     .			dayofyear,
+      IF (year .GT. 0 .AND. (dayofyear .GT. 0 .AND. dayofyear .LE. 366)
+          CALL UTL_YRDY_YRMNDY (    year,		! input
+     .                              dayofyear,		! input
+          CALL COMPUTE_EPOCH (		year,		! input
+C UTL_YRDY_YRMNDY - CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, DAY 
+C PURPOSE: UTILITY TO CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, AND DAY 
+C INVOCATION METHOD: CALL UTL_YRDY_YRMNDY (YEAR,
+C                                          DAY_OF_YEAR,
+C  YEAR                  I*4      I/O    YEAR, e.g., 1992
+C  DAY_OR_YEAR           I*4      I      DAY OF YEAR, e.g., 256
+C  H. BROER			      2-FEB-94	Correct leapyear calculation
+C  non-leap year
+C IF YEAR is not leap year and DAY_OF_YEAR is greater than 59 THEN
+C    INCREMENT DAY_OF_YEAR by 1
+C DOWHILE month counter is less than 12 and DAY_OF_YEAR is greater than
+C SET DAY_OF_YEAR decremented by the beginning day of this month to DAY
+      SUBROUTINE UTL_YRDY_YRMNDY (YEAR, DAY_OF_YEAR, MONTH, DAY)
+      INTEGER*4		YEAR,
+     +			DAY_OF_YEAR,
+      LOGICAL*1		LEAPYR
+C---------------------------------------BEGIN EXECUTABLE CODE UTL_YRDY_YRMNDY---
+      IDAY	= DAY_OF_YEAR
+C-- CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, DAY
+      LEAPYR	= .FALSE.
+      IF( MOD( YEAR, 4 ) .EQ. 0 )   THEN
+          IF( MOD( YEAR, 100 ) .NE. 0 )   THEN
+              LEAPYR	= .TRUE.
+              IF( MOD( YEAR, 400 ) .EQ. 0 )   THEN
+                  LEAPYR	= .TRUE.
+      IF( (.NOT.LEAPYR) .AND. DAY_OF_YEAR .GT. 59 )   THEN
+	subroutine compute_EPOCH (year, month, day, hour, minute,
+      integer*4		year,
+	EPOCH = julian_date(year, month, day) - 1721060
+	integer*4	y,		! YEAR
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]TEST_FIXUP.FOR;2
+
+C year) and extract the year from the SC clock.  Compare these two values.
+C If the year obtained from the SC clock (SC_Year) is later than the
+C current year, and obvious impossibility, set the logical variable SWAP_PARTS
+      INTEGER MONTH, DAY, THIS_YEAR
+      INTEGER*4  SC_Year, SC_DOY, SC_Msec, SC_MicSec, ISTAT
+C   Compare the years from the two sources and set SWAP_PARTS accordingly
+C Get the date.  Remember to adjust year to proper century, as it only give a
+        CALL IDATE(MONTH,DAY,THIS_YEAR)
+        IF (THIS_YEAR .LT. 90) THIS_YEAR = THIS_YEAR + 2000
+        IF (THIS_YEAR .LT. 100) THIS_YEAR = THIS_YEAR + 1900
+C Now convert the EPOCH time into normal time: calendar year, day of year, etc.
+        CALL WIND_EPOCH_TO_GREG(  SC_Year,
+C Now for the big test.  If the year just obtained (SC_Year) is later than the
+C current year, set SWAP_PARTS to .TRUE..  Also, if the high bit of SCClock(1)
+        SWAP_PARTS = SC_Year .GT. THIS_YEAR .OR. BTEST(SC_Clock(1),31)
+        TYPE *,'THIS_YEAR, SC_Year =',THIS_YEAR,SC_Year
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]WIND_BUILD_L1_HEADER.FOR;76
+
+        INTEGER year,hrs,mins,secs,month,day,pos
+        INTEGER*4 Clock_Beg_Year, Clock_Beg_DOY, Clock_Beg_Msec, Clock_Beg_MicSec
+        INTEGER*4 Clock_End_Year, Clock_End_DOY, Clock_End_Msec, Clock_End_MicSec
+	COMMON /DATES/ Clock_Beg_Year, Clock_Beg_DOY, Clock_Beg_Msec, Clock_Beg_MicSec,
+     &                 Clock_End_Year, Clock_End_DOY, Clock_End_Msec, Clock_End_MicSec
+C Adjust year for current century
+        READ(date1(8:9), 112) year
+        IF (year .lt. 90) THEN
+          year = 2000 + year
+          year = year + 1900
+        WRITE(l1_file_header.run_date, 113) date1(1:7),year
+	CALL doy_to_month_day( Clock_Beg_Year, Clock_Beg_DOY, month, day, date_str )
+	CALL doy_to_month_day( Clock_End_Year, Clock_End_DOY, month, day, date_str )
+	l1_file_header.credate_year = ascii_date(8:11)
+	SUBROUTINE DOY_TO_MONTH_DAY( YEAR, DOY, MONTH, DAY, DATE_STR )
+C    This routine converts a given day of year to a (numeric) month and day.
+C    The `YEAR' argument is needed to distinguish leap from non-leap years.  In
+C     YEAR:
+C	  An INTEGER*4 variable containing the year of the date.
+C	  An INTEGER*4 variable containing the day of the year.
+C     Scan array of days-in-year-to-date, locate month whose beginning
+C     day-of-year is the largest one less than the given day-of-year.
+C     Subtract this value from given day-of-year to get day-of-month.
+C     Take into account leap years by using alternate set of values.
+	INTEGER*4 YEAR, DOY, MONTH, DAY
+	LEAP = 1                                                     ! Not a leap year
+	IF (MOD(YEAR,4) .EQ. 0 .AND. MOD(YEAR,100) .NE. 0) LEAP = 2  ! Leap year
+C If this is the first month, the day-of-year and day-of-month are the same.
+C If this is not the first month, subtract the day-of-year on which the previous 
+	WRITE(DATE_STR,1001) DAY,MONTH_ABBREV(MONTH),YEAR
+	SUBROUTINE GET_CDT(filename,ascii_date,day_of_year)
+C  the year for that date.
+C     day_of_year:
+C	  year of the creation date.
+C   day of the year in which the file was created.  Now call LIB$DAY twice to
+C   origin) to the 1) start of the year in which the file was created, and
+C   the day of year value. 
+	INTEGER*4 day_of_year
+	CHARACTER year_start*11
+	INTEGER*4 ios,quad_date(2),year_start_internal(2)
+D	type *,'Year:     ',ascii_date(8:11)
+C Compute day of year.
+C First get quadword time for first day of year.  Then get number of days from
+C November 17, 1858 to start of year and to file's creation date.  Difference
+C the two to get day of year file was created.
+	year_start = ' 1-JAN-' // ascii_date(8:11)
+	CALL LIB$CONVERT_DATE_STRING (year_start, year_start_internal,,,,)
+	CALL LIB$DAY (ndays1, year_start_internal, )
+	day_of_year = ndays2 - ndays1 + 1
+D	type *,'Doy:      ',day_of_year
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+C Adjust the year to be in the correct century, then encode the date into L1
+C won't work in year 2090 or later.
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]WIND_CD_READ.FOR;235
+
+C       CALL WIND_EPOCH_TO_GREG(        SC_Beg_Year,                                            !! WIND_LIB.OLB
+C       CALL WIND_GET_LZ_TIMES( DSTRYRDAY, DSTPYRDAY, STRTime, STPTime, ISTAT )                 !! WIND_LIB.OLB
+C       CALL WIND_GREG_TO_EPOCH(        LR_Beg_Year,    ! ATC: Year                             !! WIND_LIB.OLB
+C     +                                 LR_Beg_DOY,     ! ATC: Day Of Year
+      COMMON /DATES/ Clock_Beg_Year, Clock_Beg_DOY, Clock_Beg_Msec, Clock_Beg_MicSec,
+     &               Clock_End_Year, Clock_End_DOY, Clock_End_Msec, Clock_End_MicSec
+     :                  DSTPYRDAY,      ! STOP TIME
+     :                  DSTRYRDAY,      ! START TIME
+     :                  DYRDAY,         ! CURRENT TIME
+     +                  Clock_Beg_Year,	! save start time here
+     +                  Clock_End_Year,	! save stop time here
+     :                  SC_Beg_Year,    !
+     :                  SC_End_Year,    !
+      CALL WIND_GREG_TO_EPOCH(          LR_Beg_Year,    ! ATC: Year
+     +                                  LR_Beg_DOY,     ! ATC: Day Of Year
+      CALL WIND_GREG_TO_EPOCH(          LR_End_Year,
+          DSTRYRDAY = SC_Beg_EPOCH
+          DSTPYRDAY = SC_End_EPOCH
+          DSTRYRDAY = LR_Beg_EPOCH
+          DSTPYRDAY = LR_End_EPOCH
+      CALL WIND_GET_LZ_TIMES( DSTRYRDAY, DSTPYRDAY, STRTime, STPTime, ISTAT )
+      CALL WIND_EPOCH_TO_GREG(          SC_Beg_Year,
+      CALL WIND_EPOCH_TO_GREG(          SC_End_Year,
+      Clock_Beg_Year = SC_Beg_Year
+      Clock_End_Year = SC_End_Year
+      IF(DIAG .LE. 5) WRITE( TTOUT, 114 )          SC_Beg_Year,
+     :                          SC_End_Year,
+     :          ' START :',     T12, ' Year =', T24, I4, /,
+     :          ' End :',       T12, ' Year =', T24, I4, /,
+     +          LR_Beg_Year,            ! ATC: year-Beginning of First MajFrame
+     +          LR_End_Year,            ! ATC: year-Beginning of Last MajFrame
+     +  /,      ' LR_Beg_Year           =', I6,         ! ATC: year-Beginning of First MajFrame
+     +  /,      ' LR_End_Year           =', I6,         ! ATC: year-Beginning of Last MajFrame
+          CALL WIND_GREG_TO_EPOCH(      DR2_Beg_Year,   ! ATC: Year     ! Calc WALL-EPOCH
+     +                                  DR2_Beg_DOY,    ! ATC: Day Of Year
+          CALL WIND_GREG_TO_EPOCH(      DR2_Beg_Year,   ! ATC: Year
+     +                                  DR2_Beg_DOY,    ! ATC: Day Of Year
+      CALL WIND_EPOCH_TO_GREG(          SC_Beg_Year,
+      CALL WIND_GREG_TO_EPOCH(          DR_Beg_Year,    ! ATC: Year
+     +                                  DR_Beg_DOY,     ! ATC: Day Of Year
+          DYRDAY = DR_SC_EPOCH
+          DYRDAY = DR_Beg_EPOCH
+      Pref_EPOCH = DYRDAY
+     +                          DR_Beg_Year,    SC_Beg_Year,    ! Year
+     +                          DR_Beg_DOY,     SC_Beg_DOY,     ! Day Of Year
+     :          T30, 'YEAR :',          T54, I4,        T75, I4, /,
+     :          T30, 'YEAR :',          T53, I5,        T74, I5, /,
+     +          DR_Beg_Year,            ! ATC: year-Beginning of Major Frame
+     +  /,      ' DR_Beg_Year           =', I6,         ! ATC: year-Beginning of Major Frame
+     :          SCI(EDBset).EDB(MSpin).W_Time.YEAR,
+     :          SCI(EDBset).EDB(MSpin).SC_Time.YEAR,
+              DYRDAY = DR_SC_EPOCH + T1
+              DYRDAY = DR_Beg_EPOCH + T1
+                  CALL WIND_EPOCH_TO_GREG(      SC_Beg_Year,
+                  CALL WIND_GREG_TO_EPOCH( DR_Beg_Year, ! ATC: Year
+     +                                  DR_Beg_DOY,     ! ATC: Day Of Year
+                      DYRDAY = DR_SC_EPOCH
+                      DYRDAY = DR_Beg_EPOCH
+                  Pref_EPOCH = DYRDAY
+     +                          DR_Beg_Year,    SC_Beg_Year,    ! Year
+     +                          DR_Beg_DOY,     SC_Beg_DOY,     ! Day Of Year
+     +          DR_Beg_Year,            ! ATC: year-Beginning of Major Frame
+                  CALL WIND_EPOCH_TO_GREG(      SC_Beg_Year,
+                  CALL WIND_GREG_TO_EPOCH( DR_Beg_Year,         ! ATC: Year
+     +                                          DR_Beg_DOY,     ! ATC: Day Of Year
+                      DYRDAY = DR_SC_EPOCH
+                      DYRDAY = DR_Beg_EPOCH
+                  Pref_EPOCH = DYRDAY
+     +                          DR_Beg_Year,    SC_Beg_Year,    ! Year
+     +                          DR_Beg_DOY,     SC_Beg_DOY,     ! Day Of Year
+     +          DR_Beg_Year,            ! ATC: year-Beginning of Major Frame
+      IF( DYRDAY .GT. STPTime ) GOTO 9999
+C year) and extract the year from the SC clock.  Compare these two values.
+C If the year obtained from the SC clock (SC_Year) is later than the
+C current year, and obvious impossibility, set the logical variable SWAP_PARTS
+      INTEGER MONTH, DAY, THIS_YEAR
+      INTEGER*4  SC_Year, SC_DOY, SC_Msec, SC_MicSec, ISTAT
+C   Compare the years from the two sources and set SWAP_PARTS accordingly
+C Get the date.  Remember to adjust year to proper century, as it only give a
+        CALL IDATE(MONTH,DAY,THIS_YEAR)
+        IF (THIS_YEAR .LT. 90) THIS_YEAR = THIS_YEAR + 2000
+        IF (THIS_YEAR .LT. 100) THIS_YEAR = THIS_YEAR + 1900
+C Now convert the EPOCH time into normal time: calendar year, day of year, etc.
+        CALL WIND_EPOCH_TO_GREG(  SC_Year,
+C Now for the big test.  If the year just obtained (SC_Year) is later than the
+C current year, set SWAP_PARTS to .TRUE..  Also, if the high bit of SCClock(1)
+        SWAP_PARTS = SC_Year .GT. THIS_YEAR .OR. BTEST(SC_Clock(1),31)
+        TYPE *,'THIS_YEAR, SC_Year =',THIS_YEAR,SC_Year
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]WIND_EPOCH_TO_GREG.FOR;4
+
+      SUBROUTINE WIND_EPOCH_TO_GREG( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+C	This subroutine converts into integer numbers representing Year,
+C	DayOfYear, Milliseconds, and Microseconds from a REAL*8 EPOCH number.
+C	CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+C	YEAR	I*4	 I	year, e.g.:1994, neg. = B.C.
+C	DOY	I*4	 I	day-of-year
+      INTEGER*4	YEAR,DOY,MSEC,MICRO,STATUS
+      CALL EPOCH_breakdown( EPOCH, YEAR, IMON, IDAY, IHR, IMIN, ISEC, IMILLI )
+      CALL CNVRT_YRMONDAY_TO_YEARDAY( YEAR, IMON, IDAY, DOY )	
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]WIND_GET_LZ_TIMES.FOR;4
+
+      INTEGER*4 YEAR,
+     +          sYEAR,
+     +          eYEAR,
+      equivalence (ftime(1), YEAR),
+     :          ' YEAR', T9, ':', I4, /,
+  100 CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, epoch_start_tm, status )
+      sYEAR     = YEAR
+      WRITE( TTOUT, 10 )   ' STARTING YEAR IS (NEG = ALL DATA ON FILE) '
+      CALL TIINT4( sYEAR, *990 )
+      IF( sYEAR .LT. 0 )        THEN
+      IF( MOD( sYEAR, 4 ) .EQ. 0 )   THEN
+          IF( MOD( sYEAR, 100 ) .NE. 0 )   THEN
+              IF( MOD( sYEAR, 400 ) .EQ. 0 )    sLY = 1
+     :                  sYEAR, sDOY, HOUR, MINUTE, SECOND, sMILLS, MICROS
+      CALL WIND_GREG_TO_EPOCH( sYEAR, sDOY, MILLIS, MICROS, req_start_time, status )
+  200 CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, epoch_stop_tm, status )
+      eYEAR     = YEAR
+  210 WRITE( TTOUT, 10 )   ' STOP YEAR IS  (NEG INPUT = ALL DATA TO END-OF-FILE)'
+      CALL TIINT4( eYEAR, *180 )
+      IF( eYEAR .LT. 0 )        THEN
+      IF( MOD( eYEAR, 4 ) .EQ. 0 )   THEN
+          IF( MOD( eYEAR, 100 ) .NE. 0 )   THEN
+              IF( MOD( eYEAR, 400 ) .EQ. 0 )    eLY = 1
+     :                  eYEAR, eDOY, HOUR, MINUTE, SECOND, eMILLS, MICROS
+      CALL WIND_GREG_TO_EPOCH( eYEAR, eDOY, MILLIS, MICROS, req_end_time, status )
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]WIND_PB5_TO_EPOCH.FOR;4
+
+C    ADD 1 DAY TO ACCOUNT FOR YEAR 0 BEING LEAP YEAR
+C assume year 0 A.D. is a leap year.  For that reason all dates after Feb 28, 0
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]WIND_SAVE_HK.FOR;27
+
+     :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.YEAR,
+     :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.YEAR,
+     :                  T19,'YEAR:', I16, I20, /,
+     :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.YEAR,
+     :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.YEAR,
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]JD.C;14
+
+*    The year, month, and day are assumed to have already been validated.  This
+  long scclock1,tjd,jdn,julianday,year,month,doy,jd2;
+  printf("Enter ATC value (year, doy): ");
+  scanf("%d,%d", &year, &doy);
+  jd2 = JulianDay(year,1L,1L);
+
+******************************
+SMS1:[WIND.SOFTWARE.LZ]JD2.C;2
+
+*    The year, month, and day are assumed to have already been validated.  This
+  long scclock1,tjd,jdn,julianday,year,month,day,jd2;
+  printf("Enter year, month, day): ");
+  scanf("%d,%d,%d", &year, &month, &day);
+  jd2 = JulianDay(year,month,day);
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]CNVRT_T_YRMONDAY_TO_YEARDAY.FOR;2
+
+      SUBROUTINE CNVRT_T_YRMONDAY_TO_YEARDAY( Time, imo, iday )
+C Subroutine to convert from year, month, day to year day of year using a
+C Uses CNVRT_YRMONDAY_TO_YEARDAY to do the dirty work.
+      RECORD /T/ Time		!	  structure of type T containing year
+      INTEGER*4	IYR,		! INPUT:  year
+     :		IDAY_YR 	! OUTPUT: day of year
+      iyr = Time.YEAR
+      call CNVRT_YRMONDAY_TO_YEARDAY( iyr, imo, iday, iday_yr )
+      Time.DOY = iday_yr
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRDY_TO_YRMNDY.FOR;1
+
+      SUBROUTINE CNVRT_YRDY_TO_YRMNDY( YEAR, DAY_OF_YEAR, MONTH, DAY )
+C CNVRT_YRDY_TO_YRMNDY - CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, DAY 
+C PURPOSE: UTILITY TO CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, AND DAY 
+C    CALL CNVRT_YRDY_TO_YRMNDY( YEAR,
+C				DAY_OF_YEAR,
+C  YEAR                  I*4      I/O    YEAR, e.g., 1992
+C  DAY_OR_YEAR           I*4      I      DAY OF YEAR, e.g., 256
+C  H. BROER			      5-APR-94	Correct leapyear calculation
+C  non-leap year
+C IF YEAR is not leap year and DAY_OF_YEAR is greater than 59 THEN
+C    INCREMENT DAY_OF_YEAR by 1
+C DOWHILE month counter is less than 12 and DAY_OF_YEAR is greater than
+C SET DAY_OF_YEAR decremented by the beginning day of this month to DAY
+      INTEGER*4		YEAR,
+     +			DAY_OF_YEAR,
+      LOGICAL*1		LEAPYR
+C---------------------------------------BEGIN EXECUTABLE CODE UTL_YRDY_YRMNDY---
+      IDAY	= DAY_OF_YEAR
+C-- CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, DAY
+      LEAPYR	= .FALSE.
+      IF( MOD( YEAR, 4 ) .EQ. 0 )   THEN
+          IF( MOD( YEAR, 100 ) .NE. 0 )   THEN
+              LEAPYR	= .TRUE.
+              IF( MOD( YEAR, 400 ) .EQ. 0 )   LEAPYR	= .TRUE.
+      IF( (.NOT.LEAPYR) .AND. DAY_OF_YEAR .GT. 59 )   THEN
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRMONDAY_TO_JULIAN.FOR;1
+
+      INTEGER*4 FUNCTION CNVRT_YRMONDAY_TO_JULIAN( IYY, IMM, IDY )
+!	noon of the calender date specified by month IMM, day IDY, and year IYY,
+!	all INTEGER*4 variables. Positive year signifies A.D.; negative B.C.
+!	Remember thet the year after 1 B.C. was 1 A.D.  Note that this routine
+!	JJ	= CNVRT_YRMONDAY_TO_JULIAN( IYY, IMM, IDY )
+!	INTEGER*4	IYY	! INPUT:Year	pos=A.D., neg=B.C., no zero
+!	25-Mar-1994	H.Broer	Correct for BC-years from Julian day 60.
+     :		IMM,		!		MONTH OF YEAR
+     :		IYY,		!		YEAR
+          TYPE 100, ' THERE IS NO YEAR 0.'
+          TYPE 110, ' PLEASE ENTER YEAR;?'
+      CNVRT_YRMONDAY_TO_JULIAN	= JUL
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRMONDAY_TO_YEARDAY.FOR;1
+
+      subroutine CNVRT_YRMONDAY_TO_YEARDAY( iyr, imo, iday, iday_yr )
+c     subroutine to convert from year, month, day to year day of year.
+      INTEGER*4	IYR,		! INPUT:  year
+     :		IDAY_YR,	! OUTPUT: day of year
+      LOGICAL*1	IYRL
+      iyrl = .FALSE.
+      IF( MOD( iyr, 4 ) .EQ. 0 )   THEN
+          IF( MOD( iyr, 100 ) .NE. 0 )   THEN
+              iyrl = .TRUE.
+              IF( MOD( iyr, 400 ) .EQ. 0 )	iyrl = .TRUE.
+      if( iyrl ) then
+          iday_yr	= imol(  imo ) + iday
+          iday_yr	= imonl( imo ) + iday
+c      write( 6, * )	iyr, imo, iday, iday_yr
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]JULIAN_TO_GREGORIAN.FOR;3
+
+C	the return of the calender date expressed in year IYY, month IMM, and
+C	INTEGER*4	IYY	! OUT:	YEAR		e.g.: 1994, neg = BC
+     :		IMM,		!		MONTH OF YEAR
+     :		IYY,		!		YEAR
+      IF( IYY .LE. 0 )		IYY = IYY - 1	! NO YEAR ZERO neither AD nor BC
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]WIND_EPOCH_TO_GREG.FOR;4
+
+      SUBROUTINE WIND_EPOCH_TO_GREG( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+C	This subroutine converts into integer numbers representing Year,
+C	DayOfYear, Milliseconds, and Microseconds from a REAL*8 EPOCH number.
+C	CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+C	YEAR	I*4	 I	year, e.g.:1994, neg. = B.C.
+C	DOY	I*4	 I	day-of-year
+      INTEGER*4	YEAR,DOY,MSEC,MICRO,STATUS
+      CALL EPOCH_breakdown( EPOCH, YEAR, IMON, IDAY, IHR, IMIN, ISEC, IMILLI )
+      CALL CNVRT_YRMONDAY_TO_YEARDAY( YEAR, IMON, IDAY, DOY )	
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]WIND_FORMAT_TIME.FOR;6
+
+	WRITE(TEMP,1001) TIMESTRC.YEAR,TIMESTRC.DOY,TIMESTRC.HR,TIMESTRC.MIN,
+	WRITE(TEMP,FMT_SPEC) TIMESTRC.YEAR,TIMESTRC.DOY,TIMESTRC.HR,TIMESTRC.MIN,
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+      INTEGER*4 YEAR,
+     +          sYEAR,
+     +          eYEAR,
+      equivalence (ftime(1), YEAR),
+     :          ' YEAR', T9, ':', I4, /,
+  100 CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, epoch_start_tm, status )
+      sYEAR     = YEAR
+      WRITE( TTOUT, 10 )   ' STARTING YEAR IS (NEG = ALL DATA ON FILE) '
+      CALL TIINT4( sYEAR, *990 )
+      IF( sYEAR .LT. 0 )        THEN
+      IF( MOD( sYEAR, 4 ) .EQ. 0 )   THEN
+          IF( MOD( sYEAR, 100 ) .NE. 0 )   THEN
+              IF( MOD( sYEAR, 400 ) .EQ. 0 )    sLY = 1
+     :                  sYEAR, sDOY, HOUR, MINUTE, SECOND, sMILLS, MICROS
+      CALL WIND_GREG_TO_EPOCH( sYEAR, sDOY, MILLIS, MICROS, req_start_time, status )
+  200 CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, epoch_stop_tm, status )
+      eYEAR     = YEAR
+  210 WRITE( TTOUT, 10 )   ' STOP YEAR IS  (NEG INPUT = ALL DATA TO END-OF-FILE)'
+      CALL TIINT4( eYEAR, *180 )
+      IF( eYEAR .LT. 0 )        THEN
+      IF( MOD( eYEAR, 4 ) .EQ. 0 )   THEN
+          IF( MOD( eYEAR, 100 ) .NE. 0 )   THEN
+              IF( MOD( eYEAR, 400 ) .EQ. 0 )    eLY = 1
+     :                  eYEAR, eDOY, HOUR, MINUTE, SECOND, eMILLS, MICROS
+      CALL WIND_GREG_TO_EPOCH( eYEAR, eDOY, MILLIS, MICROS, req_end_time, status )
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]WIND_GREG_TO_EPOCH.FOR;5
+
+      SUBROUTINE WIND_GREG_TO_EPOCH( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+C	This subroutine converts integer numbers representing Year, DayOfYear,
+C	CALL WIND_GREG_TO_EPOCH( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+C	YEAR	I*4	 I	year, e.g.:1994, neg. = B.C.
+C	DOY	I*4	 I	day-of-year
+C					CNVRT_YRMONDAY_TO_JULIAN,
+      INTEGER*4	YEAR,DOY,MSEC,MICRO,STATUS
+      CALL compute_EPOCH( YEAR, 0, DOY, 0, 0, 0, MSEC, EPOCH )
+
+******************************
+SMS1:[WIND.SOFTWARE.LIB]WIND_PB5_TO_EPOCH.FOR;4
+
+C    ADD 1 DAY TO ACCOUNT FOR YEAR 0 BEING LEAP YEAR
+C assume year 0 A.D. is a leap year.  For that reason all dates after Feb 28, 0

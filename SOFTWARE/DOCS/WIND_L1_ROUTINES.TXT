@@ -1,0 +1,379 @@
+WIND Level 1 File Access Routine Documentation                                 p2-1
+FUNCTION NAME:
+        WIND_COMPARE_TIME
+CALLING SEQUENCE:
+        result = WIND_COMPARE_TIME_xx( t1, t2 )
+FUNCTIONAL DESCRIPTION: 
+     These functions compare two times and return a logical value indicating if
+     they are in a specific relation to one another.  The six logical functions
+     are named WIND_COMPARE_TIME_xx, where xx is a 2-letter abbreviation for the
+     relation to be tested: EQ, LE, LT, GE, GT, or NE.
+FORMAL PARAMETERS:
+ 
+    t1:
+          A RECORD variable of structure type T containing the first of the
+          two times to be compared.
+    t2:
+          A RECORD variable of structure type T containing the second of the
+          two times to be compared.
+RETURNED FUNCTION VALUE:
+    result:
+          A logical value indicating if the relation    t1 xx t2   is true or
+          not, where "xx" (the last two letters of the function name) is one of
+          the following: EQ, LE, LT, GE, GT, or NE.
+WIND Level 1 File Access Routine Documentation                                p2-2
+FUNCTION NAME:
+        WIND_COMPRESS
+CALLING SEQUENCE:
+        byte_value = WIND_COMPRESS( actual_value, ccode )
+FUNCTIONAL DESCRIPTION: 
+     This function compresses an integer value into its byte equivalent.  The
+     value is logarithmically encoded so that large numbers will fit into a
+     byte.  The value to be compressed is passed in the argument
+     `actual_value'.  `ccode' is a logical variable that is true if Compression
+     Code C is to be used; if it is false, Compression Code A is used instead. 
+     The compressed value is returned as a BYTE value. 
+FORMAL PARAMETERS:
+ 
+    actual_value :
+          An INTEGER*4 variable containing the value to be compressed.
+      
+    ccode:
+          A LOGICAL variable indicating the type of compression code algorithm
+          which was used:
+              .TRUE.    Compression Code C
+              .FALSE.   Compression Code A
+RETURNED FUNCTION VALUE:
+    byte_value:
+          The compressed result is returned as a BYTE value.
+WIND Level 1 File Access Routine Documentation                                p2-3
+FUNCTION NAME:
+        WIND_DECOMPRESS
+CALLING SEQUENCE:
+        actual_value = WIND_DECOMPRESS( byte_value, ccode )
+FUNCTIONAL DESCRIPTION: 
+     This function decompresses a byte into its integer equivalent so
+     arithmetic operations may be performed upon it.  The byte to be
+     decompressed is passed in the argument `byte_value'.  `ccode' is a logical
+     variable that is true if Compression Code C is to be used; if it is false,
+     Compression Code A is used instead.  The decompressed value is returned as
+     an INTEGER*4 value. 
+FORMAL PARAMETERS:
+ 
+    byte_value:
+          A BYTE variable containing the value to be decompressed.
+      
+    ccode:
+          A LOGICAL variable indicating the type of compression code algorithm
+          which was used:
+              .TRUE.    Compression Code C
+              .FALSE.   Compression Code A
+RETURNED FUNCTION VALUE:
+    actual_value :
+          The decompressed result is returned as an INTEGER*4 value.
+WIND Level 1 File Access Routine Documentation                                p2-4
+ROUTINE NAME:
+        WIND_DISSECT_MASS_PHA
+CALLING SEQUENCE:
+        CALL WIND_DISSECT_MASS_PHA( pha, sector, range, anode, tof )
+FUNCTIONAL DESCRIPTION: 
+     This subroutine extracts the sector, range, anode, and time of flight
+     fields from the WIND MASS PHA word passed in the argument `pha' and returns
+     each component to the caller as an INTEGER*4 quantity.
+     NOTE: This routine only works for MASS PHA words.
+FORMAL PARAMETERS:
+ 
+    pha:
+          A BYTE array of length 2 containing the PHA word to be dissected.
+      
+    sector:
+          An INTEGER*4 variable which will receive the extracted sector field
+          of the PHA word.
+    range:
+          An INTEGER*4 variable which will receive the extracted range field
+          of the PHA word.
+    anode:
+          An INTEGER*4 variable which will receive the extracted anode field
+          of the PHA word.
+    tof:
+          An INTEGER*4 variable which will receive the extracted time of flight
+          field of the PHA word.
+WIND Level 1 File Access Routine Documentation                                p2-5
+ROUTINE NAME:
+        WIND_DISSECT_STICS_PHA
+CALLING SEQUENCE:
+        CALL WIND_DISSECT_STICS_PHA( pha, sector, range, energy, tof, start_id,
+                                     stop_id, ssd_id )
+FUNCTIONAL DESCRIPTION: 
+     This subroutine extracts the sector, range, energy, time of flight,
+     start ID, stop ID, and SSD ID fields from a WIND STICS PHA word passed in
+     the argument `pha' and returns each component to the caller as an
+     INTEGER*4 quantity. 
+     NOTE: This routine only works for STICS PHA words.
+FORMAL PARAMETERS:
+    pha:
+          A BYTE array of length 4 containing the STICS PHA word to be
+          dissected.
+    sector:
+          An INTEGER*4 variable which will receive the extracted sector field
+          of the PHA word.
+    range:
+          An INTEGER*4 variable which will receive the extracted and decoded
+          range field of the PHA word.
+    energy:
+          An INTEGER*4 variable which will receive the extracted energy field
+          of the PHA word.
+    tof:
+          An INTEGER*4 variable which will receive the extracted time of flight
+          field of the PHA word.
+    start_id:
+          An INTEGER*4 variable which will receive the extracted and decoded
+          Start ID field of the PHA word.
+    stop_id:
+          An INTEGER*4 variable which will receive the extracted Stop ID
+          field of the PHA word.
+    ssd_id:
+          An INTEGER*4 variable which will receive the extracted SSD ID
+          field of the PHA word.
+WIND Level 1 File Access Routine Documentation                                p2-6
+ROUTINE NAME:
+        WIND_DISSECT_SWICS_PHA
+CALLING SEQUENCE:
+        CALL WIND_DISSECT_SWICS_PHA( pha, sector, energy, range, ssd_id, tof )
+FUNCTIONAL DESCRIPTION: 
+     This subroutine extracts the sector, energy, range, SSD ID, and time of
+     flight fields from the WIND SWICS PHA word passed in the argument `pha'
+     and returns each component to the caller as an INTEGER*4 quantity.
+     NOTE: This routine only works for SWICS PHA words.
+FORMAL PARAMETERS:
+    pha:
+          A BYTE array of length 4 containing the SWICS PHA word to be
+          dissected. 
+    sector:
+          An INTEGER*4 variable which will receive the extracted sector field
+          of the PHA word.
+    energy:
+          An INTEGER*4 variable which will receive the extracted energy field
+          of the PHA word.
+    range:
+          An INTEGER*4 variable which will receive the extracted and decoded
+          range field of the PHA word.
+    ssd_id:
+          An INTEGER*4 variable which will receive the extracted SSD ID
+          field of the PHA word.
+    tof:
+          An INTEGER*4 variable which will receive the extracted time of flight
+          field of the PHA word.
+ 
+WIND Level 1 File Access Routine Documentation                                p2-7
+ROUTINE NAME:
+        WIND_L1_CLOSE
+CALLING SEQUENCE:
+        CALL WIND_L1_CLOSE( unit, status )
+FUNCTIONAL DESCRIPTION: 
+    This routine closes the Level 1 format file specified by the argument
+    `unit'.  Internal data structures associated with this unit are released or
+    cleared, as appropriate.  A status code is returned in the argument
+    `status'.
+FORMAL PARAMETERS:
+ 
+    unit:
+          An INTEGER*4 variable specifying the Fortran unit number of the L1
+          file to be closed.  Allowable values for unit are 1-20.
+     
+    status:
+          An INTEGER*4 variable which will receive, upon return, the status of
+          the close operation.  A 1 indicates success, all other values
+          indicate failure.
+WIND Level 1 File Access Routine Documentation                                p2-8
+ROUTINE NAME:
+        WIND_L1_GET_BASIC
+CALLING SEQUENCE:
+        CALL WIND_L1_GET_BASIC( L1_unit, basic_rec, status )
+FUNCTIONAL DESCRIPTION:
+    This routine copies the Basic (Core) data structure from the Science Record
+    associated with unit L1_unit to the caller's argument basic_rec, which is a
+    record of type CORE.
+FORMAL PARAMETERS:
+    L1_unit:
+          An INTEGER*4 variable specifying the Fortran unit number of the
+          L1 file.  Allowable values for L1_unit are 1-20.
+    basic_rec:
+          A RECORD variable of structure type CORE which will receive the Basic
+          (Core) data structure associated with the current Science Record.
+    status:
+          An INTEGER*4 variable which will receive the completion status.
+          A 1 indicates success.
+WIND Level 1 File Access Routine Documentation                                p2-9
+ROUTINE NAME:
+        WIND_L1_GET_HDB
+CALLING SEQUENCE:
+        CALL WIND_L1_GET_HDB( L1_unit, hdb_structure, status ) 
+FUNCTIONAL DESCRIPTION:
+    This routine copies the Housekeeping Data Block (HDB) data structure from
+    the Science Record associated with unit L1_unit to the caller's argument
+    hdb_structure, which is a record of type HDBstr.  
+FORMAL PARAMETERS:
+    L1_unit:
+          An INTEGER*4 variable specifying the Fortran unit number of the
+          L1 file.  Allowable values for L1_unit are 1-20.
+    hdb_structure:
+          A RECORD variable of structure type HDBstr which will receive the HDB
+          data structure associated with the current Science Record.
+    status:
+          An INTEGER*4 variable which will receive the completion status.
+          A 1 indicates success.
+WIND Level 1 File Access Routine Documentation                                p2-10
+ROUTINE NAME:
+        WIND_L1_GET_HK
+CALLING SEQUENCE:
+        CALL WIND_L1_GET_HK( L1_unit, hk_structure, hk_count, status ) 
+FUNCTIONAL DESCRIPTION:
+    This routine copies the Housekeeping (HK) data structure from the Science
+    Record associated with unit L1_unit to the caller's argument hk_structure,
+    which is a record of type Hkeep.  All HK entries are copied.  The number of
+    valid HKs in the structure is returned in the argument hk_count. 
+WIND Level 1 File Access Routine Documentation                                p2-11
+ROUTINE NAME:
+        WIND_L1_GET_MASS
+CALLING SEQUENCE:
+        CALL WIND_L1_GET_MASS( L1_unit, rates, pha_words, status ) 
+FUNCTIONAL DESCRIPTION:
+    This routine copies the MASS data structures from the Science Record 
+    associated with unit L1_unit to the caller's arguments rates and pha_words,
+    which are records of type MA_RATE and MA_PHA, respectively.
+FORMAL PARAMETERS:
+    L1_unit:
+          An INTEGER*4 variable specifying the Fortran unit number of the
+          L1 file.  Allowable values for L1_unit are 1-20.
+    rates:
+          A RECORD variable of structure type MA_RATE which will receive the
+          rates from the Mass sensor associated with the current Science Record.
+    pha_words:
+          A RECORD variable of structure type MA_PHA which will receive the
+          PHA words from the Mass sensor associated with the current Science
+          Record. 
+    status:
+          An INTEGER*4 variable which will receive the completion status.
+          A 1 indicates success.
+WIND Level 1 File Access Routine Documentation                                p2-12
+ROUTINE NAME:
+        WIND_L1_GET_STICS
+CALLING SEQUENCE:
+        CALL WIND_L1_GET_STICS( L1_unit, rates, pha_words, status ) 
+FUNCTIONAL DESCRIPTION:
+    This routine copies the STICS data structures from the Science Record 
+    associated with unit L1_unit to the caller's arguments rates and pha_words,
+    which are records of type ST_RATE and ST_PHA, respectively.
+FORMAL PARAMETERS:
+    L1_unit:
+          An INTEGER*4 variable specifying the Fortran unit number of the
+          L1 file.  Allowable values for L1_unit are 1-20.
+    rates:
+          A RECORD variable of structure type ST_RATE which will receive the
+          rates from the STICS sensor associated with the current Science
+          Record. 
+    pha_words:
+          A RECORD variable of structure type ST_PHA which will receive the
+          PHA words from the STICS sensor associated with the current Science
+          Record. 
+    status:
+          An INTEGER*4 variable which will receive the completion status.
+          A 1 indicates success.
+WIND Level 1 File Access Routine Documentation                                p2-13
+ROUTINE NAME:
+        WIND_L1_GET_SWICS
+CALLING SEQUENCE:
+        CALL WIND_L1_GET_SWICS( L1_unit, rates, pha_words, status ) 
+FUNCTIONAL DESCRIPTION:
+    This routine copies the SWICS data structures from the Science Record 
+    associated with unit L1_unit to the caller's arguments rates and pha_words,
+    which are records of type SW_RATE and SW_PHA, respectively.
+FORMAL PARAMETERS:
+    L1_unit:
+          An INTEGER*4 variable specifying the Fortran unit number of the
+          L1 file.  Allowable values for L1_unit are 1-20.
+    rates:
+          A RECORD variable of structure type SW_RATE which will receive the
+          rates from the SWICS sensor associated with the current Science
+          Record. 
+    pha_words:
+          A RECORD variable of structure type SW_PHA which will receive the
+          PHA words from the SWICS sensor associated with the current Science
+          Record. 
+    status:
+          An INTEGER*4 variable which will receive the completion status.
+          A 1 indicates success.
+WIND Level 1 File Access Routine Documentation                                p2-14
+ROUTINE NAME:
+        WIND_L1_OPEN
+CALLING SEQUENCE:
+        CALL WIND_L1_OPEN( unit, filename, header, status )
+FUNCTIONAL DESCRIPTION: 
+    This routine opens a Level 1 format file, specified by the argument
+    `filename', onto the unit number given by the argument `unit'.  The file's
+    file header record is then read into the argument `header'.  It is also
+    retained in memory for future reference.  The fact that this unit is opened
+    is recorded internally for future access.  A status code is returned in the
+    argument `status'.
+FORMAL PARAMETERS:
+ 
+    unit:
+          An INTEGER*4 variable specifying the Fortran unit number onto which
+          the L1 file will be opened.  Allowable values for unit are 1-20.
+     
+    filename:
+          A CHARACTER variable specifying the name of the L1 file to be opened.
+    header:
+          A RECORD variable of structure type ST_L1_FILE_HDR which will receive
+          the file header of the Level 1 file.
+          
+    status:
+          An INTEGER*4 variable which will receive, upon return, the status of
+          the open operation.  A 1 indicates success, all other values indicate
+          failure.
+WIND Level 1 File Access Routine Documentation                                p2-15
+ROUTINE NAME:
+        WIND_L1_READ_SR
+CALLING SEQUENCE:
+        CALL WIND_L1_READ_SR( unit, scirec_number, header, status )
+FUNCTIONAL DESCRIPTION:
+    This program reads the next Science Record from the specified L1 data file
+    and stores it internally.  It returns the header record to the call.  It
+    does not transfer any other data to the caller; this is done by the various
+    WIND_L1_GET* routines.
+FORMAL PARAMETERS:
+ 
+    unit:
+          An INTEGER*4 variable indicating the Level 1 file to be read. 
+          Allowable values for L1_unit are 1-20. 
+     
+    scirec_number:
+          An INTEGER*4 variable which will receive the number of the science
+          record which is read, if successful.
+     
+    header:
+          A RECORD variable of structure type ST_L1_SR_HEADER which will
+          receive the header of the next science record.
+    status:
+          An INTEGER*4 variable which will receive the read completion status.
+          A 1 indicates success.
+WIND Level 1 File Access Routine Documentation                                p2-16
+ROUTINE NAME:
+        WIND_L1_SKIP_SR
+CALLING SEQUENCE:
+        CALL WIND_L1_SKIP_SR( unit, count, status )
+FUNCTIONAL DESCRIPTION:
+    This program reads and discards the next `count' Science Records from the
+    specified L1 data file.  A call to WIND_L1_READ_SR must be made for the
+    next Science Record to be available for accessing.  No data is transferred
+    to the caller.
+FORMAL PARAMETERS:
+    unit:
+        An INTEGER*4 variable indicating the Level 1 file to be read.
+    count:
+        An INTEGER*4 variable indicating the number of Science Records to be
+        skipped.
+    status:
+        An INTEGER*4 variable which will receive the read completion status.
+        A 1 indicates success.

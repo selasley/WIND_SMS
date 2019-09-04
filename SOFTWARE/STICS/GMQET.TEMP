@@ -1,0 +1,726 @@
+        PROGRAM GMQET                  ! This version : 23-AUG-93
+C   SUBROUTINES ARE HOUSED IN GMQETSUBS.FOR
+C
+C   PROGRAM TO PRODUCE A PRINTER MATRIX OR HISTOGRAM OF A UMD
+C   M VS MPQ (OR TOF VS ENERGY) CLASSIFICATIONS FROM PULSE HEIGHT EVENTS
+C
+C   AUTHOR: L. KISTLER (26-APR-85) (MODIFIED FROM DCH'S MATRIX.FOR)
+C   AMPTE VERSION: 23-JUN-88
+C   "IVER = 2"    ULYSSES VERSION: 15.MAY.91            STEVE CHRISTON
+C   "IVER = 3"    ULYSSES VERSION: 16.MAY.91            STEVE CHRISTON
+C   "FVER = 4.1"  ULYSSES VERSION: 18.JUN.91            STEVE CHRISTON
+C   "FVER = 4.2"  ULYSSES VERSION: 05.JUL.91            STEVE CHRISTON
+C   "IVER = 5.0"  GEOTAIL VERSION: 17-MAY-93            CHRISTON/BROER
+C
+C   SUBROUTINES REQUIRED: TASKS:CHEMLIB/LIB,LYNN:MASS,MASSPERQ,
+C                    SYS$LIBRARY:IMSLIBS/L, STEVE:OCTBOX
+C
+C   FOR PRE-GEOTAIL MODIFICATION HISTORY SEE DISKA1:[CHRISTON.ULYSSES]:MQET.DOC
+C
+C   MODIFIED TO LET THE USER PICK ANY OF THE FOUR VARIABLES MASS,
+C   MASS PER CHARGE, ENERGY IN keV, TIME IN ns, ENERGY CHANNEL #,
+C   AND TIME CHANNEL # AS THE INDEPENDENT AND DEPENDENT VARIABLE.
+C   FURTHER, BOXES CAN BE SET UP IN ANY OF THOSE VARIABLES, WHICH 
+C   NEED NOT BE THE SAME AS THE ONES PICKED ABOVE. 
+C                                          (R.V.STEIGER, 30 AUGUST 1990)
+C   20-MAY-93   H.BROER      enhanced STANDARD values
+C    1-JUN-93   H.BROER      added  'INC_DIR'
+C   23-JUN-93   H.BROER      put COMMON /MMPQRES/,/MATRIX/,/MATRXNFO/,
+C                              /TIM/ into GMQETSV.INC
+C   12-JUL-93   S.CHRISTON   added initialization of BRTCNT
+C   22-JUL-93   H.BROER      changed handling of MATRIC.PRT, after every print
+C                            a new version will be started, option '-4' deletes
+C                            the latest version.
+C   20-AUG-93   H.BROER      put COMMON /MATPRT/,/SUD/ into GMQETSV.INC
+C
+
+      IMPLICIT NONE
+      INCLUDE 'INC_DIR:GMQETSV.INC'                   ! __211 LINES  23-AUG-93
+C
+      REAL*4       MASS,     MPQ,      NDX_MMPQ,
+     :             PAPS,     REN,      RTOF,
+     :             V_XMN,    V_XMX,    V_YMN,    V_YMX,
+     :             XBOX,     YBOX
+C
+      INTEGER*4    ETCHVAL,  IHM,      II,       IJ,       IM,       IMPQ,
+     :             ISIGN,    IXZ,      IYZ,      JJ,       KK,
+     :             MMN,      MMX,      MMPQ_NDX, MPQMN,    MPQMX,    N_OB,
+     :             OCTBOXCHK,OSTAT,    STATUS,   SVOCTBOXCHK,
+     :             SVXBOXVAR,SVYBOXVAR
+C
+      LOGICAL      CF DTF,                    ! .T. IF CTL FILE EOF
+     :             OCTBOX
+C
+      INTEGER*2    OCTSPEC,  IFIOPEN3,
+     :             JOCT                       !OCTBOX REQUIRES JOCT -> I*2
+C
+      BYTE         YESNO                      ! FOR ACCEPTING YES/NO
+C
+      CHARACTER*1  ANSWER/'S'/
+C
+      LOGICAL*1    GET ANS,  XLOG,     YLOG
+C
+      EXTERNAL     GET ANS,  MMPQ_NDX, NDX_MMPQ, OCTBOX
+C
+C      *** FOR COMMON /OCTCOM/ ***
+C
+      REAL*4       V_X(60,0:8),
+     :             V_Y(60,0:8),
+     :             V_S(60,0:3)
+      INTEGER*4    BOXCOUNT(60),
+     :             BOXSPEC(60,0:63)
+C
+      COMMON /OCTCOM/ V_X,      V_Y,      V_S,      BOXCOUNT, BOXSPEC
+C
+C      *** FOR COMMON /XYVAR/ ***
+C
+      INTEGER*4    XVAR,
+     :             YVAR,
+     :             XBOXVAR,
+     :             YBOXVAR
+C
+      COMMON /XYVAR/ XVAR, YVAR, XBOXVAR, YBOXVAR
+
+C
+      DATA         IHM/-9999/
+      DATA         N_OB/60/, JPRT/77/
+      DATA         IFIOPEN3 /1/, ETCHVAL/10000/
+C
+      SVVER        = IVER
+      TYPE 67, 'PGM GMQET - VERSION =', IVER, ISSUED
+  67  FORMAT(/, 1X, A, F7.3, 2X, A)
+      AUTOMAT      = GET ANS ()                  ! FETCH PREVIOUS ANSWERS
+      AUTOMAT      = .FALSE.
+      IF( AUTOMAT )        IHM = SVIHM
+C
+C   ZERO BOXES AND COUNTERS...NUMBER OF BOXES NOW 60
+C
+       DO II = 1,N_OB              !BOXES
+         DO JJ = 0,3
+           V_S(II,JJ) = 0.
+         ENDDO
+         DO JJ = 1,4
+           V_Y(II,JJ)   = 120.
+           V_Y(II,JJ+4) = 0.
+           V_X(II,JJ+2) = 120.
+         ENDDO
+         V_X(II,0) = 0.
+         V_X(II,1) = 0.
+         V_X(II,2) = 0.
+         V_X(II,7) = 0.
+         V_X(II,8) = 0.
+         V_Y(II,0) = 0.
+       ENDDO
+C                               ! COUNTERS
+      TFRST   = -999.99D0
+C
+      NSR     = 0               ! TOTAL NUMBER OF SCIENCE RECORDS CHECKED
+      NNSR    = 0               ! TOTAL NUMBER OF SCIENCE RECORDS SKIPPED
+      NZ      = 0               ! NUMBER OF ZERO PHA EVENTS
+      NNZ     = 0               ! NUMBER OF NON-ZERO PHA EVENTS
+      NTOT    = 0               ! TOTAL NUMBER OF PHA EVENTS INCLUDING ZEROS
+      OCTSPEC = 0               ! = 1 AFTER FILE FOR BOXES COLLECTED IS OPEN
+      DO II = 0, 3
+        RNGTCNT(II) = 0         !NO. OF EVENTS IN RANGES 0,1,2, OR 3
+        BRTCNT(II)  = 0         !NO. OF EVENTS OF BASIC RATES 0,1,2, OR 3
+        MXTCNT(II)  = 0         !NO. OF MATRIX EVENTS IN RANGE 0,1,2, OR 3
+      ENDDO
+      DO II=1,N_OB
+         BOXCOUNT(II) = 0
+         DO JJ=0,63
+            BOXSPEC(II,JJ) = 0
+         ENDDO
+      ENDDO
+
+C
+C_______________________________USER QUESTIONING______________________________
+C
+10100 CONTINUE
+      YESNO = 'N'
+      TYPE 5
+ 5    FORMAT (/' WOULD YOU LIKE TO READ IN AN OLD MATRIX (Y/N):',$)
+      CALL TI BYTE (YESNO,1,*10100)
+      IF(YESNO.EQ.'Y'.OR.YESNO.EQ.'y') GOTO 30000
+C   ELSE
+      CALL CLEAR_MATRIX(*10120)
+10120 CONTINUE
+C
+C     IF AUTOMATIC SKIP SELECTION OF AXIS
+C
+      IF( AUTOMAT ) then
+          XVAR     = SVXVAR           ! X-VARIABLE
+          XLOG     = SVXLOG           ! FALSE      = LINEAR
+          AXMPQ    = SVAXMPQ          ! X-ORIG
+          MPQRES   = SVMPQRES         ! X-RES
+          YVAR     = SVYVAR           ! Y-VARIABLE
+          YLOG     = SVYLOG           ! FALSE = LINEAR
+          AXM      = SVAXM            ! Y-ORIG
+          MRES     = SVMRES           ! Y-RES
+      ELSE
+C
+C  ASK USER IF S/HE WANTS A STANDARD MATRIX FORMAT
+C  -----------------------------------------------
+        WRITE(6,10245) 
+10245   FORMAT(1X,'DO YOU WANT A STANDARD MMPQ DISPLAY? (Y/N): ',$)
+        SVSTND = .TRUE.
+        CALL TI LOG ( SVSTND, *10100 )
+        IF( SVSTND ) THEN
+C *** SAVE SET VALUES ***
+          SVXLOG   = .TRUE.           ! *** MAIN PROGRAM ***
+          SVYLOG   = .TRUE.
+          SVAXMPQ  = 0.707106781      ! X-origin
+          SVMPQRES = 0.434156728      !in % -> 1.00434.. = 64**1/960
+          SVAXM    = 0.550            ! Y-origin
+          SVMRES   = 2.1153           !in % -> 1.021153
+          SVXVAR   = 1
+          SVYVAR   = 2
+                                      ! *** GTLDSKDAT ***
+          SVIDET   = 0                ! SSD selection
+          SVIRNG   = -1               ! range selection
+          SVSEC1   = -1               ! sector
+          SVSEC2   = 0                !     selection
+          SVSTP1   = -1               ! DV step
+          SVSTP2   = 0                !     selection
+          SVSUD    = 'N'              ! pseudocount display
+          SVUCF    = .FALSE.          ! CONTROL FILE USED
+          SVAMNY   = SVAXM            ! *** MASSMAT ***
+          SVAMNX   = SVAXMPQ          ! DISPLAY ORIGIN
+          SVYCHP   = 5                !    "    CELL
+          SVXCHP   = 8
+          SVAMXY   = 99.              !    "    MASS MAX
+          SVICOM   = 'N'              ! Normal / Compressed DISPLAY
+          SVGRID   = 'Y'              ! Dotted GRID lines ?
+          SVFACT   = 1                ! Division factor
+C *** PROGRAM VALUES ***
+          XVAR     = SVXVAR           ! X-VARIABLE
+          XLOG     = SVXLOG           ! FALSE = LINEAR
+          AXMPQ    = SVAXMPQ          ! X-ORIG
+          MPQRES   = SVMPQRES         ! X-RES
+          YVAR     = SVYVAR           ! Y-VARIABLE
+          YLOG     = SVYLOG           ! FALSE = LINEAR
+          AXM      = SVAXM            ! Y-ORIG
+          MRES     = SVMRES           ! Y-RES
+          GOTO 10280
+      ENDIF  ! STANDARD MATRIX OR NOT
+C
+C  ASK USER WHAT VARIABLES S/HE WANTS TO USE 
+C  -----------------------------------------
+10200 CONTINUE
+              SVXVAR = 1
+              TYPE *
+              TYPE *, ' YOUR CHOICES ARE:: '
+              TYPE *, ' 1: MASS PER CHARGE, 2: MASS,'
+              TYPE *, ' 3: TIME [ns], 4: ENERGY [keV],'
+              TYPE *, ' 5: TIME CH#,  6: ENERGY CH#, ' 
+              TYPE *
+              TYPE '(A,$)',  ' WHAT IS YOUR X-AXIS VARIABLE? (1:6):'
+              CALL TI INT4( SVXVAR, *10200 )
+              IF ( SVXVAR.LT.1 .OR. SVXVAR.GT.6 ) GO TO 10200
+              XVAR = SVXVAR
+10220 CONTINUE
+              SVYVAR = 2
+              TYPE *
+              TYPE '(A,$)',  ' WHAT IS YOUR Y-AXIS VARIABLE? (1:6):'
+                  CALL TI INT4( SVYVAR, *10200 )
+                  IF ( SVYVAR.LT.1 .OR. SVYVAR.GT.6 ) GO TO 10220
+                  YVAR = SVYVAR
+C| X- AND Y-RESOLUTION
+C --------------------
+10240 CONTINUE
+            SVXLOG  = .FALSE.
+            IF ( XVAR .EQ. 1  .OR.  XVAR .EQ. 2 )      SVXLOG = .TRUE.
+            WRITE ( 6, 10241 )       SVXLOG
+10241 FORMAT (1X, 'X-AXIS IS LOG-SCALE ? T/F [', L1, ']:', $)
+            CALL TI LOG ( SVXLOG, *10220 )
+            XLOG = SVXLOG
+            IF ( XLOG ) THEN
+                        SVAXMPQ  = 0.707106781    ! X-origin
+                        SVMPQRES = 0.434156727    !in % -> 1.00434.. = 64**1/960
+            ELSE
+                        SVAXMPQ  = 0.00
+                        SVMPQRES = 0.050
+            ENDIF
+            WRITE ( 6, 10242 )       'X-ORIG', SVAXMPQ
+10242 FORMAT (1X, A, ' = ', G16.6, ' ?:', $ )
+            CALL TI REAL ( SVAXMPQ, *10240 )
+            WRITE ( 6, 10242 )       'X-RES', SVMPQRES
+            CALL TI REAL ( SVMPQRES, *10240 )
+
+10260       CONTINUE
+            SVYLOG  = .FALSE.
+            IF ( YVAR .EQ. 1  .OR.  YVAR .EQ. 2 )      SVYLOG = .TRUE.
+            WRITE ( 6, 10261 )       SVYLOG
+10261 FORMAT (1X, 'Y-AXIS IS LOG-SCALE ? T/F [', L1, ']:', $)
+            CALL TI LOG ( SVYLOG, *10220 )
+            YLOG = SVYLOG
+            IF ( YLOG ) THEN
+                        SVAXM    = 0.550         ! Y-origin
+                        SVMRES   = 2.1153      !in % -> 1.021153
+            ELSE
+                        SVAXM    = 0.00
+                        SVMRES   = 0.500
+            ENDIF
+            WRITE ( 6, 10242 )       'Y-ORIG', SVAXM
+            CALL TI REAL ( SVAXM, *10240 )
+            WRITE ( 6, 10242 )       'Y-RES', SVMRES
+            CALL TI REAL ( SVMRES, *10240 )
+C*      TYPE 33                        
+C*33    FORMAT(/' ENTER X-RES, X-ORIG, Y-RES, Y-ORIG ',
+C*     +'("0,0,0,0"->DFlin, " 9999.,0,0,0"->DFlog)'/
+C*     :30X,'                               ^----*'/
+C*     +30X,' FOR LIN: *ORIG <= 0., *RES = VALUE'/
+C*     +30X,' FOR LOG: *ORIG  > 0., *RES = %STEP'/
+C*     +30X,' E.G., *ORIG=0.5, *RES=0.45% => RANGE: 0.5 - 49.4'/
+C*     +30X,' IF *RES<0: *RES=10**(-1/*RES)-1.]%,-500=>2 DECADES'/
+C*     +' -->: '$)
+C*      CALL TI BYTE (,80,*10220)
+C*      DECODE(80,3301,,ERR=3302) MPQRES,AXMPQ,MRES,AXM
+C* 3301 FORMAT(4F)
+C* 3302 IF((ABS(MPQRES)+ABS(MRES)+ABS(AXMPQ)+ABS(AXM)).EQ.0.) THEN
+C               !DEFAULT LINEAR VALUES--v
+C*        GOTO 10280
+C*      ELSE IF(MPQRES.GT.9000.0) THEN
+C               !DEFAULT LOG VALUES--v
+C*        GOTO 10280
+C*      ENDIF
+10280 TYPE*, SVMPQRES, SVAXMPQ, SVMRES, SVAXM
+        IF ( SVMRES.LT.0.)  SVMRES   = 100.*(10.**(-1./SVMRES)-1.)
+        IF (SVMPQRES.LT.0.) SVMPQRES = 100.*(10.**(-1./SVMPQRES)-1.)
+        IF (SVAXM.GT.0.)    SVMRES   = SVMRES/100.
+        IF (SVAXMPQ.GT.0.)  SVMPQRES = SVMPQRES/100.
+        TYPE*, SVMPQRES, SVAXMPQ, SVMRES, SVAXM
+        AXMPQ  = SVAXMPQ
+        MPQRES = SVMPQRES
+        AXM    = SVAXM
+        MRES   = SVMRES
+      ENDIF
+
+C| CHECK FOR HOW BIG A BOX
+C  -----------------------
+10300 CONTINUE
+      TYPE SVFRMD,' (DON"T) COLLECT BOXES (AND BOXSPECTRA)? 0/1/2:'
+      CALL TI INT4(svOCTBOXCHK,*10240)
+      OCTBOXCHK = svOCTBOXCHK
+      IF(OCTBOXCHK.LT.0.OR.OCTBOXCHK.GT.2) GOTO 10300
+      IF(OCTBOXCHK.GT.0) THEN
+        svXBOXVAR = 1
+10320   TYPE *
+        TYPE *, ' WHAT IS YOUR X-BOX VARIABLE? '
+        TYPE *, ' 1: MASS PER CHARGE, 2: MASS,'
+        TYPE *, ' 3: TIME [ns], 4: ENERGY [keV],'
+        TYPE '(A,$)', '  5: TIME CH#, 6: ENERGY CH#, ' 
+        CALL TI INT4( svXBOXVAR, *10300 )
+        IF ( svXBOXVAR.LT.1 .OR. svXBOXVAR.GT.6 ) GO TO 10320
+        XBOXVAR = svXBOXVAR
+        svYBOXVAR = 2
+10340   TYPE *      
+        TYPE *, ' WHAT IS YOUR Y-BOX VARIABLE? '
+        TYPE *, ' 1: MASS PER CHARGE, 2: MASS,'
+        TYPE *, ' 3: TIME [ns], 4: ENERGY [keV],'
+        TYPE '(A,$)', '  5: TIME CH#, 6: ENERGY CH#, ' 
+        CALL TI INT4( svYBOXVAR, *10320 )
+        IF ( svYBOXVAR.LT.1 .OR. svYBOXVAR.GT.6 ) GO TO 10340
+        YBOXVAR = svYBOXVAR
+        TYPE*,' BOX VERTEX REMINDER:'
+        TYPE*,'          2   3'
+        TYPE*,'    12  ...___...  34'
+        TYPE*,'        : /   \ :   '     
+        TYPE*,'     1  :/     \:  4 '     
+        TYPE*,'        |       |   '     
+        TYPE*,'     0  :\     /:  5 '     
+        TYPE*,'        : \   / :   '     
+        TYPE*,'    07  :..___..:  56'
+        TYPE*,'          7   6'
+        CALL SETOCTBOX(JOCT,V_X,V_Y,V_S)  !JOCT = # BOXES SET IN setOCTBOX()
+        CALL OCTRANGE(JOCT,V_X,V_Y,V_XMN,V_XMX,V_YMN,V_YMX)
+      ENDIF
+10400 CALL GTLDSKDATA(IHM,IFIOPEN3)            ! COLLECT DATA DIRECTLY FROM DISK FILES
+      TYPE 1041, IHM
+1041  FORMAT ( 1X, 'IHM = ', I11, /)
+      IHM      = -99
+10500 CONTINUE                                 ! LOOP FOREVER
+      IPRT = 3
+      TYPE 3201
+ 3201 FORMAT(
+     : ' ENTER MENU CONTROL...OR "-99" TO VIEW MENU ITEMS',$)
+      CALL TI INT4 (IHM,*10500)      
+
+      IF(IHM.EQ.-99) THEN
+          TYPE 320
+  320 FORMAT(
+     : /,   ' ENTER *   TO *...',
+     : /7X, ' 0      PRINT',
+     : /7X, ' 1(-1)  WRITE(VIEW) 1-D HISTOGRAM',
+     : /7X, ' 2(-2)  WRITE(VIEW) 2-D MMPQ MATRIX',
+     : /7X, ' 3      WRITE CURRENT MATRIX TO DISK',
+     : /7X, ' 4      READ IN NEW MATRIX FROM DISK',
+     : /7X, ' 5(-5)  ADD TO MATRIX - CHANGE(KEEP) CRITERIA',
+     : /7X, ' 6(-6)  WRITE(VIEW) BOXES AND BOXCOUNTS',
+     : /7X, ' 7      ZERO CURRENT MATRIX AND/OR COUNTERS',
+     : /7X, ' 8(-8)  WRITE(VIEW) BOXSPEC',
+     : /7X, ' 9(-9)  (UN)ETCH BOX VERTICES ONTO MATRIX',
+     : /7X, '10(-10) (UN)ETCH BOXES ONTO MATRIX (NOT YET WORKING)',
+     : /7X, '11      READ IN OR CHANGE BOXES',
+     : /7X, '12      DISPLAY MATRIX CHARACTERISTICS',
+     : /,'  OR: -3(-4)  EXIT & (NOT) KEEP MATRIX.PRT: ',$)
+          CALL TI INT4 (IHM,*10500)      
+      ENDIF
+C
+C      PERFORM TASKS
+C
+20000 IF(IHM.EQ.0) THEN                        ! PRINT IF REQUESTED
+          CLOSE (UNIT = 3)
+          IFIOPEN3 = 1
+20040     ANSWER   = 'S'
+          TYPE 2004
+2004  FORMAT( ' WOULD YOU LIKE LONG (L) OR SHORT (S) PAPER', $)
+          CALL TI CHAR (ANSWER,*10500)
+          CALL CHLCUC (ANSWER)
+          IF( (ANSWER .NE.'L').AND.(ANSWER.NE.'S') ) GOTO 20040
+          TYPE '(/,1X,A)',   '(WAITING FOR SYSTEM TO INITIATE PRINTING)'
+          IF( ANSWER.EQ.'L' )   THEN
+            CALL VX DCL('PRINT/NOFEED/SETUP=HKLIST MATRIX.PRT',.TRUE.)
+          ELSE 
+            CALL VX DCL('PRINT/NOFEED/SETUP=CHELOG MATRIX.PRT',.TRUE.)
+          ENDIF
+C
+          OPEN ( UNIT    = 3,
+     X           FILE    = 'MATRIX.PRT',
+     X           IOSTAT  = OSTAT,
+     X           STATUS  = 'OLD',
+     X           SHARED,
+     X           RECL    = 256,
+     X           ERR     = 20500)
+          IFIOPEN3 = 0
+      ELSE IF(IHM.EQ.-1) THEN                  !  VIEW THE CURRENT HISTOGRAM
+          IPRT = 6
+          CALL MASSHIST(*10500)
+      ELSE IF(IHM.EQ.-2) THEN                  !   VIEW THE CURRENT MATRIX
+          IPRT = 6
+          CALL MASSMAT(*10500)
+      ELSE IF(IHM.EQ.5.OR.IHM.EQ.-5) THEN      !   COLLECT MORE
+          GOTO 10400
+      ELSE IF (IHM.EQ.-6) THEN                 !   VIEW BOX INFO
+          IPRT = 6
+          CALL BOX_INFO(JOCT,BOXCOUNT,V_X,V_Y,V_S,*10500)
+
+      ELSE IF(IHM.EQ.7) THEN                   !   ZERO MATRIX AND COUNTERS
+        TYPE 2010
+2010    FORMAT (' ENTER Y(N) TO (NOT) ZERO THE MATRIX: ',$)
+        CALL TI BYTE (YESNO,1,*10500)
+        IF(YESNO.EQ.'Y'.OR.YESNO.EQ.'y') CALL CLEAR_MATRIX (*10500)
+C                                              !   CLEAR COUNTERS
+        TYPE 2015
+2015    FORMAT (' ENTER Y(N) TO (NOT) ZERO THE COUNTERS AND BOXES: ',$)
+        CALL TI BYTE (YESNO,1,*10500)
+        IF (YESNO.EQ.'Y'.OR.YESNO.EQ.'y')  THEN
+            TFRST = -999.99D0
+            NSR   = 0           ! NUMBER OF SCIENCE RECORDS ANALYZED
+            NNSR  = 0           ! NUMBER OF SCIENCE RECORDS SKIPPED
+            NZ    = 0           ! NUMBER OF ZERO PHA EVENTS
+            NNZ   = 0           ! NUMBER OF NON-ZERO PHA EVENTS
+            NTOT  = 0           ! TOTAL NUMBER OF PHA EVENTS INCLUDING ZEROS
+            DO II = 0, 3 
+              RNGTCNT(II) = 0   ! NUMBER OF  PHA EVENTS IN RANGE 0,1,2 OR '3'
+              BRTCNT(II)  = 0   ! NUMBER OF RATE EVENTS IN RANGE 0,1,2 OR '3'
+              MXTCNT(II)  = 0   ! NUMBER OF MATRIX EVENTS IN RANGE 0,1,2 OR '3'
+            ENDDO ! II
+            DO II = 1, N_OB
+                BOXCOUNT(II) = 0
+                DO JJ = 0, 63
+                    BOXSPEC(II,JJ) = 0
+                ENDDO ! II
+            ENDDO                        ! END ZEROING OPTION
+          ENDIF ! YESNO
+      ELSE IF(IHM.EQ.-8) THEN            !  VIEW BOXSPECT VALUES
+          IPRT = 6
+          CALL BOXSPECPRT(JOCT,BOXSPEC,PAPS,*10500)
+      ELSE IF (IABS(IHM).EQ.12) THEN
+        IPRT = 6
+        IF(IHM.EQ.12)     IPRT = 7
+        CALL MATRIX_STATS
+      ELSE IF(IHM.EQ.-3.OR.IHM.EQ.-4) THEN           !   QUIT THE PROGRAM
+          IF(IHM.EQ.-3) THEN
+              CLOSE (UNIT = 3)
+              TYPE *,'TO PRINT MATRIX OR HISTOGRAM ',
+     X             'TYPE:   PRINT/NOFEED MATRIX.PRT'
+          ELSE
+              IF( IFIOPEN3 .EQ. 1 ) THEN
+                  OPEN ( UNIT    = 3,
+     X                   FILE    = 'MATRIX.PRT',
+     X                   IOSTAT  = OSTAT,
+     X                   STATUS  = 'OLD',
+     X                   SHARED,
+     X                   ERR     = 20500)
+                  IFIOPEN3 = 0
+              END IF ! ( IFIOPEN3 .EQ. 1 )
+              CLOSE (UNIT = 3, STATUS='DELETE')
+          ENDIF
+        CALL SAV ANS ()                              ! INCE ANSWERS
+        CLOSE (UNIT =CFTEMP,STATUS ='DELETE')        ! CONTROL FILE SUMMARY
+        CALL EXIT
+
+C
+C   PERFORM MORE TASKS
+      ELSE              
+        SVIHM = IHM      ! REMEMBER OPTION
+        IF(IPRT.EQ.3.AND.IFIOPEN3.EQ.1) THEN
+          OPEN ( UNIT    = 3,
+     X           FILE    = 'MATRIX.PRT',
+     X           IOSTAT  = OSTAT,
+     X           STATUS  = 'NEW',
+     X           RECL    = 256,
+     X           ERR     = 20500)
+          IFIOPEN3 = 0
+        ENDIF
+      ENDIF
+      IF(IHM.EQ.1) THEN
+           CALL MASSHIST (*10500)
+      ELSE IF(IHM.EQ.2) THEN
+           CALL MASSMAT (*10500)
+      ELSE IF(IHM.EQ.3) THEN
+           CALL WRITE_MATRIX (*10500)
+      ELSE IF(IHM.EQ.4) THEN
+           CALL READ_MATRIX (*10500)
+20400      TYPE*,MPQRES,AXMPQ,MRES,AXM,NSR
+           IF ( OCTBOXCHK.GT.0 ) THEN
+C           TYPE*, MPQ,M,OCTBOX(1,V_X,V_Y,V_S,MPQ,M)
+             MPQMN = MMPQ_NDX(V_XMN,MPQRES,AXMPQ,MXMPQ)
+             IF(MPQMN.GT.0) MPQMN = MPQMN - 1
+             IF(MPQMN.LT.0) MPQMN = 0
+             MPQMX = MMPQ_NDX(V_XMX,MPQRES,AXMPQ,MXMPQ)
+             IF(MPQMX.GT.0) MPQMX = MPQMX + 1
+             IF(MPQMX.GT.MXMPQ) MPQMX = MXMPQ
+             MMN = MMPQ_NDX(V_YMN,MRES,AXM,MXM)
+             IF(MMN.GT.0) MMN = MMN - 1
+             IF(MMN.LT.0) MMN = 0
+             MMX = MMPQ_NDX(V_YMX,MRES,AXM,MXM)
+             IF(MMX.GT.0) MMX = MMX + 1
+             IF(MMX.GT.MXM) MMX = MXM
+             TYPE*, V_XMN,V_XMX,V_YMN,V_YMX
+             TYPE*,MPQMN,MPQMX,MMN,MMX
+             DO IMPQ = MPQMN,MPQMX
+               XBOX = NDX_MMPQ(IMPQ,MPQRES,AXMPQ)
+               DO IM = MMN,MMX
+                 YBOX = NDX_MMPQ(IM,MRES,AXM)
+                 DO JJ = 1,JOCT
+                   IF ( OCTBOX(JJ,V_X,V_Y,V_S,XBOX,YBOX) ) THEN
+                     BOXCOUNT(JJ) = BOXCOUNT(JJ) + MTRX(IMPQ,IM) !INCREMENT BOX COUNTER
+C                    BOXSPEC(JJ,VS(1)) = BOXSPEC(JJ,VS(1)) + 1
+                   ENDIF
+                 ENDDO
+               ENDDO              !  IM-LOOP
+             ENDDO                !IMPQ-LOOP
+           END IF ! OCTBOXCHK.GT.0
+           GO TO 10500         
+      ELSE IF(IHM.EQ.6) THEN                           !  WRITE THE BOXSUMS
+          IPRT = 7
+          CALL BOX_INFO(JOCT,BOXCOUNT,V_X,V_Y,V_S,*10500)
+
+      ELSE IF(IHM.EQ.8) THEN                           !  WRITE THE BOXSPECTRA
+          IF(OCTSPEC.EQ.0) THEN
+           OPEN ( UNIT    = 77,
+     X            FILE    = 'MQETSPEC.PRT',
+     X            STATUS  = 'NEW',
+     X            RECL    = 300,
+     X            IOSTAT  = OSTAT,
+     X            ERR     = 10500 )
+            OCTSPEC = 1
+          END IF ! (OCTSPEC.EQ.0)
+          IPRT = 77
+          WRITE(IPRT,2040)
+     :          SVT1( 1:4 ), SVT1( 8:10 ), SVT1( 14:22 ),
+     :          SVT2( 1:4 ), SVT2( 8:10 ), SVT2( 14:22 ),
+     :          JOCT,PAPS
+2040      FORMAT( 2( 1X, A, '/', A, '/', A), I5, 0PF7.1 )
+          CALL BOXSPECPRT(JOCT,BOXSPEC,PAPS,*10500)
+C
+      ELSE IF (IHM.EQ.9.OR.IHM.EQ.-9) THEN              !  ETCH BOX VERTICES ONTO MATRIX
+        ISIGN = SIGN( +1, IHM )
+        DO JJ = 1, JOCT
+          DO KK = 0,7                                   ! DO LOOP FOR 8 VERTICES
+            IXZ = MMPQ_NDX( V_X(JJ,KK), MPQRES, AXMPQ, MXMPQ )
+            IYZ = MMPQ_NDX( V_Y(JJ,KK), MRES,   AXM,   MXM )
+            MTRX(IXZ,IYZ) =  MTRX(IXZ,IYZ) + ISIGN * ETCHVAL
+          ENDDO
+        ENDDO
+      ELSE IF (IHM.EQ.10.OR.IHM.EQ.-10) THEN            ! ETCH BOXES ONTO MATRIX
+        ISIGN = SIGN( +1, IHM )
+        DO JJ = 1, JOCT                                 ! ETCH-LOOP OVER BOXES
+        DO IXZ =                                        ! TOP LINE
+     :  MMPQ_NDX(V_X(JJ,2),MPQRES,AXMPQ,MXMPQ),
+     :  MMPQ_NDX(V_X(JJ,3),MPQRES,AXMPQ,MXMPQ)
+          IYZ = MMPQ_NDX(V_Y(JJ,2),MRES,AXM,MXM)
+          MTRX(IXZ,IYZ) = MTRX(IXZ,IYZ) + ISIGN * ETCHVAL
+        ENDDO                                           ! END TOP LINE
+        DO IXZ =                                        ! BOTTOM LINE
+     :  MMPQ_NDX(V_X(JJ,7),MPQRES,AXMPQ,MXMPQ),
+     :  MMPQ_NDX(V_X(JJ,6),MPQRES,AXMPQ,MXMPQ)
+          IYZ = MMPQ_NDX(V_Y(JJ,7),MRES,AXM,MXM)  
+          MTRX(IXZ,IYZ) = MTRX(IXZ,IYZ) + ISIGN * ETCHVAL
+        ENDDO                                           ! END BOTTOM LINE
+        DO IYZ =                                        ! LEFT LINE
+     : MMPQ_NDX(V_Y(JJ,0),MRES,AXM,MXM),MMPQ_NDX(V_Y(JJ,1),MRES,AXM,MXM)
+          IXZ = MMPQ_NDX(V_X(JJ,0),MPQRES,AXMPQ,MXMPQ)  
+          MTRX(IXZ,IYZ) = MTRX(IXZ,IYZ) + ISIGN * ETCHVAL
+        ENDDO                                           ! END LEFT LINE
+        DO IYZ =                                        ! RIGHT LINE
+     : MMPQ_NDX(V_Y(JJ,5),MRES,AXM,MXM),MMPQ_NDX(V_Y(JJ,4),MRES,AXM,MXM)
+          IXZ = MMPQ_NDX(V_X(JJ,5),MPQRES,AXMPQ,MXMPQ)  
+          MTRX(IXZ,IYZ) = MTRX(IXZ,IYZ) + ISIGN * ETCHVAL
+        ENDDO                                           ! END RIGHT LINE
+
+C        DO IXZ =                                       ! TOP LEFT SLOPE
+C     :  MMPQ_NDX(V_X(JJ,1),MPQRES,AXMPQ)+1,MMPQ_NDX(V_X(JJ,2),MPQRES,AXMPQ)
+C     :  - 1
+C          M = V_Y(JJ,1)+(NDX_MMPQ(IXZ,MPQRES,AXMPQ)-V_X(JJ,1))*V_S(JJ,0)
+C          IYZ = MMPQ_NDX( M,MRES,AXM)
+C          MTRX(IXZ,IYZ) =  ETCHVAL
+C        ENDDO                                          ! END TOP LEFT SLOPE
+C
+C        DO IXZ =                                       ! TOP RIGHT SLOPE
+C     :  MMPQ_NDX(V_X(JJ,3),MPQRES,AXMPQ)+1,MMPQ_NDX(V_X(JJ,4),MPQRES,AXMPQ)
+C     :  - 1
+C          M = V_Y(JJ,3)+(NDX_MMPQ(IXZ,MPQRES,AXMPQ)-V_X(JJ,3))*V_S(JJ,1)
+C          IYZ = MMPQ_NDX( M,MRES,AXM)
+C          MTRX(IXZ,IYZ) =  ETCHVAL
+C        ENDDO                                          ! END TOP RIGHT SLOPE
+C
+C        DO IXZ =                                       ! BOTTOM RIGHT SLOPE
+C     :  MMPQ_NDX(V_X(JJ,6),MPQRES,AXMPQ)+1,MMPQ_NDX(V_X(JJ,5),MPQRES,AXMPQ)
+C     :  - 1
+C          MASS = V_Y(JJ,6)+(NDX_MMPQ(IXZ,MPQRES,AXMPQ)-V_X(JJ,6))*V_S(JJ,2)
+C          IYZ = MMPQ_NDX( MASS,MRES,AXM )
+C          MTRX(IXZ,IYZ) =  ETCHVAL
+C        ENDDO                                          ! END BOTTOM RIGHT SLOPE
+C
+C        DO IXZ =                                       ! BOTTOM LEFT SLOPE
+C     :  MMPQ_NDX(V_X(JJ,0),MPQRES,AXMPQ)+1,MMPQ_NDX(V_X(JJ,7),MPQRES,AXMPQ)
+C     :  - 1
+C          MASS = V_Y(JJ,0)+(NDX_MMPQ(IXZ,MPQRES,AXMPQ)-V_X(JJ,0))*V_S(JJ,3)
+C          IYZ = MMPQ_NDX( MASS,MRES,AXM )
+C          MTRX(IXZ,IYZ) =  ETCHVAL
+C        ENDDO                                          ! END BOTTOM LEFT SLOPE
+C
+        ENDDO                                           ! END ETCH-LOOP OVER BOXES
+      ELSE IF (IHM.EQ.11) THEN
+          GOTO 10300                                    ! READ IN BOXES
+      ELSE IF (IHM.EQ.13) THEN
+        TYPE *,'>>> UNKNOWN OPTION'
+           DO II = 0,1023
+            DO IJ = 0,255
+              IF(MTRX(II,IJ).GT.0) 
+     :         TYPE *, ' *** IMPQ, IM, #: ',II,IJ,MTRX(II,IJ)
+            ENDDO
+          ENDDO
+        TYPE *,'>>> #$%$^*%^(&^&UN'
+      ENDIF
+      GOTO 10500                                        !  END LOOP FOREVER
+20500 CONTINUE
+      TYPE*, ' *** COULD NOT REOPEN ''MATRIX.PRT'' ***'
+      TYPE*, ' *** STATUS = ', OSTAT
+C*      CALL ERRSNS(,,,,STATUS)
+C*      CALL LIB$SIGNAL(%VAL(STATUS))
+      GOTO 10500
+!      ENDIF
+30000 CALL READ_MATRIX (*10500)                  !  READ IN MATRIX IF REQUESTED
+      GOTO 10500
+      END
+
+       SUBROUTINE MATRIX_STATS ! (*)
+C
+C      THIS ROUTINE LISTS BASIC MATRIX INFORMATION 
+C        TO COMPLEMENT THE FAMILY OF PROGRAMS *MQET -> CMQET, UMQET
+C
+C      WRITTEN BY STEVE CHRISTON      05.JULY.1991
+C                 UMD SPACE PHYSICS
+C
+C      MODIFICATION INFORMATION:
+C
+      IMPLICIT NONE
+C
+      INCLUDE    'INC_DIR:GMQETSV.INC'                 ! 211 LINES  23-AUG-93
+C
+      INTEGER*4  IM,IMPQ
+      INTEGER*4  IFIRST
+C
+C      *** FOR COMMON /SPINCOM/ ***
+C
+      INTEGER*4  JSPIN(0:138),
+     :           KSPIN(0:138),
+     :           MSPIN,
+     :           JSPNPRT
+C
+      COMMON /SPINCOM/ JSPIN,KSPIN,MSPIN,JSPNPRT
+C
+C      *** FOR COMMON /MTRXNMS/ ***
+C
+      CHARACTER*64 MTRXNAME,            ! INPUT FILENAME
+     :             HDRNAME              ! HEADER FILENAME
+C
+      COMMON /MTRXNMS/ MTRXNAME, HDRNAME
+C................................................................................
+      INTEGER*4    ISP1,ISP2                  !*
+C................................................................................
+      INTEGER*2    INBUF(60)
+      INTEGER*4    JJ
+      REAL*4       NDX_MMPQ
+      EXTERNAL     NDX_MMPQ
+
+10110 WRITE(IPRT,100) MTRXNAME(1:63),HDRNAME(1:63)
+ 100  FORMAT (/, ' MATRIX STATISTICS: ',
+     :        /, ' MATRIX: ',A,
+     :        /, ' HEADER: ',A)
+C----------------------------------------------------------------------------
+        WRITE(IPRT,10) '  IDET  IRNG  ISC1  ISC2  ISP1  ISP2  IFCT'
+   10  FORMAT(A,A)
+        WRITE(IPRT,11) IDET,IRNG,ISC1,ISC2,ISP1,ISP2,IFCT
+   11  FORMAT(7I6,I11)
+        WRITE(IPRT,10) '     NSR  NNSR ISTP1 ISTP2  SUD  SBK  RDV',
+     :                 '       NZ        NNZ      NTOT'
+        WRITE(IPRT,12) NSR,NNSR,ISTP1,ISTP2,SUD,SBK,RDV,NZ,NNZ,NTOT
+   12   FORMAT(I8,I6,2I6,3A5,3I10)
+        WRITE(IPRT,10)' RNGCNT: 0     1     2     3    BRCNT:',
+     :                        ' 0     1     2     3'
+        WRITE(IPRT,13) RNGTCNT,BRTCNT
+   13   FORMAT(I10,3I6,I12,3I6)
+        WRITE(IPRT,10) '                  T1                  T2',
+     :                 '                TFST                TLST'
+        WRITE(IPRT,14) T1,T2,TFRST,TLAST
+   14   FORMAT(4F20.4)
+        WRITE(IPRT,10) '        XRES        YRES         AXX         AXY'
+        WRITE(IPRT,24) MPQRES,MRES,AXMPQ,AXM
+   24   FORMAT(1PE12.4,3E12.4)
+        WRITE(IPRT,10) '         LLO         LHI       PPSMN       PPSMX',
+     :                 '       LSTRT        LEND'
+        WRITE(IPRT,15) LLO,LHI,PPSMN,PPSMX,LSTRT,LEND
+   15   FORMAT(1PE12.4,5E12.4)
+C
+       WRITE(IPRT,5550)' THE MATRIX SPANS THE FOLLOWING AREA:',
+     :                  '    256  __________________  ',
+     :                                   NDX_MMPQ(255,MRES,AXM)
+         WRITE(IPRT,5551)'        |                |'
+       IF(.NOT.svYLOG) THEN
+         WRITE(IPRT,5551)'        | <- LINEAR      |'
+       ELSE
+         WRITE(IPRT,5551)'        | <- LOG         |'
+       ENDIF
+         WRITE(IPRT,5551)'        |                |'
+       IF(.NOT.svXLOG) THEN
+         WRITE(IPRT,5551)'        |  | LINEAR      |'
+       ELSE
+         WRITE(IPRT,5551)'        |  | LOG         |'
+       ENDIF
+         WRITE(IPRT,5551)'        |  V             |'
+         WRITE(IPRT,5551)'     1  __________________  ',
+     :                                           NDX_MMPQ(0,MRES,AXM)
+ 5550  FORMAT(A,T40,A,F6.2)
+ 5551  FORMAT(T40,A,F6.1)
+         WRITE(IPRT,5551)'        1                1024'
+       WRITE(IPRT,5552)
+     :    NDX_MMPQ(0,MPQRES,AXMPQ),NDX_MMPQ(1023,MPQRES,AXMPQ)
+C                 1234567890123456789012345678901234567
+ 5552  FORMAT(T40,5X,F8.3,10X,F8.3)
+C       WRITE(IPRT,5551)' '
+10999 RETURN  ! 1
+      END

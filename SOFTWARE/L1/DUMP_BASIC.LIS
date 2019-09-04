@@ -1,0 +1,183 @@
+DUMP_BASIC                                                      27-OCT-1995 11:57:42    DEC Fortran V6.2-508                Page   1
+                                                                 8-FEB-1995 12:42:05    SMS1:[WIND.SOFTWARE.L1]DUMP_BASIC.FOR;2
+
+	      1 	subroutine dump_basic(iout,basicrec,spin)
+	      2 	implicit none
+	      3         INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+DUMP_BASIC                                                      27-OCT-1995 11:57:42    DEC Fortran V6.2-508                Page   2
+                                                                 8-FEB-1995 12:42:05    SMS1:[WIND.SOFTWARE.L1]DUMP_BASIC.FOR;2
+
+	    541 	RECORD /CORE/ basicrec
+	    542 	integer iout,spin
+	    543 	character*30 format_time
+	    544 C
+	    545         write(iout,1012) 'W_Time ',format_time(basicrec.edb(spin).W_Time)
+	    546         write(iout,1012) 'SC_Time ',format_time(basicrec.edb(spin).SC_Time)
+	    547 	write(iout,1010) 'EPOCH ',basicrec.edb(spin).EPOCH
+	    548 	write(iout,1010) 'SC_EPOCH ',basicrec.edb(spin).SC_EPOCH
+	    549 	write(iout,1011) 'BYTE_SF ',basicrec.edb(spin).BYTE_SF
+	    550 	write(iout,1011) 'SFperBlock ',basicrec.edb(spin).SFperBlock
+	    551 	write(iout,1011) 'MeaSpin ',basicrec.edb(spin).MeaSpin
+	    552 	write(iout,1011) 'SpinCnt ',basicrec.edb(spin).SpinCnt
+	    553 	write(iout,1011) 'SWICS_Len ',basicrec.edb(spin).SWICS_Len
+	    554 	write(iout,1011) 'STICS_Len ',basicrec.edb(spin).STICS_Len
+	    555 	write(iout,1011) 'MASS_Len ',basicrec.edb(spin).MASS_Len
+	    556 	write(iout,1011) 'SWICS_RATE_Size ',basicrec.edb(spin).SWICS_RATE_Size
+	    557 	write(iout,1011) 'STICS_RATE_Size ',basicrec.edb(spin).STICS_RATE_Size
+	    558 	write(iout,1011) 'SpareTime ',basicrec.edb(spin).SpareTime
+	    559 	write(iout,1011) 'SYNC(1) ',basicrec.edb(spin).SYNC(1)
+	    560 	write(iout,1011) 'SYNC(2) ',basicrec.edb(spin).SYNC(2)
+	    561 	write(iout,1011) 'BitRate ',basicrec.edb(spin).BitRate
+	    562 	write(iout,1011) 'HDB_FLAG ',basicrec.edb(spin).HDB_FLAG
+	    563 	write(iout,1011) 'RAMCheck ',basicrec.edb(spin).RAMCheck
+	    564 	write(iout,1011) 'SWICSPower ',basicrec.edb(spin).SWICSPower
+	    565 	write(iout,1011) 'STICSPower ',basicrec.edb(spin).STICSPower
+	    566 	write(iout,1011) 'MASSPower ',basicrec.edb(spin).MASSPower
+	    567 	write(iout,1011) 'ValCmdFl ',basicrec.edb(spin).ValCmdFl
+	    568 	write(iout,1011) 'InvCmdFl ',basicrec.edb(spin).InvCmdFl
+	    569 	write(iout,1011) 'CmdErrFl ',basicrec.edb(spin).CmdErrFl
+	    570 	write(iout,1011) 'SWICS_HP ',basicrec.edb(spin).SWICS_HP
+	    571 	write(iout,1011) 'SWICS_CP ',basicrec.edb(spin).SWICS_CP
+	    572 	write(iout,1011) 'STICS_HP ',basicrec.edb(spin).STICS_HP
+	    573 	write(iout,1011) 'STICS_CP ',basicrec.edb(spin).STICS_CP
+	    574 	write(iout,1011) 'MASS_CP ',basicrec.edb(spin).MASS_CP
+	    575 	write(iout,1011) 'MDisChar ',basicrec.edb(spin).MDisChar
+	    576 	write(iout,1011) 'DeadTime ',basicrec.edb(spin).DeadTime
+	    577 	write(iout,1011) 'WDisChar ',basicrec.edb(spin).WDisChar
+	    578 	write(iout,1011) 'MHStep ',basicrec.edb(spin).MHStep
+	    579 	write(iout,1011) 'MSPStep ',basicrec.edb(spin).MSPStep
+	    580 	write(iout,1011) 'MSTStep ',basicrec.edb(spin).MSTStep
+	    581 	write(iout,1011) 'WPStep ',basicrec.edb(spin).WPStep
+	    582 	write(iout,1011) 'WSPStep ',basicrec.edb(spin).WSPStep
+	    583 	write(iout,1011) 'WSTStep ',basicrec.edb(spin).WSTStep
+	    584 	write(iout,1011) 'SSPStep ',basicrec.edb(spin).SSPStep
+	    585 	write(iout,1011) 'SSTStep ',basicrec.edb(spin).SSTStep
+	    586 	write(iout,1011) 'Qual ',basicrec.edb(spin).Qual
+	    587 	write(iout,1011) 'CORE_Qual ',basicrec.edb(spin).CORE_Qual
+	    588 	write(iout,1011) 'SW_BR_Qual',basicrec.edb(spin).SW_BR_Qual
+	    589 	write(iout,1011) 'SW_MR_Qual',basicrec.edb(spin).SW_MR_Qual
+	    590 	write(iout,1011) 'SW_ME1_Qual',basicrec.edb(spin).SW_ME1_Qual
+	    591 	write(iout,1011) 'SW_ME2_Qual',basicrec.edb(spin).SW_ME2_Qual
+	    592 	write(iout,1011) 'SW_ER_Qual',basicrec.edb(spin).SW_ER_Qual
+	    593 	write(iout,1011) 'ST_HMR_Qual',basicrec.edb(spin).ST_HMR_Qual
+	    594 	write(iout,1011) 'ST_SMR_Qual',basicrec.edb(spin).ST_SMR_Qual
+	    595 	write(iout,1011) 'ST_BR_Qual',basicrec.edb(spin).ST_BR_Qual
+	    596 	write(iout,1011) 'ST_OMR_Qual',basicrec.edb(spin).ST_OMR_Qual
+	    597 	write(iout,1011) 'ST_ER_Qual',basicrec.edb(spin).ST_ER_Qual
+
+DUMP_BASIC                                                      27-OCT-1995 11:57:42    DEC Fortran V6.2-508                Page   3
+                                                                 8-FEB-1995 12:42:05    SMS1:[WIND.SOFTWARE.L1]DUMP_BASIC.FOR;2
+
+	    598 	write(iout,1011) 'MA_UER_Qual',basicrec.edb(spin).MA_UER_Qual
+	    599 	write(iout,1011) 'MA_SER_Qual',basicrec.edb(spin).MA_SER_Qual
+	    600 	write(iout,1011) 'MA_BR_Qual',basicrec.edb(spin).MA_BR_Qual
+	    601 	write(iout,1011) 'MA_MR_Qual',basicrec.edb(spin).MA_MR_Qual
+	    602 	write(iout,1011) 'SW_P_Qual',basicrec.edb(spin).SW_P_Qual
+	    603 	write(iout,1011) 'ST_P_Qual',basicrec.edb(spin).ST_P_Qual
+	    604 	write(iout,1011) 'MA_P_Qual',basicrec.edb(spin).MA_P_Qual
+	    605 1010	format(1x,2x,a12,' = ',f25.2)
+	    606 1011	format(1x,2x,a12,' = ',i10)
+	    607 1012	format(1x,2x,a12,' = ',a)
+	    608 1013	format(1x,2x,a12,' = ',l10)
+	    609 	return
+	    610 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $IODATA$                               128 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                8360   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                1120 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 9608
+
+
+ENTRY POINTS
+
+    Address   Type  Name      
+                              
+  2-00000000        DUMP_BASIC
+
+
+VARIABLES
+
+    Address   Type  Name     Address   Type  Name
+                                                 
+      **      I*4   IOUT       **      I*4   SPIN
+
+
+RECORDS
+
+    Address   Name      Structure        Bytes
+                                              
+      **      BASICREC  CORE              7384
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+      **       1010       **       1011       **       1012       **       1013
+
+
+
+DUMP_BASIC                                                      27-OCT-1995 11:57:42    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                     8-FEB-1995 12:42:05    SMS1:[WIND.SOFTWARE.L1]DUMP_BASIC.FOR;2
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name             
+                         
+  CHAR  FORMAT_TIME      
+
+DUMP_BASIC                                                      27-OCT-1995 11:57:42    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                     8-FEB-1995 12:42:05    SMS1:[WIND.SOFTWARE.L1]DUMP_BASIC.FOR;2
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]DUMP_BASIC.LIS;4
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]DUMP_BASIC.OBJ;4
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          2.58 seconds
+  Elapsed time:      4.51 seconds
+  Pagefaults:         353
+  I/O Count:           24

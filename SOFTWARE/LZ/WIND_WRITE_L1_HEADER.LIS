@@ -1,0 +1,253 @@
+WIND_WRITE_L1_HEADER                                            12-APR-1995 19:15:14    DEC Fortran V6.2-508                Page   1
+                                                                15-DEC-1994 21:54:22    WIND_WRITE_L1_HEADER.FOR;20
+
+	      1 	SUBROUTINE wind_write_l1_header(unit,action)
+	      2 C+
+	      3 C 
+	      4 C FUNCTIONAL DESCRIPTION:	
+	      5 C 
+	      6 C    This routine writes out a Level 1 file or Science Record header.
+	      7 C 
+	      8 C FORMAL PARAMETERS:
+	      9 C  
+	     10 C     unit:
+	     11 C	  An INTEGER*4 variable specifying the Fortran unit number to write the
+	     12 C	  header to.
+	     13 C      
+	     14 C     action:
+	     15 C	  An INTEGER*4 variable indicating what action is to be performed.
+	     16 C	  Its valid values are in the table below.
+	     17 C
+	     18 C	  Value  Action                          Length
+	     19 C	    1	 WRITE file header                  400
+	     20 C	    2	 WRITE Science Record header        200
+	     21 C           3    REWRITE file header                400
+	     22 C  
+	     23 C COMMON BLOCKS:
+	     24 C  
+	     25 C     L1_HEADERS	  Contains the file and Science Record header information
+	     26 C  
+	     27 C 
+	     28 C This version:   1.2   15-DEC-1994
+	     29 C 
+	     30 C Created: 
+	     31 C 
+	     32 C	 12-OCT-1994    L. Bleau
+	     33 C 
+	     34 C Revised:
+	     35 C 
+	     36 C	 Date     | Name  | Description
+	     37 C ----------------+-------+-----------------------------------------------------
+	     38 C 1.1 14-OCT-1994 |  LRB  | changed field name written to c_all to reference
+	     39 C                           the entire structure as a CHARACTER variable
+	     40 C 1.2 15-DEC-1994 |  LRB  | added code to read and rewrite file header to permit
+	     41 C                           updating header on an existing file, changed some
+	     42 C                           labels, changed parameter from hdr_type to action
+	     43 C 
+	     44 C-
+	     45 CDEC$   IDENT   '1.2'
+	     46 
+	     47 	IMPLICIT NONE
+	     48 	INTEGER*4 unit, action
+	     49 	INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	    181 	INCLUDE 'INC_DIR:L0_DATA_RECORD.INC/NOLIST'
+
+WIND_WRITE_L1_HEADER                                            12-APR-1995 19:15:14    DEC Fortran V6.2-508                Page   2
+1.2                                                             15-DEC-1994 21:54:22    WIND_WRITE_L1_HEADER.FOR;20
+
+	    349 
+	    350 	INTEGER iostatus, nbytes
+	    351         INTEGER*4 forterr, rmsstc, rmsstv, lun, vaxerr
+	    352 
+	    353 	IF (action .lt. 1 .or. action .gt. 3) RETURN
+	    354 	GO TO (100,200,300), action
+	    355 C
+	    356 100	WRITE(unit, 1001, ERR=900, IOSTAT=iostatus) l1_file_header.c_all
+	    357 1001	FORMAT(A)
+	    358 	RETURN
+	    359 C
+	    360 200	WRITE(unit, 1001, ERR=910, IOSTAT=iostatus) l1_sr_header.c_all
+	    361 	RETURN
+	    362 C
+	    363 300     READ(unit, 1002, ERR=920, END=920, IOSTAT=iostatus) nbytes,C_DR_BUFFER(1:nbytes)
+	    364 1002	FORMAT(Q,A)
+	    365 	REWRITE(unit, 1001, ERR=930, IOSTAT=iostatus) l1_file_header.c_all
+	    366 	RETURN
+	    367 C
+	    368 900     CALL ERRSNS(forterr,rmsstc,rmsstv,lun,vaxerr)
+	    369         iostatus = rmsstc
+	    370         CALL LIB$SIGNAL(%val(iostatus))
+	    371 	RETURN
+	    372 C
+	    373 910	TYPE 1003,unit,iostatus
+	    374 1003	FORMAT(' *** ERROR WRITING L1 HEADER, UNIT=',I3,', STATUS=',I4)
+	    375 	GOTO 900
+	    376 C
+	    377 920	TYPE 1004,unit,iostatus
+	    378 1004	FORMAT(' *** ERROR READING L1 HEADER, UNIT=',I3,', STATUS=',I4)
+	    379 	GOTO 900
+	    380 C
+	    381 930	TYPE 1005,unit,iostatus
+	    382 1005	FORMAT(' *** ERROR REWRITING L1 HEADER, UNIT=',I3,', STATUS=',I4)
+	    383 	GOTO 900
+	    384 	END
+
+WIND_WRITE_L1_HEADER                                            12-APR-1995 19:15:14    DEC Fortran V6.2-508                Page   3
+1.2                             Symbol Table                    15-DEC-1994 21:54:22    WIND_WRITE_L1_HEADER.FOR;20
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46000 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               248 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                 792   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 224 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                74532
+
+
+ENTRY POINTS
+
+    Address   Type  Name                
+                                        
+  4-00000000        WIND_WRITE_L1_HEADER
+
+
+VARIABLES
+
+    Address   Type  Name                       Address   Type  Name                       Address   Type  Name                  
+                                                                                                                                
+      **      I*4   ACTION                   8-00000004  I*4   DR2_PHYS_REC_NUM         7-0000002C  I*4   DR_TLM_MODE           
+  1-00000000  CHAR  C_BIG_NULL_BUFFER        8-00003208  R*8   DR2_SC_EPOCH             2-00000004  I*4   FORTERR               
+  8-00000000  CHAR  C_DR2_BUFFER             8-0000002C  I*4   DR2_TLM_MODE             0-00000038# I*4   IOSTATUS              
+  7-00000000  CHAR  C_DR_BUFFER              7-00000018  I*4   DR_BEG_DOY               7-0000321C  L*1   L0_FILE_READONLY      
+  1-00000000  CHAR  C_NULL_BUFFER            7-00003200  R*8   DR_BEG_EPOCH             7-00003218  I*4   L0_FILE_REC_PNTR      
+  8-00000018  I*4   DR2_BEG_DOY              7-00000008  I*4   DR_BEG_MAJFR_CNT         2-00000010  I*4   LUN                   
+  8-00003200  R*8   DR2_BEG_EPOCH            7-00000020  I*4   DR_BEG_MICSEC            2-00000000  I*4   NBYTES                
+  8-00000008  I*4   DR2_BEG_MAJFR_CNT        7-0000001C  I*4   DR_BEG_MSEC              7-00003210  R*8   PREF_EPOCH            
+  8-00000020  I*4   DR2_BEG_MICSEC           7-00000014  I*4   DR_BEG_YEAR              2-00000008  I*4   RMSSTC                
+  8-0000001C  I*4   DR2_BEG_MSEC             7-00000000  I*4   DR_INSTR_NUM             2-0000000C  I*4   RMSSTV                
+  8-00000014  I*4   DR2_BEG_YEAR             7-00000024  I*4   DR_NUM_MINFR_FILL            **      I*4   UNIT                  
+  8-00000000  I*4   DR2_INSTR_NUM            7-00000028  I*4   DR_NUM_MINFR_SYNC_ERR    2-00000014  I*4   VAXERR                
+  8-00000024  I*4   DR2_NUM_MINFR_FILL       7-00000004  I*4   DR_PHYS_REC_NUM                                                  
+  8-00000028  I*4   DR2_NUM_MINFR_SYNC_ERR   7-00003208  R*8   DR_SC_EPOCH                                                      
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes
+                                                            
+  6-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400
+  6-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+
+
+
+WIND_WRITE_L1_HEADER                                            12-APR-1995 19:15:14    DEC Fortran V6.2-508                Page   4
+1.2                             Symbol Table                    15-DEC-1994 21:54:22    WIND_WRITE_L1_HEADER.FOR;20
+
+ARRAYS
+
+     Address  Type  Name                          Bytes  Dimensions
+
+  8-0000000C  I*4   DR2_BEG_SC_CLOCK                  8  (2)
+  8-00000000  I*1   DR2_BUFFER                    13300  (13300)
+  8-00000000  I*1   DR2_BUFFER_CONTINGENCY        13300  (13300)
+  8-0000012A  I*1   DR2_FILL                          2  (2)
+  8-0000012C  I*1   DR2_MINFR                     12500  (12500)
+  8-0000012C  I*1   DR2_MINFR_3DP                 12500  (50, 0:249)
+  8-0000012C  I*1   DR2_MINFR_EPA                  6000  (24, 0:249)
+  8-0000012C  I*1   DR2_MINFR_KON                  1500  (6, 0:249)
+  8-0000012C  I*1   DR2_MINFR_MFI                  6250  (25, 0:249)
+  8-00000030  I*1   DR2_MINFR_QUAL                  250  (0:249)
+  8-0000012C  I*1   DR2_MINFR_SMS                 10500  (42, 0:249)
+  8-0000012C  I*1   DR2_MINFR_SWE                 11250  (45, 0:249)
+  8-0000012C  I*1   DR2_MINFR_TGR                  5250  (21, 0:249)
+  8-0000012C  I*1   DR2_MINFR_WAV                 11250  (45, 0:249)
+  7-0000000C  I*4   DR_BEG_SC_CLOCK                   8  (2)
+  7-00000000  I*1   DR_BUFFER                     13300  (13300)
+  7-00000000  I*1   DR_BUFFER_CONTINGENCY         13300  (13300)
+  7-0000012A  I*1   DR_FILL                           2  (2)
+  7-0000012C  I*1   DR_MINFR                      12500  (12500)
+  7-0000012C  I*1   DR_MINFR_3DP                  12500  (50, 0:249)
+  7-0000012C  I*1   DR_MINFR_EPA                   6000  (24, 0:249)
+  7-0000012C  I*1   DR_MINFR_KON                   1500  (6, 0:249)
+  7-0000012C  I*1   DR_MINFR_MFI                   6250  (25, 0:249)
+  7-00000030  I*1   DR_MINFR_QUAL                   250  (0:249)
+  7-0000012C  I*1   DR_MINFR_SMS                  10500  (42, 0:249)
+  7-0000012C  I*1   DR_MINFR_SWE                  11250  (45, 0:249)
+  7-0000012C  I*1   DR_MINFR_TGR                   5250  (21, 0:249)
+  7-0000012C  I*1   DR_MINFR_WAV                  11250  (45, 0:249)
+  1-00000000  I*1   NULL_BUFFER                   46000  (46000)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  4-0000005C   100    4-00000290   900    4-00000000   930        **       1003
+  4-000000A0   200    4-00000000   910        **       1001       **       1004
+  4-00000128   300    4-00000000   920        **       1002       **       1005
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name            
+                        
+        LIB$SIGNAL      
+
+WIND_WRITE_L1_HEADER                                            12-APR-1995 19:15:14    DEC Fortran V6.2-508                Page   5
+1.2                             Symbol Table                    15-DEC-1994 21:54:22    WIND_WRITE_L1_HEADER.FOR;20
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_WRITE_L1_HEADER.LIS;54
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_WRITE_L1_HEADER.OBJ;33
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.51 seconds
+  Elapsed time:      2.01 seconds
+  Pagefaults:         134
+  I/O Count:           18

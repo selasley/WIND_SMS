@@ -1,0 +1,105 @@
+                                                                 1-APR-1997 12:55:13    DEC Fortran V6.2-508                Page   1
+                                                                29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]DPU_EQ.FOR;3
+
+	      1 C
+	      2 
+	      3       SUBROUTINE DPU_EQ(DPPSP,DPPSM,DVS,EQ)
+	      4 
+	      5 C     This subroutine determines the e/q value based on the default dpu
+	      6 C     algorithm and constants.
+	      7 
+	      8       REAL*4 D1/6.190722/,
+	      9      .       D2/1.1225857/      ! Default values used for E/Q calculation
+	     10 
+	     11       INTEGER*4 DPPSP,          !enable bit for dpps plus plate
+	     12      .          DPPSM,          !enable bit for dpps minus plate
+	     13      .          DVS             !dpps voltage step number
+	     14 
+	     15       REAL*4 EQ     !DPU value for e/q
+	     16 
+	     17           IF(IAND(DPPSP, DPPSM).EQ.1)THEN               !both plates on
+	     18             EQ = D1 * (D2**DVS)
+	     19           ELSE IF (DPPSP.EQ.1 .OR. DPPSM.EQ.1) THEN     !one plate on
+	     20             EQ = 0.5 * D1 * (D2**DVS)
+	     21           ELSE                                          !neither plate on
+	     22             EQ = 0
+	     23           ENDIF
+	     24 
+	     25       RETURN
+	     26       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 224   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  68 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  300
+
+
+ENTRY POINTS
+
+    Address   Type  Name  
+                          
+  2-00000000        DPU_EQ
+
+
+VARIABLES
+
+    Address   Type  Name      Address   Type  Name      Address   Type  Name 
+                                                                             
+  1-00000000  R*4   D1          **      I*4   DPPSM       **      I*4   DVS  
+  1-00000004  R*4   D2          **      I*4   DPPSP       **      R*4   EQ   
+
+DPU_EQ                                                           1-APR-1997 12:55:13    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                    29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]DPU_EQ.FOR;3
+
+	     27      
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]DPU_EQ.LIS;7
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]DPU_EQ.OBJ;8
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.22 seconds
+  Elapsed time:      1.64 seconds
+  Pagefaults:         240
+  I/O Count:            8

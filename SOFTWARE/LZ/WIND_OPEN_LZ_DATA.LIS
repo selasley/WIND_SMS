@@ -1,0 +1,2534 @@
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   1
+                                                                 1-DEC-1994 12:19:13    [WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.FOR;3
+
+	      1       SUBROUTINE WIND_OPEN_LZ_DATA( FILENAME, TYPE, STATUS )
+	      2 !+
+	      3 !       This version:   1.1    1-DEC-1994
+	      4 !
+	      5 !     REFERENCE:
+	      6 !
+	      7 !     USAGE and PARAMETERS:
+	      8 !       CALL WIND_OPEN_LZ_DATA( FILENAME, TYPE, STATUS )
+	      9 !       FILENAME  CHAR*80	Input string containing the name
+	     10 !				of the file to be opened.
+	     11 !       TYPE	  CHAR*3	Input string containing 'NEW' or 'OLD'
+	     12 !				to indicate what type file to open.
+	     13 !       STATUS	  INTEGER*4	Output variable containing the completion
+	     14 !				status of the subroutine's execution.
+	     15 !
+	     16 !     CALLS/FUNCTIONS:
+	     17 !
+	     18 !     CREATION:
+	     19 !        6 Feb 1992, S. R. Nylund
+	     20 !     REVISIONS:
+	     21 !	23-FEB-1994	H.BROER         adopted from EPIC to WIND
+	     22 !	 5-APR-1994	H.BROER         name changed
+	     23 !        1-DEC-1994     L. Bleau        changed WRITE unit from KB to TTOUT
+	     24 !-
+	     25 CDEC$ IDENT '1.1'
+	     26       IMPLICIT NONE
+	     27 
+	     28       INCLUDE	'INC_DIR:SW_CODES.INC'
+    1	     29 !+
+    1	     30 !     SW_CODES.INC
+    1	     31 !      This common block contains the ... 
+    1	     32 !
+    1	     33 !     REFERENCE:
+    1	     34 !
+    1	     35 !     USAGE and PARAMETERS:
+    1	     36 !      INCLUDE SW_CODES.INC
+    1	     37 !       .	.
+    1	     38 !
+    1	     39 !     CREATION:
+    1	     40 !       8 Apr 1992, M. L. Grimes
+    1	     41 !
+    1	     42 !     REVISIONS:
+    1	     43 !
+    1	     44 !-
+    1	     45 
+    1	     46 !==============================================================================
+    1	     47 
+    1	     48       COMMON	/VERSIONS/      SWVersion, SWVersion_N
+    1	     49 
+    1	     50       REAL*4	SWVersion(2,125)
+    1	     51 
+    1	     52 !---- General use --------(1-25)-----------------------------------------------
+    1	     53       REAL*4
+    1	     54      +		Ver__PROG(2),
+    1	     55      +		Ver_MAINSEC(2),		! include file
+    1	     56      +		Ver_EPIC_CHECK_SWVERSION(2),
+    1	     57      +		Ver_EPIC_INIT_CHANNELS(2),
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   2
+1.1                                                             30-NOV-1994 15:47:09    SMS1:[WIND.SOFTWARE.INC]SW_CODES.INC;13
+
+    1	     58      +		Ver_EPIC_CLOSE_USERMSG(2),
+    1	     59      +		Ver_EPIC_OPEN_USERMSG(2),
+    1	     60      +		Ver_EPIC_PUT_USERMSG(2),
+    1	     61      +		Ver_EPIC_TERM(2),
+    1	     62      +		Ver_EPIC_RET_CALIBRATION(2),
+    1	     63      +		Ver_EPIC_RET_CONTROL_PARAMETERS(2),
+    1	     64      +          Ver_EPIC_INTERPRET_USERMSG(2)
+    1	     65 
+    1	     66       EQUIVALENCE	
+    1	     67      +          (SWVersion(1,1),        Ver__PROG),
+    1	     68      +          (SWVersion(1,2),        Ver_MAINSEC),
+    1	     69      +		(SWVersion(1,3),        Ver_EPIC_CHECK_SWVERSION),
+    1	     70      +		(SWVersion(1,4),	Ver_EPIC_INIT_CHANNELS),
+    1	     71      +		(SWVersion(1,5),	Ver_EPIC_CLOSE_USERMSG),
+    1	     72      +		(SWVersion(1,6),	Ver_EPIC_OPEN_USERMSG),
+    1	     73      +		(SWVersion(1,7),	Ver_EPIC_PUT_USERMSG),
+    1	     74      +		(SWVersion(1,8),	Ver_EPIC_TERM),
+    1	     75      +		(SWVersion(1,9),	Ver_EPIC_RET_CALIBRATION),
+    1	     76      +		(SWVersion(1,10),	Ver_EPIC_RET_CONTROL_PARAMETERS),
+    1	     77      +          (SWVersion(1,11),	Ver_EPIC_INTERPRET_USERMSG)
+    1	     78 
+    1	     79       DATA Ver_MAINSEC  / 1.00, 0/
+    1	     80 
+    1	     81 !---- Conversion from SFDU to L0 use -------(26-50)----------------------------
+    1	     82 
+    1	     83       REAL*4
+    1	     84      +		Ver_EPIC_SFDU_to_L0(2),
+    1	     85      +		Ver_EPIC_OPEN_SFDU(2),
+    1	     86      +		Ver_EPIC_READ_SFDU_FILE_HEADER(2),
+    1	     87      +		Ver_EPIC_READ_SFDU_LABL_RECORD(2),
+    1	     88      +		Ver_EPIC_READ_SFDU_DATA_RECORD(2),
+    1	     89      +		Ver_EPIC_CLOSE_SFDU(2),
+    1	     90      +		Ver_EPIC_OPEN_CAL(2),
+    1	     91      +		Ver_EPIC_READ_CAL_LABL_RECORD(2),
+    1	     92      +		Ver_EPIC_READ_CAL_DATA_RECORD(2),
+    1	     93      +		Ver_EPIC_CLOSE_CAL(2),
+    1	     94      +		Ver_ICSS_RET_LZ(2)
+    1	     95 
+    1	     96       EQUIVALENCE
+    1	     97      +		(SWVersion(1,26),	Ver_EPIC_SFDU_to_L0),
+    1	     98      +		(SWVersion(1,27),	Ver_EPIC_OPEN_SFDU),
+    1	     99      +		(SWVersion(1,28),	Ver_EPIC_READ_SFDU_FILE_HEADER),
+    1	    100      +		(SWVersion(1,29),	Ver_EPIC_READ_SFDU_LABL_RECORD),
+    1	    101      +		(SWVersion(1,30),	Ver_EPIC_READ_SFDU_DATA_RECORD),
+    1	    102      +		(SWVersion(1,31),	Ver_EPIC_CLOSE_SFDU),
+    1	    103      +		(SWVersion(1,32),	Ver_EPIC_OPEN_CAL),
+    1	    104      +		(SWVersion(1,33),	Ver_EPIC_READ_CAL_LABL_RECORD),
+    1	    105      +		(SWVersion(1,34),	Ver_EPIC_READ_CAL_DATA_RECORD),
+    1	    106      +		(SWVersion(1,35),	Ver_EPIC_CLOSE_CAL),
+    1	    107      +		(SWVersion(1,36),	Ver_ICSS_RET_LZ)
+    1	    108 
+    1	    109 !---- L0 use --------(51-75)---------------------------------------------------
+    1	    110       REAL*4
+    1	    111      +		Ver_EPIC_CHECK_SYNC(2),
+    1	    112      +		Ver_EPIC_DECOM(2),
+    1	    113      +		Ver_EPIC_DECOM_DPUCOMMON(2),
+    1	    114      +		Ver_EPIC_RET_LEVEL0(2),
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   3
+1.1                                                             30-NOV-1994 15:47:09    SMS1:[WIND.SOFTWARE.INC]SW_CODES.INC;13
+
+    1	    115      +		Ver_EPIC_ADJUST_TIME(2),
+    1	    116      +		Ver_EPIC_OPEN_L0(2),
+    1	    117      +		Ver_EPIC_WRITE_L0_FILE_HEADER(2),
+    1	    118      +		Ver_EPIC_WRITE_L0_LABL_RECORD(2),
+    1	    119      +		Ver_EPIC_WRITE_L0_DATA_RECORD(2),
+    1	    120      +		Ver_EPIC_READ_L0_LABL_RECORD(2),
+    1	    121      +		Ver_EPIC_READ_L0_DATA_RECORD(2),
+    1	    122      +		Ver_EPIC_CLOSE_L0(2),
+    1	    123      +		Ver_Julian_doy(2),
+    1	    124      +		Ver_EPIC_RET_HEADS(2),
+    1	    125      +		Ver_EPIC_SETUP_SCI_RECORD(2)
+    1	    126 
+    1	    127       EQUIVALENCE	
+    1	    128      +          (SWVersion(1,51),       Ver_EPIC_CHECK_SYNC),
+    1	    129      +		(SWVersion(1,52),	Ver_EPIC_DECOM),
+    1	    130      +		(SWVersion(1,53),	Ver_EPIC_DECOM_DPUCOMMON),
+    1	    131      +		(SWVersion(1,54),	Ver_EPIC_RET_LEVEL0),
+    1	    132      +		(SWVersion(1,55),	Ver_EPIC_ADJUST_TIME),
+    1	    133      +		(SWVersion(1,56),	Ver_EPIC_OPEN_L0),
+    1	    134      +		(SWVersion(1,57),	Ver_EPIC_WRITE_L0_FILE_HEADER),
+    1	    135      +		(SWVersion(1,58),	Ver_EPIC_WRITE_L0_LABL_RECORD),
+    1	    136      +		(SWVersion(1,59),	Ver_EPIC_WRITE_L0_DATA_RECORD),
+    1	    137      +		(SWVersion(1,60),	Ver_EPIC_READ_L0_LABL_RECORD),
+    1	    138      +		(SWVersion(1,61),	Ver_EPIC_READ_L0_DATA_RECORD),
+    1	    139      +		(SWVersion(1,62),	Ver_EPIC_CLOSE_L0),
+    1	    140      +		(SWVersion(1,63),	Ver_Julian_doy),
+    1	    141      +		(SWVersion(1,64),	Ver_EPIC_RET_HEADS),
+    1	    142      +		(SWVersion(1,65),	Ver_EPIC_SETUP_SCI_RECORD)
+    1	    143 
+    1	    144 !---- Conversion from L0 to L1 use --------(76-100)----------------------------
+    1	    145       REAL*4
+    1	    146      +		Ver_EPIC_CLEAR_BUFFERS(2),
+    1	    147      +		Ver_EPIC_RET_MODE(2),
+    1	    148      +		Ver_EPIC_GET_FORMAT(2),
+    1	    149      +		Ver_EPIC_GET_CHINDEX(2),
+    1	    150      +		Ver_EPIC_L0_TO_L1(2),
+    1	    151      +		Ver_EPIC_SHIFT_EDBS(2),
+    1	    152      +		Ver_EPIC_IN_FILL(2)
+    1	    153 
+    1	    154       EQUIVALENCE	
+    1	    155      +          (SWVersion(1,76),       Ver_EPIC_CLEAR_BUFFERS),
+    1	    156      +		(SWVersion(1,77),	Ver_EPIC_RET_MODE),
+    1	    157      +		(SWVersion(1,78),	Ver_EPIC_GET_FORMAT),
+    1	    158      +		(SWVersion(1,79),	Ver_EPIC_GET_CHINDEX),
+    1	    159      +		(SWVersion(1,80),	Ver_EPIC_L0_TO_L1),
+    1	    160      +		(SWVersion(1,81),	Ver_EPIC_SHIFT_EDBS),
+    1	    161      +		(SWVersion(1,82),	Ver_EPIC_IN_FILL)
+    1	    162 
+    1	    163 !---- L1 use --------(101-125)-------------------------------------------------
+    1	    164       REAL*4
+    1	    165      +		Ver_EPIC_INIT_DECOMPRESS(2),
+    1	    166      +		Ver_L1_GET_REC_PREAMBLE(2),
+    1	    167      +		Ver_EPIC_HDR_WRITE(2),
+    1	    168      +		Ver_EPIC_RET_TIME(2),
+    1	    169      +		Ver_EPIC_WRITE_L1(2),
+    1	    170      +		Ver_EPIC_READ_L1(2),
+    1	    171      +		Ver_EPIC_OPEN_L1(2),
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   4
+1.1                                                             30-NOV-1994 15:47:09    SMS1:[WIND.SOFTWARE.INC]SW_CODES.INC;13
+
+    1	    172      +		Ver_EPIC_CLOSE_L1(2),
+    1	    173      +		Ver_EPIC_READ_EDBMAP(2),
+    1	    174      +		Ver_EPIC_INIT_SCHEMES(2),
+    1	    175      +		Ver_EPIC_FILL_OUT(2),
+    1	    176      +		Ver_EPIC_DECOM_HSKP(2),
+    1	    177      +		Ver_EPIC_UNPACK_HSKP(2)
+    1	    178 
+    1	    179 
+    1	    180       EQUIVALENCE	
+    1	    181      +          (SWVersion(1,101),      Ver_EPIC_INIT_DECOMPRESS),
+    1	    182      +		(SWVersion(1,102),	Ver_L1_GET_REC_PREAMBLE),
+    1	    183      +		(SWVersion(1,103),	Ver_EPIC_HDR_WRITE),
+    1	    184      +		(SWVersion(1,104),	Ver_EPIC_RET_TIME),
+    1	    185      +		(SWVersion(1,105),	Ver_EPIC_WRITE_L1),
+    1	    186      +		(SWVersion(1,106),	Ver_EPIC_READ_L1),
+    1	    187      +		(SWVersion(1,107),	Ver_EPIC_OPEN_L1),
+    1	    188      +		(SWVersion(1,108),	Ver_EPIC_CLOSE_L1),
+    1	    189      +		(SWVersion(1,109),	Ver_EPIC_READ_EDBMAP),
+    1	    190      +		(SWVersion(1,110),	Ver_EPIC_INIT_SCHEMES),
+    1	    191      +		(SWVersion(1,111),	Ver_EPIC_FILL_OUT),
+    1	    192      +		(SWVersion(1,112),	Ver_EPIC_DECOM_HSKP),
+    1	    193      +		(SWVersion(1,113),	Ver_EPIC_UNPACK_HSKP)
+    1	    194 
+    1	    195 
+    1	    196       INTEGER*4	SWVersion_N	/113/	! Number of software modules
+    1	    197 
+    1	    198 
+    1	    199 !=============================================================================
+    1	    200 !     Message status codes
+    1	    201 !
+    1	    202 !       FATAL:       Error state from which no or an insufficient recovery was
+    1	    203 !                    possible (value is divisible by 8).
+    1	    204 !       ERROR:       Error state from which a recovery was possiblE (value is
+    1	    205 !                    divisible by 4).
+    1	    206 !       WARNING:     Error state for which no recovery was necessary (value is
+    1	    207 !                    is divisible by 2).
+    1	    208 !       INFORMATION: Non-error state (value is odd).
+    1	    209 !
+    1	    210 !-----------------------------------------------------------------------------
+    1	    211 
+    1	    212 !---- Information codes (1-25) -----------------------------------------------
+    1	    213       INTEGER*4
+    1	    214      +		EPIC$_CALIB_FILE,
+    1	    215      +		EPIC$_CONTROL_FILE,
+    1	    216      +		EPIC$_FOUND_SYNC,
+    1	    217      +		EPIC$_NEW_ICS_MODE,
+    1	    218      +		EPIC$_NEW_STICS_MODE,
+    1	    219      +		EPIC$_SCI_REC_COUNT,
+    1	    220      +		EPIC$_START_RUN,
+    1	    221      +		EPIC$_START_TIME,
+    1	    222      +		EPIC$_STOP_TIME,
+    1	    223      +		EPIC$_STARTING_ICS_MODE,
+    1	    224      +		EPIC$_STARTING_STICS_MODE,
+    1	    225      +		EPIC$_TERMINATION_BY_DONE_FLAG,
+    1	    226      +		EPIC$_TERMINATION_BY_EOF_FLAG,
+    1	    227      +		EPIC$_TERMINATION_BY_FATAL_ERR,
+    1	    228      +		EPIC$_USER_MSG_FILE_OPENED,
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   5
+1.1                                                             30-NOV-1994 15:47:09    SMS1:[WIND.SOFTWARE.INC]SW_CODES.INC;13
+
+    1	    229      +		EPIC$_USER_MSG_FILE_CLOSED
+    1	    230 
+    1	    231       PARAMETER (EPIC$_CALIB_FILE =     		'01000002'X)
+    1	    232       PARAMETER (EPIC$_CONTROL_FILE =   		'02000002'X)
+    1	    233       PARAMETER	(EPIC$_FOUND_SYNC =			'03000002'X)
+    1	    234       PARAMETER (EPIC$_NEW_ICS_MODE =			'04000002'X)
+    1	    235       PARAMETER (EPIC$_NEW_STICS_MODE =			'05000002'X)
+    1	    236       PARAMETER (EPIC$_SCI_REC_COUNT =			'06000002'X)
+    1	    237       PARAMETER (EPIC$_START_RUN =     			'07000002'X)
+    1	    238       PARAMETER (EPIC$_START_TIME =			'08000002'X)
+    1	    239       PARAMETER (EPIC$_STOP_TIME =     			'09000002'X)
+    1	    240       PARAMETER (EPIC$_STARTING_ICS_MODE =		'10000002'X)
+    1	    241       PARAMETER (EPIC$_STARTING_STICS_MODE =		'11000002'X)
+    1	    242       PARAMETER (EPIC$_TERMINATION_BY_DONE_FLAG =	'12000002'X)
+    1	    243       PARAMETER (EPIC$_TERMINATION_BY_EOF_FLAG =	'13000002'X)
+    1	    244       PARAMETER (EPIC$_TERMINATION_BY_FATAL_ERR =	'14000002'X)
+    1	    245       PARAMETER	(EPIC$_USER_MSG_FILE_OPENED =		'15000002'X)
+    1	    246       PARAMETER	(EPIC$_USER_MSG_FILE_CLOSED =		'16000002'X)
+    1	    247 
+    1	    248 !---- Warning codes (26-40) --------------------------------------------------
+    1	    249       INTEGER*4
+    1	    250      +		EPIC$_CLOSE_ERROR,
+    1	    251      +		EPIC$_DIVIDE_ZERO,
+    1	    252      +		EPIC$_DROPPED_SPIN,
+    1	    253      +		EPIC$_ICS_INVALID,
+    1	    254      +		EPIC$_SCI_REC_NOT_SYNCED,
+    1	    255      +		EPIC$_SKIP_TO_NEXT_SCRE,
+    1	    256      +		EPIC$_STICS_INVALID
+    1	    257 
+    1	    258       PARAMETER	(EPIC$_CLOSE_ERROR =	 		'26000001'X)
+    1	    259       PARAMETER	(EPIC$_DIVIDE_ZERO =	 		'27000003'X)
+    1	    260       PARAMETER	(EPIC$_DROPPED_SPIN =		 	'28000005'X)
+    1	    261       PARAMETER	(EPIC$_ICS_INVALID =			'29000007'X)
+    1	    262       PARAMETER (EPIC$_SCI_REC_NOT_SYNCED =		'30000009'X)
+    1	    263       PARAMETER (EPIC$_SKIP_TO_NEXT_SCRE =		'31000011'X)
+    1	    264       PARAMETER	(EPIC$_STICS_INVALID =			'32000013'X)
+    1	    265 
+    1	    266 !---- Error codes (41-65) -----------------------------------------------------
+    1	    267       INTEGER*4
+    1	    268      +		EPIC$_BAD_ICS_MODE,
+    1	    269      +		EPIC$_EDB_COUNTER_MISMATCH,
+    1	    270      +		EPIC$_FILL_IN_LZ_FILE,
+    1	    271      +		EPIC$_EOF_PR_LZ,
+    1	    272      +		EPIC$_GAP_IN_LZ_FILE,
+    1	    273      +		EPIC$_HK_SUBCOM_OUT_OF_SYNC,
+    1	    274      +		EPIC$_LOST_SYNC,
+    1	    275      +		EPIC$_MIXED_EPIC_PWR_STATE,
+    1	    276      +		EPIC$_MIXED_HV_ENABLE_STATE,
+    1	    277      +		EPIC$_MIXED_ICS_LVPS_STATE,
+    1	    278      +		EPIC$_MIXED_SENSOR_MODE_STATE,
+    1	    279      +		EPIC$_MIXED_STICS_LVPS_STATE,
+    1	    280      +		EPIC$_SCI_REC_CNTR_MISMATCH,
+    1	    281      +		EPIC$_SYNC_ERR_IN_LZ_FILE,
+    1	    282      +		EPIC$_SYNC_NOT_FOUND,
+    1	    283      +		EPIC$_SYNC_SHIFTED,
+    1	    284      +		EPIC$_INVALID_SCRE_NUM
+    1	    285 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   6
+1.1                                                             30-NOV-1994 15:47:09    SMS1:[WIND.SOFTWARE.INC]SW_CODES.INC;13
+
+    1	    286       PARAMETER	(EPIC$_BAD_ICS_MODE =		 	'42000004'X)
+    1	    287       PARAMETER	(EPIC$_EDB_COUNTER_MISMATCH =	 	'43000004'X)
+    1	    288       PARAMETER	(EPIC$_FILL_IN_LZ_FILE =		'44000004'X)
+    1	    289       PARAMETER	(EPIC$_EOF_PR_LZ =			'45000004'X)
+    1	    290       PARAMETER	(EPIC$_GAP_IN_LZ_FILE = 		'46000004'X)
+    1	    291       PARAMETER	(EPIC$_HK_SUBCOM_OUT_OF_SYNC =		'47000004'X)
+    1	    292       PARAMETER	(EPIC$_LOST_SYNC =			'48000004'X)
+    1	    293       PARAMETER	(EPIC$_MIXED_EPIC_PWR_STATE =		'49000004'X)
+    1	    294       PARAMETER	(EPIC$_MIXED_HV_ENABLE_STATE =		'50000004'X)
+    1	    295       PARAMETER	(EPIC$_MIXED_ICS_LVPS_STATE =		'51000004'X)
+    1	    296       PARAMETER	(EPIC$_MIXED_SENSOR_MODE_STATE =	'52000004'X)
+    1	    297       PARAMETER	(EPIC$_MIXED_STICS_LVPS_STATE =		'53000004'X)
+    1	    298       PARAMETER	(EPIC$_SCI_REC_CNTR_MISMATCH =		'54000004'X)
+    1	    299       PARAMETER	(EPIC$_SYNC_ERR_IN_LZ_FILE =		'55000004'X)
+    1	    300       PARAMETER	(EPIC$_SYNC_NOT_FOUND =		 	'56000004'X)
+    1	    301       PARAMETER	(EPIC$_SYNC_SHIFTED =		 	'57000004'X)
+    1	    302       PARAMETER	(EPIC$_INVALID_SCRE_NUM =	 	'58000004'X)
+    1	    303 
+    1	    304 !---- Fatal codes (66-99) -----------------------------------------------------
+    1	    305       INTEGER*4
+    1	    306      +		EPIC$_BAD_CAL_VERSION,
+    1	    307      +		EPIC$_BAD_CP_VERSION,
+    1	    308      +		EPIC$_BAD_DECOMPRESSION_I_CODE,
+    1	    309      +		EPIC$_BAD_DECOMPRESSION_S_CODE,
+    1	    310      +		EPIC$_BAD_SWVersion,
+    1	    311      +		EPIC$_BAD_SWVersion_N,
+    1	    312      +		EPIC$_MAP_RD_FAILURE,
+    1	    313      +		EPIC$_OPEN_FAILURE,
+    1	    314      +		EPIC$_READ_ERROR,
+    1	    315      +		EPIC$_WRONG_CNTRL_SECTION,
+    1	    316      +		EPIC$_BAD_DECOMPRESSION_CODE
+    1	    317 
+    1	    318       PARAMETER (EPIC$_BAD_CAL_VERSION =		'66000008'X)
+    1	    319       PARAMETER (EPIC$_BAD_CP_VERSION =			'67000008'X)
+    1	    320       PARAMETER	(EPIC$_BAD_DECOMPRESSION_I_CODE =	'68000008'X)
+    1	    321       PARAMETER	(EPIC$_BAD_DECOMPRESSION_S_CODE =	'69000008'X)
+    1	    322       PARAMETER	(EPIC$_BAD_SWVersion =			'70000008'X)
+    1	    323       PARAMETER (EPIC$_BAD_SWVersion_N =		'71000008'X)
+    1	    324       PARAMETER (EPIC$_MAP_RD_FAILURE =			'72000008'X)
+    1	    325       PARAMETER	(EPIC$_OPEN_FAILURE =			'73000008'X)
+    1	    326       PARAMETER	(EPIC$_READ_ERROR =	 		'74000008'X)
+    1	    327       PARAMETER (EPIC$_WRONG_CNTRL_SECTION =		'75000008'X)
+    1	    328       PARAMETER	(EPIC$_BAD_DECOMPRESSION_CODE =		'76000008'X)
+    1	    329 
+    1	    330 !     ------------------------------------------------------------------------
+	    331       INCLUDE	'INC_DIR:L0_Labl_Record.INC'
+    1	    332 !+	L0_Labl_Record.INC
+    1	    333 !
+    1	    334 !	This version	25-Jan-94
+    1	    335 !
+    1	    336 !	This common block represents the elements and the order of elements
+    1	    337 !	of the Data_Record_Header (DHR) as defined in the Data Format Control
+    1	    338 !	Document (DFCD) 560-1DFD/0190  CSC/TR-91/6014 dated MARCH 1993 for the
+    1	    339 !	International Solar-Terrestrial Physics (ISTP) Program for one Major
+    1	    340 !	Frame.
+    1	    341 !
+    1	    342 !	Creation:
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   7
+1.1                                                             30-NOV-1994 15:47:05    SMS1:[WIND.SOFTWARE.INC]L0_LABL_RECORD.INC;1
+
+    1	    343 !	 25-Jan-94	H. Broer	First Version
+    1	    344 !
+    1	    345 !-----------------------------------------------------------------------------
+    1	    346 
+    1	    347       COMMON /Label_Record/	! NASA CDHF LEVEL 0 LABEL RECORDFORMAT
+    1	    348      +		LR_SCID,		! Spacecraft ID
+    1	    349      +		LR_Instr_Num,		! Instrument Number
+    1	    350      +		LR_Instr_Name,		! Instrument Name
+    1	    351      +		LR_Phys_Rec_Num,	! Physical Record Number
+    1	    352      +		LR_Phys_Rec_per_MajFr,	! Physical Records Per Major Frame
+    1	    353      +		LR_Phys_Rec_in_File,	! Number of Physical Records in File
+    1	    354      +		LR_Beg_MajFr_Cnt,	! Major Frame Count - First Major Frame
+    1	    355      +		LR_End_MajFr_Cnt,	! Major Frame Count _ Last Major Frame
+    1	    356      +		LR_Beg_SC_Clock,	! S/C Clock-Beginning of First MajFrame
+    1	    357      +		LR_End_SC_Clock,	! S/C Clock-Beginning of Last MajFrame
+    1	    358      +		LR_Beg_Year,		! ATC: year-Beginning of First MajFrame
+    1	    359      +		LR_Beg_DOY,		! ATC: day -Beginning of First MajFrame
+    1	    360      +		LR_Beg_MSec,		! ATC: msec-Beginning of First MajFrame
+    1	    361      +		LR_Beg_MicSec,		! ATC: usec-Beginning of First MajFrame
+    1	    362      +		LR_End_Year,		! ATC: year-Beginning of Last MajFrame
+    1	    363      +		LR_End_DOY,		! ATC: day -Beginning of Last MajFrame
+    1	    364      +		LR_End_MSec,		! ATC: msec-Beginning of Last MajFrame
+    1	    365      +		LR_End_MicSec,		! ATC: usec-Beginning of Last MajFrame
+    1	    366      +		LR_Num_MajFr_Exp,	! Number of Major Frames Expected
+    1	    367      +		LR_Num_MajFr_File,	! Number of Major Frames in File
+    1	    368      +		LR_Num_MajFr_Gaps,	! Major Frame Level Gaps in Coverage
+    1	    369      +		LR_Data_Cov_Typ,	! Data Coverage Type
+    1	    370      +		LR_Decom_Rerun_Num,	! Decommutation Rerun Number
+    1	    371      +		LR_Decom_Prog_V_Num,	! Decommutation Program Version Number
+    1	    372      +		LR_Decom_Char_DB_V_Num,	! Decom.Characteristic Database Vers.Num
+    1	    373      +		LR_Decom_Run_DateTime,	! Decommutation Run Date/Time
+    1	    374      +		LR_Instr_File_Name,	! Instrument File Name
+    1	    375      +		LR_Phys_Rec_Size,	! Physical Record Length
+    1	    376      +		LR_Fill3,		! Spares
+    1	    377      +		LR_Merge_Rerun_Num,	! Merge Rerun Number
+    1	    378      +		LR_Merge_Prog_V_Num,	! Merge Program Version Number
+    1	    379      +		LR_Merge_Run_DateTime,	! Merge Run Date/Time
+    1	    380      +		LR_Num_Edit_Files,	! Number of Edit Files
+    1	    381      +		LR_Edit_File,		! EDIT file 1 KEY ( File Name )
+    1	    382      +		LR_L0_Rerun_Num,	! Edit File 1 Rerun
+    1	    383      +		LR_L0_Prog_V_Num,
+    1	    384      +		LR_L0_Run_DateTime,
+    1	    385      +		LR_Beg_EPOCH,
+    1	    386      +		LR_End_EPOCH
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   8
+1.1                                                             30-NOV-1994 15:47:05    SMS1:[WIND.SOFTWARE.INC]L0_LABL_RECORD.INC;1
+
+    1	    388       INTEGER*4		LR_SCID,			! GEOTAIL = 24,WIND=25
+    1	    389      +			LR_Instr_Num,			! SMS = 5
+    1	    390      +			LR_Phys_Rec_Num,		! Label Record is #1
+    1	    391      +			LR_Phys_Rec_per_MajFr,		! 1 Phys Rec/Maj Fr
+    1	    392      +			LR_Phys_Rec_in_File,		! SFDU=2702, 
+    1	    393      +			LR_Beg_MajFr_Cnt,
+    1	    394      +			LR_End_MajFr_Cnt,		! changes for L0 file
+    1	    395      +			LR_Beg_SC_Clock(2),
+    1	    396      +			LR_End_SC_Clock(2),		! changes for L0 file
+    1	    397      +			LR_Beg_Year,
+    1	    398      +			LR_Beg_DOY,
+    1	    399      +			LR_Beg_MSec,
+    1	    400      +			LR_Beg_MicSec,			! Always zero
+    1	    401      +			LR_End_Year,			! changes for L0 file
+    1	    402      +			LR_End_DOY,			! changes for L0 file
+    1	    403      +			LR_End_MSec,			! changes for L0 file
+    1	    404      +			LR_End_MicSec,			! Always zero
+    1	    405      +			LR_Num_MajFr_Exp,
+    1	    406      +			LR_Num_MajFr_File,		! changes for L0 file
+    1	    407      +			LR_Num_MajFr_Gaps,		! changes for L0 file
+    1	    408      +			LR_Decom_Rerun_Num,
+    1	    409      +			LR_Phys_Rec_Size,		! Physical Record Length
+    1	    410      +			LR_Num_Edit_Files,
+    1	    411      +			LR_Merge_Rerun_Num
+    1	    412       CHARACTER*4	LR_Instr_Name,			! SMS = 'SIC ' currently
+    1	    413      +			LR_Data_Cov_Typ,
+    1	    414      +			LR_L0_Rerun_Num
+    1	    415       CHARACTER*8	LR_Decom_Prog_V_Num,
+    1	    416      +			LR_Decom_Char_DB_V_Num,
+    1	    417      +			LR_Merge_Prog_V_Num,
+    1	    418      +			LR_L0_Prog_V_Num
+    1	    419       CHARACTER*16	LR_Decom_Run_DateTime,
+    1	    420      +			LR_Merge_Run_DateTime,
+    1	    421      +			LR_L0_Run_DateTime
+    1	    422       CHARACTER*44	LR_Instr_File_Name
+    1	    423       CHARACTER*128	LR_Edit_File(20)
+    1	    424       CHARACTER*20	LR_Fill3
+    1	    425 
+    1	    426       REAL*8		LR_Beg_EPOCH, ! EPIC-added time <= Beg_Year,_DOY,_Msec
+		........................1                                                      
+%FORT-W-MISALIGN, (1) Alignment of variable or array is inconsistent with its data type
+
+    1	    427      +			LR_End_EPOCH  ! EPIC-added time <= End_Year,_DOY,_Msec
+		........................1                                                      
+%FORT-W-MISALIGN, (1) Alignment of variable or array is inconsistent with its data type
+
+    1	    428 
+    1	    429       ! Overlay LR_Buffer array and its common block of individual items
+    1	    430       BYTE		LR_Buffer(13000)
+    1	    431       CHARACTER*13000	C_LR_Buffer
+    1	    432       EQUIVALENCE	(LR_Buffer, LR_SCID, C_LR_Buffer)
+    1	    433 
+    1	    434 
+    1	    435       COMMON /LR_EditFile/
+    1	    436      +		LR_EditFile_Key,
+    1	    437      +		LR_EditFile_Rerun_Num,
+    1	    438      +		LR_EditFile_Prog_V_Num,
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page   9
+1.1                                                             30-NOV-1994 15:47:05    SMS1:[WIND.SOFTWARE.INC]L0_LABL_RECORD.INC;1
+
+    1	    439      +		LR_EditFile_Run_DateTime,
+    1	    440      +		LR_EditFile_Data_Typ
+    1	    441 
+    1	    442       CHARACTER*128	LR_EditFile_Buf
+    1	    443       CHARACTER*24	LR_EditFile_Key
+    1	    444       CHARACTER*4	LR_EditFile_Rerun_Num
+    1	    445       CHARACTER*8	LR_EditFile_Prog_V_Num
+    1	    446       CHARACTER*16	LR_EditFile_Run_DateTime
+    1	    447       CHARACTER*4	LR_EditFile_Data_Typ		! 'P/B' = Playback
+    1	    448 							! 'R/T' = Real-time
+    1	    449       EQUIVALENCE	(LR_EditFile_Buf,	LR_EditFile_Key)
+    1	    450 
+	    451       INCLUDE	'INC_DIR:L0_DATA_Record.INC'
+    1	    452 !+	L0_Data_Record.INC
+    1	    453 !
+    1	    454 !	This version	 25-MAY-1994
+    1	    455 !
+    1	    456 !	This common block represents the elements and the order of elements
+    1	    457 !	of the Data_Record as defined in the Data Format Control Document (DFCD)
+    1	    458 !	560-1DFD/0190  CSC/TR-91/6014 dated MARCH 1993 for the International
+    1	    459 !	Solar-Terrestrial Physics (ISTP) Program for one Major Frame.
+    1	    460 !
+    1	    461 !	Creation:
+    1	    462 !	  4-Feb-94	H. Broer	First Version
+    1	    463 !
+    1	    464 !	Revision:
+    1	    465 !	15-Mar-94	H.Broer		added DR_SC_EPOCH
+    1	    466 !	25-May-94			added Pref_EPOCH
+    1	    467 !	23-Sep-94	L. Bleau	added C_BIG_NULL_Buffer
+    1	    468 !
+    1	    469 !-----------------------------------------------------------------------------
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  10
+1.1                                                             30-NOV-1994 15:47:05    SMS1:[WIND.SOFTWARE.INC]L0_DATA_RECORD.INC;5
+
+    1	    471       COMMON /Data_Record/	! NASA CDHF LEVEL 0 DATA RECORD FORMAT
+    1	    472      +		DR_Instr_Num,		! Instrument Number
+    1	    473      +		DR_Phys_Rec_Num,	! Physical Record Number within File
+    1	    474      +		DR_Beg_MajFr_Cnt,	! Major Frame Count-Beginning of Maj.Fra
+    1	    475      +		DR_Beg_SC_Clock,	! Spacecraft Clock -Beginning of Maj.Fra
+    1	    476      +		DR_Beg_Year,		! ATC: year-Beginning of Major Frame
+    1	    477      +		DR_Beg_DOY,		! ATC: doy -Beginning of Major Frame
+    1	    478      +		DR_Beg_MSec,		! ATC: msec-Beginning of Major Frame
+    1	    479      +		DR_Beg_MicSec,		! ATC: usec-Beginning of Major Frame
+    1	    480      +		DR_Num_MinFr_Fill,	! Number of Minor Frames with Fill
+    1	    481      +		DR_Num_MinFr_Sync_Err,	! Number of Minor Frames with Sync_Err
+    1	    482      +		DR_TLM_Mode,		! Telemetry Mode Indicator
+    1	    483 						! 1 = science mode
+    1	    484 						! 2 = engineering mode
+    1	    485 						! 3 = maneuver mode
+    1	    486 						! 4 = contingency mode
+    1	    487      +		DR_MinFr_Qual,		! Minor Frame Quality
+    1	    488 						! bit 0 = frame sync error flag
+    1	    489 						! bit 1 = frame counter error fllag
+    1	    490 						! bit 2 = fill frame flag
+    1	    491 						! bit 3-31 spares
+    1	    492      +		DR_Fill,		! adjustment to Longword
+    1	    493      +		DR_MinFr,		! Instrument data array as extracted
+    1	    494 					! 	from each Minor Frame
+    1	    495      +		DR_Beg_EPOCH,		! EPOCH time-Beginning of Major Frame ?
+    1	    496      +		DR_SC_EPOCH,		! EPOCH time-ditto  based on S/C clock
+    1	    497      +		Pref_EPOCH,		! Preferred EPOCH either one of above
+    1	    498      +		L0_FILE_REC_pntr,	! FILE POINTER
+    1	    499      +		L0_FILE_READONLY	! FILE CHARACTERISTIC
+    1	    500 
+    1	    501       REAL*8		DR_Beg_EPOCH,	! EPIC-added time <= Beg_Year,_DOY,_Msec
+    1	    502      +			DR_SC_EPOCH,	! ditto - based on S/C clock
+    1	    503      +			Pref_EPOCH	! the preferred one of above
+    1	    504 
+    1	    505       INTEGER*4		DR_Instr_Num,
+    1	    506      +			DR_Phys_Rec_Num,
+    1	    507      +			DR_Beg_MajFr_Cnt,
+    1	    508      +			DR_Beg_SC_Clock(2),
+    1	    509      +			DR_Beg_Year,
+    1	    510      +			DR_Beg_DOY,
+    1	    511      +			DR_Beg_MSec,
+    1	    512      +			DR_Beg_MicSec,			! Always zero
+    1	    513      +			DR_Num_MinFr_Fill,
+    1	    514      +			DR_Num_MinFr_Sync_Err,
+    1	    515      +			DR_TLM_Mode,
+    1	    516      +			L0_FILE_REC_pntr
+    1	    517 
+    1	    518       BYTE		DR_MinFr_Qual(0:249),
+    1	    519      +			DR_Fill(2),
+    1	    520      +			DR_MinFr(12500),		! Max.record size
+    1	    521      +			DR_MinFr_WAV( 45, 0:249 ),
+    1	    522      +			DR_MinFr_EPA( 24, 0:249 ),
+    1	    523      +			DR_MinFr_MFI( 25, 0:249 ),
+    1	    524      +			DR_MinFr_SWE( 45, 0:249 ),
+    1	    525      +			DR_MinFr_SMS( 42, 0:249 ),
+    1	    526      +			DR_MinFr_3DP( 50, 0:249 ),
+    1	    527      +			DR_MinFr_TGR( 21, 0:249 ),
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  11
+1.1                                                             30-NOV-1994 15:47:05    SMS1:[WIND.SOFTWARE.INC]L0_DATA_RECORD.INC;5
+
+    1	    528      +			DR_MinFr_KON(  6, 0:249 )
+    1	    529 
+    1	    530       EQUIVALENCE	(DR_MinFr,	DR_MinFr_WAV,	DR_MinFr_EPA,
+    1	    531      +			DR_MinFr_MFI,	DR_MinFr_SWE,	DR_MinFr_SMS,
+    1	    532      +			DR_MinFr_3DP,	DR_MinFr_TGR,	DR_MinFr_KON )
+    1	    533 
+    1	    534       LOGICAL*1         L0_FILE_READONLY
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  12
+1.1                                                             30-NOV-1994 15:47:05    SMS1:[WIND.SOFTWARE.INC]L0_DATA_RECORD.INC;5
+
+    1	    536       COMMON /Data_Record2/	! NASA CDHF LEVEL 0 DATA RECORD FORMAT
+    1	    537      +		DR2_Instr_Num,		! Instrument Number
+    1	    538      +		DR2_Phys_Rec_Num,	! Physical Record Number within File
+    1	    539      +		DR2_Beg_MajFr_Cnt,	! Major Frame Count-Beginning of Maj.Fra
+    1	    540      +		DR2_Beg_SC_Clock,	! Spacecraft Clock -Beginning of Maj.Fra
+    1	    541      +		DR2_Beg_Year,		! ATC: year-Beginning of Major Frame
+    1	    542      +		DR2_Beg_DOY,		! ATC: doy -Beginning of Major Frame
+    1	    543      +		DR2_Beg_MSec,		! ATC: msec-Beginning of Major Frame
+    1	    544      +		DR2_Beg_MicSec,		! ATC: usec-Beginning of Major Frame
+    1	    545      +		DR2_Num_MinFr_Fill,	! Number of Minor Frames with Fill
+    1	    546      +		DR2_Num_MinFr_Sync_Err,	! Number of Minor Frames with Sync_Err
+    1	    547      +		DR2_TLM_Mode,		! Telemetry Mode Indicator
+    1	    548 						! 1 = science mode
+    1	    549 						! 2 = engineering mode
+    1	    550 						! 3 = maneuver mode
+    1	    551 						! 4 = contingency mode
+    1	    552      +		DR2_MinFr_Qual,		! Minor Frame Quality
+    1	    553 						! bit 0 = frame sync error flag
+    1	    554 						! bit 1 = frame counter error fllag
+    1	    555 						! bit 2 = fill frame flag
+    1	    556 						! bit 3-31 spares
+    1	    557      +		DR2_Fill,		! adjustment to Longword
+    1	    558      +		DR2_MinFr,		! Instrument data array as extracted
+    1	    559 					! 	from each Minor Frame
+    1	    560      +		DR2_Beg_EPOCH,		! EPOCH time-Beginning of Major Frame ?
+    1	    561      +		DR2_SC_EPOCH		! EPOCH time-ditto  based on S/C clock
+    1	    562 
+    1	    563       REAL*8		DR2_Beg_EPOCH,	! EPIC-added time <= Beg_Year,_DOY,_Msec
+    1	    564      +			DR2_SC_EPOCH	! ditto - based on S/C clock
+    1	    565 
+    1	    566       INTEGER*4		DR2_Instr_Num,
+    1	    567      +			DR2_Phys_Rec_Num,
+    1	    568      +			DR2_Beg_MajFr_Cnt,
+    1	    569      +			DR2_Beg_SC_Clock(2),
+    1	    570      +			DR2_Beg_Year,
+    1	    571      +			DR2_Beg_DOY,
+    1	    572      +			DR2_Beg_MSec,
+    1	    573      +			DR2_Beg_MicSec,			! Always zero
+    1	    574      +			DR2_Num_MinFr_Fill,
+    1	    575      +			DR2_Num_MinFr_Sync_Err,
+    1	    576      +			DR2_TLM_Mode
+    1	    577 
+    1	    578       BYTE		DR2_MinFr_Qual(0:249),
+    1	    579      +			DR2_Fill(2),
+    1	    580      +			DR2_MinFr(12500),		! Max.record size
+    1	    581      +			DR2_MinFr_WAV( 45, 0:249 ),
+    1	    582      +			DR2_MinFr_EPA( 24, 0:249 ),
+    1	    583      +			DR2_MinFr_MFI( 25, 0:249 ),
+    1	    584      +			DR2_MinFr_SWE( 45, 0:249 ),
+    1	    585      +			DR2_MinFr_SMS( 42, 0:249 ),
+    1	    586      +			DR2_MinFr_3DP( 50, 0:249 ),
+    1	    587      +			DR2_MinFr_TGR( 21, 0:249 ),
+    1	    588      +			DR2_MinFr_KON(  6, 0:249 )
+    1	    589 
+    1	    590       EQUIVALENCE	(DR2_MinFr,	DR2_MinFr_WAV,	DR2_MinFr_EPA,
+    1	    591      +			DR2_MinFr_MFI,	DR2_MinFr_SWE,	DR2_MinFr_SMS,
+    1	    592      +			DR2_MinFr_3DP,	DR2_MinFr_TGR,	DR2_MinFr_KON )
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  13
+1.1                                                             30-NOV-1994 15:47:05    SMS1:[WIND.SOFTWARE.INC]L0_DATA_RECORD.INC;5
+
+    1	    594       ! Overlay DR_Buffer array and its common block of individual items
+    1	    595 
+    1	    596       BYTE		DR_Buffer(13300),
+    1	    597      +			DR2_Buffer(13300),
+    1	    598      +			DR_Buffer_Contingency(13300),
+    1	    599      +			DR2_Buffer_Contingency(13300)
+    1	    600 
+    1	    601       CHARACTER*13300	C_DR_Buffer,
+    1	    602      +			C_DR2_Buffer,
+    1	    603      +			C_NULL_Buffer
+    1	    604       CHARACTER*46000   C_BIG_NULL_Buffer
+    1	    605 C
+    1	    606 C Create a new character variable (C_BIG_NULL_Buffer) 46000 long, long enough
+    1	    607 C for the largest structure.  This let's us zero out other structures easily. 
+    1	    608 C To save space increase size of NULL_Buffer from 13300 to 46000 and
+    1	    609 C equivalence it to the new variable.
+    1	    610 C
+    1	    611       BYTE		NULL_Buffer(46000)/46000*0/
+    1	    612  
+    1	    613       EQUIVALENCE	(DR_Buffer, DR_Instr_Num, DR_Buffer_Contingency,
+    1	    614      +			 C_DR_Buffer),
+    1	    615      +			(DR2_Buffer, DR2_Instr_Num, DR2_Buffer_Contingency,
+    1	    616      +			 C_DR2_Buffer),
+    1	    617      +			(C_NULL_Buffer, C_BIG_NULL_Buffer, NULL_Buffer)
+    1	    618 
+	    619       INCLUDE	'INC_DIR:WIND_Lun.INC'		! WIND SYSTEM Logical Unit #s
+    1	    620 !     WIND_Lun.INC
+    1	    621 !
+    1	    622 !     Contains all the assigned logical units for all files
+    1	    623 !
+    1	    624 !    This version:    4-NOV-1994
+    1	    625 !
+    1	    626 !    CREATION:
+    1	    627 !	 4-Feb-1994	H. Broer, UMD
+    1	    628 !
+    1	    629 !    Revision:
+    1	    630 !	22-Jun_1994	H. Broer, UMD	added L1_Lun
+    1	    631 !        4-NOV-1994     L. Bleau        added TTOUT for output stream
+    1	    632 !
+    1	    633 !
+    1	    634 !					DESIGNATION
+    1	    635 !					-----------
+    1	    636       INTEGER*4	KB,			! keyboard
+    1	    637      +          TTOUT,                  ! terminal output
+    1	    638      +		L0_Lun,			! L0 File
+    1	    639      +		L1_Lun,			! L1 File
+    1	    640      +		SFDU_Lun		! SFDU data file
+    1	    641 
+    1	    642       PARAMETER	( KB = 5 ,
+    1	    643      +            TTOUT = 6 ,
+    1	    644      +		  L0_Lun = 11 ,
+    1	    645      +		  L1_Lun = 13 ,
+    1	    646      +		  SFDU_Lun = 12 )
+	    647       INCLUDE	'($SSDEF)'
+    1	    648 !*** MODULE $SSDEF ***
+    1	    649 CDEC$ OPTIONS/ALIGN=(RECORDS=PACKED,COMMONS=PACKED)
+    1	    650  ! 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  14
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	    651  !  This SDL File Generated by VAX-11 Message V04-00 on 26-JAN-1994 14:53:54.54
+    1	    652  ! 
+    1	    653  !  SSMSG.MSG - SYSTEM DEFINITION FILE FOR SYSTEM SERVICE MESSAGES
+    1	    654  ! 
+    1	    655  !  VERSION:	'X-29'
+    1	    656  ! 
+    1	    657  ! *									    *
+    1	    658  ! *  COPYRIGHT © 1978-1993 BY						    *
+    1	    659  ! *  DIGITAL EQUIPMENT CORPORATION, MAYNARD, MASSACHUSETTS.		    *
+    1	    660  ! *  ALL RIGHTS RESERVED.						    *
+    1	    661  ! * 									    *
+    1	    662  ! *  THIS SOFTWARE IS FURNISHED UNDER A LICENSE AND MAY BE USED AND COPIED   *
+    1	    663  ! *  ONLY IN  ACCORDANCE WITH  THE  TERMS  OF  SUCH  LICENSE  AND WITH THE   *
+    1	    664  ! *  INCLUSION OF THE ABOVE COPYRIGHT NOTICE. THIS SOFTWARE OR  ANY  OTHER   *
+    1	    665  ! *  COPIES THEREOF MAY NOT BE PROVIDED OR OTHERWISE MADE AVAILABLE TO ANY   *
+    1	    666  ! *  OTHER PERSON.  NO TITLE TO AND OWNERSHIP OF  THE  SOFTWARE IS  HEREBY   *
+    1	    667  ! *  TRANSFERRED.							    *
+    1	    668  ! * 									    *
+    1	    669  ! *  THE INFORMATION IN THIS SOFTWARE IS  SUBJECT TO CHANGE WITHOUT NOTICE   *
+    1	    670  ! *  AND  SHOULD  NOT  BE  CONSTRUED AS  A COMMITMENT BY DIGITAL EQUIPMENT   *
+    1	    671  ! *  CORPORATION.							    *
+    1	    672  ! * 									    *
+    1	    673  ! *  DIGITAL ASSUMES NO RESPONSIBILITY FOR THE USE  OR  RELIABILITY OF ITS   *
+    1	    674  ! *  SOFTWARE ON EQUIPMENT WHICH IS NOT SUPPLIED BY DIGITAL.		    *
+    1	    675  ! * 									    *
+    1	    676  ! *									    *
+    1	    677  ! ++
+    1	    678  ! 
+    1	    679  !  FACILITY:  VMS SYSTEM MACRO LIBRARIES
+    1	    680  ! 
+    1	    681  !  ABSTRACT:
+    1	    682  ! 
+    1	    683  ! 	THIS FILE CONTAINS THE SDL SOURCE FOR SYSTEM SERVICE MESSAGES.
+    1	    684  ! 
+    1	    685  !  GUIDELINES:
+    1	    686  ! 
+    1	    687  ! 	WITH THE RELEASE OF HELP/MESSAGE, DOCUMENTATION MUST EXACTLY MATCH
+    1	    688  ! 	MESSAGE TEXT IN ORDER FOR THE ONLINE SEARCH TO SUCCEED.  TO AVOID
+    1	    689  ! 	DOCUMENTING EMBARRASSING TYPOS OR GRAMMATICAL ERRORS, PLEASE FORWARD
+    1	    690  ! 	YOUR MESSAGES TO THE MESSAGES WRITER FOR A QUICK EDIT.  VMS SENIOR
+    1	    691  ! 	MANAGEMENT SUPPORTS ENFORCING STANDARD MESSAGE FORMATTING CONVENTIONS,
+    1	    692  ! 	WHICH ARE INCLUDED IN THE FOLLOWING GUIDELINES.
+    1	    693  ! 
+    1	    694  !      O	WORDS IN MESSAGES SHOULD NOT BEGIN WITH CAPS UNLESS THEY WOULD START
+    1	    695  !        WITH CAPS IN RUNNING TEXT.  FOR EXAMPLE,
+    1	    696  ! 
+    1	    697  ! 	    WRONG: <Security Auditing Rolled Over and Died>
+    1	    698  ! 	    RIGHT: <security auditing rolled over and died>
+    1	    699  ! 
+    1	    700  ! 	    WRONG: <Never do this unless Digital recommends it>
+    1	    701  ! 	    RIGHT: <never do this unless Digital recommends it>
+    1	    702  ! 
+    1	    703  ! 	ALTHOUGH NOT WELL KNOWN, THE $GETMSG SYSTEM SERVICE AUTOMATICALLY
+    1	    704  ! 	CONVERTS TO UPPER CASE THE INITIAL LETTER OF A MESSAGE WHEN RETRIEVING
+    1	    705  ! 	A MESSAGE IN AN ENVIRONMENT WHERE THE FACILITY, SEVERITY, AND
+    1	    706  ! 	IDENTIFICATION FIELDS HAVE BEEN SUPPRESSED.
+    1	    707  ! 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  15
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	    708  !      O	ACRONYMS SHOULD BE UPPERCASE ONLY:
+    1	    709  ! 
+    1	    710  ! 	    <a system UIC is absolutely absurd in this context>
+    1	    711  ! 
+    1	    712  !      O DO NOT BEGIN A MESSAGE WITH A CONTRACTION.
+    1	    713  ! 
+    1	    714  !      O	DO NOT END A MESSAGE WITH A PUNCTUATION MARK.
+    1	    715  ! 
+    1	    716  !      O WHEN POSSIBLE, AVOID USING CONTRACTIONS IN MESSAGES.
+    1	    717  !      	      
+    1	    718  !      O	"It's" IS A CONTRACTION FOR "it is".  THE POSSESSIVE IS "its".
+    1	    719  ! 
+    1	    720  !      O	USE THE WORD "or" INSTEAD OF A "/" WHENEVER POSSIBLE.
+    1	    721  ! 
+    1	    722  ! 	    WRONG:  <file/section/reference doesn't exist>
+    1	    723  ! 	    RIGHT:  <file, section, or reference does not exist>
+    1	    724  ! 
+    1	    725  !      O	USE OF HYPHENS (E.G. " - ") IS STRONGLY DISCOURAGED.  CONSIDER USING A
+    1	    726  ! 	SEMICOLON INSTEAD.  FOR EXAMPLE,
+    1	    727  ! 
+    1	    728  ! 	    <you blew it dude; consider typing something else>
+    1	    729  ! 
+    1	    730  !      O	SEMICOLONS SHOULD BE USED TO SEPARATE MAIN CLAUSES NOT JOINED BY A
+    1	    731  ! 	COORDINATING CONJUNCTION (E.G. "and" OR "but") AND BETWEEN A LIST OF
+    1	    732  ! 	ELEMENTS CONTAINING COMMAS.  IN THE ABOVE EXAMPLE, IT IS GRAMMATICALLY
+    1	    733  ! 	INCORRECT TO USE A COMMA IN PLACE OF THE SEMICOLON.  A COMMA IS CORRECT
+    1	    734  ! 	WHEN EITHER CLAUSE DOES NOT FORM A COMPLETE SENTENCE OR WHEN USED TO
+    1	    735  ! 	SEPARATE ITEMS IN A LIST.  FOR EXAMPLE,
+    1	    736  ! 
+    1	    737  ! 	    <security auditing is confused, braindamaged, and broken>
+    1	    738  ! 
+    1	    739  !      O	ABOVE ALL ELSE, REMEMBER THAT YOU'RE WRITING THESE MESSAGES FOR OUR
+    1	    740  ! 	USERS, MOST OF WHOM ARE NOT COMPUTER WIZARDS.  KEEP THE JARGON TO A
+    1	    741  ! 	MINIMUM AND CONCENTRATE ON COMMUNICATING A MESSAGE THAT IS AS
+    1	    742  ! 	INFORMATIVE AND AS HELPFUL AS YOU CAN MAKE IT.
+    1	    743  ! 
+    1	    744  ! 
+    1	    745  !  NOTA BENA: WHEN OBSOLETING OR ADDING MESSAGES: 
+    1	    746  ! 
+    1	    747  !      O REUSE OBSOLETE MESSAGE ENTRIES WHEN POSSIBLE.  THESE ARE MARKED BY 
+    1	    748  ! 	HAVING A MESSAGE NAME OF OBSOLETE_<somenumber>.
+    1	    749  !   
+    1	    750  !      O IF YOU MUST REMOVE A MESSAGE, DON'T SIMPLY DELETE IT.  IF MESSAGES
+    1	    751  ! 	COME AFTER IT, OBSOLETE IT BY CHANGING THE NAME TO OBSOLETE_<some number>.
+    1	    752  ! 	LOOK FOR THE OTHER OBSOLETE MESSAGES TO FIND OUT WHAT THE NEXT FREE NUMBER
+    1	    753  ! 	IS.   THIS WILL LET OTHERS KNOW WHEN THEY WANT A SLOT, THAT THEY CAN REUSE
+    1	    754  ! 	SOME OBSOLETE MESSAGE INSTEAD OF ADDING A NEW ONE. 
+    1	    755  ! 
+    1	    756  ! 
+    1	    757  ! --
+    1	    758  ! 
+    1	    759  !  AUTHOR:  THE VMS GROUP	 CREATION DATE:  1-AUG-1976
+    1	    760  ! 
+    1	    761  !  MODIFIED BY:
+    1	    762  ! 
+    1	    763  ! 	X-29	RWC136		RICHARD W. CRITZ, JR.		23-DEC-1993
+    1	    764  ! 		ADD SS$_CONFIG_SYNTAX FOR 3PB SUPPORT.  IT REPLACES
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  16
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	    765  ! 		SS$_OBSOLETE_6.
+    1	    766  ! 
+    1	    767  ! 	X-28	RAB		RICHARD A. BISHOP		9-DEC-1993
+    1	    768  ! 		ADD IMPERSONATION MESSAGE CODES FOR STU DAVIDSON
+    1	    769  ! 
+    1	    770  ! 	X-27	HH1241		HAI HUANG			06-OCT-1993
+    1	    771  ! 		CORRECT PARAMETERS FOR SS$_ILLEGAL_SHADOW.
+    1	    772  ! 
+    1	    773  ! 	X-26	DEE RYAN					30-SEP-1993
+    1	    774  ! 		CORRECTED SPELLING, PUNCTUATION, AND LEGAL ERRORS IN 
+    1	    775  ! 		MESSAGE TEXT.
+    1	    776  ! 
+    1	    777  ! 	X-25	RAB		RICHARD A. BISHOP		17-AUG-1993
+    1	    778  ! 		PICK UP NEW VAX SYMBOL:
+    1	    779  ! 
+    1	    780  ! 		X-32	WXD	BILL DAVENPORT			11-AUG-1993
+    1	    781  ! 		ADD SS$_IVNODNAM, INVALID NODE NAME FOR DECNET.
+    1	    782  ! 
+    1	    783  ! 	X-24	HH1202		HAI HUANG			12-AUG-1993
+    1	    784  ! 		ADD NEW IEEE ARITHMETIC EXCEPTIONS. 
+    1	    785  ! 
+    1	    786  ! 	X-23	HH1110		GENE LEACHE			15-JUL-1993
+    1	    787  ! 		ADD SS$_NOCALLTRANS_SUP
+    1	    788  ! 
+    1	    789  ! 	X-22	HH1110		HAI HUANG			14-JUN-1993
+    1	    790  ! 		ADD SS$_TARGET_UNWIND, SS$_TARGET_GOTO_UNWIND.
+    1	    791  ! 
+    1	    792  ! 	X-21	HH1101		HAI HUANG			26-MAY-1993
+    1	    793  ! 		REPLACE REASON MASK WITH I/O STATUS IN PAGE READ ERRORS.
+    1	    794  ! 
+    1	    795  !        X-20    MW              MARK WATTS                      25-MAY-1993
+    1	    796  !                ADD A NEW FILESYSTEM ERROR MESSAGE CALLED SHELFERROR, THIS
+    1	    797  !                WILL BE RETURNED THROUGH THE FILESYSTEM BY THE SHELF HANDLER.
+    1	    798  ! 
+    1	    799  ! 	X-19	RAB		RICHARD A. BISHOP		14-MAY-1993
+    1	    800  ! 		FOLD INITIAL CORAL CHANGES:
+    1	    801  ! 
+    1	    802  ! 		X-21A1A1 MME001	MICHAEL BEELER			12-OCT-1992
+    1	    803  ! 		ADD MME (MEDIA MANAGEMENT EXTENSION) MESSAGES
+    1	    804  ! 
+    1	    805  ! 	X-18	RAB		RICHARD A. BISHOP		14-APR-1993
+    1	    806  ! 		FOLD OF BLADE/DELTA CLEANUP (REQUIRED SS$_FDT_COMPL TO
+    1	    807  ! 		CHANGE VALUE):
+    1	    808  ! 
+    1	    809  ! 		X-14U3	RAB	RICHARD A. BISHOP	14-APR-1993
+    1	    810  ! 		MERGE BLADE CHANGES AND RESOLVE CONTENTION:
+    1	    811  ! 
+    1	    812  ! 		X-25A1 AJM93032	ANDREW J. MOSKAL	11-MAR-1993
+    1	    813  ! 		ADD NOTRANQUIL AND SMALLHEADER - MAC RELATED MESSAGES.
+    1	    814  ! 
+    1	    815  ! 	X-17	EHL003		GENE LEACHE		  1-APR-1993
+    1	    816  ! 		ADD SIG_ARGMISMATCH
+    1	    817  !                                                                
+    1	    818  ! 	X-16	EHL003		GENE LEACHE		 22-MAR-1993
+    1	    819  ! 		ADD SIG_INVARGTYPE, SIG_INVFLTARG, SIG_INVARGLIST
+    1	    820  !                                                                
+    1	    821  !        X-15    WDB:HLL004      WALTER D. BLASCHUK, JR. 06-JAN-1993
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  17
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	    822  !                HLLDD PROJECT: FDT PROCESSING CHANGES.
+    1	    823  ! 		ADD  THE SS$_FDT_COMPL CONSTANT.  THIS WILL INDICATE 
+    1	    824  ! 		THAT  FDT PROCESSING  IS COMPLETE.  IT SAYS  NOTHING
+    1	    825  ! 		ABOUT THE PRESENCE OF AN ERROR.
+    1	    826  ! 
+    1	    827  ! 	X-14	RLP017		RAY PFAU		18-DEC-1992
+    1	    828  ! 		CLARIFY CPUSTOPPING TEXT. FIX TYPO IN NOTALLCANCELED
+    1	    829  ! 		TEXT. 
+    1	    830  ! 
+    1	    831  ! 	X-13	RAB		RICHARD A. BISHOP	20-NOV-1992
+    1	    832  ! 		NEW SYMBOLS FOR PAUL HOULIHAN (SCS), PLUS MORE BLADE CHANGES:
+    1	    833  ! 
+    1	    834  ! 		PJH		PAUL J. HOULIHAN	20-NOV-1992
+    1	    835  ! 		ADD SCS INTERNAL STATUS. THESE ARE NEVER SEEN BY USERS.
+    1	    836  ! 
+    1	    837  !        	X-24	MWD0038	MICHAEL DANIELE		20-OCT-1992  14:13
+    1	    838  ! 		ADD NAMESERVCOMMERR - "Name service communications error"
+    1	    839  ! 		ON BEHALF OF DECNET/OSI.
+    1	    840  ! 
+    1	    841  !        	X-23	DDP1354	DERRELL D. PIPER       30-SEP-1992  16:36
+    1	    842  ! 		ADD MESSAGE FOR ATTEMPT TO ADD A PROTECTED SUBSYSTEM ID WITH
+    1	    843  ! 		ATTRIBUTES THAT EXCEED THOSE OF ITS HOLDER (SS$_SSANOTAUTH).
+    1	    844  ! 		ALSO ADD A MESSAGE FOR INVALID FILE OWNER (SS$_BADOWNER).
+    1	    845  ! 
+    1	    846  !        	X-22	DDP1337	DERRELL D. PIPER       16-SEP-1992  17:55
+    1	    847  ! 		UPDATE NOPRIV, EXQUOTA, AND OBJNOTLOCKED MESSAGE TEXTS.
+    1	    848  ! 
+    1	    849  ! 	X-12	RS00375		RICHARD SAYDE		 1-SEP-1992
+    1	    850  ! 		CORRECT MESSAGE TEXT FOR ALIGNMENT FAULT TRAP. REGISTER
+    1	    851  ! 		INFORMATION IS NO LONGER PROVIDED, IT IS NOW A FUNCTION
+    1	    852  ! 		CODE - 0 MEANS LOAD, 1 MEANS STORE.
+    1	    853  ! 
+    1	    854  ! 	X-11	HH0974		HAI HUANG		16-AUG-1992
+    1	    855  ! 		CORRECT MESSAGE TEXT FOR SS$_FLTINV.
+    1	    856  ! 
+    1	    857  ! 	X-10	RAB		RICHARD A. BISHOP	14-AUG-1992
+    1	    858  ! 		PICK UP ANOTHER BLADE CHANGE:
+    1	    859  ! 
+    1	    860  ! 		X-21	JAD045	JOSEPH A. DZIEDZIC	29-JUN-1992
+    1	    861  ! 		ADD "page read error across access modes" STATUS,
+    1	    862  ! 		SS$_PAGRDERRXM.
+    1	    863  ! 
+    1	    864  ! 	X-9	RAB		RICHARD A. BISHOP	16-JUL-1992
+    1	    865  ! 		PICK UP CHANGE FROM VAX, RESET IDENT & AUDIT TRAIL
+    1	    866  ! 
+    1	    867  ! 		X-19	RLA095B		ROBERT L. ADAMS		12-JUN-1992
+    1	    868  ! 		OBSOLETE CHARGE CODE ACCOUNTING AND REPLACE WITH 
+    1	    869  ! 		MORE DESCRIPTIVE PROTECTED SUBSYSTEMS ERRORS.
+    1	    870  ! 		ADD COMMENT ON OBSOLETING MESSAGES.
+    1	    871  ! 
+    1	    872  ! 	X-22	EHL002		GENE LEACHE		 8-JUL-1992
+    1	    873  ! 		ADD SS$_ILLPOLICY
+    1	    874  ! 
+    1	    875  ! 	X-21	EHL001		GENE LEACHE		18-JUN-1992
+    1	    876  ! 		ADD SS$_ILLPRIPOL
+    1	    877  ! 
+    1	    878  ! 	X-20	EMB0170		ELLEN M. BATBOUTA	12-JUN-1992
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  18
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	    879  ! 		ADD 2 NEW FATAL ERROR MESSAGES, TRANSCALLER AND
+    1	    880  ! 		NOCALLTRANS.  THESE MESSAGES INDICATE THAT A NATIVE
+    1	    881  ! 		IMAGE WAS NOT BUILT CORRECTLY TO INTEROPERATE WITH
+    1	    882  ! 		TRANSLATED CODE.
+    1	    883  ! 
+    1	    884  ! 	X-19	HH0931		HAI HUANG		27-MAY-1992
+    1	    885  ! 		CHANGE PSL IN ERROR MESSAGES TO PS.
+    1	    886  ! 
+    1	    887  ! 	X-18	RAB		RICHARD A. BISHOP	19-MAY-1992
+    1	    888  ! 		PICK UP RECENT BLADE CHANGES:
+    1	    889  ! 
+    1	    890  ! 		X-17	ATP014.17	ALAN POTTER		 2-APR-1992
+    1	    891  ! 		CHANGE ERROR MESSAGE TEXT FOR SS$_TPDISABLED AND
+    1	    892  ! 		SS$_NOLOG.
+    1	    893  ! 
+    1	    894  !        	X-15/16	DDP1198		DERRELL D. PIPER       24-MAR-1992  18:15
+    1	    895  ! 		FIX PUNCTUATION OF MESSAGES FOR HELP/MESSAGE AND ADD SOME
+    1	    896  ! 		POMPOUS GUIDELINES FOR FUTURE GENERATIONS.
+    1	    897  ! 
+    1	    898  ! 	X-17	HH0855		HAI HUANG		10-MAR-1992
+    1	    899  ! 	 -16	ADD STATUS FOR GENTRAP CODES.
+    1	    900  ! 
+    1	    901  ! 	X-15	HH0853		HAI HUANG		26-FEB-1992
+    1	    902  ! 		ADD SS$_GENTRAP, SS$_GOTO_UNWIND, SS$_EXIT_UNWIND.
+    1	    903  ! 
+    1	    904  ! 	X-14	RAB0100		RICHARD A. BISHOP	30-JAN-1992
+    1	    905  ! 		MERGE BLADE AND ALPHA VERSIONS OF THIS FILE. THIS 
+    1	    906  ! 		IS BEING DONE SO AS TO LEAVE BLADE VALUES INTACT.
+    1	    907  ! 		WHERE CHANGES IN VALUES ARE NECESSARY, THEY ARE 
+    1	    908  ! 		HAPPENING TO ALPHA. 
+    1	    909  ! 
+    1	    910  ! 		ALSO MOVE SS$_IMGDMP (PREVIOUS BLADE CHECKIN). THIS 
+    1	    911  ! 		WAS WRONGLY PLACED, AND CAUSED SOME SYMBOLS TO MOVE.
+    1	    912  ! 		THEY NOW GO BACK TO THEIR ORIGINAL VALUES.
+    1	    913  ! 
+    1	    914  ! 		AS LUCK WOULD HAVE IT, THIS CHECKIN IS GENERATION 
+    1	    915  ! 		14 ON BOTH MASTERPACKS.....
+    1	    916  ! 
+    1	    917  ! 	========================================
+    1	    918  ! 
+    1	    919  ! 	30-JAN-1992:	WHAT FOLLOWS IS THE BLADE AUDIT TRAIL 
+    1	    920  ! 			FROM 30-NOV-1990 TO 20-DEC-1991
+    1	    921  ! 
+    1	    922  ! 	========================================
+    1	    923  ! 
+    1	    924  ! 	X-13	SJVMAJ		STEPHEN J. VIVIAN	20-DEC-1991
+    1	    925  ! 		ADD SS$_IMGDMP SIGNAL FOR MAJIQ SUPPORT.
+    1	    926  ! 
+    1	    927  ! 	X-12	CRB0711		COLIN R. BLAKE		18-DEC-1991 13:18:23.93
+    1	    928  ! 		THIS IS THE C2 VERSION BEING INSERTED INTO MAINLINE.
+    1	    929  ! 
+    1	    930  !        X-8A3A1A2       THE GREAT MERGER NASSER ABBASI   11-DEC-1991
+    1	    931  ! 		MERGE T4 WITH BLADE_BLD6
+    1	    932  ! 		COPY OF HISTORY FROM BLD6 MODULE
+    1	    933  ! 		--------------------------------
+    1	    934  ! 		X-11    JFD0031   		JAMES F. DUNHAM	 	8-JAN-1991
+    1	    935  ! 			ADD MESSAGES TO SUPPORT ISO 9660 VOLUME MOUNTS
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  19
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	    936  ! 
+    1	    937  ! 	X-8A3A1A1 DOR		DENNIS O. ROGERS	26-NOV-1991 12:19
+    1	    938  ! 		C2 BLADE MERGE (T4):
+    1	    939  ! 
+    1	    940  ! 		X-10	CBD0238	CHARLES B. DUNN		14-OCT-1991
+    1	    941  ! 		ADD SS$_TIMENOTSET FOR DTSS SUPPORT
+    1	    942  ! 
+    1	    943  !        X-8A3A1	CRB0044		COLIN R. BLAKE		 6-NOV-1991  08:58
+    1	    944  ! 		T3 MERGE:
+    1	    945  ! 		
+    1	    946  ! 		X-9	EJL0610		EDWARD J. LOS		02-OCT-1991
+    1	    947  ! 			RESET VERSION TO MATCH GENERATION. ADD SYSTEM SNAPSHOT
+    1	    948  ! 			VALIDATION ERRORS
+    1	    949  ! 
+    1	    950  ! 	X-8A3	CRB0030		COLIN R. BLAKE		23-OCT-1991
+    1	    951  ! 		MORE C2 MERGING:
+    1	    952  ! 
+    1	    953  ! 		T-6T9	SAD0144		STUART A. DAVIDSON	18-OCT-1991
+    1	    954  ! 			ADD NOOJBSRV ERROR -- OBJECT SERVER NOT RUNNING.
+    1	    955  ! 
+    1	    956  ! 	X-8A2	FAK0003		FORREST A. KENNEY	16-OCT-1991
+    1	    957  ! 		MERGE LATEST C2 CHANGES.
+    1	    958  ! 
+    1	    959  ! 	       T-9	DDP0887		DERRELL D. PIPER	4-OCT-1991  18:43
+    1	    960  ! 			ADD ITEM CODE ERROR MESSAGES.
+    1	    961  ! 
+    1	    962  ! 	X-8A1	FAK0002		FORREST A. KENNEY	20-SEP-1991
+    1	    963  ! 		MERGE C2 MESSAGES INTO MAINLINE, FIX IDENT TO AGREE WITH
+    1	    964  ! 		CMS DUE TO MASTERPACK CLEANUP.
+    1	    965  ! 
+    1	    966  ! 		X-80T8	LMP0542		L. MARK PILANT,		29-JUL-1991  16:42
+    1	    967  ! 			ADD A MESSAGE TO INDICATE THAT DELETION OF FILES WITH 
+    1	    968  ! 			ACTIVE RMS JOURNALING IS NOT ALLOWED.
+    1	    969  ! 
+    1	    970  ! 			LMP0544		L. MARK PILANT,		30-JUL-1991  14:45
+    1	    971  ! 			ADD A MESSAGE TO INDICATE THE SUPPLIED FILE 
+    1	    972  ! 			SPECIFICATION IS INVALID FOR THE ATTEMPTED OPERATION.
+    1	    973  ! 
+    1	    974  ! 		T-7	RLA		ROBERT L. ADAMS		26-JUN-1991
+    1	    975  ! 			FOLD MAGIC CHANGES INTO TRANQUILITY.
+    1	    976  ! 
+    1	    977  ! 		T-6	DDP0977		DERRELL D. PIPER	7-JUN-1991  10:01
+    1	    978  ! 			ADD OVRMAXAUD.
+    1	    979  ! 
+    1	    980  ! 		T-5	AJM		ANDREW J. MOSKAL	13-MAY-1991
+    1	    981  ! 			ADD INVSECOPER, NOCLASSSUPPORT - MAC PROTECTION RELATED
+    1	    982  ! 			MESSAGES.
+    1	    983  ! 
+    1	    984  ! 		T-4	SAD0116		STUART A. DAVIDSON	 3-MAY-1991
+    1	    985  ! 			ADD ILLRSDM (ILLEGAL RESOURCE DOMAIN OPERATION)
+    1	    986  ! 
+    1	    987  ! 		X-80T3	SAD0109		STUART A. DAVIDSON	19-APR-1991
+    1	    988  ! 			ADD OBJECT CONTEXT NOT LOCKED MESSAGE.
+    1	    989  ! 
+    1	    990  ! 		X-80T2	SAD0109		STUART A. DAVIDSON	11-MAR-1991
+    1	    991  ! 			ADD MISSED MESSAGES FOR SECURITY OBJECT MANAGEMENT
+    1	    992  ! 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  20
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	    993  ! 		X-81    RLA0147		ROBERT L. ADAMS		15-FEB-1991
+    1	    994  ! 			ADD SECURITY MESSAGES ADDED FOR PHOENIX WORK.
+    1	    995  ! 
+    1	    996  ! 	X-87	PMV0169		PETER M. VATNE		20-JUN-1991
+    1	    997  ! 		ADD SS$_DEVNOTWS.
+    1	    998  ! 
+    1	    999  ! 	X-86	CW		CHRIS WHITAKER		10-MAR-1991
+    1	   1000  ! 		ADD SS$_REMEMBER ALIAS.
+    1	   1001  ! 
+    1	   1002  ! 	X-85	FAK001		FORREST A. KENNEY	08-MAR-1991
+    1	   1003  ! 		ADD SS$_QUEUED.
+    1	   1004  ! 
+    1	   1005  ! 	X-84	JLBBP01		J.L. BERG		28-FEB-1991
+    1	   1006  ! 		ADD SS$_NOREADER AND SS$_NOWRITER.
+    1	   1007  ! 
+    1	   1008  ! 	X-83	CW		CHRIS WHITAKER		26-FEB-1991
+    1	   1009  ! 		ADD ERROR CODES FOR DECDTM V1.2 SUPPORT.
+    1	   1010  ! 
+    1	   1011  !     	X-82	RG40077		RAY GUZMAN		21-FEB-1991
+    1	   1012  ! 		ADD 4    NEW    CODES.    SS$_BADCHECKSUM,   SS$_INVSECDOMAIN,
+    1	   1013  ! 		SS$_ARBTOOBIG, AND SS$_ORBTOOBIG.
+    1	   1014  ! 
+    1	   1015  ! 	X-81	RKK0058		ROBERT K. KOSAKOWSKI	19-FEB-1991
+    1	   1016  ! 		RESERVE 20 MESSAGE CODES FOR MEDIA MANAGEMENT EXTENSIONS.
+    1	   1017  ! 		(FOR DAN KYLER)
+    1	   1018  ! 
+    1	   1019  ! 	X-46U12	LPL0001		LEE LEAHY		30 NOV 1990
+    1	   1020  ! 		MERGED EDIT X-74
+    1	   1021  ! 
+    1	   1022  ! 		X-74	LPL0001		LEE LEAHY		12 OCT 1990
+    1	   1023  ! 			ADDED SS$_INVBUSNAM, SS$_INVCOMPTYPE, SS$_INVCOMPID,
+    1	   1024  ! 			SS$_INVCOMPLIST, SS$_RMTPATH, AND NOCOMPLSTS.
+    1	   1025  ! 
+    1	   1026  ! 	========================================
+    1	   1027  ! 
+    1	   1028  ! 	30-JAN-1992:	WHAT FOLLOWS IS THE ALPHA AUDIT TRAIL 
+    1	   1029  ! 			FROM 16-JUL-1990 TO 18-DEC-1991
+    1	   1030  ! 
+    1	   1031  ! 	========================================
+    1	   1032  ! 
+    1	   1033  ! 	X-13	RS00233		RICHARD SAYDE		18-DEC-1991
+    1	   1034  ! 		ADD ERROR CODES FOR ALIGNMENT FAULT REPORTING.
+    1	   1035  ! 
+    1	   1036  ! 	X-12	TNS001		TOM SCARPELLI		24-OCT-1991
+    1	   1037  ! 		ADD MESSAGES FROM VAX SIDE FOR NEW QUEUE MANAGER.
+    1	   1038  ! 
+    1	   1039  ! 	X-11	DMB001		DAVID M. BERNARDO	23-OCT-1991
+    1	   1040  ! 		ADD SLICING_DISABLED.
+    1	   1041  ! 
+    1	   1042  ! 	X-10	WMC010		WAYNE CARDOZA		24-SEP-1991
+    1	   1043  ! 		ADD UNALIGNED SP LOAD.
+    1	   1044  ! 
+    1	   1045  ! 	X-9	TNS001		TOM SCARPELLI		17-JUN-1991
+    1	   1046  ! 		ADD MESSAGES FROM VAX SIDE FOR $FORGE_WORD SYSTEM SERVICE.
+    1	   1047  ! 
+    1	   1048  ! 	X-8	RWC038		RICHARD W. CRITZ, JR.		12-JUN-1991
+    1	   1049  ! 		CHANGE SS$_DRVEXISTS AND SS$_DEVEXISTS FROM INFORMATIONALS
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  21
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1050  ! 		TO WARNINGS.
+    1	   1051  ! 
+    1	   1052  ! 	X-7	HH0624		HAI HUANG		09-APR-1991
+    1	   1053  ! 		ADD SS$_ALTER, ALTER STACK FRAMES, FOR TIE SUPPORT.
+    1	   1054  ! 	
+    1	   1055  ! 	X-K10	LPL001		LEE LEAHY		 4 APR 1991
+    1	   1056  ! 		INCLUDED THE DEFINITIONS FROM IOWA/SIGMA.
+    1	   1057  ! 
+    1	   1058  ! 		X-46U12	LPL0001		LEE LEAHY		30 NOV 1990
+    1	   1059  ! 			MERGED EDIT X-74
+    1	   1060  ! 
+    1	   1061  ! 			X-74	LPL0001		LEE LEAHY		12 OCT 1990
+    1	   1062  ! 				ADDED SS$_INVBUSNAM, SS$_INVCOMPTYPE, SS$_INVCOMPID,
+    1	   1063  ! 				SS$_INVCOMPLIST, SS$_RMTPATH, AND NOCOMPLSTS.
+    1	   1064  ! 
+    1	   1065  ! 	X-K9	HH0610		HAI HUANG		25-FEB-1991
+    1	   1066  ! 		ADD ALPHA HARDWARE EXCEPTIONS SS$_HPARITH, SS$_ALIGN.
+    1	   1067  ! 	
+    1	   1068  ! 	X-K8	RFH002		ROBERT F. HOFFMAN	23-JAN-1991
+    1	   1069  ! 		ADD SS$_QIO_CROCK FOR SPECIAL TREATMENT THAT $QIO
+    1	   1070  ! 		NEEDS IN ORDER TO FAULT IN A PAGE IN CALLER'S MODE.
+    1	   1071  ! 
+    1	   1072  ! 	X-K7	MSH1062		MICHAEL S. HARVEY	13-DEC-1990
+    1	   1073  ! 		ADD SS$_INVARG FOR $CRMPSC AND $MPGBLSC SERVICES.
+    1	   1074  ! 
+    1	   1075  ! 	X-K6	RFH001		ROBERT F. HOFFMAN	11-DEC-1990
+    1	   1076  ! 		ADD SS$_QUEUED FOR TTDRIVER PORT (REPLACES AN UNUSED
+    1	   1077  ! 		MESSAGE)
+    1	   1078  ! 
+    1	   1079  ! 	X-K5	RWC003		RICHARD W. CRITZ, JR.	 1-NOV-1990
+    1	   1080  ! 		ADD SS$_DRVNOTVALID.
+    1	   1081  ! 
+    1	   1082  ! 	X-K4	RWC003		RICHARD W. CRITZ, JR.	11-OCT-1990
+    1	   1083  ! 		ADD $LOAD_DRIVER STATUSES.
+    1	   1084  ! 
+    1	   1085  ! 	X-K3	KLN1027		KAREN L. NOEL		25-JUL-1990
+    1	   1086  ! 		ADD SS$_NOT_LOADED
+    1	   1087  ! 
+    1	   1088  ! 	X-K2	WMC0K2		WAYNE CARDOZA		16-JUL-1990
+    1	   1089  ! 		ADD WAIT IN CALLERS MODE.
+    1	   1090  ! 
+    1	   1091  ! 	========================================
+    1	   1092  ! 
+    1	   1093  ! 	30-JAN-1992:	WHAT FOLLOWS IS THE COMMON AUDIT TRAIL 
+    1	   1094  ! 			UP TO 21-MAY-1990
+    1	   1095  ! 
+    1	   1096  ! 	========================================
+    1	   1097  ! 
+    1	   1098  ! 	X-46U11	CW1024		CHRIS WHITAKER		21-MAY-1990
+    1	   1099  ! 		ADD SS$_VOLATILE.
+    1	   1100  ! 
+    1	   1101  !        X-46U10	DDP0643		DERRELL D. PIPER	28-MAR-1990  15:55
+    1	   1102  ! 		ADD SS$_USEGENPWD.
+    1	   1103  ! 
+    1	   1104  ! 	X-46U9	MAS0254		MARK A. STILES		20-FEB-1990
+    1	   1105  ! 		FIXUP OUT-OF-ORDER CODES.  MOVE SOME NEW CODES INTO
+    1	   1106  ! 		UNUSED SLOTS.  FIX TEXT OF INSFSPT TO BE MORE GENERIC.
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  22
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1107  ! 
+    1	   1108  ! 	X-46U8	CAM0109		CHRISTOPHER A. MEGA	12-FEB-1990
+    1	   1109  ! 		ADD BOOTREJECT WARNING STATUS - USED BY START/CPU CODE IF A CPU
+    1	   1110  ! 		FAILS TO BOOT BECAUSE IT IS IN THE BOOT_REJECTED STATE.
+    1	   1111  ! 
+    1	   1112  ! 	X-46U7	LBB0010		LEE BARTON		30-NOV-1989
+    1	   1113  ! 		ADD SS$_ARCHIVING, SS$_ARCHIVED (XQP SUPPORT OF ALM)
+    1	   1114  ! 
+    1	   1115  ! 	X-46U6	LMP0517		L. MARK PILANT,		17-OCT-1989  16:42
+    1	   1116  ! 		ADD PROTECTED SUBSYSTEM SUPPORT.
+    1	   1117  ! 
+    1	   1118  ! 	X-46U5	RLF		RICHARD L. FRANK	16-OCT-1989
+    1	   1119  ! 		MODIFY INSFSPTS TO BE MORE GENERIC. ADD INSFRPGS AND
+    1	   1120  ! 		INSFLPGS.
+    1	   1121  ! 
+    1	   1122  ! 	X-46U4	CAM0072		CHRISTOPHER A. MEGA	06-OCT-1989
+    1	   1123  ! 		CHANGED CPUSTOPPD TO CPUSTOPPING
+    1	   1124  ! 
+    1	   1125  !        X-46U3	DDP0546		DERRELL D. PIPER	4-OCT-1989  14:24
+    1	   1126  ! 		ADD SS$_NOCALLPRIV FOR $CHECK_ACCESS.
+    1	   1127  ! 
+    1	   1128  ! 	X-46U2	PRD0503		PAUL R. DESTEFANO	25-SEP-1989
+    1	   1129  ! 		ADD SS$_NOSUCHFAC FOR EVENT FACILITY OBJECT SECURITY.
+    1	   1130  ! 
+    1	   1131  ! 	X-46U1	PRD0495		PAUL R. DESTEFANO	18-SEP-1989
+    1	   1132  ! 		ADD SS$_INVEVENT FATAL MESSAGE FOR $SETEVTAST AND
+    1	   1133  ! 		$CANEVTAST.
+    1	   1134  ! 
+    1	   1135  ! 	X-46	SAS0203		SCOTT A. SHURTS		15-SEP-1989
+    1	   1136  ! 		ADD SS$_INCONOLCK FATAL MESSAGE FOR $CHANGE_ACL.
+    1	   1137  ! 
+    1	   1138  ! 	X-45	CAM0063		CHRISTOPHER A. MEGA	13-SEP-1989
+    1	   1139  ! 		ADD WARNING AND INFORMATIONAL STATUS FOR ENHANCED PRIMARY
+    1	   1140  ! 		CPU SWITCHING: CPUSTARTIP, CPUSTARTD, CPUSTOPPD, PRIMNOSTP.
+    1	   1141  ! 		ALSO ADDED /FAO=1 TO NSTPPD.
+    1	   1142  ! 
+    1	   1143  !        X-44	DDP0429		DERRELL D. PIPER       11-SEP-1989  16:57
+    1	   1144  ! 		CHANGE THE SEVERITY OF THE NEW PASSWORD STATUS CODES
+    1	   1145  ! 		FROM FATAL TO ERROR.
+    1	   1146  ! 
+    1	   1147  ! 	X-43	CBD0198		CHARLES B. DUNN		14-AUG-1989
+    1	   1148  ! 		ADD SS$_EFNOTSET FOR IOC$PRE_SIMREQCOM SUPPORT
+    1	   1149  ! 
+    1	   1150  ! 	X-42	RAP0491		ROD A. PAYNE		15-AUG-89
+    1	   1151  ! 		ADD SS$_HSTBUFACC, TO REPORT HOST BUFFER ACCESS ERRORS.
+    1	   1152  ! 
+    1	   1153  ! 	X-41	CJB0041		CHERYL J. BULMER	 9-AUG-1989
+    1	   1154  ! 		ADD SS$_LOADER, TO REPORT LOADER CYCLE ERRORS.
+    1	   1155  ! 
+    1	   1156  ! 	X-40	MAS0238		MARK A. STILES		 9-AUG-1989
+    1	   1157  ! 		ADD SS$_CPUCAP FOR USE WHEN A REQUESTED CPU DOES NOT
+    1	   1158  ! 		HAVE THE CAPABILITIES REQUIRED TO RUN THE PROCESS.
+    1	   1159  ! 		[FOLD FROM X-29U11 IN V5.3 STREAM]
+    1	   1160  ! 		
+    1	   1161  ! 	X-39	MVI0033		MICHAEL V. ILES,	28-JUL-1989 10:08:05.45
+    1	   1162  ! 		ADD MESSAGE CODE NOSUCHCPB AND CHANGE TEXT FOR ACLFULL
+    1	   1163  ! 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  23
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1164  !        X-38	DDP0387		DERRELL D. PIPER       25-JUL-1989  12:47
+    1	   1165  ! 		ADD MESSAGE CODES FOR SITE-SPECIFIC PASSWORD POLICIES.
+    1	   1166  ! 
+    1	   1167  !        X-37	DDP0375		DERRELL D. PIPER       31-MAY-1989  15:12
+    1	   1168  ! 		REPLACE SOME OBSOLETE MESSAGE CODES.	
+    1	   1169  ! 
+    1	   1170  ! 	X-36	HH0340		HAI HUANG		03-OCT-1988
+    1	   1171  ! 		ADD VECALIGN ERROR.
+    1	   1172  ! 
+    1	   1173  ! 	X-35	SSA0002		STAN AMWAY		30-SEP-1988
+    1	   1174  ! 		CORRECT TEXT FOR SS$_VECFULL.
+    1	   1175  ! 
+    1	   1176  ! 	X-34	JEJ0550		JAMES E JOHNSON		19-SEP-1988
+    1	   1177  ! 		ADD ALRCURTID, RMALRDCL, NOSUCHPART, INVLOG, BADLOGVER,
+    1	   1178  ! 		LOGSTALL, LOGFULL, LOGNAME.
+    1	   1179  ! 
+    1	   1180  ! 	X-33	SSA0001		STAN AMWAY		14-SEP-1988
+    1	   1181  ! 		ADD NOSUSPEND ("process cannot be suspended").
+    1	   1182  ! 
+    1	   1183  ! 	X-32	RJB0165		RICHARD J. BOUCHARD JR.	14-SEP-1988
+    1	   1184  ! 		ADD NOMOREDEV MESSAGE FOR $DEVICE_SCAN SERVICE.
+    1	   1185  ! 
+    1	   1186  ! 	X-31	ACG0559		ANDREW C. GOLDSTEIN,	31-AUG-1988  16:28
+    1	   1187  ! 		ADD HWM_STALL FOR ABORT OF STALLED INTERNAL IRP'S
+    1	   1188  ! 
+    1	   1189  ! 	X-30	HH0334		HAI HUANG		31-AUG-1988
+    1	   1190  ! 		REPLACE SYSVERDIF WITH A NEW VALUE (I.E. SEVERITY) AND
+    1	   1191  ! 		A NEW MESSAGE.
+    1	   1192  ! 
+    1	   1193  !        X-29	DDP0308		DERRELL D. PIPER       21-JUL-1988  14:02
+    1	   1194  ! 		ADD PWDSYNTAX, INVPWDLEN, AND PWDNOTDIF.
+    1	   1195  ! 
+    1	   1196  ! 	X-28	JEJ0527		JAMES E JOHNSON		27-JUN-1988
+    1	   1197  ! 		ADD NOSUCHTID, NOCURTID, WRONGSTATE, VETO, UNKRESULT,
+    1	   1198  ! 		FORGET, PREPARED, NOSUCHRM, ITEMNOTFOUND, NOMOREITEMS
+    1	   1199  ! 
+    1	   1200  ! 	X-26	HH0315		HAI HUANG		18-APR-1988
+    1	   1201  ! 	 -27	ADD NEW STATUS CODES FOR VECTOR SUPPORT.
+    1	   1202  ! 
+    1	   1203  !        X-25    PT00010		PANKAJ TANDON		30-DEC-1987  
+    1	   1204  ! 		ADD ALLSTARTED,ALRDYSTRT,ALRDYSTPPD AND NSTPPD FOR
+    1	   1205  ! 		$START/STOP CPU ERRONEOUS CASES.
+    1	   1206  ! 
+    1	   1207  ! 	X-24	LMP0465		L. MARK PILANT,		28-OCT-1987  15:58
+    1	   1208  ! 		ADD A NEW MESSAGE, SS$_NORIGHTSDB, TO INDICATE THAT THERE
+    1	   1209  ! 		IS NOT A RIGHTS DATABASE IS NOT PRESENT ON THE SYSTEM.
+    1	   1210  ! 
+    1	   1211  ! 	X-23	SJF		STU FARNHAM		5-OCT-1987
+    1	   1212  ! 		ADD NOSUCHCPU
+    1	   1213  ! 
+    1	   1214  ! 	X-22	DLM006		DAN MURPHY		13-SEP-1987
+    1	   1215  ! 		INFORMATIONAL CODES FOR $GETSECI.
+    1	   1216  ! 
+    1	   1217  ! 	X-21	WMC0021		WAYNE CARDOZA		4-SEP-1987
+    1	   1218  ! 		FIX A MISSPELLING IN VA_IN_USE.
+    1	   1219  ! 
+    1	   1220  ! 	X-20	WMC0020		WAYNE CARDOZA		27-JUL-1987
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  24
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1221  ! 		ADD NODELETE.
+    1	   1222  ! 
+    1	   1223  ! 	X-19	WMC0019		WAYNE CARDOZA		10-MAR-1987
+    1	   1224  ! 		EXPRCLM  SHOULD NOT MENTION SUBPROCESSES.
+    1	   1225  ! 
+    1	   1226  ! 	X-18	WMC0018		WAYNE CARDOZA		19-FEB-1987
+    1	   1227  ! 		ADD VA_IN_USE.
+    1	   1228  ! 
+    1	   1229  ! 	X-17	DDP0029		DERRELL D. PIPER	21-JAN-1987
+    1	   1230  ! 		CONVERT SS$_BADXXXCTX TO SINGLE BADCONTEXT MSG.
+    1	   1231  ! 
+    1	   1232  ! 	X-16	DDP0027		DERRELL D. PIPER	12-JAN-1987
+    1	   1233  ! 		ADD SS$_TOOMUCHCTX AND SS$_BADUAICTX.
+    1	   1234  ! 
+    1	   1235  ! 	X-15	HH0237		HAI HUANG		06-JAN-1987
+    1	   1236  ! 		ADD SS$_UNSUPPORTED.
+    1	   1237  ! 
+    1	   1238  ! 	X-14	DDP0008		DERRELL D. PIPER	08-DEC-1986
+    1	   1239  ! 		ADD SS$_LASTID, SS$_NOMOREID, SS$_RLSEMPTY, AND 
+    1	   1240  ! 		SS$_BADJPICTX FOR JPI$_RIGHTSLIST ITEM CODE.
+    1	   1241  ! 		(NB: S VARIANT IS NOW OBSOLETE.)
+    1	   1242  !    
+    1	   1243  ! 	X-9	NCD0001		NANCY C. DENARDO	21-OCT-1986
+    1	   1244  ! 		ADDED SS$_EXLICENSE, SS$_INVLICENSE, SS$_LICENSE_LEVEL,
+    1	   1245  ! 		AND SS$_INV_HW_ID FOR LMF SERVICE.
+    1	   1246  ! 
+    1	   1247  ! 	X-8     SAS001		SCOTT A. SHURTS		02-OCT-1986
+    1	   1248  ! 		ADDED SS$_SRVMMAT TO INDICATE CRYPTOGRAPHIC SERVICE
+    1	   1249  ! 		MISMATCH.
+    1	   1250  ! 
+    1	   1251  ! 	X-7	KL 0001		KEITH LOEPERE		12-JUN-1986
+    1	   1252  ! 		ADDED SS$_REMOVED TO INDICATE DIR ENTRY ONLY REMOVED.
+    1	   1253  ! 
+    1	   1254  ! 	X-6	CWH5006		CW HOBBS		30-MAY-1986
+    1	   1255  ! 		ADD SS$_REMOTE_PROC ERROR MESSAGE FOR CWPS.
+    1	   1256  ! 
+    1	   1257  ! 	X-5H2	SJF		STU FARNHAM		29-MAY-1986
+    1	   1258  ! 		ADD	SS$_CPUNOTACT TO INDICATE THAT THE REQUESTED
+    1	   1259  ! 		CPU IN AN SMP SYSTEM IS NOT ACTIVE.
+    1	   1260  ! 
+    1	   1261  ! 	X-5	PRD0184		PAUL R. DESTEFANO	07-NOV-1985
+    1	   1262  ! 		ADD SS$_DATALOST "data lost" TO INDICATE DLS END
+    1	   1263  ! 		FLAG SET IN CACHING TAPE DRIVE OR DRIVER HAS OTHERWISE
+    1	   1264  ! 		DETECTED THE LOSS OF CACHED DATA.
+    1	   1265  ! 
+    1	   1266  ! 	X-4	LMP0382		L. MARK PILANT,		 6-NOV-1985  10:10
+    1	   1267  ! 		ADD SS$_OBJLOCKHELD TO INDICATE THAT A PROCESS ALREADY HOLDS
+    1	   1268  ! 		THE OBJECT'S ACL LOCK.
+    1	   1269  ! 
+    1	   1270  ! 	X-3	JMK0002		JOSEPH M. KRAETSCH	17-SEP-1985
+    1	   1271  ! 		ADD SS$_RUCONFLICT "file has active RUs by another facility".
+    1	   1272  ! 		REMOVE NOTMPJNL, NOPRMJNL (OBSOLETE).
+    1	   1273  ! 
+    1	   1274  ! 	V04-001	ROW0466		RALPH O. WEBER		11-JUN-1985
+    1	   1275  ! 		REPLACE SS$_SHACPYINP (A NO LONGER USED SHADOWING ERROR 
+    1	   1276  ! 		STATUS) WITH SS$_DEVNOTSHR, "device not currently shareable".  
+    1	   1277  ! 		SS$_DEVNOTSHR IS AN ERROR STATUE FOR USE WITH DEVICES MARKED 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  25
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1278  ! 		FOR EXCLUSIVE ACCESS BY SOMEONE ELSE BY AN MSCP CONTROLLER.
+    1	   1279  ! 
+    1	   1280  ! ---
+    1	   1281  ! +
+    1	   1282  !  SYSTEM STATUS CODES
+    1	   1283  ! 
+    1	   1284  ! 	LAYOUT OF MESSAGE SPACE:
+    1	   1285  ! 
+    1	   1286  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1287  ! 
+    1	   1288  ! 	0-127       0-3FF	128	FATAL ERRORS
+    1	   1289  !      128-191	  400-5FF	 64	HARDWARE DEFINED FATAL ERRORS
+    1	   1290  !      192-255	  600-7FF	 64	SUCCESS CODES
+    1	   1291  !      256-383	  800-BFF	128	WARNING CODES
+    1	   1292  !      384-447	  C00-DFF	 64	INFORMATIONAL CODES
+    1	   1293  !      448-511	  E00-FFF	 64	NONFATAL ERROR CODES
+    1	   1294  !     512-1023	1000-1FFF	512	SHARED MESSAGES (NOT HERE, SEE SHRMSG)
+    1	   1295  !    1024-1279	2000-27FF	256	FATAL ERRORS (CONTINUED FROM 3FF)
+    1	   1296  !    1280-1343	2800-29FF	 64	NO PRIVILEGE ERRORS
+    1	   1297  !    1344-1375	2A00-2AFF	 32	EXCEEDED QUOTA ERRORS
+    1	   1298  !    1376-1407	2B00-2BFF	 32	RESERVED FOR MEDIA MGMT EXTENSIONS
+    1	   1299  !    1408-1663	2C00-33FF	256	NONFATAL ERROR CODES (CONTINUED FROM FFF)
+    1	   1300  !    1664-4031	3400-7DFF      2368	(UNUSED)
+    1	   1301  !    4032-4095	7E00-7FFF	 64	RESERVED FOR SCS SYSAPS
+    1	   1302  !    
+    1	   1303  ! -
+    1	   1304  ! 
+    1	   1305  !  EXPLICITLY DEFINED SUCESS CODES
+    1	   1306  ! 
+    1	   1307  !  DO NOT MIX THESE CODES WITH INCREMENTAL ASSIGNMENTS BELOW
+    1	   1308  ! 
+    1	   1309 	PARAMETER SYSTEM$_FACILITY = '00000000'X
+    1	   1310 	PARAMETER SS$_NORMAL = '00000001'X
+    1	   1311  ! 
+    1	   1312  !  NOTE THAT CONTINUE,WASCLR,WASSET,REMEMBER DO NOT HAVE ANY MESSAGE TEXT
+    1	   1313  !  SINCE THESE CODES USE THE SAME MESSAGE NUMBER AS NORMAL AND ACCVIO,
+    1	   1314  !  THEY CAN NEVER BE MADE TO HAVE MESSAGES ASSOCIATED WITH THEM.
+    1	   1315  ! 
+    1	   1316 	PARAMETER SS$_CONTINUE = '00000001'X
+    1	   1317 	PARAMETER SS$_WASCLR = '00000001'X
+    1	   1318 	PARAMETER SS$_WASSET = '00000009'X
+    1	   1319 	PARAMETER SS$_REMEMBER = '00000001'X
+    1	   1320  ! 
+    1	   1321  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1322  ! 
+    1	   1323  ! 	0-127       0-3FF	128	FATAL ERRORS
+    1	   1324  !    1024-1279	2000-27FF	256	FATAL ERRORS (CONTINUED FROM 3FF)
+    1	   1325  ! 
+    1	   1326 	PARAMETER SS$_ACCVIO = '0000000C'X
+    1	   1327 	PARAMETER SS$_BADPARAM = '00000014'X
+    1	   1328 	PARAMETER SS$_EXQUOTA = '0000001C'X
+    1	   1329 	PARAMETER SS$_NOPRIV = '00000024'X
+    1	   1330  !  MAKE THE ABOVE ERRORS FALL INTO SHORT LITERALS
+    1	   1331 	PARAMETER SS$_ABORT = '0000002C'X
+    1	   1332 	PARAMETER SS$_BADATTRIB = '00000034'X
+    1	   1333 	PARAMETER SS$_BADESCAPE = '0000003C'X
+    1	   1334 	PARAMETER SS$_BADIMGHDR = '00000044'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  26
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1335 	PARAMETER SS$_CHANINTLK = '0000004C'X
+    1	   1336 	PARAMETER SS$_CTRLERR = '00000054'X
+    1	   1337 	PARAMETER SS$_DATACHECK = '0000005C'X
+    1	   1338 	PARAMETER SS$_DEVFOREIGN = '00000064'X
+    1	   1339 	PARAMETER SS$_DEVMOUNT = '0000006C'X
+    1	   1340 	PARAMETER SS$_DEVNOTMBX = '00000074'X
+    1	   1341 	PARAMETER SS$_DEVNOTMOUNT = '0000007C'X
+    1	   1342 	PARAMETER SS$_DEVOFFLINE = '00000084'X
+    1	   1343 	PARAMETER SS$_DRVERR = '0000008C'X
+    1	   1344 	PARAMETER SS$_DUPLNAM = '00000094'X
+    1	   1345 	PARAMETER SS$_FILACCERR = '0000009C'X
+    1	   1346 	PARAMETER SS$_FILALRACC = '000000A4'X
+    1	   1347 	PARAMETER SS$_FILNOTACC = '000000AC'X
+    1	   1348 	PARAMETER SS$_FILNOTEXP = '000000B4'X
+    1	   1349 	PARAMETER SS$_FORMAT = '000000BC'X
+    1	   1350 	PARAMETER SS$_GPTFULL = '000000C4'X
+    1	   1351 	PARAMETER SS$_GSDFULL = '000000CC'X
+    1	   1352 	PARAMETER SS$_LCKPAGFUL = '000000D4'X
+    1	   1353 	PARAMETER SS$_ILLBLKNUM = '000000DC'X
+    1	   1354 	PARAMETER SS$_ILLCNTRFUNC = '000000E4'X
+    1	   1355 	PARAMETER SS$_ILLEFC = '000000EC'X
+    1	   1356 	PARAMETER SS$_ILLIOFUNC = '000000F4'X
+    1	   1357 	PARAMETER SS$_ILLPAGCNT = '000000FC'X
+    1	   1358 	PARAMETER SS$_ILLSER = '00000104'X
+    1	   1359 	PARAMETER SS$_INCVOLLABEL = '0000010C'X
+    1	   1360 	PARAMETER SS$_INSFARG = '00000114'X
+    1	   1361 	PARAMETER SS$_INSFWSL = '0000011C'X
+    1	   1362 	PARAMETER SS$_INSFMEM = '00000124'X
+    1	   1363 	PARAMETER SS$_INSFRAME = '0000012C'X
+    1	   1364 	PARAMETER SS$_IVADDR = '00000134'X
+    1	   1365 	PARAMETER SS$_IVCHAN = '0000013C'X
+    1	   1366 	PARAMETER SS$_IVDEVNAM = '00000144'X
+    1	   1367 	PARAMETER SS$_IVGSDNAM = '0000014C'X
+    1	   1368 	PARAMETER SS$_IVLOGNAM = '00000154'X
+    1	   1369 	PARAMETER SS$_IVLOGTAB = '0000015C'X
+    1	   1370 	PARAMETER SS$_IVQUOTAL = '00000164'X
+    1	   1371 	PARAMETER SS$_IVSECFLG = '0000016C'X
+    1	   1372 	PARAMETER SS$_IVSSRQ = '00000174'X
+    1	   1373 	PARAMETER SS$_IVSTSFLG = '0000017C'X
+    1	   1374 	PARAMETER SS$_IVTIME = '00000184'X
+    1	   1375 	PARAMETER SS$_LENVIO = '0000018C'X
+    1	   1376 	PARAMETER SS$_LKWSETFUL = '00000194'X
+    1	   1377 	PARAMETER SS$_MBTOOSML = '0000019C'X
+    1	   1378 	PARAMETER SS$_MEDOFL = '000001A4'X
+    1	   1379 	PARAMETER SS$_NODATA = '000001AC'X
+    1	   1380 	PARAMETER SS$_NOIOCHAN = '000001B4'X
+    1	   1381 	PARAMETER SS$_NOLOGNAM = '000001BC'X
+    1	   1382 	PARAMETER SS$_NONEXDRV = '000001C4'X
+    1	   1383 	PARAMETER SS$_NOTFILEDEV = '000001CC'X
+    1	   1384 	PARAMETER SS$_NOTINTBLSZ = '000001D4'X
+    1	   1385 	PARAMETER SS$_NOTLABELMT = '000001DC'X
+    1	   1386 	PARAMETER SS$_NOTSQDEV = '000001E4'X
+    1	   1387 	PARAMETER SS$_PAGOWNVIO = '000001EC'X
+    1	   1388 	PARAMETER SS$_PARITY = '000001F4'X
+    1	   1389 	PARAMETER SS$_PARTESCAPE = '000001FC'X
+    1	   1390 	PARAMETER SS$_PFMBSY = '00000204'X
+    1	   1391 	PARAMETER SS$_PSTFULL = '0000020C'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  27
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1392 	PARAMETER SS$_RESULTOVF = '00000214'X
+    1	   1393 	PARAMETER SS$_SECTBLFUL = '0000021C'X
+    1	   1394 	PARAMETER SS$_TAPEPOSLOST = '00000224'X
+    1	   1395 	PARAMETER SS$_TIMEOUT = '0000022C'X
+    1	   1396 	PARAMETER SS$_UNASEFC = '00000234'X
+    1	   1397 	PARAMETER SS$_UNSAFE = '0000023C'X
+    1	   1398 	PARAMETER SS$_VASFULL = '00000244'X
+    1	   1399 	PARAMETER SS$_VECINUSE = '0000024C'X
+    1	   1400 	PARAMETER SS$_VOLINV = '00000254'X
+    1	   1401 	PARAMETER SS$_WRITLCK = '0000025C'X
+    1	   1402 	PARAMETER SS$_NOTAPEOP = '00000264'X
+    1	   1403 	PARAMETER SS$_IVCHNLSEC = '0000026C'X
+    1	   1404 	PARAMETER SS$_NOMBX = '00000274'X
+    1	   1405 	PARAMETER SS$_NOLINKS = '0000027C'X
+    1	   1406 	PARAMETER SS$_NOSOLICIT = '00000284'X
+    1	   1407 	PARAMETER SS$_NOSUCHNODE = '0000028C'X
+    1	   1408 	PARAMETER SS$_REJECT = '00000294'X
+    1	   1409 	PARAMETER SS$_TOOMUCHDATA = '0000029C'X
+    1	   1410 	PARAMETER SS$_BUGCHECK = '000002A4'X
+    1	   1411 	PARAMETER SS$_FILNOTCNTG = '000002AC'X
+    1	   1412 	PARAMETER SS$_BADSTACK = '000002B4'X
+    1	   1413 	PARAMETER SS$_MCHECK = '000002BC'X
+    1	   1414 	PARAMETER SS$_DEVACTIVE = '000002C4'X
+    1	   1415 	PARAMETER SS$_HANGUP = '000002CC'X
+    1	   1416 	PARAMETER SS$_OPINCOMPL = '000002D4'X
+    1	   1417 	PARAMETER SS$_ILLSEQOP = '000002DC'X
+    1	   1418 	PARAMETER SS$_IVSECIDCTL = '000002E4'X
+    1	   1419 	PARAMETER SS$_NOTNETDEV = '000002EC'X
+    1	   1420 	PARAMETER SS$_IVPROTECT = '000002F4'X
+    1	   1421 	PARAMETER SS$_ACPVAFUL = '000002FC'X
+    1	   1422 	PARAMETER SS$_MTLBLLONG = '00000304'X
+    1	   1423 	PARAMETER SS$_BUFBYTALI = '0000030C'X
+    1	   1424 	PARAMETER SS$_NOAQB = '00000314'X
+    1	   1425 	PARAMETER SS$_WRONGACP = '0000031C'X
+    1	   1426 	PARAMETER SS$_BUFNOTALIGN = '00000324'X
+    1	   1427 	PARAMETER SS$_DEVCMDERR = '0000032C'X
+    1	   1428 	PARAMETER SS$_DEVREQERR = '00000334'X
+    1	   1429 	PARAMETER SS$_INSFBUFDP = '0000033C'X
+    1	   1430 	PARAMETER SS$_INSFMAPREG = '00000344'X
+    1	   1431 	PARAMETER SS$_IVBUFLEN = '0000034C'X
+    1	   1432 	PARAMETER SS$_IVMODE = '00000354'X
+    1	   1433 	PARAMETER SS$_MCNOTVALID = '0000035C'X
+    1	   1434 	PARAMETER SS$_POWERFAIL = '00000364'X
+    1	   1435 	PARAMETER SS$_SHMGSNOTMAP = '0000036C'X
+    1	   1436 	PARAMETER SS$_TOOMANYLNAM = '00000374'X
+    1	   1437 	PARAMETER SS$_SHMNOTCNCT = '0000037C'X
+    1	   1438 	PARAMETER SS$_NOTCREATOR = '00000384'X
+    1	   1439 	PARAMETER SS$_INTERLOCK = '0000038C'X
+    1	   1440 	PARAMETER SS$_BADQUEUEHDR = '00000394'X
+    1	   1441 	PARAMETER SS$_NOSLOT = '0000039C'X
+    1	   1442 	PARAMETER SS$_SUSPENDED = '000003A4'X
+    1	   1443 	PARAMETER SS$_EXPORTQUOTA = '000003AC'X
+    1	   1444 	PARAMETER SS$_NOSHMBLOCK = '000003B4'X
+    1	   1445 	PARAMETER SS$_BADQFILE = '000003BC'X
+    1	   1446 	PARAMETER SS$_NOQFILE = '000003C4'X
+    1	   1447 	PARAMETER SS$_QFACTIVE = '000003CC'X
+    1	   1448 	PARAMETER SS$_QFNOTACT = '000003D4'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  28
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1449 	PARAMETER SS$_DUPDSKQUOTA = '000003DC'X
+    1	   1450 	PARAMETER SS$_NODISKQUOTA = '000003E4'X
+    1	   1451 	PARAMETER SS$_EXDISKQUOTA = '000003EC'X
+    1	   1452 	PARAMETER SS$_IDMISMATCH = '000003F4'X
+    1	   1453 	PARAMETER SS$_NOWRT = '000003FC'X
+    1	   1454  !  **************
+    1	   1455  !  NOTE:  THE ABOVE SET OF SEVERE ERROR MESSAGES IS FULL!!!!
+    1	   1456  ! 	 ANY ADDITIONAL SEVERE ERROR MESSAGES MUST BE ADDED
+    1	   1457  ! 	 BELOW, IN THE RANGE HEX 2000-2800.
+    1	   1458  !  **************
+    1	   1459 	PARAMETER SS$_BADISD = '00002004'X
+    1	   1460 	PARAMETER SS$_RELINK = '0000200C'X
+    1	   1461 	PARAMETER SS$_NOTINSTALL = '00002014'X
+    1	   1462 	PARAMETER SS$_SHARTOOBIG = '0000201C'X
+    1	   1463 	PARAMETER SS$_NOP1VA = '00002024'X
+    1	   1464 	PARAMETER SS$_MULTRMS = '0000202C'X
+    1	   1465 	PARAMETER SS$_VECFULL = '00002034'X
+    1	   1466 	PARAMETER SS$_IVLVEC = '0000203C'X
+    1	   1467 	PARAMETER SS$_INSFSPTS = '00002044'X
+    1	   1468 	PARAMETER SS$_DISCONNECT = '0000204C'X
+    1	   1469 	PARAMETER SS$_PRIVINSTALL = '00002054'X
+    1	   1470 	PARAMETER SS$_PROTINSTALL = '0000205C'X
+    1	   1471 	PARAMETER SS$_BADVEC = '00002064'X
+    1	   1472 	PARAMETER SS$_REMRSRC = '0000206C'X
+    1	   1473 	PARAMETER SS$_PROTOCOL = '00002074'X
+    1	   1474 	PARAMETER SS$_THIRDPARTY = '0000207C'X
+    1	   1475 	PARAMETER SS$_NOSUCHUSER = '00002084'X
+    1	   1476 	PARAMETER SS$_SHUT = '0000208C'X
+    1	   1477 	PARAMETER SS$_UNREACHABLE = '00002094'X
+    1	   1478 	PARAMETER SS$_INVLOGIN = '0000209C'X
+    1	   1479 	PARAMETER SS$_NOSUCHOBJ = '000020A4'X
+    1	   1480 	PARAMETER SS$_EXCPUTIM = '000020AC'X
+    1	   1481 	PARAMETER SS$_OPRABORT = '000020B4'X
+    1	   1482 	PARAMETER SS$_SHRIDMISMAT = '000020BC'X
+    1	   1483 	PARAMETER SS$_COMMHARD = '000020C4'X
+    1	   1484 	PARAMETER SS$_IVCHAR = '000020CC'X
+    1	   1485 	PARAMETER SS$_DEVINACT = '000020D4'X
+    1	   1486 	PARAMETER SS$_CONNECFAIL = '000020DC'X
+    1	   1487 	PARAMETER SS$_LINKABORT = '000020E4'X
+    1	   1488 	PARAMETER SS$_LINKDISCON = '000020EC'X
+    1	   1489 	PARAMETER SS$_LINKEXIT = '000020F4'X
+    1	   1490 	PARAMETER SS$_PATHLOST = '000020FC'X
+    1	   1491 	PARAMETER SS$_CLEARED = '00002104'X
+    1	   1492 	PARAMETER SS$_RESET = '0000210C'X
+    1	   1493 	PARAMETER SS$_UNSOLICIT = '00002114'X
+    1	   1494 	PARAMETER SS$_TOOMANYREDS = '0000211C'X
+    1	   1495 	PARAMETER SS$_IVLOCKID = '00002124'X
+    1	   1496 	PARAMETER SS$_SUBLOCKS = '0000212C'X
+    1	   1497 	PARAMETER SS$_PARNOTGRANT = '00002134'X
+    1	   1498 	PARAMETER SS$_CVTUNGRANT = '0000213C'X
+    1	   1499 	PARAMETER SS$_FORCEDERROR = '00002144'X
+    1	   1500 	PARAMETER SS$_ILLSELF = '0000214C'X
+    1	   1501 	PARAMETER SS$_ILLCDTST = '00002154'X
+    1	   1502 	PARAMETER SS$_NOLISTENER = '0000215C'X
+    1	   1503 	PARAMETER SS$_EXGBLPAGFIL = '00002164'X
+    1	   1504 	PARAMETER SS$_BADRCT = '0000216C'X
+    1	   1505 	PARAMETER SS$_DIRNOTEMPTY = '00002174'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  29
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1506 	PARAMETER SS$_FORCEDEXIT = '0000217C'X
+    1	   1507 	PARAMETER SS$_NOTPRINTED = '00002184'X
+    1	   1508 	PARAMETER SS$_JBCERROR = '0000218C'X
+    1	   1509 	PARAMETER SS$_NOLICENSE = '00002194'X
+    1	   1510 	PARAMETER SS$_VCBROKEN = '0000219C'X
+    1	   1511 	PARAMETER SS$_VCCLOSED = '000021A4'X
+    1	   1512 	PARAMETER SS$_INSFCDT = '000021AC'X
+    1	   1513 	PARAMETER SS$_DEVNOTDISM = '000021B4'X
+    1	   1514 	PARAMETER SS$_NOSHRIMG = '000021BC'X
+    1	   1515 	PARAMETER SS$_DUPUNIT = '000021C4'X
+    1	   1516 	PARAMETER SS$_BADACLCTX = '000021CC'X
+    1	   1517 	PARAMETER SS$_SERIOUSEXCP = '000021D4'X
+    1	   1518 	PARAMETER SS$_TEMPLATEDEV = '000021DC'X
+    1	   1519 	PARAMETER SS$_IVACL = '000021E4'X
+    1	   1520 	PARAMETER SS$_NOSUCHID = '000021EC'X
+    1	   1521 	PARAMETER SS$_NOLCLMEDA = '000021F4'X
+    1	   1522 	PARAMETER SS$_NOREGAVIL = '000021FC'X
+    1	   1523 	PARAMETER SS$_NOREGSUIT = '00002204'X
+    1	   1524 	PARAMETER SS$_NOSUCHPGM = '0000220C'X
+    1	   1525 	PARAMETER SS$_PGMLDFAIL = '00002214'X
+    1	   1526 	PARAMETER SS$_PGMSTDALN = '0000221C'X
+    1	   1527 	PARAMETER SS$_IVIDENT = '00002224'X
+    1	   1528 	PARAMETER SS$_DUPIDENT = '0000222C'X
+    1	   1529 	PARAMETER SS$_INCSEGTRA = '00002234'X
+    1	   1530 	PARAMETER SS$_NODELEAVE = '0000223C'X
+    1	   1531 	PARAMETER SS$_KERNELINV = '00002244'X
+    1	   1532 	PARAMETER SS$_EXLNMQUOTA = '0000224C'X
+    1	   1533 	PARAMETER SS$_PARENT_DEL = '00002254'X
+    1	   1534 	PARAMETER SS$_PARNOTSYS = '0000225C'X
+    1	   1535 	PARAMETER SS$_INSSWAPSPACE = '00002264'X
+    1	   1536 	PARAMETER SS$_VOLOERR = '0000226C'X
+    1	   1537 	PARAMETER SS$_DATALATE = '00002274'X
+    1	   1538 	PARAMETER SS$_OVRMAXARG = '0000227C'X
+    1	   1539 	PARAMETER SS$_SHACHASTA = '00002284'X
+    1	   1540 	PARAMETER SS$_TERMNETDEV = '0000228C'X
+    1	   1541 	PARAMETER SS$_NOLOGTAB = '00002294'X
+    1	   1542 	PARAMETER SS$_WRONGNAME = '0000229C'X
+    1	   1543 	PARAMETER SS$_NOVOLACC = '000022A4'X
+    1	   1544 	PARAMETER SS$_NOFILACC = '000022AC'X
+    1	   1545 	PARAMETER SS$_INVEXHLIST = '000022B4'X
+    1	   1546 	PARAMETER SS$_NOACLSUPPORT = '000022BC'X
+    1	   1547 	PARAMETER SS$_INVSECLASS = '000022C4'X
+    1	   1548 	PARAMETER SS$_INCSHAMEM = '000022CC'X
+    1	   1549 	PARAMETER SS$_DEVNOTSHR = '000022D4'X
+    1	   1550 	PARAMETER SS$_RUCONFLICT = '000022DC'X
+    1	   1551 	PARAMETER SS$_DATALOST = '000022E4'X
+    1	   1552 	PARAMETER SS$_REMOTE_PROC = '000022EC'X
+    1	   1553 	PARAMETER SS$_CPUNOTACT = '000022F4'X
+    1	   1554 	PARAMETER SS$_SRVMMAT = '000022FC'X
+    1	   1555 	PARAMETER SS$_EXLICENSE = '00002304'X
+    1	   1556 	PARAMETER SS$_INVLICENSE = '0000230C'X
+    1	   1557 	PARAMETER SS$_LICENSE_LEVEL = '00002314'X
+    1	   1558 	PARAMETER SS$_INV_HW_ID = '0000231C'X
+    1	   1559 	PARAMETER SS$_BADCONTEXT = '00002324'X
+    1	   1560 	PARAMETER SS$_TOOMUCHCTX = '0000232C'X
+    1	   1561 	PARAMETER SS$_VA_IN_USE = '00002334'X
+    1	   1562 	PARAMETER SS$_NODELETE = '0000233C'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  30
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1563 	PARAMETER SS$_NOSUCHCPU = '00002344'X
+    1	   1564 	PARAMETER SS$_IMGVEXC = '0000234C'X
+    1	   1565 	PARAMETER SS$_NOSAVPEXC = '00002354'X
+    1	   1566 	PARAMETER SS$_NOSUCHTID = '0000235C'X
+    1	   1567 	PARAMETER SS$_NOSUCHRM = '00002364'X
+    1	   1568 	PARAMETER SS$_NOCURTID = '0000236C'X
+    1	   1569 	PARAMETER SS$_WRONGSTATE = '00002374'X
+    1	   1570 	PARAMETER SS$_VETO = '0000237C'X
+    1	   1571 	PARAMETER SS$_PWDSYNTAX = '00002384'X
+    1	   1572 	PARAMETER SS$_PWDNOTDIF = '0000238C'X
+    1	   1573 	PARAMETER SS$_INVPWDLEN = '00002394'X
+    1	   1574 	PARAMETER SS$_SYSVERDIF = '0000239C'X
+    1	   1575 	PARAMETER SS$_HWM_STALL = '000023A4'X
+    1	   1576 	PARAMETER SS$_NOSUSPEND = '000023AC'X
+    1	   1577 	PARAMETER SS$_NOSUCHPART = '000023B4'X
+    1	   1578 	PARAMETER SS$_RMALRDCL = '000023BC'X
+    1	   1579 	PARAMETER SS$_ALRCURTID = '000023C4'X
+    1	   1580 	PARAMETER SS$_INVLOG = '000023CC'X
+    1	   1581 	PARAMETER SS$_BADLOGVER = '000023D4'X
+    1	   1582 	PARAMETER SS$_OPINPROG = '000023DC'X
+    1	   1583 	PARAMETER SS$_WRONGACMODE = '000023E4'X
+    1	   1584 	PARAMETER SS$_SUBTRACED = '000023EC'X
+    1	   1585 	PARAMETER SS$_ARCHIVING = '000023F4'X
+    1	   1586 	PARAMETER SS$_ARCHIVED = '000023FC'X
+    1	   1587 	PARAMETER SS$_SITEPWDFAIL = '00002404'X
+    1	   1588 	PARAMETER SS$_NOSUCHCPB = '0000240C'X
+    1	   1589 	PARAMETER SS$_CPUCAP = '00002414'X
+    1	   1590 	PARAMETER SS$_LOADER = '0000241C'X
+    1	   1591 	PARAMETER SS$_HSTBUFACC = '00002424'X
+    1	   1592 	PARAMETER SS$_INCONOLCK = '0000242C'X
+    1	   1593 	PARAMETER SS$_INVEVENT = '00002434'X
+    1	   1594 	PARAMETER SS$_NOSUCHFAC = '0000243C'X
+    1	   1595 	PARAMETER SS$_NOCALLPRIV = '00002444'X
+    1	   1596 	PARAMETER SS$_INSFLPGS = '0000244C'X
+    1	   1597 	PARAMETER SS$_INSFRPGS = '00002454'X
+    1	   1598 	PARAMETER SS$_BADREASON = '0000245C'X
+    1	   1599 	PARAMETER SS$_NOSUCHBID = '00002464'X
+    1	   1600 	PARAMETER SS$_NOTORIGIN = '0000246C'X
+    1	   1601 	PARAMETER SS$_NOLOG = '00002474'X
+    1	   1602 	PARAMETER SS$_TPDISABLED = '0000247C'X
+    1	   1603 	PARAMETER SS$_BRANCHENDED = '00002484'X
+    1	   1604 	PARAMETER SS$_BRANCHSTARTED = '0000248C'X
+    1	   1605 	PARAMETER SS$_NOSUCHREPORT = '00002494'X
+    1	   1606 	PARAMETER SS$_BADTIME = '0000249C'X
+    1	   1607 	PARAMETER SS$_PARTJOINED = '000024A4'X
+    1	   1608 	PARAMETER SS$_NOPRESUME = '000024AC'X
+    1	   1609 	PARAMETER SS$_RECOVERCANCEL = '000024B4'X
+    1	   1610 	PARAMETER SS$_CURTIDCHANGE = '000024BC'X
+    1	   1611 	PARAMETER SS$_NOREADER = '000024C4'X
+    1	   1612 	PARAMETER SS$_NOWRITER = '000024CC'X
+    1	   1613 	PARAMETER SS$_DEVNOTWS = '000024D4'X
+    1	   1614 	PARAMETER SS$_NOCLASS = '000024DC'X
+    1	   1615 	PARAMETER SS$_CONTEXTSKEW = '000024E4'X
+    1	   1616 	PARAMETER SS$_BADFORGEDB = '000024EC'X
+    1	   1617 	PARAMETER SS$_NODOMAIN = '000024F4'X
+    1	   1618 	PARAMETER SS$_OVRMAXAUD = '000024FC'X
+    1	   1619 	PARAMETER SS$_BADCHAIN = '00002504'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  31
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1620 	PARAMETER SS$_BADBUFLEN = '0000250C'X
+    1	   1621 	PARAMETER SS$_BADITMCOD = '00002514'X
+    1	   1622 	PARAMETER SS$_BADBUFADR = '0000251C'X
+    1	   1623 	PARAMETER SS$_BADRETLEN = '00002524'X
+    1	   1624 	PARAMETER SS$_SSINOTHELD = '0000252C'X
+    1	   1625 	PARAMETER SS$_SSAMISSING = '00002534'X
+    1	   1626 	PARAMETER SS$_SSANOTAUTH = '0000253C'X
+    1	   1627 	PARAMETER SS$_BADOWNER = '00002544'X
+    1	   1628 	PARAMETER SS$_NAMESERVCOMMERR = '0000254C'X
+    1	   1629 	PARAMETER SS$_IVNODNAM = '00002554'X
+    1	   1630 	PARAMETER SS$_CONFIG_SYNTAX = '0000255C'X
+    1	   1631 	PARAMETER SS$_SHELVED = '00002564'X
+    1	   1632 	PARAMETER SS$_DRVNOTVALID = '0000256C'X
+    1	   1633 	PARAMETER SS$_SLICING_DISABLED = '00002574'X
+    1	   1634 	PARAMETER SS$_NOCALLTRANS = '0000257C'X
+    1	   1635 	PARAMETER SS$_TRANSCALLER = '00002584'X
+    1	   1636 	PARAMETER SS$_ILLPRIPOL = '0000258C'X
+    1	   1637 	PARAMETER SS$_ILLPOLICY = '00002594'X
+    1	   1638 	PARAMETER SS$_INSFRSPID = '0000259C'X
+    1	   1639 	PARAMETER SS$_INSFCREDITL = '000025A4'X
+    1	   1640 	PARAMETER SS$_INSFCREDITH = '000025AC'X
+    1	   1641 	PARAMETER SS$_INSFMAP = '000025B4'X
+    1	   1642 	PARAMETER SS$_SIG_INVARGTYPE = '000025BC'X
+    1	   1643 	PARAMETER SS$_SIG_INVFLTARG = '000025C4'X
+    1	   1644 	PARAMETER SS$_SIG_INVARGLIST = '000025CC'X
+    1	   1645 	PARAMETER SS$_SIG_INVFUNCTYPE = '000025D4'X
+    1	   1646 	PARAMETER SS$_SIG_ARGMISMATCH = '000025DC'X
+    1	   1647 	PARAMETER SS$_NOTRANQUIL = '000025E4'X
+    1	   1648 	PARAMETER SS$_NOCALLTRANS_SUP = '000025EC'X
+    1	   1649  ! 
+    1	   1650  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   1651  !  ***** NOTE: ROOM FOR 66 MORE MESSAGES IN THIS SECTION *****
+    1	   1652  ! 
+    1	   1653  ! 
+    1	   1654  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1655  ! 
+    1	   1656  !      128-191	  400-5FF	 64	HARDWARE DEFINED FATAL ERRORS
+    1	   1657  ! 
+    1	   1658 	PARAMETER SS$_PLHLDR = '00000404'X
+    1	   1659 	PARAMETER SS$_ASTFLT = '0000040C'X
+    1	   1660 	PARAMETER SS$_BREAK = '00000414'X
+    1	   1661 	PARAMETER SS$_CMODSUPR = '0000041C'X
+    1	   1662 	PARAMETER SS$_CMODUSER = '00000424'X
+    1	   1663 	PARAMETER SS$_COMPAT = '0000042C'X
+    1	   1664 	PARAMETER SS$_OPCCUS = '00000434'X
+    1	   1665 	PARAMETER SS$_OPCDEC = '0000043C'X
+    1	   1666 	PARAMETER SS$_PAGRDERR = '00000444'X
+    1	   1667 	PARAMETER SS$_RADRMOD = '0000044C'X
+    1	   1668 	PARAMETER SS$_ROPRAND = '00000454'X
+    1	   1669 	PARAMETER SS$_SSFAIL = '0000045C'X
+    1	   1670 	PARAMETER SS$_TBIT = '00000464'X
+    1	   1671 	PARAMETER SS$_DEBUG = '0000046C'X
+    1	   1672  !  THE FOLLOWING CODES MUST BE IN ORDER SINCE THEY ARE CALCULATED
+    1	   1673 	PARAMETER SS$_ARTRES = '00000474'X
+    1	   1674 	PARAMETER SS$_INTOVF = '0000047C'X
+    1	   1675 	PARAMETER SS$_INTDIV = '00000484'X
+    1	   1676 	PARAMETER SS$_FLTOVF = '0000048C'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  32
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1677 	PARAMETER SS$_FLTDIV = '00000494'X
+    1	   1678 	PARAMETER SS$_FLTUND = '0000049C'X
+    1	   1679 	PARAMETER SS$_DECOVF = '000004A4'X
+    1	   1680 	PARAMETER SS$_SUBRNG = '000004AC'X
+    1	   1681 	PARAMETER SS$_FLTOVF_F = '000004B4'X
+    1	   1682 	PARAMETER SS$_FLTDIV_F = '000004BC'X
+    1	   1683 	PARAMETER SS$_FLTUND_F = '000004C4'X
+    1	   1684  !  THE ABOVE CODES MUST BE IN ORDER SINCE THEY ARE CALCULATED
+    1	   1685 	PARAMETER SS$_INHCHMK = '000004CC'X
+    1	   1686 	PARAMETER SS$_INHCHME = '000004D4'X
+    1	   1687 	PARAMETER SS$_VECDIS = '000004DC'X
+    1	   1688 	PARAMETER SS$_VARITH = '000004E4'X
+    1	   1689 	PARAMETER SS$_ILLVECOP = '000004EC'X
+    1	   1690 	PARAMETER SS$_VECALIGN = '000004F4'X
+    1	   1691 	PARAMETER SS$_IMGDMP = '000004FC'X
+    1	   1692 	PARAMETER SS$_HPARITH = '00000504'X
+    1	   1693 	PARAMETER SS$_ALIGN = '0000050C'X
+    1	   1694 	PARAMETER SS$_UNALIGN_SP_LOAD = '00000514'X
+    1	   1695 	PARAMETER SS$_GENTRAP = '0000051C'X
+    1	   1696 	PARAMETER SS$_FLTINV = '00000524'X
+    1	   1697 	PARAMETER SS$_FLTINE = '0000052C'X
+    1	   1698 	PARAMETER SS$_DECDIV = '00000534'X
+    1	   1699 	PARAMETER SS$_DECINV = '0000053C'X
+    1	   1700 	PARAMETER SS$_ASSERTERR = '00000544'X
+    1	   1701 	PARAMETER SS$_NULPTRERR = '0000054C'X
+    1	   1702 	PARAMETER SS$_STKOVF = '00000554'X
+    1	   1703 	PARAMETER SS$_STRLENERR = '0000055C'X
+    1	   1704 	PARAMETER SS$_SUBSTRERR = '00000564'X
+    1	   1705 	PARAMETER SS$_RANGEERR = '0000056C'X
+    1	   1706 	PARAMETER SS$_SUBRNG1 = '00000574'X
+    1	   1707 	PARAMETER SS$_SUBRNG2 = '0000057C'X
+    1	   1708 	PARAMETER SS$_SUBRNG3 = '00000584'X
+    1	   1709 	PARAMETER SS$_SUBRNG4 = '0000058C'X
+    1	   1710 	PARAMETER SS$_SUBRNG5 = '00000594'X
+    1	   1711 	PARAMETER SS$_SUBRNG6 = '0000059C'X
+    1	   1712 	PARAMETER SS$_SUBRNG7 = '000005A4'X
+    1	   1713 	PARAMETER SS$_PAGRDERRXM = '000005AC'X
+    1	   1714 	PARAMETER SS$_ILLEGAL_SHADOW = '000005B4'X
+    1	   1715 	PARAMETER SS$_FLTINV_F = '000005BC'X
+    1	   1716 	PARAMETER SS$_FLTINE_F = '000005C4'X
+    1	   1717 	PARAMETER SS$_INTOVF_F = '000005CC'X
+    1	   1718  ! 
+    1	   1719  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   1720  !  ***** NOTE: ROOM FOR 6 MORE MESSAGES IN THIS SECTION *****
+    1	   1721  ! 
+    1	   1722  ! 
+    1	   1723  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1724  ! 
+    1	   1725  !      192-255	  600-7FF	 64	SUCCESS CODES
+    1	   1726  ! 
+    1	   1727 	PARAMETER SS$_BUFFEROVF = '00000601'X
+    1	   1728 	PARAMETER SS$_CONTROLO = '00000609'X
+    1	   1729 	PARAMETER SS$_CONTROLY = '00000611'X
+    1	   1730 	PARAMETER SS$_CREATED = '00000619'X
+    1	   1731 	PARAMETER SS$_MSGNOTFND = '00000621'X
+    1	   1732 	PARAMETER SS$_NOTRAN = '00000629'X
+    1	   1733 	PARAMETER SS$_SUPERSEDE = '00000631'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  33
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1734 	PARAMETER SS$_WASECC = '00000639'X
+    1	   1735 	PARAMETER SS$_DEVALRALLOC = '00000641'X
+    1	   1736 	PARAMETER SS$_REMOTE = '00000649'X
+    1	   1737 	PARAMETER SS$_CONTROLC = '00000651'X
+    1	   1738 	PARAMETER SS$_NOTMODIFIED = '00000659'X
+    1	   1739 	PARAMETER SS$_RDDELDATA = '00000661'X
+    1	   1740 	PARAMETER SS$_OVRDSKQUOTA = '00000669'X
+    1	   1741 	PARAMETER SS$_OBSOLETE_1 = '00000671'X
+    1	   1742 	PARAMETER SS$_FILEPURGED = '00000679'X
+    1	   1743 	PARAMETER SS$_NOTALLPRIV = '00000681'X
+    1	   1744 	PARAMETER SS$_SYNCH = '00000689'X
+    1	   1745 	PARAMETER SS$_CONCEALED = '00000691'X
+    1	   1746 	PARAMETER SS$_INCOMPAT = '00000699'X
+    1	   1747 	PARAMETER SS$_DBGOPCREQ = '000006A1'X
+    1	   1748 	PARAMETER SS$_ALRDYCLOSED = '000006A9'X
+    1	   1749 	PARAMETER SS$_LNMCREATED = '000006B1'X
+    1	   1750 	PARAMETER SS$_ACEIDMATCH = '000006B9'X
+    1	   1751 	PARAMETER SS$_DBGEVENT = '000006C1'X
+    1	   1752 	PARAMETER SS$_REMOVED = '000006C9'X
+    1	   1753 	PARAMETER SS$_QUEUED = '000006D1'X
+    1	   1754 	PARAMETER SS$_SUBDISABLED = '000006D9'X
+    1	   1755 	PARAMETER SS$_FORGET = '000006E1'X
+    1	   1756 	PARAMETER SS$_PREPARED = '000006E9'X
+    1	   1757 	PARAMETER SS$_NOMOREITEMS = '000006F1'X
+    1	   1758 	PARAMETER SS$_VOLATILE = '000006F9'X
+    1	   1759 	PARAMETER SS$_CLASSUPER = '00000701'X
+    1	   1760  ! 
+    1	   1761  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   1762  !  ***** NOTE: ROOM FOR 33 MORE MESSAGES IN THIS SECTION *****
+    1	   1763  ! 
+    1	   1764  ! 
+    1	   1765  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1766  ! 
+    1	   1767  !      256-383	  800-BFF	128	WARNING CODES
+    1	   1768  ! 
+    1	   1769 	PARAMETER SS$_ACCONFLICT = '00000800'X
+    1	   1770 	PARAMETER SS$_BADCHKSUM = '00000808'X
+    1	   1771 	PARAMETER SS$_BADFILEHDR = '00000810'X
+    1	   1772 	PARAMETER SS$_BADFILENAME = '00000818'X
+    1	   1773 	PARAMETER SS$_BADFILEVER = '00000820'X
+    1	   1774 	PARAMETER SS$_BADIRECTORY = '00000828'X
+    1	   1775 	PARAMETER SS$_CANCEL = '00000830'X
+    1	   1776 	PARAMETER SS$_DATAOVERUN = '00000838'X
+    1	   1777 	PARAMETER SS$_DEVALLOC = '00000840'X
+    1	   1778 	PARAMETER SS$_DEVASSIGN = '00000848'X
+    1	   1779 	PARAMETER SS$_DEVICEFULL = '00000850'X
+    1	   1780 	PARAMETER SS$_DEVNOTALLOC = '00000858'X
+    1	   1781 	PARAMETER SS$_DIRFULL = '00000860'X
+    1	   1782 	PARAMETER SS$_DUPFILENAME = '00000868'X
+    1	   1783 	PARAMETER SS$_ENDOFFILE = '00000870'X
+    1	   1784 	PARAMETER SS$_ENDOFTAPE = '00000878'X
+    1	   1785 	PARAMETER SS$_OBSOLETE_2 = '00000880'X
+    1	   1786 	PARAMETER SS$_FCPREADERR = '00000888'X
+    1	   1787 	PARAMETER SS$_FCPREWNDERR = '00000890'X
+    1	   1788 	PARAMETER SS$_FCPSPACERR = '00000898'X
+    1	   1789 	PARAMETER SS$_FCPWRITERR = '000008A0'X
+    1	   1790 	PARAMETER SS$_FILELOCKED = '000008A8'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  34
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1791 	PARAMETER SS$_FILENUMCHK = '000008B0'X
+    1	   1792 	PARAMETER SS$_FILESEQCHK = '000008B8'X
+    1	   1793 	PARAMETER SS$_FILESTRUCT = '000008C0'X
+    1	   1794 	PARAMETER SS$_HEADERFULL = '000008C8'X
+    1	   1795 	PARAMETER SS$_IDXFILEFULL = '000008D0'X
+    1	   1796 	PARAMETER SS$_MBFULL = '000008D8'X
+    1	   1797 	PARAMETER SS$_NOHOMEBLK = '000008E0'X
+    1	   1798 	PARAMETER SS$_NONEXPR = '000008E8'X
+    1	   1799 	PARAMETER SS$_NONLOCAL = '000008F0'X
+    1	   1800 	PARAMETER SS$_NOHANDLER = '000008F8'X
+    1	   1801 	PARAMETER SS$_NOSIGNAL = '00000900'X
+    1	   1802 	PARAMETER SS$_NOSUCHDEV = '00000908'X
+    1	   1803 	PARAMETER SS$_NOSUCHFILE = '00000910'X
+    1	   1804 	PARAMETER SS$_RESIGNAL = '00000918'X
+    1	   1805 	PARAMETER SS$_UNWIND = '00000920'X
+    1	   1806 	PARAMETER SS$_UNWINDING = '00000928'X
+    1	   1807 	PARAMETER SS$_NOMOREFILES = '00000930'X
+    1	   1808 	PARAMETER SS$_BEGOFFILE = '00000938'X
+    1	   1809 	PARAMETER SS$_BLOCKCNTERR = '00000940'X
+    1	   1810 	PARAMETER SS$_MUSTCLOSEFL = '00000948'X
+    1	   1811 	PARAMETER SS$_WAITUSRLBL = '00000950'X
+    1	   1812 	PARAMETER SS$_ILLUSRLBLRD = '00000958'X
+    1	   1813 	PARAMETER SS$_ILLUSRLBLWT = '00000960'X
+    1	   1814 	PARAMETER SS$_ILLLBLAST = '00000968'X
+    1	   1815 	PARAMETER SS$_ENDOFUSRLBL = '00000970'X
+    1	   1816 	PARAMETER SS$_NOSUCHSEC = '00000978'X
+    1	   1817 	PARAMETER SS$_CLIFRCEXT = '00000980'X
+    1	   1818 	PARAMETER SS$_FCPREPSTN = '00000988'X
+    1	   1819 	PARAMETER SS$_TOOMANYVER = '00000990'X
+    1	   1820 	PARAMETER SS$_NOTVOLSET = '00000998'X
+    1	   1821 	PARAMETER SS$_ENDOFVOLUME = '000009A0'X
+    1	   1822 	PARAMETER SS$_NOMOREPROC = '000009A8'X
+    1	   1823 	PARAMETER SS$_NODEVAVL = '000009B0'X
+    1	   1824 	PARAMETER SS$_NOTQUEUED = '000009B8'X
+    1	   1825 	PARAMETER SS$_DGQINCOMP = '000009C0'X
+    1	   1826 	PARAMETER SS$_DIRALLOC = '000009C8'X
+    1	   1827 	PARAMETER SS$_ACLEMPTY = '000009D0'X
+    1	   1828 	PARAMETER SS$_NOENTRY = '000009D8'X
+    1	   1829 	PARAMETER SS$_NOMOREACE = '000009E0'X
+    1	   1830 	PARAMETER SS$_RIGHTSFULL = '000009E8'X
+    1	   1831 	PARAMETER SS$_VALNOTVALID = '000009F0'X
+    1	   1832 	PARAMETER SS$_ACLFULL = '000009F8'X
+    1	   1833 	PARAMETER SS$_NOMORENODE = '00000A00'X
+    1	   1834 	PARAMETER SS$_NOMORELOCK = '00000A08'X
+    1	   1835 	PARAMETER SS$_BEGOFTAPE = '00000A10'X
+    1	   1836 	PARAMETER SS$_OBJLOCKHELD = '00000A18'X
+    1	   1837 	PARAMETER SS$_CPUSTARTIP = '00000A20'X
+    1	   1838 	PARAMETER SS$_ALLSTARTED = '00000A28'X
+    1	   1839 	PARAMETER SS$_ALRDYSTRT = '00000A30'X
+    1	   1840 	PARAMETER SS$_ALRDYSTPPD = '00000A38'X
+    1	   1841 	PARAMETER SS$_NSTPPD = '00000A40'X
+    1	   1842 	PARAMETER SS$_UNKRESULT = '00000A48'X
+    1	   1843 	PARAMETER SS$_ITEMNOTFOUND = '00000A50'X
+    1	   1844 	PARAMETER SS$_NOMOREDEV = '00000A58'X
+    1	   1845 	PARAMETER SS$_EFNOTSET = '00000A60'X
+    1	   1846 	PARAMETER SS$_PRIMNOSTP = '00000A68'X
+    1	   1847 	PARAMETER SS$_BOOTREJECT = '00000A70'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  35
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1848 	PARAMETER SS$_RMTPATH = '00000A78'X
+    1	   1849 	PARAMETER SS$_OBJECT_EXISTS = '00000A80'X
+    1	   1850 	PARAMETER SS$_NOSUCHOBJECT = '00000A88'X
+    1	   1851 	PARAMETER SS$_NOVOLDESC = '00000A90'X
+    1	   1852 	PARAMETER SS$_NOPTBLDIR = '00000A98'X
+    1	   1853 	PARAMETER SS$_DRVEXISTS = '00000AA0'X
+    1	   1854 	PARAMETER SS$_DEVEXISTS = '00000AA8'X
+    1	   1855 	PARAMETER SS$_GOTO_UNWIND = '00000AB0'X
+    1	   1856 	PARAMETER SS$_EXIT_UNWIND = '00000AB8'X
+    1	   1857 	PARAMETER SS$_SMALLHEADER = '00000AC0'X
+    1	   1858 	PARAMETER SS$_FDT_COMPL = '00000AC8'X
+    1	   1859 	PARAMETER SS$_TARGET_UNWIND = '00000AD0'X
+    1	   1860 	PARAMETER SS$_TARGET_GOTO_UNWIND = '00000AD8'X  ! 
+    1	   1861  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   1862  !  ***** NOTE: ROOM FOR 36 MORE MESSAGES IN THIS SECTION *****
+    1	   1863  ! 
+    1	   1864  ! 
+    1	   1865  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1866  ! 
+    1	   1867  !      384-447	  C00-DFF	 64	INFORMATIONAL CODES
+    1	   1868  ! 
+    1	   1869 	PARAMETER SS$_EOTIN = '00000C03'X
+    1	   1870 	PARAMETER SS$_CHAINW = '00000C0B'X
+    1	   1871 	PARAMETER SS$_NOTINSEC = '00000C13'X
+    1	   1872 	PARAMETER SS$_NONXPAG = '00000C1B'X
+    1	   1873 	PARAMETER SS$_LOGNAME = '00000C23'X
+    1	   1874 	PARAMETER SS$_CPUSTARTD = '00000C2B'X
+    1	   1875 	PARAMETER SS$_CPUSTOPPING = '00000C33'X
+    1	   1876 	PARAMETER SS$_NOTALLCANCELED = '00000C3B'X
+    1	   1877 	PARAMETER SS$_NOTHINGDONE = '00000C43'X
+    1	   1878 	PARAMETER SS$_EVTNOTENAB = '00000C4B'X
+    1	   1879 	PARAMETER SS$_NOPATHTBL = '00000C53'X
+    1	   1880  ! 
+    1	   1881  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   1882  !  ***** NOTE: ROOM FOR 53 MORE MESSAGES IN THIS SECTION *****
+    1	   1883  ! 
+    1	   1884  ! 
+    1	   1885  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1886  ! 
+    1	   1887  !      448-511	  E00-FFF	 64	NONFATAL ERROR CODES
+    1	   1888  !    1408-1663	2C00-33FF	256	NONFATAL ERROR CODES (CONTINUED FROM FFF)
+    1	   1889  ! 
+    1	   1890 	PARAMETER SS$_LINEABRT = '00000E02'X
+    1	   1891 	PARAMETER SS$_DEADLOCK = '00000E0A'X
+    1	   1892 	PARAMETER SS$_NOLOCKID = '00000E12'X
+    1	   1893 	PARAMETER SS$_EXDEPTH = '00000E1A'X
+    1	   1894 	PARAMETER SS$_PARTMAPPED = '00000E22'X
+    1	   1895 	PARAMETER SS$_CANCELGRANT = '00000E2A'X
+    1	   1896 	PARAMETER SS$_RETRY = '00000E32'X
+    1	   1897 	PARAMETER SS$_BADACL = '00000E3A'X
+    1	   1898 	PARAMETER SS$_ACEEXISTS = '00000E42'X
+    1	   1899 	PARAMETER SS$_UNSUPPORTED = '00000E4A'X
+    1	   1900 	PARAMETER SS$_NORIGHTSDB = '00000E52'X
+    1	   1901 	PARAMETER SS$_LOGSTALL = '00000E5A'X
+    1	   1902 	PARAMETER SS$_LOGFULL = '00000E62'X
+    1	   1903 	PARAMETER SS$_PWDINDIC = '00000E6A'X
+    1	   1904 	PARAMETER SS$_PWDINHIS = '00000E72'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  36
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1905 	PARAMETER SS$_PWDWEAK = '00000E7A'X
+    1	   1906 	PARAMETER SS$_USEGENPWD = '00000E82'X
+    1	   1907 	PARAMETER SS$_INVBUSNAM = '00000E8A'X
+    1	   1908 	PARAMETER SS$_INVCOMPTYPE = '00000E92'X
+    1	   1909 	PARAMETER SS$_INVCOMPID = '00000E9A'X
+    1	   1910 	PARAMETER SS$_INVCOMPLIST = '00000EA2'X
+    1	   1911 	PARAMETER SS$_NOCOMPLSTS = '00000EAA'X
+    1	   1912 	PARAMETER SS$_INVSECDOMAIN = '00000EB2'X
+    1	   1913 	PARAMETER SS$_BADCHECKSUM = '00000EBA'X
+    1	   1914 	PARAMETER SS$_ARBTOOBIG = '00000EC2'X
+    1	   1915 	PARAMETER SS$_ORBTOOBIG = '00000ECA'X
+    1	   1916 	PARAMETER SS$_INVAJLNAM = '00000ED2'X
+    1	   1917 	PARAMETER SS$_TOOMANYAJL = '00000EDA'X
+    1	   1918 	PARAMETER SS$_RSDMINUSE = '00000EE2'X
+    1	   1919 	PARAMETER SS$_RSDMNOTFOU = '00000EEA'X
+    1	   1920 	PARAMETER SS$_INVUICGRP = '00000EF2'X
+    1	   1921 	PARAMETER SS$_RSDM_ACTIVE = '00000EFA'X
+    1	   1922 	PARAMETER SS$_OBJLOCKED = '00000F02'X
+    1	   1923 	PARAMETER SS$_NOTMPNAM = '00000F0A'X
+    1	   1924 	PARAMETER SS$_INVCLSITM = '00000F12'X
+    1	   1925 	PARAMETER SS$_NOTSHRTBL = '00000F1A'X
+    1	   1926 	PARAMETER SS$_MMATORB = '00000F22'X
+    1	   1927 	PARAMETER SS$_NOSUCHVOL = '00000F2A'X
+    1	   1928 	PARAMETER SS$_OBJNOTLOCKED = '00000F32'X
+    1	   1929 	PARAMETER SS$_ILLRSDM = '00000F3A'X
+    1	   1930 	PARAMETER SS$_NOCLASSSUPPORT = '00000F42'X
+    1	   1931 	PARAMETER SS$_INVSECOPER = '00000F4A'X
+    1	   1932 	PARAMETER SS$_NODELJNLACT = '00000F52'X
+    1	   1933 	PARAMETER SS$_INVFILFOROP = '00000F5A'X
+    1	   1934 	PARAMETER SS$_NOOBJSRV = '00000F62'X
+    1	   1935 	PARAMETER SS$_NOFILEACCESS = '00000F6A'X
+    1	   1936 	PARAMETER SS$_BADFILESIZE = '00000F72'X
+    1	   1937 	PARAMETER SS$_NOTFULLYMAPPED = '00000F7A'X
+    1	   1938 	PARAMETER SS$_BADWINCNT = '00000F82'X
+    1	   1939 	PARAMETER SS$_BADWINLBN = '00000F8A'X
+    1	   1940 	PARAMETER SS$_BADWINRVN = '00000F92'X
+    1	   1941 	PARAMETER SS$_EXTRAWINDOW = '00000F9A'X
+    1	   1942 	PARAMETER SS$_REVISED = '00000FA2'X
+    1	   1943 	PARAMETER SS$_TIMENOTSET = '00000FAA'X
+    1	   1944 	PARAMETER SS$_WAIT_CALLERS_MODE = '00000FB2'X
+    1	   1945 	PARAMETER SS$_NOT_LOADED = '00000FBA'X
+    1	   1946 	PARAMETER SS$_DRV_NOUNLOAD = '00000FC2'X
+    1	   1947 	PARAMETER SS$_INVARG = '00000FCA'X
+    1	   1948 	PARAMETER SS$_QIO_CROCK = '00000FD2'X
+    1	   1949 	PARAMETER SS$_ALTER = '00000FDA'X
+    1	   1950 	PARAMETER SS$_AFR_ENABLED = '00000FE2'X
+    1	   1951 	PARAMETER SS$_AFR_NOT_ENABLED = '00000FEA'X
+    1	   1952 	PARAMETER SS$_SHELFERROR = '00000FF2'X
+    1	   1953 	PARAMETER SS$_PERSONANONGRATA = '00000FFA'X  !  **************
+    1	   1954  !  NOTE:  THE ABOVE SET OF NONFATAL ERROR MESSAGES IS FULL!!!!
+    1	   1955  ! 	 ANY ADDITIONAL NONFATAL ERROR MESSAGES MUST BE ADDED
+    1	   1956  ! 	 BELOW, IN THE RANGE HEX 2C00-33FF.
+    1	   1957  !  **************
+    1	   1958 	PARAMETER SS$_NOTASSUMING = '00002C02'X
+    1	   1959 	PARAMETER SS$_ALREADYASSUMING = '00002C0A'X
+    1	   1960 	PARAMETER SS$_INUSE = '00002C12'X
+    1	   1961 	PARAMETER SS$_USERDISABLED = '00002C1A'X
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  37
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   1962 	PARAMETER SS$_NOCHJIB = '00002C22'X
+    1	   1963  ! 
+    1	   1964  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   1965  !  ***** NOTE: ROOM FOR 251 MORE MESSAGES IN THIS SECTION *****
+    1	   1966  ! 
+    1	   1967  ! 
+    1	   1968  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   1969  ! 
+    1	   1970  !    1280-1343	2800-29FF	 64	NO PRIVILEGE ERRORS
+    1	   1971  ! 
+    1	   1972  ! 
+    1	   1973  !  NB: THESE MESSAGES MUST BE KEPT IN THE SAME ORDER AS THE PRIVILEGE BIT
+    1	   1974  !  DEFINITIONS ($PRVDEF) AS THE PRIVILEGE BIT POSITION IS USED AS AN INDEX INTO
+    1	   1975  !  THESE MESSAGE CODES BY THE $CHECK_PRIVILEGE SYSTEM SERVICE.
+    1	   1976  ! 
+    1	   1977 	PARAMETER SS$_NOPRIVSTRT = '00002800'X
+    1	   1978 	PARAMETER SS$_NOCMKRNL = '00002804'X
+    1	   1979 	PARAMETER SS$_NOCMEXEC = '0000280C'X
+    1	   1980 	PARAMETER SS$_NOSYSNAM = '00002814'X
+    1	   1981 	PARAMETER SS$_NOGRPNAM = '0000281C'X
+    1	   1982 	PARAMETER SS$_NOALLSPOOL = '00002824'X
+    1	   1983 	PARAMETER SS$_NODETACH = '0000282C'X
+    1	   1984 	PARAMETER SS$_NODIAGNOSE = '00002834'X
+    1	   1985 	PARAMETER SS$_NOLOG_IO = '0000283C'X
+    1	   1986 	PARAMETER SS$_NOGROUP = '00002844'X
+    1	   1987 	PARAMETER SS$_NOACNT = '0000284C'X
+    1	   1988 	PARAMETER SS$_NOPRMCEB = '00002854'X
+    1	   1989 	PARAMETER SS$_NOPRMMBX = '0000285C'X
+    1	   1990 	PARAMETER SS$_NOPSWAPM = '00002864'X
+    1	   1991 	PARAMETER SS$_NOALTPRI = '0000286C'X
+    1	   1992 	PARAMETER SS$_NOSETPRV = '00002874'X
+    1	   1993 	PARAMETER SS$_NOTMPMBX = '0000287C'X
+    1	   1994 	PARAMETER SS$_NOWORLD = '00002884'X
+    1	   1995 	PARAMETER SS$_NOMOUNT = '0000288C'X
+    1	   1996 	PARAMETER SS$_NOOPER = '00002894'X
+    1	   1997 	PARAMETER SS$_NOEXQUOTA = '0000289C'X
+    1	   1998 	PARAMETER SS$_NONETMBX = '000028A4'X
+    1	   1999 	PARAMETER SS$_NOVOLPRO = '000028AC'X
+    1	   2000 	PARAMETER SS$_NOPHY_IO = '000028B4'X
+    1	   2001 	PARAMETER SS$_NOBUGCHK = '000028BC'X
+    1	   2002 	PARAMETER SS$_NOPRMGBL = '000028C4'X
+    1	   2003 	PARAMETER SS$_NOSYSGBL = '000028CC'X
+    1	   2004 	PARAMETER SS$_NOPFNMAP = '000028D4'X
+    1	   2005 	PARAMETER SS$_NOSHMEM = '000028DC'X
+    1	   2006 	PARAMETER SS$_NOSYSPRV = '000028E4'X
+    1	   2007 	PARAMETER SS$_NOBYPASS = '000028EC'X
+    1	   2008 	PARAMETER SS$_NOSYSLCK = '000028F4'X
+    1	   2009 	PARAMETER SS$_NOSHARE = '000028FC'X
+    1	   2010 	PARAMETER SS$_NOUPGRADE = '00002904'X
+    1	   2011 	PARAMETER SS$_NODOWNGRADE = '0000290C'X
+    1	   2012 	PARAMETER SS$_NOGRPPRV = '00002914'X
+    1	   2013 	PARAMETER SS$_NOREADALL = '0000291C'X
+    1	   2014 	PARAMETER SS$_NOIMPORT = '00002924'X
+    1	   2015 	PARAMETER SS$_NOAUDIT = '0000292C'X
+    1	   2016 	PARAMETER SS$_NOSECURITY = '00002934'X
+    1	   2017 	PARAMETER SS$_NOPRIVEND = '000029FF'X
+    1	   2018  ! 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  38
+1.1                                                              4-NOV-1994 21:24:10    SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1($SSDEF)
+
+    1	   2019  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   2020  ! 
+    1	   2021  !    1344-1375	2A00-2AFF	 32	EXCEEDED QUOTA ERRORS
+    1	   2022  !  
+    1	   2023 	PARAMETER SS$_EXQUOTASTRT = '00002A00'X
+    1	   2024 	PARAMETER SS$_EXASTLM = '00002A04'X
+    1	   2025 	PARAMETER SS$_EXBIOLM = '00002A0C'X
+    1	   2026 	PARAMETER SS$_EXBYTLM = '00002A14'X
+    1	   2027 	PARAMETER SS$_EXDIOLM = '00002A1C'X
+    1	   2028 	PARAMETER SS$_EXFILLM = '00002A24'X
+    1	   2029 	PARAMETER SS$_EXPGFLQUOTA = '00002A2C'X
+    1	   2030 	PARAMETER SS$_EXPRCLM = '00002A34'X
+    1	   2031 	PARAMETER SS$_EXTQELM = '00002A3C'X
+    1	   2032 	PARAMETER SS$_EXENQLM = '00002A44'X
+    1	   2033 	PARAMETER SS$_EXQUOTAEND = '00002AFF'X
+    1	   2034  ! 
+    1	   2035  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   2036  ! 
+    1	   2037  !    1376-1407	2B00-2BFF	 32	RESERVED FOR MEDIA MGMT EXTENSIONS
+    1	   2038  ! 
+    1	   2039 	PARAMETER SS$_MMSFAILED = '00002B04'X
+    1	   2040  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   2041  !  ***** NOTE: ROOM FOR 2 MORE MESSAGES IN THIS SECTION *****
+    1	   2042 	PARAMETER SS$_TOOFEWDEV = '00002B18'X
+    1	   2043 	PARAMETER SS$_AVRWAIT = '00002B20'X
+    1	   2044  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   2045  !  ***** NOTE: ROOM FOR 3 MORE MESSAGES IN THIS SECTION *****
+    1	   2046 	PARAMETER SS$_NO_MMS = '00002B43'X
+    1	   2047 	PARAMETER SS$_MMSREADY = '00002B4B'X
+    1	   2048 	PARAMETER SS$_MMSNOTREADY = '00002B53'X
+    1	   2049 	PARAMETER SS$_SKIP_CHECKS = '00002B5B'X
+    1	   2050 	PARAMETER SS$_NO_NOTIFY = '00002B63'X
+    1	   2051 	PARAMETER SS$_SKIP_EXPIRATION = '00002B6B'X
+    1	   2052  !  NEW SYMBOLS SHOULD BE ADDED IMMEDIATELY BEFORE THIS COMMENT
+    1	   2053  !  ***** NOTE: ROOM FOR 18 MORE MESSAGES IN THIS SECTION *****
+    1	   2054  ! 
+    1	   2055  ! 	MSG #S	   RANGE      # MSGS	    DESCRIPTION
+    1	   2056  ! 
+    1	   2057  !    4032-4095	7E00-7FFF	 64	RESERVED FOR SCS SYSAPS
+    1	   2058  ! 
+    1	   2059  ! 	MESSAGE CODES IN THIS BLOCK ARE GUARANTEED NOT TO
+    1	   2060  ! 	BE TRANSLATED BY VMS WHEN THEY ARE SEND OUT BY VMSSCS
+    1	   2061  ! 	OR WHEN THEY ARE RECEIVED BY VMSSCS.  SCA SYSAPS ARE
+    1	   2062  ! 	FREE TO USE THESE CODES IN ANY SYSAP-DEPENDENT MANNER
+    1	   2063  ! 	IN WHICH THEY CHOOSE.
+    1	   2064  ! 
+    1	   2065  ! 	THIS ADDRESS OF THIS BLOCK OF CODES MUST BE IN CONFORMANCE
+    1	   2066  ! 	WITH THE SCA ARCHITECTURE, I.E., MUST NOT BE MOVED.
+    1	   2067  ! 
+    1	   2068 	PARAMETER SS$_SYSAPMIN = '00007E00'X
+    1	   2069 	PARAMETER SS$_SYSAPMAX = '00007FFF'X
+    1	   2070 CDEC$ END OPTIONS
+    1	   2071 
+	   2072 
+	   2073       INTEGER*4		Record_Size,
+	   2074      +			STATUS
+	   2075 
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  39
+1.1                                                              1-DEC-1994 12:19:13    [WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.FOR;3
+
+	   2076       CHARACTER*80	FILENAME
+	   2077       CHARACTER*3	TYPE
+	   2078 
+	   2079 !     ------------------------------------------------------------------------
+	   2080 
+	   2081       STATUS = SS$_NORMAL			! Start with successful status
+	   2082 
+	   2083       INQUIRE ( FILE = FILENAME, RECL = Record_Size )
+	   2084       WRITE( TTOUT, 100 ) Record_Size
+	   2085   100 FORMAT( '  Record_Size =', I7 )
+	   2086       IF( Record_Size .EQ. 0 )   THEN
+	   2087           Record_Size	= 12800			! Max.length of WIND data record
+	   2088       ENDIF					! in bytes
+	   2089 
+	   2090 !   Open old or new file
+	   2091 
+	   2092       IF ((TYPE .EQ. 'OLD') .OR. (TYPE  .EQ. 'old'))    THEN
+	   2093 
+	   2094           OPEN(	UNIT	= SFDU_Lun,
+	   2095      +		NAME	= FILENAME,
+	   2096      +		FORM	= 'FORMATTED',
+	   2097      +		TYPE	= 'OLD',
+	   2098      +		RECL	= Record_Size,		! 2700*4 = 10800 bytes
+	   2099      +		SHARED,
+	   2100      +		READONLY,
+	   2101      +		ERR	= 2000,			! Return if error
+	   2102      +		IOSTAT	= STATUS)
+	   2103 
+	   2104           IF (STATUS .EQ. 0)   THEN
+	   2105               READ( SFDU_Lun, 400 )   LR_Buffer
+	   2106               Record_Size	= LR_Phys_Rec_Size
+	   2107 
+	   2108               CLOSE( SFDU_Lun )
+	   2109 
+	   2110               OPEN ( UNIT	= SFDU_Lun,
+	   2111      +			NAME	= FILENAME,
+	   2112      +			FORM	= 'FORMATTED',
+	   2113      +			TYPE	= 'OLD',
+	   2114      +			RECL	= Record_Size,
+	   2115      +			SHARED,
+	   2116      +			READONLY,
+	   2117      +			ERR	= 2000,			! Return if error
+	   2118      +			IOSTAT	= STATUS)
+	   2119 
+	   2120               IF (STATUS .EQ. 0)	STATUS = SS$_NORMAL
+	   2121           ELSE
+	   2122               WRITE( TTOUT, 200 )
+	   2123           ENDIF
+	   2124       ENDIF
+	   2125 
+	   2126       RETURN
+	   2127 
+	   2128 2000  TYPE 2001, STATUS
+	   2129       RETURN
+	   2130 
+	   2131   200 FORMAT(' ***ERROR: Trying to open DATA not as OLD ***' )
+	   2132   400 FORMAT( 12800A1 )
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  40
+1.1                                                              1-DEC-1994 12:19:13    [WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.FOR;3
+
+	   2133  2001 FORMAT(' ***ERROR in WIND_OPEN_LZ_DATA, STATUS =', I6, ' ***')
+	   2134       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46000 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                    4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               176 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                 740   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 220 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 VERSIONS                              1004 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 LABEL_RECORD                         13000 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 LR_EDITFILE                            128 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                87872
+
+
+ENTRY POINTS
+
+    Address   Type  Name             
+                                     
+  4-00000000        WIND_OPEN_LZ_DATA
+
+
+VARIABLES
+
+    Address   Type  Name                         Address   Type  Name                    
+                                                                                         
+  1-00000000  CHAR  C_BIG_NULL_BUFFER          9-00000024  I*4   DR_NUM_MINFR_FILL       
+ 10-00000000  CHAR  C_DR2_BUFFER               9-00000028  I*4   DR_NUM_MINFR_SYNC_ERR   
+  9-00000000  CHAR  C_DR_BUFFER                9-00000004  I*4   DR_PHYS_REC_NUM         
+  7-00000000  CHAR  C_LR_BUFFER                9-00003208  R*8   DR_SC_EPOCH             
+      **      CHAR  C_NULL_BUFFER              9-0000002C  I*4   DR_TLM_MODE             
+ 10-00000018  I*4   DR2_BEG_DOY                    **      CHAR  FILENAME                
+ 10-00003200  R*8   DR2_BEG_EPOCH              9-0000321C  L*1   L0_FILE_READONLY        
+ 10-00000008  I*4   DR2_BEG_MAJFR_CNT          9-00003218  I*4   L0_FILE_REC_PNTR        
+ 10-00000020  I*4   DR2_BEG_MICSEC             7-00000034  I*4   LR_BEG_DOY              
+ 10-0000001C  I*4   DR2_BEG_MSEC               7-00000B04  R*8   LR_BEG_EPOCH            
+ 10-00000014  I*4   DR2_BEG_YEAR               7-00000018  I*4   LR_BEG_MAJFR_CNT        
+ 10-00000000  I*4   DR2_INSTR_NUM              7-0000003C  I*4   LR_BEG_MICSEC           
+ 10-00000024  I*4   DR2_NUM_MINFR_FILL         7-00000038  I*4   LR_BEG_MSEC             
+ 10-00000028  I*4   DR2_NUM_MINFR_SYNC_ERR     7-00000030  I*4   LR_BEG_YEAR             
+ 10-00000004  I*4   DR2_PHYS_REC_NUM           7-0000005C  CHAR  LR_DATA_COV_TYP         
+ 10-00003208  R*8   DR2_SC_EPOCH               7-0000006C  CHAR  LR_DECOM_CHAR_DB_V_NUM  
+ 10-0000002C  I*4   DR2_TLM_MODE               7-00000064  CHAR  LR_DECOM_PROG_V_NUM     
+  9-00000018  I*4   DR_BEG_DOY                 7-00000060  I*4   LR_DECOM_RERUN_NUM      
+  9-00003200  R*8   DR_BEG_EPOCH               7-00000074  CHAR  LR_DECOM_RUN_DATETIME   
+  9-00000008  I*4   DR_BEG_MAJFR_CNT           8-00000000  CHAR  LR_EDITFILE_BUF         
+  9-00000020  I*4   DR_BEG_MICSEC              8-00000034  CHAR  LR_EDITFILE_DATA_TYP    
+  9-0000001C  I*4   DR_BEG_MSEC                8-00000000  CHAR  LR_EDITFILE_KEY         
+  9-00000014  I*4   DR_BEG_YEAR                8-0000001C  CHAR  LR_EDITFILE_PROG_V_NUM  
+  9-00000000  I*4   DR_INSTR_NUM               8-00000018  CHAR  LR_EDITFILE_RERUN_NUM   
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  41
+1.1                             Symbol Table                     1-DEC-1994 12:19:13    [WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.FOR;3
+
+    Address   Type  Name                         Address   Type  Name                    
+                                                                                         
+  8-00000024  CHAR  LR_EDITFILE_RUN_DATETIME   7-000000D4  CHAR  LR_MERGE_RUN_DATETIME   
+  7-00000044  I*4   LR_END_DOY                 7-000000E4  I*4   LR_NUM_EDIT_FILES       
+  7-00000B0C  R*8   LR_END_EPOCH               7-00000050  I*4   LR_NUM_MAJFR_EXP        
+  7-0000001C  I*4   LR_END_MAJFR_CNT           7-00000054  I*4   LR_NUM_MAJFR_FILE       
+  7-0000004C  I*4   LR_END_MICSEC              7-00000058  I*4   LR_NUM_MAJFR_GAPS       
+  7-00000048  I*4   LR_END_MSEC                7-00000014  I*4   LR_PHYS_REC_IN_FILE     
+  7-00000040  I*4   LR_END_YEAR                7-0000000C  I*4   LR_PHYS_REC_NUM         
+  7-000000B4  CHAR  LR_FILL3                   7-00000010  I*4   LR_PHYS_REC_PER_MAJFR   
+  7-00000084  CHAR  LR_INSTR_FILE_NAME         7-000000B0  I*4   LR_PHYS_REC_SIZE        
+  7-00000008  CHAR  LR_INSTR_NAME              7-00000000  I*4   LR_SCID                 
+  7-00000004  I*4   LR_INSTR_NUM               9-00003210  R*8   PREF_EPOCH              
+  7-00000AEC  CHAR  LR_L0_PROG_V_NUM           2-00000000  I*4   RECORD_SIZE             
+  7-00000AE8  CHAR  LR_L0_RERUN_NUM                **      I*4   STATUS                  
+  7-00000AF4  CHAR  LR_L0_RUN_DATETIME         6-000003E8  I*4   SWVERSION_N             
+  7-000000CC  CHAR  LR_MERGE_PROG_V_NUM            **      CHAR  TYPE                    
+  7-000000C8  I*4   LR_MERGE_RERUN_NUM                                                   
+
+
+ARRAYS
+
+     Address  Type  Name                                   Bytes  Dimensions
+
+ 10-0000000C  I*4   DR2_BEG_SC_CLOCK                           8  (2)
+ 10-00000000  I*1   DR2_BUFFER                             13300  (13300)
+ 10-00000000  I*1   DR2_BUFFER_CONTINGENCY                 13300  (13300)
+ 10-0000012A  I*1   DR2_FILL                                   2  (2)
+ 10-0000012C  I*1   DR2_MINFR                              12500  (12500)
+ 10-0000012C  I*1   DR2_MINFR_3DP                          12500  (50, 0:249)
+ 10-0000012C  I*1   DR2_MINFR_EPA                           6000  (24, 0:249)
+ 10-0000012C  I*1   DR2_MINFR_KON                           1500  (6, 0:249)
+ 10-0000012C  I*1   DR2_MINFR_MFI                           6250  (25, 0:249)
+ 10-00000030  I*1   DR2_MINFR_QUAL                           250  (0:249)
+ 10-0000012C  I*1   DR2_MINFR_SMS                          10500  (42, 0:249)
+ 10-0000012C  I*1   DR2_MINFR_SWE                          11250  (45, 0:249)
+ 10-0000012C  I*1   DR2_MINFR_TGR                           5250  (21, 0:249)
+ 10-0000012C  I*1   DR2_MINFR_WAV                          11250  (45, 0:249)
+  9-0000000C  I*4   DR_BEG_SC_CLOCK                            8  (2)
+  9-00000000  I*1   DR_BUFFER                              13300  (13300)
+  9-00000000  I*1   DR_BUFFER_CONTINGENCY                  13300  (13300)
+  9-0000012A  I*1   DR_FILL                                    2  (2)
+  9-0000012C  I*1   DR_MINFR                               12500  (12500)
+  9-0000012C  I*1   DR_MINFR_3DP                           12500  (50, 0:249)
+  9-0000012C  I*1   DR_MINFR_EPA                            6000  (24, 0:249)
+  9-0000012C  I*1   DR_MINFR_KON                            1500  (6, 0:249)
+  9-0000012C  I*1   DR_MINFR_MFI                            6250  (25, 0:249)
+  9-00000030  I*1   DR_MINFR_QUAL                            250  (0:249)
+  9-0000012C  I*1   DR_MINFR_SMS                           10500  (42, 0:249)
+  9-0000012C  I*1   DR_MINFR_SWE                           11250  (45, 0:249)
+  9-0000012C  I*1   DR_MINFR_TGR                            5250  (21, 0:249)
+  9-0000012C  I*1   DR_MINFR_WAV                           11250  (45, 0:249)
+  7-00000020  I*4   LR_BEG_SC_CLOCK                            8  (2)
+  7-00000000  I*1   LR_BUFFER                              13000  (13000)
+  7-000000E8  CHAR  LR_EDIT_FILE                            2560  (20)
+  7-00000028  I*4   LR_END_SC_CLOCK                            8  (2)
+      **      I*1   NULL_BUFFER                            46000  (46000)
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  42
+1.1                             Symbol Table                     1-DEC-1994 12:19:13    [WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.FOR;3
+
+  6-00000000  R*4   SWVERSION                               1000  (2, 125)
+  6-000001B0  R*4   VER_EPIC_ADJUST_TIME                       8  (2)
+  6-00000010  R*4   VER_EPIC_CHECK_SWVERSION                   8  (2)
+  6-00000190  R*4   VER_EPIC_CHECK_SYNC                        8  (2)
+  6-00000258  R*4   VER_EPIC_CLEAR_BUFFERS                     8  (2)
+  6-00000110  R*4   VER_EPIC_CLOSE_CAL                         8  (2)
+  6-000001E8  R*4   VER_EPIC_CLOSE_L0                          8  (2)
+  6-00000358  R*4   VER_EPIC_CLOSE_L1                          8  (2)
+  6-000000F0  R*4   VER_EPIC_CLOSE_SFDU                        8  (2)
+  6-00000020  R*4   VER_EPIC_CLOSE_USERMSG                     8  (2)
+  6-00000198  R*4   VER_EPIC_DECOM                             8  (2)
+  6-000001A0  R*4   VER_EPIC_DECOM_DPUCOMMON                   8  (2)
+  6-00000378  R*4   VER_EPIC_DECOM_HSKP                        8  (2)
+  6-00000370  R*4   VER_EPIC_FILL_OUT                          8  (2)
+  6-00000270  R*4   VER_EPIC_GET_CHINDEX                       8  (2)
+  6-00000268  R*4   VER_EPIC_GET_FORMAT                        8  (2)
+  6-00000330  R*4   VER_EPIC_HDR_WRITE                         8  (2)
+  6-00000018  R*4   VER_EPIC_INIT_CHANNELS                     8  (2)
+  6-00000320  R*4   VER_EPIC_INIT_DECOMPRESS                   8  (2)
+  6-00000368  R*4   VER_EPIC_INIT_SCHEMES                      8  (2)
+  6-00000050  R*4   VER_EPIC_INTERPRET_USERMSG                 8  (2)
+  6-00000288  R*4   VER_EPIC_IN_FILL                           8  (2)
+  6-00000278  R*4   VER_EPIC_L0_TO_L1                          8  (2)
+  6-000000F8  R*4   VER_EPIC_OPEN_CAL                          8  (2)
+  6-000001B8  R*4   VER_EPIC_OPEN_L0                           8  (2)
+  6-00000350  R*4   VER_EPIC_OPEN_L1                           8  (2)
+  6-000000D0  R*4   VER_EPIC_OPEN_SFDU                         8  (2)
+  6-00000028  R*4   VER_EPIC_OPEN_USERMSG                      8  (2)
+  6-00000030  R*4   VER_EPIC_PUT_USERMSG                       8  (2)
+  6-00000108  R*4   VER_EPIC_READ_CAL_DATA_RECORD              8  (2)
+  6-00000100  R*4   VER_EPIC_READ_CAL_LABL_RECORD              8  (2)
+  6-00000360  R*4   VER_EPIC_READ_EDBMAP                       8  (2)
+  6-000001E0  R*4   VER_EPIC_READ_L0_DATA_RECORD               8  (2)
+  6-000001D8  R*4   VER_EPIC_READ_L0_LABL_RECORD               8  (2)
+  6-00000348  R*4   VER_EPIC_READ_L1                           8  (2)
+  6-000000E8  R*4   VER_EPIC_READ_SFDU_DATA_RECORD             8  (2)
+  6-000000D8  R*4   VER_EPIC_READ_SFDU_FILE_HEADER             8  (2)
+  6-000000E0  R*4   VER_EPIC_READ_SFDU_LABL_RECORD             8  (2)
+  6-00000040  R*4   VER_EPIC_RET_CALIBRATION                   8  (2)
+  6-00000048  R*4   VER_EPIC_RET_CONTROL_PARAMETERS            8  (2)
+  6-000001F8  R*4   VER_EPIC_RET_HEADS                         8  (2)
+  6-000001A8  R*4   VER_EPIC_RET_LEVEL0                        8  (2)
+  6-00000260  R*4   VER_EPIC_RET_MODE                          8  (2)
+  6-00000338  R*4   VER_EPIC_RET_TIME                          8  (2)
+  6-00000200  R*4   VER_EPIC_SETUP_SCI_RECORD                  8  (2)
+  6-000000C8  R*4   VER_EPIC_SFDU_TO_L0                        8  (2)
+  6-00000280  R*4   VER_EPIC_SHIFT_EDBS                        8  (2)
+  6-00000038  R*4   VER_EPIC_TERM                              8  (2)
+  6-00000380  R*4   VER_EPIC_UNPACK_HSKP                       8  (2)
+  6-000001D0  R*4   VER_EPIC_WRITE_L0_DATA_RECORD              8  (2)
+  6-000001C0  R*4   VER_EPIC_WRITE_L0_FILE_HEADER              8  (2)
+  6-000001C8  R*4   VER_EPIC_WRITE_L0_LABL_RECORD              8  (2)
+  6-00000340  R*4   VER_EPIC_WRITE_L1                          8  (2)
+  6-00000118  R*4   VER_ICSS_RET_LZ                            8  (2)
+  6-000001F0  R*4   VER_JULIAN_DOY                             8  (2)
+  6-00000328  R*4   VER_L1_GET_REC_PREAMBLE                    8  (2)
+  6-00000008  R*4   VER_MAINSEC                                8  (2)
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  43
+1.1                             Symbol Table                     1-DEC-1994 12:19:13    [WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.FOR;3
+
+  6-00000000  R*4   VER__PROG                                  8  (2)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label     Address   Label
+                                                                                                   
+      **       100        **       200        **       400        **       2000       **       2001
+
+WIND_OPEN_LZ_DATA                                                9-DEC-1994 16:39:55    DEC Fortran V6.2-508                Page  44
+1.1                             Symbol Table                     1-DEC-1994 12:19:13    [WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_OPEN_LZ_DATA.LIS;2
+  /NOOBJECT
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.37 seconds
+  Elapsed time:      3.62 seconds
+  Pagefaults:         371
+  I/O Count:           73

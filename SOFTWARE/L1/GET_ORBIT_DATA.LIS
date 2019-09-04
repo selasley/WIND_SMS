@@ -1,0 +1,360 @@
+GET_ORBIT_DATA                                                  21-JUL-1997 16:55:44    DEC Fortran V6.2-508                Page   1
+                                                                21-JUL-1997 16:55:35    SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+	      1         SUBROUTINE get_orbit_data(which_date, what_pos, maxsize,
+	      2      1		nstored, epoch_arr, gci_pos_arr, gci_vel_arr, gse_pos_arr,
+	      3      1		gse_vel_arr, gsm_pos_arr, gsm_vel_arr, sun_vec_arr)
+	      4  
+	      5 C+
+	      6 C 
+	      7 C FUNCTIONAL DESCRIPTION:	
+	      8 C 
+	      9 C    
+	     10 C    This routine returns all requested orbit information for a given date.
+	     11 C
+	     12 C 
+	     13 C FORMAL PARAMETERS:
+	     14 C  
+	     15 C     WHICH_DATE:
+	     16 C	  REAL*8    The date/time, in Epoch format, of the date for which
+	     17 C		    position information is requested.
+	     18 C      
+	     19 C     WHAT_POS:
+	     20 C	  LOG*4	    A 7-element logical array.  Each element indicates to
+	     21 C		    GET_ORBIT_DATA what information the calling program
+	     22 C		    requires.  The elements, in order, are:
+	     23 C			1   GCI position
+	     24 C			2   GCI velocity
+	     25 C			3   GSE position
+	     26 C			4   GSE velocity
+	     27 C			5   GSM position
+	     28 C			6   GSM velocity
+	     29 C			7   Sun vector
+	     30 C		    If a particular element is .TRUE. the corresponding position
+	     31 C		    (or velocity) information is stored in its argument.
+	     32 C      
+	     33 C     MAXSIZE:
+	     34 C	  INT*4	    The maximum number of elements in each of the arrays
+	     35 C		    GCI_POS_ARR, GCI_VEL_ARR, GSE_POS_ARR, GSE_POS_ARR,
+	     36 C		    GSM_POS_ARR, GSM_POS_ARR, and SUN_VEC_ARR. 
+	     37 C      
+	     38 C     NSTORED:
+	     39 C	  INT*4	    The number of positions actually stored in each of the
+	     40 C		    arrays GCI_POS_ARR, GCI_VEL_ARR, GSE_POS_ARR, GSE_POS_ARR,
+	     41 C		    GSM_POS_ARR, GSM_POS_ARR, and SUN_VEC_ARR. 
+	     42 C
+	     43 C     EPOCH_ARR:
+	     44 C     	  REAL*8    An array of MAXSIZE elements containing the Epoch times.
+	     45 C		    The first NSTORED elements contain Epoch times associated
+	     46 C		    with the corresponding position and velocity values stored
+	     47 C		    in the remaining arguments.
+	     48 C	
+	     49 C     GCI_POS_ARR:
+	     50 C	  /EPHEMERIS/	An array of MAXSIZE RECORDs of structure type /EPHEMERIS/.
+	     51 C		    The first NSTORED elements contain positions in GCI
+	     52 C		    coordinates which were retrieved from the CDF data file. 
+	     53 C      
+	     54 C     GCI_VEL_ARR:
+	     55 C	  /EPHEMERIS/	An array of MAXSIZE RECORDs of structure type /EPHEMERIS/.
+	     56 C		    The first NSTORED elements contain velocities in GCI
+	     57 C		    coordinates which were retrieved from the CDF data file. 
+
+GET_ORBIT_DATA                                                  21-JUL-1997 16:55:44    DEC Fortran V6.2-508                Page   2
+                                                                21-JUL-1997 16:55:35    SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+	     58 C      
+	     59 C     GSE_POS_ARR:
+	     60 C	  /EPHEMERIS/	An array of MAXSIZE RECORDs of structure type /EPHEMERIS/.
+	     61 C		    The first NSTORED elements contain positions in GSE
+	     62 C		    coordinates which were retrieved from the CDF data file. 
+	     63 C      
+	     64 C     GSE_VEL_ARR:
+	     65 C	  /EPHEMERIS/	An array of MAXSIZE RECORDs of structure type /EPHEMERIS/.
+	     66 C		    The first NSTORED elements contain velocities in GSE
+	     67 C		    coordinates which were retrieved from the CDF data file. 
+	     68 C      
+	     69 C     GSM_POS_ARR:
+	     70 C	  /EPHEMERIS/	An array of MAXSIZE RECORDs of structure type /EPHEMERIS/.
+	     71 C		    The first NSTORED elements contain positions in GSM
+	     72 C		    coordinates which were retrieved from the CDF data file. 
+	     73 C      
+	     74 C     GSM_VEL_ARR:
+	     75 C	  /EPHEMERIS/	An array of MAXSIZE RECORDs of structure type /EPHEMERIS/.
+	     76 C		    The first NSTORED elements contain velocities in GSM
+	     77 C		    coordinates which were retrieved from the CDF data file. 
+	     78 C      
+	     79 C     SUN_VEC_ARR:
+	     80 C	  /EPHEMERIS/	An array of MAXSIZE RECORDs of structure type /EPHEMERIS/.
+	     81 C		    The first NSTORED elements contain positions in GCI sun
+	     82 C		    vector coordinates which were retrieved from the CDF data
+	     83 C		    file.  
+	     84 C
+	     85 C  
+	     86 C COMMON BLOCKS:
+	     87 C  
+	     88 C     EPHDATA	  where routine GET_EPHEMERIS stores the position and velocity
+	     89 C     		  data it reads from the CDF; defined in L1_HDR_INFO.INC
+	     90 C  
+	     91 C DESIGN:
+	     92 C  
+	     93 C     convert Epoch time into date
+	     94 C     construct name of CDF file
+	     95 C     read data from CDF file
+	     96 C     move data from COMMON into proper parts of arrays
+	     97 C  
+	     98 C 
+	     99 C This version:   1.3   31-JAN-1996
+	    100 C 
+	    101 C Created: 
+	    102 C 
+	    103 C	 22-JUN-1995    Larry Bleau
+	    104 C 
+	    105 C Revised:
+	    106 C 
+	    107 C	 Date     | Name  | Description
+	    108 C ----------------+-------+-----------------------------------------------------
+	    109 C 22-JUN-1995     |  LRB  | copied from GET_ORBIT_DAYS V1.0, changed to get data
+	    110 C 			    from only a single day
+	    111 C 22-JUN-1995     |  LRB  | test if epoch time is zero, if so don't store
+	    112 C 31-JAN-1996	  |  LRB  | use record count NREC_OR instead of 144 as number
+	    113 C 			    of records in orbit CDF file in case it is short
+	    114 C 21-JUL-1997	  |  LRB  | check for definitive (DEF) orbit file first, then
+
+GET_ORBIT_DATA                                                  21-JUL-1997 16:55:44    DEC Fortran V6.2-508                Page   3
+                                                                21-JUL-1997 16:55:35    SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+	    115 C			    check for predictive (PRE) if DEF doesn't exist
+	    116 C 
+	    117 C-
+	    118 CDEC$	IDENT '1.3'
+	    119 	IMPLICIT NONE
+	    120 	INCLUDE 'INC_DIR:EPHDEF.INC'
+	    152 	INCLUDE 'INC_DIR:L1_HDR_INFO.INC'
+	    191 	INCLUDE '($RMSDEF)'
+	    902 	REAL*8 which_date
+	    903 	LOGICAL*4 what_pos(7)
+	    904 	INTEGER*4 maxsize,nstored
+	    905 	REAL*8 epoch_arr(maxsize)
+	    906 	RECORD /EPHEMERIS/ gci_pos_arr(maxsize), gci_vel_arr(maxsize),
+	    907 	1 gse_pos_arr(maxsize), gse_vel_arr(maxsize), gsm_pos_arr(maxsize),
+	    908 	1 gsm_vel_arr(maxsize), sun_vec_arr(maxsize)
+	    909 C
+	    910 	INTEGER*4 year, month, day, hour, minute, second, msec, store_here, i
+	    911 	INTEGER*4 status, context, ncor, lib$find_file, lib$find_file_end, nleft
+	    912 	CHARACTER or_pattern*39,or_name*80
+	    913 C
+	    914 	store_here = 1
+	    915 	nstored = 0
+	    916 C
+	    917 C Convert Epoch time into date format
+	    918 C
+	    919 	call epoch_breakdown(which_date, year, month, day, hour, minute,
+	    920 	1 second, msec)
+	    921 C
+	    922 C Determine the name of the first ORbit data file for this day.
+	    923 C This assumes there is only one version of the orbit file present for this
+	    924 C date.  If there is more than one this code will use the first file, which may
+	    925 C not be the one desired.
+	    926 C
+	    927 C In mid-1997 definitive orbit data (DEF files) was no longer sent, being
+	    928 C replaced by predicted orbit data (PRE files).  To allow this program to work
+	    929 C with both types of orbit files, assume DEF first, then try PRE if the DEF
+	    930 C file does not exist.
+	    931 C
+	    932 	write(or_pattern,1001) year,month,day
+	    933 1001	format('WIND_OR_DATA:WI_OR_DEF_',I4.4,I2.2,I2.2,'_V%%.CDF')
+	    934 	context = 0
+	    935 	status = lib$find_file (or_pattern, or_name, context, , , ,)
+	    936 	if (status .eq. rms$_normal) then	    ! we found a file
+	    937 	    ncor = index( or_name, '.CDF;' ) - 1
+	    938 	else
+	    939 C
+	    940 	    status = lib$find_file_end(context)
+	    941 	    write(or_pattern,1002) year,month,day
+	    942 1002	    format('WIND_OR_DATA:WI_OR_PRE_',I4.4,I2.2,I2.2,'_V%%.CDF')
+	    943 	    context = 0
+	    944 	    status = lib$find_file (or_pattern, or_name, context, , , ,)
+	    945 	    if (status .eq. rms$_normal) then	    ! we found a file
+	    946 	        ncor = index( or_name, '.CDF;' ) - 1
+	    947 	    else
+	    948 	        status = lib$find_file_end(context)
+	    949 	        goto 500			    ! no file, return nothing
+	    950 	    endif
+
+GET_ORBIT_DATA                                                  21-JUL-1997 16:55:44    DEC Fortran V6.2-508                Page   4
+1.3                                                             21-JUL-1997 16:55:35    SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+	    951 	endif
+	    952 	status = lib$find_file_end(context)
+ C	    953 D	type *,'reading from ',or_name(1:ncor)
+	    954 C
+	    955 C Now that we have a CDF filename call the routine GET_EPHEMERIS to read orbit
+	    956 C data from the CDF.  It puts it in common block EPHDATA.  The blank second
+	    957 C argument tells it we don't want attitude information.
+	    958 C 
+	    959 	call get_ephemeris(or_name(1:ncor), ' ', status)
+	    960 C
+	    961 C Now copy the requested information from the common block into the caller's
+	    962 C arrays at the correct position.
+	    963 C
+	    964 	nleft = maxsize - store_here + 1
+	    965 	DO i=1,MIN(nleft,NREC_OR)
+	    966 	    IF (eph_epoch(i) .ne. 0.0) THEN
+	    967 		epoch_arr(store_here) = eph_epoch(i)
+	    968 		IF (what_pos(1)) gci_pos_arr(store_here) = gci_pos(i)
+	    969 		IF (what_pos(2)) gci_vel_arr(store_here) = gci_vel(i)
+	    970 		IF (what_pos(3)) gse_pos_arr(store_here) = gse_pos(i)
+	    971 		IF (what_pos(4)) gse_vel_arr(store_here) = gse_vel(i)
+	    972 		IF (what_pos(5)) gsm_pos_arr(store_here) = gsm_pos(i)
+	    973 		IF (what_pos(6)) gsm_vel_arr(store_here) = gsm_vel(i)
+	    974 		IF (what_pos(7)) sun_vec_arr(store_here) = gci_sun_vector(i)
+	    975 		store_here = store_here + 1
+	    976 	    END IF
+	    977 	END DO
+	    978 	nstored = store_here - 1
+	    979 C
+	    980 C Done copying orbit data for this day
+	    981 C	    
+	    982 500	CONTINUE
+	    983 C
+	    984 	RETURN
+	    985 	END
+
+GET_ORBIT_DATA                                                  21-JUL-1997 16:55:44    DEC Fortran V6.2-508                Page   5
+1.3                             Symbol Table                    21-JUL-1997 16:55:35    SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                  152 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                               120 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                1600   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 226 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 EPHDATA                              29384 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                31482
+
+
+ENTRY POINTS
+
+    Address   Type  Name          
+                                  
+  3-00000000        GET_ORBIT_DATA
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                                                           
+  0-00000050  I*4   CONTEXT      1-00000004  I*4   MONTH            **      I*4   NSTORED          **      R*8   WHICH_DATE
+  1-00000008  I*4   DAY          1-00000018  I*4   MSEC         1-00000048  CHAR  OR_NAME      1-00000000  I*4   YEAR      
+  1-0000000C  I*4   HOUR       REG-00000006  I*4   NCOR         1-00000020  CHAR  OR_PATTERN                               
+REG-00000006  I*4   I          REG-00000004  I*4   NLEFT        1-00000014  I*4   SECOND                                   
+      **      I*4   MAXSIZE      5-000072C4  I*4   NREC_AT      0-00000054# I*4   STATUS                                   
+  1-00000010  I*4   MINUTE       5-000072C0  I*4   NREC_OR    REG-0000000E  I*4   STORE_HERE                               
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  5-00000000  R*8   EPH_EPOCH         1152  (144)
+      **      R*8   EPOCH_ARR           **  (*)
+  5-00007080  R*4   SPIN_RATE          576  (144)
+      **      L*4   WHAT_POS            28  (7)
+
+
+
+RECORD ARRAYS
+
+    Address   Name            Structure         Bytes  Dimensions
+
+  5-00006300  GCI_ATT         ATTITUDE          1152  (144)
+  5-00000480  GCI_POS         EPHEMERIS         3456  (144)
+      **      GCI_POS_ARR     EPHEMERIS           **  (*)
+  5-00005580  GCI_SUN_VECTOR  EPHEMERIS         3456  (144)
+  5-00001200  GCI_VEL         EPHEMERIS         3456  (144)
+      **      GCI_VEL_ARR     EPHEMERIS           **  (*)
+  5-00006780  GSE_ATT         ATTITUDE          1152  (144)
+  5-00001F80  GSE_POS         EPHEMERIS         3456  (144)
+
+GET_ORBIT_DATA                                                  21-JUL-1997 16:55:44    DEC Fortran V6.2-508                Page   6
+1.3                             Symbol Table                    21-JUL-1997 16:55:35    SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+      **      GSE_POS_ARR     EPHEMERIS           **  (*)
+  5-00002D00  GSE_VEL         EPHEMERIS         3456  (144)
+      **      GSE_VEL_ARR     EPHEMERIS           **  (*)
+  5-00006C00  GSM_ATT         ATTITUDE          1152  (144)
+  5-00003A80  GSM_POS         EPHEMERIS         3456  (144)
+      **      GSM_POS_ARR     EPHEMERIS           **  (*)
+  5-00004800  GSM_VEL         EPHEMERIS         3456  (144)
+      **      GSM_VEL_ARR     EPHEMERIS           **  (*)
+      **      SUN_VEC_ARR     EPHEMERIS           **  (*)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+  3-000005CC   500        **       1001       **       1002
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                      Type  Name                   
+                                                               
+        EPOCH_BREAKDOWN           I*4   LIB$FIND_FILE          
+        GET_EPHEMERIS             I*4   LIB$FIND_FILE_END      
+
+GET_ORBIT_DATA                                                  21-JUL-1997 16:55:44    DEC Fortran V6.2-508                Page   7
+1.3                             Symbol Table                    21-JUL-1997 16:55:35    SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿp&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.LIS;5
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.OBJ;4
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.14 seconds
+  Elapsed time:      2.87 seconds
+  Pagefaults:         220
+  I/O Count:           21

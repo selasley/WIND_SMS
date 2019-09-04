@@ -1,0 +1,42 @@
+Hi Jo,
+I have run the STICS time periods you requested for 
+DOY 150 1995  8:00 - 24:00 with 30 min intervals.
+The files are currently located in the following 
+directory:
+	UMSMS::SMSDISK4:[WIND.L2DATA.STICS] 
+The file names are of the form 
+	STICS_HHe_YYMMDD_HRMN_HRMN_T13.FLX
+		e.g. STICS_HHE_950530_2330_2400_T13.FLX
+Each file contains header information followed by the data.
+ First set of data is flux in units of #/(cm2-sr-sec-keV/amu).
+ Second set of data is the corresponding error in the flux.
+ Third set of data is the raw counts with E/Q replaced by DVS_HITS.
+The size of each energy-per-charge bin is +/- 2% of the mean E/Q value.
+ 
+The following FORTRAN code was used to write the data:
+*********************************************************************
+C
+C Write flux data to output file
+C 
+      DO I=DATA_DVSTEP_MIN,DATA_DVSTEP_MAX
+	WRITE(55,955)I,DPU_EPQ(I),(OMNI_DATA_COR(I,L),L=1,22)
+ 955    FORMAT(1X,I6,3X,F6.2,3X,22(1X,E12.5))
+      END DO
+C
+C Write error in flux to output file
+C 
+      WRITE(55,*)
+      WRITE(55,*)
+      DO I=DATA_DVSTEP_MIN, DATA_DVSTEP_MAX
+	WRITE(55,955)I,DPU_EPQ(I),(FLUX_ERR(I,L),L=1,22)
+      END DO
+C
+C Write raw counts to output file with E/Q replaced by DVS_HITS.
+C 
+      WRITE(55,*)
+      WRITE(55,*)
+      DO I=DATA_DVSTEP_MIN, DATA_DVSTEP_MAX
+	WRITE(55,958)I,INT(DVS_HITS(I)),(OMNI_DATA_RAW(I,L),L=1,22)
+ 958    FORMAT(1X,I6,3X,I6,3X,22(1X,F12.0))
+      END DO
+***********************************************************************

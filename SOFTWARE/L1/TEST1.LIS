@@ -1,0 +1,163 @@
+TEST1$MAIN                                                       1-JUN-1995 17:51:48    DEC Fortran V6.2-508                Page   1
+                                                                 1-JUN-1995 17:51:37    SMS1:[WIND.SOFTWARE.L1]TEST1.FOR;3
+
+	      1 	include 'inc_dir:ephdef.inc'
+    1	      2       STRUCTURE /EPHEMERIS/		! structure to describe spacecraft 
+    1	      3 					! position in some coordinate system
+    1	      4           REAL*8           x
+    1	      5           REAL*8           y
+    1	      6           REAL*8           z
+    1	      7       END STRUCTURE    !EPHEMERIS
+    1	      8 
+    1	      9       STRUCTURE /ATTITUDE/		! structure to describe spacecraft 
+    1	     10 					! attitude (orientation)
+    1	     11 	  REAL*4	   r_asc
+    1	     12 	  REAL*4	   decl
+    1	     13       END STRUCTURE    !ATTITUDE
+	     14 	integer maxsize
+	     15 	parameter (maxsize=500)
+	     16 	real*8 beg_date,end_date, epoch_arr(maxsize)
+	     17 	integer year,month,day,nsize,nfilled
+	     18 	logical what_pos(7)/7*.true./
+	     19 	record /ephemeris/ gci_pos_arr(maxsize),
+	     20 	1 gci_vel_arr(maxsize), gse_pos_arr(maxsize), gse_vel_arr(maxsize),
+	     21 	1 gsm_pos_arr(maxsize), gsm_vel_arr(maxsize), sun_vec_arr(maxsize) 
+	     22 C
+	     23 10	type *,'enter maximum # of values to retirieve (<=500)'
+	     24 	accept *,nsize
+	     25 	type *,'enter starting date (year,month,day)'
+	     26 	accept *,year,month,day
+	     27 	call compute_epoch(year,month,day,0,0,0,0,beg_date)
+	     28 	type *,'enter ending date (year,month,day)'
+	     29 	accept *,year,month,day
+	     30 	call compute_epoch(year,month,day,23,59,59,0,end_date)
+	     31 
+	     32 	call get_orbit_days(beg_date,end_date,what_pos,nsize,nfilled,
+	     33 	1 epoch_arr,gci_pos_arr,gci_vel_arr,gse_pos_arr,gse_vel_arr,gsm_pos_arr,
+	     34 	1 gsm_vel_arr,sun_vec_arr)
+	     35 
+	     36 	type *,'filled ',nfilled,', entries'
+	     37 	goto 10
+	     38 	end
+
+TEST1$MAIN                                                       1-JUN-1995 17:51:48    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                     1-JUN-1995 17:51:37    SMS1:[WIND.SOFTWARE.L1]TEST1.FOR;3
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                88064 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT *32
+  3 $CODE$                                 960   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 437 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+
+    Total Space Allocated                89493
+
+
+ENTRY POINTS
+
+    Address   Type  Name      
+                              
+  3-00000000        TEST1$MAIN
+
+
+VARIABLES
+
+    Address   Type  Name         Address   Type  Name         Address   Type  Name         Address   Type  Name    
+                                                                                                                   
+  2-00000000  R*8   BEG_DATE   2-00000008  R*8   END_DATE   2-00000020  I*4   NFILLED    2-00000010  I*4   YEAR    
+  2-00000018  I*4   DAY        2-00000014  I*4   MONTH      2-0000001C  I*4   NSIZE                                
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  2-00000040  R*8   EPOCH_ARR         4000  (500)
+  1-00000000  L*4   WHAT_POS            28  (7)
+
+
+
+RECORD ARRAYS
+
+    Address   Name         Structure         Bytes  Dimensions
+
+  2-00000FE0  GCI_POS_ARR  EPHEMERIS        12000  (500)
+  2-00003EC0  GCI_VEL_ARR  EPHEMERIS        12000  (500)
+  2-00006DA0  GSE_POS_ARR  EPHEMERIS        12000  (500)
+  2-00009C80  GSE_VEL_ARR  EPHEMERIS        12000  (500)
+  2-0000CB60  GSM_POS_ARR  EPHEMERIS        12000  (500)
+  2-0000FA40  GSM_VEL_ARR  EPHEMERIS        12000  (500)
+  2-00012920  SUN_VEC_ARR  EPHEMERIS        12000  (500)
+
+
+
+
+TEST1$MAIN                                                       1-JUN-1995 17:51:48    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     1-JUN-1995 17:51:37    SMS1:[WIND.SOFTWARE.L1]TEST1.FOR;3
+
+LABELS
+
+    Address   Label
+                   
+  3-0000003C   10  
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                   Type  Name                
+                                                         
+        COMPUTE_EPOCH                GET_ORBIT_DAYS      
+
+TEST1$MAIN                                                       1-JUN-1995 17:51:48    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                     1-JUN-1995 17:51:37    SMS1:[WIND.SOFTWARE.L1]TEST1.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /DIAGNOSTICS=SMS1:[WIND.SOFTWARE.L1]TEST1.DIA;4
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]TEST1.LIS;4
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]TEST1.OBJ;2
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.24 seconds
+  Elapsed time:      1.65 seconds
+  Pagefaults:         107
+  I/O Count:           14

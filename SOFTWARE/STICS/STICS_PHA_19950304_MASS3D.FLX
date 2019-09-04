@@ -1,0 +1,17 @@
+  STICS  ION f(v) NORMALIZED TO SOLAR WIND SPEED FROM MASS  
+  Run time  13:56:33   29-SEP-99
+  Flux Type:    1 (1=omni-directional, 2=parallel beam)
+  Output Filename: STICS_PHA_19950304_MASS3D.F
+  Clock selected: Wall     Trigger mode is (Tn.!E)+(Tn.En)       
+  FIFO mode is OFF         TGS  mode is OFF
+  Telemetry mode is Science mode     
+  FILTERING CHOICES:
+          Voltage step selection =   0 to 31
+          Event type selection   =       ALL
+          Range selection        =     2 1 0
+          Range checking is OFF
+          Velocity range         =  260 to   1000
+          Selected Telescopes =   1, 2, 3  (-1=not selected)
+          Sectors     =   0 to 15
+          Telescope checking is  ON
+  Start Time   -1  0/ 0 00:00:00     End Time 3000  0/ 0 00:00:00

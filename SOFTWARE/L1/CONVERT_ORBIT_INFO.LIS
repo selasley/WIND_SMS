@@ -1,0 +1,223 @@
+CONVERT_ORBIT_INFO                                               7-JUN-1995 15:49:36    DEC Fortran V6.2-508                Page   1
+                                                                 7-JUN-1995 15:47:59    [WIND.SOFTWARE.L1]CONVERT_ORBIT_INFO.FOR;7
+
+	      1 	SUBROUTINE convert_orbit_info(units, system, nsize, position, 
+	      2 	1 earth_dist)
+	      3  
+	      4 C+
+	      5 C 
+	      6 C FUNCTIONAL DESCRIPTION:	
+	      7 C 
+	      8 C    This subroutine is called if the position information needs to be
+	      9 C    transformed to some other systems of units, such as Earth radii, or to
+	     10 C    spherical coordinates.  The input coordinates are assumed to be in units
+	     11 C    of kilometers in a Cartesian space (x,y,z).
+	     12 C
+	     13 C    While this is inteded to be used on positions, it will also work on
+	     14 C    velocity data since they are stored in the same type of structure
+	     15 C    (/EPHEMERIS/) as position data.
+	     16 C
+	     17 C    In addition the distance from Earth (effectively the value of r in the
+	     18 C    spherical coordinate system) is always computed and returned in the last
+	     19 C    argument.
+	     20 C    
+	     21 C FORMAL PARAMETERS:
+	     22 C      
+	     23 C     UNITS:
+	     24 C	  INT*4	    An encoded value indicating whether or not the units are to
+	     25 C		    be changed and to what.  The allowable values are:
+	     26 C			0	no change in units
+	     27 C			1	Earth radii
+	     28 C			other	same as 0
+	     29 C      
+	     30 C     SYSTEM:
+	     31 C	  INT*4	    An encoded value indicating whether or not the coordinate
+	     32 C		    system is to be changed to spherical.  The allowable values are:
+	     33 C			0	no change to coordinate system
+	     34 C			1	change to spherical coordinates (r,theta,phi)
+	     35 C			other	same as 0
+	     36 C      
+	     37 C     NSIZE:
+	     38 C	  INT*4	    The number of elements in the arrays POSITION and
+	     39 C		    EARTH_DIST.
+	     40 C  
+	     41 C     POSITION:
+	     42 C	  /EPHEMERIS/	An array of NSIZE elements, each of which is a RECORD of
+	     43 C		    structure type /EPHEMERIS/.  When called this argument
+	     44 C		    contains the position (or velocity) data.  Upon return this
+	     45 C		    argument will have been overwritten with the transformed
+	     46 C		    position (or velocity) data.
+	     47 C      
+	     48 C     EARTH_DIST:
+	     49 C	  REAL*8    An array of NSIZE elements which will, upon return, contain
+	     50 C		    the distance of each position from Earth (0,0,0) in the
+	     51 C		    appropriate units.
+	     52 C  
+	     53 C COMMON BLOCKS:
+	     54 C  
+	     55 C     None
+	     56 C  
+	     57 C DESIGN:
+
+CONVERT_ORBIT_INFO                                               7-JUN-1995 15:49:36    DEC Fortran V6.2-508                Page   2
+                                                                 7-JUN-1995 15:47:59    [WIND.SOFTWARE.L1]CONVERT_ORBIT_INFO.FOR;7
+
+	     58 C  
+	     59 C     set up conversion factors to use, logical switches to control code
+	     60 C     process data, performing coordinate transformation
+	     61 C     process data, performing unit conversion
+	     62 C
+	     63 C NOTES:
+	     64 C
+	     65 C     The value used for the Earth's radius is the mean equatorial radius,
+	     66 C     6378.077.  This was obtained from the CRC Handbook, 63rd ed., p F-154.
+	     67 C
+	     68 C This version:    1-JUN-1995	  1.0
+	     69 C 
+	     70 C Created: 
+	     71 C 
+	     72 C	 1-JUN-1995    Larry Bleau
+	     73 C 
+	     74 C Revised:
+	     75 C 
+	     76 C	 Date     | Name  | Description
+	     77 C ----------------+-------+-----------------------------------------------------
+	     78 C [change_entry]
+	     79 C 
+	     80 C-
+	     81 CDEC$	IDENT '1.0'
+	     82 	IMPLICIT NONE
+	     83 	INCLUDE 'INC_DIR:EPHDEF.INC'
+	    115 	INTEGER*4 units, system, nsize
+	    116 	RECORD /EPHEMERIS/ position(nsize)
+	    117 	REAL*8 earth_dist(nsize)
+	    118 C
+	    119 	INTEGER i
+	    120 	REAL*8 factor, earth_radius, theta, phi
+	    121 	DATA earth_radius/6378.077/    ! mean equatorial radius
+	    122 C
+	    123 	factor = 1.0
+	    124 	IF (units .eq. 1) factor = 1.0 / earth_radius
+	    125 C
+	    126 C Change units and compute distance from Earth
+	    127 C
+	    128 	DO i=1,nsize
+	    129 	    position(i).x = position(i).x * factor
+	    130 	    position(i).y = position(i).y * factor
+	    131 	    position(i).z = position(i).z * factor
+	    132 	    earth_dist(i) = SQRT (position(i).x**2 + position(i).y**2 +
+	    133 	1			  position(i).z**2)
+	    134 	END DO
+	    135 C
+	    136 C Change coordinate system to spherical if requested
+	    137 C Part of the job ius already done in the EARTH_DIST array
+	    138 C Make sure to store into POSITION last as we are overwriting the x,y,z values
+	    139 C
+	    140 	IF (system .eq. 1) THEN
+	    141 	    DO i=1,nsize
+	    142 		phi = acos( position(i).z / earth_dist(i) )
+	    143 		theta = dasin( position(i).y / (earth_dist(i) * sin(phi) ) )
+	    144 		position(i).r = earth_dist(i)
+	    145 		position(i).theta = theta
+
+CONVERT_ORBIT_INFO                                               7-JUN-1995 15:49:36    DEC Fortran V6.2-508                Page   3
+1.0                                                              7-JUN-1995 15:47:59    [WIND.SOFTWARE.L1]CONVERT_ORBIT_INFO.FOR;7
+
+	    146 		position(i).phi = phi * 360.0D0 / 3.141592653589793D0
+	    147 	    END DO
+	    148 	END IF
+	    149 C
+	    150 	RETURN
+	    151 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 508   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 128 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  644
+
+
+ENTRY POINTS
+
+    Address   Type  Name              
+                                      
+  2-00000000        CONVERT_ORBIT_INFO
+
+
+VARIABLES
+
+    Address   Type  Name             Address   Type  Name             Address   Type  Name        
+                                                                                                  
+  1-00000000  R*8   EARTH_RADIUS       **      I*4   NSIZE        REG-00000020  R*8   THETA       
+REG-00000022  R*8   FACTOR       REG-00000022  R*8   PHI                **      I*4   UNITS       
+REG-########  I*4   I                  **      I*4   SYSTEM                                       
+
+
+ARRAYS
+
+     Address  Type  Name              Bytes  Dimensions
+
+      **      R*8   EARTH_DIST           **  (*)
+
+
+
+RECORD ARRAYS
+
+    Address   Name      Structure         Bytes  Dimensions
+
+      **      POSITION  EPHEMERIS           **  (*)
+
+
+CONVERT_ORBIT_INFO                                               7-JUN-1995 15:49:36    DEC Fortran V6.2-508                Page   4
+1.0                             Symbol Table                     7-JUN-1995 15:47:59    [WIND.SOFTWARE.L1]CONVERT_ORBIT_INFO.FOR;7
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]CONVERT_ORBIT_INFO.LIS;8
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]CONVERT_ORBIT_INFO.OBJ;6
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.38 seconds
+  Elapsed time:      2.01 seconds
+  Pagefaults:         152
+  I/O Count:           18

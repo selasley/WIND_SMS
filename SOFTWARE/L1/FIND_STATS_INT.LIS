@@ -1,0 +1,224 @@
+FIND_STATS_INT                                                  21-NOV-1995 14:18:42    DEC Fortran V6.2-508                Page   1
+                                                                20-NOV-1995 18:36:03    SMS1:[WIND.SOFTWARE.L1]FIND_STATS_INT.FOR;1
+
+	      1 	SUBROUTINE FIND_STATS_INT(INPUT,STATS)
+	      2 
+	      3 C+
+	      4 C 
+	      5 C FUNCTIONAL DESCRIPTION:	
+	      6 C 
+	      7 C    This subroutine finds the minimum, maxixmum, and running sum of the
+	      8 C    housekeeping quantity passed in the parameter INPUT.  These are stored in
+	      9 C    the structure STATS, along with the time of the maxiumum and minimum.
+	     10 C    Also, if limit checking is enabled for this quantity, the engineering
+	     11 C    value, passed in parameter ENG_VALUE, is compared against the upper and
+	     12 C    lower limits.  If the quantity is out of range the condition is reported.
+	     13 C    Finally the engineering value is stored in the structure; this saves the
+	     14 C    last good value of the quantity.
+	     15 C
+	     16 C FORMAL PARAMETERS:
+	     17 C  
+	     18 C     INPUT:
+	     19 C	  An INTEGER*4 variable giving the raw value of the quantity in
+	     20 C	  question. 
+	     21 C      
+	     22 C     ENG_VALUE:
+	     23 C	  A REAL*4 variable giving the engineering value of the quantity in
+	     24 C	  question.  This is a 5th order polynomial function of the raw value.
+	     25 C
+	     26 C     STATS:
+	     27 C	  A record of structure type HOUSEKEEPING_STATS describing the quantity
+	     28 C	  in question.
+	     29 C  
+	     30 C COMMON BLOCKS:
+	     31 C  
+	     32 C     INFO	makes information about the current HK, HDB, or SR available
+	     33 C  
+	     34 C DESIGN:
+	     35 C  
+	     36 C     The engineering value should be computed before calling FIND_STATS.  If it
+	     37 C     is not the coefficients of the polynomial will also have to be passed in
+	     38 C     as arguemnts.
+	     39 C  
+	     40 C 
+	     41 C This version:   1.2   17-NOV-1995
+	     42 C 
+	     43 C Created: 
+	     44 C 
+	     45 C	 [dd-mmm-yyyy]    John Paquette
+	     46 C 
+	     47 C Revised:
+	     48 C 
+	     49 C	 Date     | Name  | Description
+	     50 C ----------------+-------+-----------------------------------------------------
+	     51 C 13-NOV-1995 1.1 |  LRB  | enhanced to check limits, too; change calling
+	     52 C			    sequence to pass in engineering value; use
+	     53 C			    engineering value to compare to limits; added
+	     54 C			    documentation; save Epoch time and wall time of min
+	     55 C			    and max values
+	     56 C 17-NOV-1995 1.2 |  LRB  | added routine FIND_STATS_INT to do same but for
+	     57 C			    integer argument and to take zeros into account
+
+FIND_STATS_INT                                                  21-NOV-1995 14:18:42    DEC Fortran V6.2-508                Page   2
+                                                                20-NOV-1995 18:36:03    SMS1:[WIND.SOFTWARE.L1]FIND_STATS_INT.FOR;1
+
+	     58 C-
+	     59 CDEC$	IDENT  '1.2'
+	     60 	IMPLICIT NONE
+	     61 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+FIND_STATS_INT                                                  21-NOV-1995 14:18:42    DEC Fortran V6.2-508                Page   3
+1.2                                                             20-NOV-1995 18:36:03    SMS1:[WIND.SOFTWARE.L1]FIND_STATS_INT.FOR;1
+
+	    599 	INCLUDE 'INC_DIR:LIMITDEF.INC/NOLIST'
+	    648 C
+	    649 C Parameter declarations
+	    650 C
+	    651 	INTEGER*4 INPUT
+	    652 	REAL*4 ENG_VALUE
+	    653 	RECORD /HOUSEKEEPING_STATS/ STATS
+	    654 C
+	    655 	LOGICAL IGNORE_ZEROS
+	    656 C
+	    657 C COMMON blocks
+	    658 C
+	    659 	INTEGER*4 NUM_SR
+	    660 	REAL*8 EPOCH
+	    661 	RECORD /T/ W_TIME
+	    662 	COMMON /INFO/ EPOCH,W_TIME,NUM_SR
+	    663 C
+	    664 C Keep a count of the number of times we are called.  This is the number of
+	    665 C values in the sum, which we'll need to compute the average.
+	    666 C
+	    667 	STATS.COUNT = STATS.COUNT + 1
+	    668 C
+	    669 C Compare to previously established min and max, and add to accumulator.  Also
+	    670 C compare to upper and lower limits if reporting is enabled for this parameter.
+	    671 C
+	    672 	IF (INPUT .LT. STATS.MIN_VALUE) THEN
+	    673 	  STATS.MIN_VALUE = INPUT
+	    674 	  STATS.MIN_TIME = EPOCH
+	    675 	  STATS.MIN_W_TIME = W_TIME
+	    676 	ENDIF
+	    677 	IF (INPUT .GT. STATS.MAX_VALUE) THEN
+	    678 	  STATS.MAX_VALUE = INPUT
+	    679 	  STATS.MAX_TIME = EPOCH
+	    680 	  STATS.MAX_W_TIME = W_TIME
+	    681 	ENDIF
+	    682 	STATS.AVERAGE = STATS.AVERAGE + INPUT
+	    683 C
+	    684 C Save engineering value as the last good value
+	    685 C
+	    686 	STATS.LAST_VALUE = INPUT
+	    687 C
+	    688 C If reporting is enabled check against upper and lower limits.  Take proper
+	    689 C action is value exceeds either of these.
+	    690 C
+	    691 	IF (STATS.REPORT) THEN
+	    692 	  IF (INPUT .GT. STATS.HI_LIMIT) THEN
+	    693 	    STATS.HI_COUNT = STATS.HI_COUNT + 1
+	    694 	    CALL LIMIT_REPORT(STATS,FLOAT(INPUT))
+	    695 	  ENDIF
+	    696 	  IF (INPUT .LT. STATS.LO_LIMIT) THEN
+	    697 	    STATS.LO_COUNT = STATS.LO_COUNT + 1
+	    698 	    CALL LIMIT_REPORT(STATS,FLOAT(INPUT))
+	    699 	  ENDIF
+	    700 	ENDIF
+	    701 C
+	    702 	RETURN
+	    703 	END
+
+FIND_STATS_INT                                                  21-NOV-1995 14:18:42    DEC Fortran V6.2-508                Page   4
+1.2                             Symbol Table                    20-NOV-1995 18:36:03    SMS1:[WIND.SOFTWARE.L1]FIND_STATS_INT.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                1068   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  56 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  4 INFO                                    20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                 1152
+
+
+ENTRY POINTS
+
+    Address   Type  Name          
+                                  
+  2-00000000        FIND_STATS_INT
+
+
+VARIABLES
+
+    Address   Type  Name             Address   Type  Name             Address   Type  Name        
+                                                                                                  
+  1-00000000  R*4   ENG_VALUE      1-00000004  L*4   IGNORE_ZEROS   4-00000010  I*4   NUM_SR      
+  4-00000000  R*8   EPOCH              **      I*4   INPUT                                        
+
+
+RECORDS
+
+    Address   Name    Structure                 Bytes
+                                                     
+      **      STATS   HOUSEKEEPING_STATS          124
+  4-00000008  W_TIME  T                             8
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name              
+                          
+        LIMIT_REPORT      
+
+FIND_STATS_INT                                                  21-NOV-1995 14:18:42    DEC Fortran V6.2-508                Page   5
+1.2                             Symbol Table                    20-NOV-1995 18:36:03    SMS1:[WIND.SOFTWARE.L1]FIND_STATS_INT.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(SYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]FIND_STATS_INT.LIS;2
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]FIND_STATS_INT.OBJ;2
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.49 seconds
+  Elapsed time:      2.04 seconds
+  Pagefaults:         166
+  I/O Count:           19

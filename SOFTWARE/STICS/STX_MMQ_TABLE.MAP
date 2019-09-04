@@ -1,0 +1,418 @@
+
+                                                                 5-APR-1997 01:51        Linker A11-14                    Page    1
+                                             +------------------------+
+                                             ! Object Module Synopsis !
+                                             +------------------------+
+Module Name     Ident              Bytes      File                                Creation Date      Creator
+-----------     -----              -----      -----                               -------------      -------
+STX_MMQ_TABLE   1.5                123984 STX_MMQ_TABLE.OBJ;5                   5-APR-1997 01:51  DEC Fortran V6.2-508
+SMS_MASS_SPEED                      71070 SMS_MASS_SPEED.OBJ;20                 1-APR-1997 12:55  DEC Fortran V6.2-508
+MRQMIN                               3292 [WIND.SOFTWARE.STICS]MRQMIN_SW.OBJ;4  1-APR-1997 12:55  DEC Fortran V6.2-508
+MRQCOF                               2448 [WIND.SOFTWARE.STICS]MRQCOF_SW.OBJ;4  1-APR-1997 12:55  DEC Fortran V6.2-508
+COVSRT                               1724 [WIND.SOFTWARE.STICS]COVSRT_SW.OBJ;4  1-APR-1997 12:55  DEC Fortran V6.2-508
+GAUSSJ                               4452 [WIND.SOFTWARE.STICS]GAUSSJ_SW.OBJ;4  1-APR-1997 12:55  DEC Fortran V6.2-508
+DPU_EQ                                300 [WIND.SOFTWARE.STICS]DPU_EQ.OBJ;8     1-APR-1997 12:55  DEC Fortran V6.2-508
+MMPQ_DPU_WSTICS                      1936 MMPQ_DPU_WSTICS.OBJ;17                1-APR-1997 12:55  DEC Fortran V6.2-508
+DISSECT_STICS_PHA              
+                                      604 DISSECT_STICS_PHA.OBJ;9               1-APR-1997 12:55  DEC Fortran V6.2-508
+DIRECTION_REQUESTS             
+                                     1552 DIRECTION_REQUESTS.OBJ;4             27-MAR-1997 02:20  DEC Fortran V6.2-508
+TELESCOPE_ID                         1112 TELESCOPE_ID.OBJ;2                   26-MAR-1997 19:18  DEC Fortran V6.2-508
+COMPARE_TIME                         1400 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:14  DEC Fortran V6.2-508
+WIND_DECOMPRESS                      1544 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_CLOSE   1.1               3189560 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_BASIC              
+                1.0               3189080 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_HDB 1.0               3189068 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_MASS               
+                1.0               3189184 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_STICS              
+                1.0               3189188 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_OPEN    1.7               3192751 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_OPEN_NEXT              
+                1.2               3192834 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_READ_SR 1.11              3211675 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WINDMSG         0                     891 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  Message A02-10
+CNVRT_T_YRMONDAY_TO_YEARDAY    
+                                      252 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+WIND_GET_FILENAME              
+                1.6                  2880 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:27  DEC Fortran V6.2-508
+CNVRT_YRMONDAY_TO_YEARDAY      
+                                      344 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+SELECT_FILE     1.4                115888 SMS1:[WIND.LIB]WIND_LIB.OLB;5        16-JAN-1996 14:57  DEC Fortran V6.2-508
+TICHAR                                948 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TILOG                                1136 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TIXENT                               3376 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXDRC                                488 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXEIL                                908 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXLRN                               2240 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+CHCCSP                                964 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:14  DEC Fortran V6.2-508
+VXDCL                                 288 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:35  DEC Fortran V6.2-508
+                                            +--------------------------+
+                                            ! Program Section Synopsis !
+                                            +--------------------------+
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+
+SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.EXE;7                    5-APR-1997 01:51        Linker A11-14                    Page    2
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 0001236F 00002370 (       9072.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD 
+                STX_MMQ_TABLE   00010000 000105FF 00000600 (       1536.) OCTA  4
+                SMS_MASS_SPEED  00010600 00010881 00000282 (        642.) OCTA  4
+                MRQMIN          00010890 0001093F 000000B0 (        176.) OCTA  4
+                MRQCOF          00010940 0001096B 0000002C (         44.) OCTA  4
+                COVSRT          00010970 0001098F 00000020 (         32.) OCTA  4
+                GAUSSJ          00010990 000109BF 00000030 (         48.) OCTA  4
+                DPU_EQ          000109C0 00010A03 00000044 (         68.) OCTA  4
+                MMPQ_DPU_WSTICS 00010A10 00010B13 00000104 (        260.) OCTA  4
+                DISSECT_STICS_PHA                      
+                                00010B20 00010B8F 00000070 (        112.) OCTA  4
+                DIRECTION_REQUESTS                     
+                                00010B90 00010C67 000000D8 (        216.) OCTA  4
+                TELESCOPE_ID    00010C70 00010C7F 00000010 (         16.) OCTA  4
+                COMPARE_TIME    00010C80 00010E1F 000001A0 (        416.) OCTA  4
+                WIND_DECOMPRESS 00010E20 00010E97 00000078 (        120.) OCTA  4
+                WIND_L1_CLOSE   00010EA0 00010F2F 00000090 (        144.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00010F30 00010F57 00000028 (         40.) OCTA  4
+                WIND_L1_GET_HDB 00010F60 00010F87 00000028 (         40.) OCTA  4
+                WIND_L1_GET_MASS                       
+                                00010F90 00010FBF 00000030 (         48.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00010FC0 00010FF7 00000038 (         56.) OCTA  4
+                WIND_L1_OPEN    00011000 000113BE 000003BF (        959.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000113C0 00011575 000001B6 (        438.) OCTA  4
+                WIND_L1_READ_SR 00011580 00011712 00000193 (        403.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                00011720 00011757 00000038 (         56.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00011760 0001195F 00000200 (        512.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00011960 0001197F 00000020 (         32.) OCTA  4
+                SELECT_FILE     00011980 00011C4F 000002D0 (        720.) OCTA  4
+                TICHAR          00011C50 00011CE3 00000094 (        148.) OCTA  4
+                TILOG           00011CF0 00011DEF 00000100 (        256.) OCTA  4
+                TIXENT          00011DF0 00011FD7 000001E8 (        488.) OCTA  4
+                TIXDRC          00011FE0 00012057 00000078 (        120.) OCTA  4
+                TIXEIL          00012060 000120EF 00000090 (        144.) OCTA  4
+                TIXLRN          000120F0 0001227B 0000018C (        396.) OCTA  4
+                CHCCSP          00012280 00012327 000000A8 (        168.) OCTA  4
+                VXDCL           00012330 0001236F 00000040 (         64.) OCTA  4
+$DATA$                          00020000 000202BF 000002C0 (        704.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                STX_MMQ_TABLE   00020000 000201CF 000001D0 (        464.) OCTA  4
+                DPU_EQ          000201D0 000201D7 00000008 (          8.) OCTA  4
+                WIND_L1_OPEN    000201E0 000201E3 00000004 (          4.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000201F0 0002024F 00000060 (         96.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00020250 00020253 00000004 (          4.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00020260 000202BF 00000060 (         96.) OCTA  4
+$IODATA$                        000202C0 0002184F 00001590 (       5520.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+
+SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.EXE;7                    5-APR-1997 01:51        Linker A11-14                    Page    3
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$IODATA$                        000202C0 0002184F 00001590 (       5520.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD   
+                STX_MMQ_TABLE   000202C0 00020F7F 00000CC0 (       3264.) OCTA  4
+                SMS_MASS_SPEED  00020F80 000210C7 00000148 (        328.) OCTA  4
+                DIRECTION_REQUESTS                     
+                                000210D0 00021257 00000188 (        392.) OCTA  4
+                WIND_L1_CLOSE   00021260 000212A7 00000048 (         72.) OCTA  4
+                WIND_L1_OPEN    000212B0 00021303 00000054 (         84.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00021310 00021337 00000028 (         40.) OCTA  4
+                WIND_L1_READ_SR 00021340 0002135B 0000001C (         28.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00021360 0002138F 00000030 (         48.) OCTA  4
+                SELECT_FILE     00021390 000213C7 00000038 (         56.) OCTA  4
+                TICHAR          000213D0 00021427 00000058 (         88.) OCTA  4
+                TILOG           00021430 0002146B 0000003C (         60.) OCTA  4
+                TIXENT          00021470 000216E3 00000274 (        628.) OCTA  4
+                TIXDRC          000216F0 0002170B 0000001C (         28.) OCTA  4
+                TIXEIL          00021710 00021737 00000028 (         40.) OCTA  4
+                TIXLRN          00021740 0002184B 0000010C (        268.) OCTA  4
+L1INFO2                         00021850 00024B41 000032F2 (      13042.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_L1_CLOSE   00021850 00024B41 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00021850 00024B41 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_HDB 00021850 00024B41 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_MASS                       
+                                00021850 00024B41 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00021850 00024B41 000032F2 (      13042.) OCTA  4
+                WIND_L1_OPEN    00021850 00024B41 000032F2 (      13042.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00021850 00024B41 000032F2 (      13042.) OCTA  4
+                WIND_L1_READ_SR 00021850 00024B41 000032F2 (      13042.) OCTA  4
+L1_HEADERS                      00024B50 00024DD3 00000284 (        644.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                STX_MMQ_TABLE   00024B50 00024DD3 00000284 (        644.) OCTA  4
+                SMS_MASS_SPEED  00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_CLOSE   00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_HDB 00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_MASS                       
+                                00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_OPEN    00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00024B50 00024DD3 00000284 (        644.) OCTA  4
+                WIND_L1_READ_SR 00024B50 00024DD3 00000284 (        644.) OCTA  4
+$CODE$                          00030000 0003F50F 0000F510 (      62736.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD 
+                STX_MMQ_TABLE   00030000 000335F3 000035F4 (      13812.) OCTA  4
+                SMS_MASS_SPEED  00033600 00034BAF 000015B0 (       5552.) OCTA  4
+                MRQMIN          00034BB0 000356E7 00000B38 (       2872.) OCTA  4
+                MRQCOF          000356F0 00035FFF 00000910 (       2320.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.EXE;7                    5-APR-1997 01:51        Linker A11-14                    Page    4
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$CODE$                          00030000 0003F50F 0000F510 (      62736.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD   
+                COVSRT          00036000 0003669B 0000069C (       1692.) OCTA  4
+                GAUSSJ          000366A0 00037573 00000ED4 (       3796.) OCTA  4
+                DPU_EQ          00037580 0003765F 000000E0 (        224.) OCTA  4
+                MMPQ_DPU_WSTICS 00037660 00037CAB 0000064C (       1612.) OCTA  4
+                DISSECT_STICS_PHA                      
+                                00037CB0 00037E9B 000001EC (        492.) OCTA  4
+                DIRECTION_REQUESTS                     
+                                00037EA0 00038223 00000384 (        900.) OCTA  4
+                TELESCOPE_ID    00038230 00038677 00000448 (       1096.) OCTA  4
+                COMPARE_TIME    00038680 00038A3B 000003BC (        956.) OCTA  4
+                WIND_DECOMPRESS 00038A40 00038FC7 00000588 (       1416.) OCTA  4
+                WIND_L1_CLOSE   00038FD0 00039167 00000198 (        408.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00039170 000391EB 0000007C (        124.) OCTA  4
+                WIND_L1_GET_HDB 000391F0 0003925F 00000070 (        112.) OCTA  4
+                WIND_L1_GET_MASS                       
+                                00039260 0003933B 000000DC (        220.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00039340 00039417 000000D8 (        216.) OCTA  4
+                WIND_L1_OPEN    00039420 00039EEB 00000ACC (       2764.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00039EF0 0003AAAF 00000BC0 (       3008.) OCTA  4
+                WIND_L1_READ_SR 0003AAB0 0003C8F7 00001E48 (       7752.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                0003C900 0003C9BF 000000C0 (        192.) OCTA  4
+                WIND_GET_FILENAME                      
+                                0003C9C0 0003D183 000007C4 (       1988.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                0003D190 0003D267 000000D8 (        216.) OCTA  4
+                SELECT_FILE     0003D270 0003DD67 00000AF8 (       2808.) OCTA  4
+                TICHAR          0003DD70 0003DF5B 000001EC (        492.) OCTA  4
+                TILOG           0003DF60 0003E1BB 0000025C (        604.) OCTA  4
+                TIXENT          0003E1C0 0003E967 000007A8 (       1960.) OCTA  4
+                TIXDRC          0003E970 0003E9DF 00000070 (        112.) OCTA  4
+                TIXEIL          0003E9E0 0003EBCF 000001F0 (        496.) OCTA  4
+                TIXLRN          0003EBD0 0003F10B 0000053C (       1340.) OCTA  4
+                CHCCSP          0003F110 0003F423 00000314 (        788.) OCTA  4
+                VXDCL           0003F430 0003F50F 000000E0 (        224.) OCTA  4
+MSG$AAAAAAAAAAA                 00040000 0004000F 00000010 (         16.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040000 0004000F 00000010 (         16.) LONG  2
+MSG$AAAAAAAAAAB                 00040010 00040013 00000004 (          4.) LONG  2   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040010 00040013 00000004 (          4.) LONG  2
+MSG$AAAAAAAAAAC                 00040014 00040017 00000004 (          4.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040014 00040017 00000004 (          4.) LONG  2
+MSG$SECTION                     00040018 0004037A 00000363 (        867.) BYTE  0   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040018 0004037A 00000363 (        867.) BYTE  0
+$BSS$                           00050000 000988BF 000488C0 (     297152.) 2 **  5 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                STX_MMQ_TABLE   00050000 00069747 00019748 (     104264.) OCTA  4
+                SMS_MASS_SPEED  00069760 000790FF 0000F9A0 (      63904.) 2 **  5
+                MRQMIN          00079100 000791F3 000000F4 (        244.) OCTA  4
+                MRQCOF          00079200 00079253 00000054 (         84.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.EXE;7                    5-APR-1997 01:51        Linker A11-14                    Page    5
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$BSS$                           00050000 000988BF 000488C0 (     297152.) 2 **  5 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD   
+                GAUSSJ          00079260 000794BF 00000260 (        608.) OCTA  4
+                MMPQ_DPU_WSTICS 000794C0 000794FF 00000040 (         64.) OCTA  4
+                DIRECTION_REQUESTS                     
+                                00079500 0007952B 0000002C (         44.) OCTA  4
+                COMPARE_TIME    00079530 0007954B 0000001C (         28.) OCTA  4
+                WIND_DECOMPRESS 00079550 00079557 00000008 (          8.) OCTA  4
+                WIND_L1_CLOSE   00079560 00079573 00000014 (         20.) OCTA  4
+                WIND_L1_OPEN    00079580 00079597 00000018 (         24.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000795A0 000796EF 00000150 (        336.) OCTA  4
+                WIND_L1_READ_SR 000796F0 0007CFDF 000038F0 (      14576.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                0007CFE0 0007CFE3 00000004 (          4.) OCTA  4
+                WIND_GET_FILENAME                      
+                                0007CFF0 0007D137 00000148 (        328.) OCTA  4
+                SELECT_FILE     0007D140 000987EF 0001B6B0 (     112304.) OCTA  4
+                TICHAR          000987F0 000987F7 00000008 (          8.) OCTA  4
+                TILOG           00098800 00098803 00000004 (          4.) OCTA  4
+                TIXENT          00098810 00098867 00000058 (         88.) OCTA  4
+                TIXDRC          00098870 0009887F 00000010 (         16.) OCTA  4
+                TIXEIL          00098880 0009888F 00000010 (         16.) OCTA  4
+                TIXLRN          00098890 000988A7 00000018 (         24.) OCTA  4
+                CHCCSP          000988B0 000988B7 00000008 (          8.) OCTA  4
+L1BUF                           000988C0 000A88BD 0000FFFE (      65534.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_HDB 000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_MASS                       
+                                000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+                WIND_L1_OPEN    000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+                WIND_L1_READ_SR 000988C0 000A88BD 0000FFFE (      65534.) OCTA  4
+L1INFO                          000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_HDB 000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_MASS                       
+                                000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+                WIND_L1_OPEN    000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+                WIND_L1_READ_SR 000A88C0 0038FBFF 002E7340 (    3044160.) OCTA  4
+NULLBUF                         0038FC00 0039FBFF 00010000 (      65536.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.EXE;7                    5-APR-1997 01:51        Linker A11-14                    Page    6
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+NULLBUF                         0038FC00 0039FBFF 00010000 (      65536.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD   
+                WIND_L1_GET_BASIC                      
+                                0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_HDB 0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_MASS                       
+                                0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+                WIND_L1_OPEN    0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+                WIND_L1_READ_SR 0038FC00 0039FBFF 00010000 (      65536.) OCTA  4
+TICOMC                          0039FC00 0039FCBB 000000BC (        188.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          0039FC00 0039FCBB 000000BC (        188.) OCTA  4
+                TILOG           0039FC00 0039FCBB 000000BC (        188.) OCTA  4
+                TIXENT          0039FC00 0039FCBB 000000BC (        188.) OCTA  4
+                TIXDRC          0039FC00 0039FCBB 000000BC (        188.) OCTA  4
+                TIXEIL          0039FC00 0039FCBB 000000BC (        188.) OCTA  4
+                TIXLRN          0039FC00 0039FCBB 000000BC (        188.) OCTA  4
+TICOMN                          0039FCC0 0039FCD7 00000018 (         24.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          0039FCC0 0039FCD7 00000018 (         24.) OCTA  4
+                TILOG           0039FCC0 0039FCD7 00000018 (         24.) OCTA  4
+                TIXENT          0039FCC0 0039FCD7 00000018 (         24.) OCTA  4
+                TIXDRC          0039FCC0 0039FCD7 00000018 (         24.) OCTA  4
+                TIXEIL          0039FCC0 0039FCD7 00000018 (         24.) OCTA  4
+                TIXLRN          0039FCC0 0039FCD7 00000018 (         24.) OCTA  4
+                                                +-----------------+
+                                                ! Symbols By Name !
+                                                +-----------------+
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+CHCCSP                          00012318-R                                              MMPQ_DPU_WSTICS                 00010A78-R  
+CHLAST                          00012308-R                                              MRQCOF                          00010940-R  
+CHLCUC                          000122B8-R                                              MRQMIN                          000108C8-R  
+CHPRFX                          00012280-R                                              SELECT_FILE                     00011B48-R  
+CNVRT_T_YRMONDAY_TO_YEARDAY     00011720-R                                              SMS_MASS_SPEED                  000107A0-R  
+CNVRT_YRMONDAY_TO_YEARDAY       00011960-R                                              STX_MMQ_TABLE                   00010328-R  
+COMPARE_TIME                    00010C80-R                                              TELESCOPE_ID                    00010C70-R  
+COMPARE_TIME_EQ                 00010D60-R                                              TICHAR                          00011C50-R  
+COMPARE_TIME_GE                 00010DE0-R                                              TILOG                           00011D48-R  
+COMPARE_TIME_GT                 00010DA0-R                                              TIXDRC                          00011FE0-R  
+COMPARE_TIME_LE                 00010D20-R                                              TIXEIL                          00012060-R  
+COMPARE_TIME_LT                 00010CE0-R                                              TIXENT                          00011EE8-R  
+COMPARE_TIME_NE                 00010CA0-R                                              TIXLRN                          000121A0-R  
+COVSRT                          00010970-R                                              USER_REQUESTS_DATA_TYPE         00010060-R  
+DIRECTION_REQUESTS              00010B90-R                                              VXDCL                           00012330-R  
+DISSECT_STICS_PHA               00010B20-R                                              WIND$_BADFILEHDR                081781C2    
+DPU_EQ                          000109C0-R                                              WIND$_BADRECLEN                 081780F8    
+FUNCS                           00010600-R                                              WIND$_EMPTY                     08178100    
+GAUSSJ                          00010990-R                                              WIND$_FACILITY                  00000817    
+
+SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.EXE;7                    5-APR-1997 01:51        Linker A11-14                    Page    7
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+WIND$_FILEFMT                   081780F0                                                
+WIND$_FILNAMFMT                 081781BA                                                
+WIND$_FILNOTOPN                 081781B2                                                
+WIND$_HDRFMT                    08178053                                                
+WIND$_INUSE                     0817819A                                                
+WIND$_INVHDRVER                 081781AA                                                
+WIND$_NONEXTFILE                081781CA                                                
+WIND$_OUTRANGE                  081781A2                                                
+WIND$_SUCCESS                   08178001                                                
+WIND$_TOOMANY                   08178192                                                
+WIND_COMPARE_TIME               00010C90-R                                              
+WIND_COMPARE_TIME_EQ            00010D80-R                                              
+WIND_COMPARE_TIME_GE            00010E00-R                                              
+WIND_COMPARE_TIME_GT            00010DC0-R                                              
+WIND_COMPARE_TIME_LE            00010D40-R                                              
+WIND_COMPARE_TIME_LT            00010D00-R                                              
+WIND_COMPARE_TIME_NE            00010CC0-R                                              
+WIND_COMPRESS                   00010E20-R                                              
+WIND_DECOMPRESS                 00010E78-R                                              
+WIND_GET_FILENAME               00011838-R                                              
+WIND_L1_CLOSE                   00010EA0-R                                              
+WIND_L1_GET_BASIC               00010F30-R                                              
+WIND_L1_GET_HDB                 00010F60-R                                              
+WIND_L1_GET_MASS                00010F90-R                                              
+WIND_L1_GET_STICS               00010FC0-R                                              
+WIND_L1_OPEN                    000111F0-R                                              
+WIND_L1_OPEN_NEXT               00011470-R                                              
+WIND_L1_READ_SR                 00011638-R                                              
+	  Key for special characters above:
+		+--------------------+
+		! *  - Undefined     !
+		! A  - Alias Name    !
+		! I  - Internal Name !
+		! U  - Universal     !
+		! R  - Relocatable   !
+		! X  - External      !
+		! WK - Weak          !
+		+--------------------+
+
+SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.EXE;7                    5-APR-1997 01:51        Linker A11-14                    Page    8
+                                                 +----------------+
+                                                 ! Image Synopsis !
+                                                 +----------------+
+Virtual memory allocated:                         00010000 003AFFFF 003A0000 (3801088. bytes, 7424. pages)
+Stack size:                                             20. pages
+Image header virtual block limits:                       1.        2. (    2. blocks)
+Image binary virtual block limits:                       3.      187. (  185. blocks)
+Image name and identification:                    STX_MMQ_TABLE 1.5
+Number of files:                                        22.
+Number of modules:                                      40.
+Number of program sections:                             24.
+Number of global symbols:                             1500.
+Number of image sections:                               33.
+User transfer address:                            00010328
+Debugger transfer address:                        00000340
+Number of code references to shareable images:          46.
+Image type:                                       EXECUTABLE.
+Map format:                                       DEFAULT in file SMS1:[WIND.SOFTWARE.STICS]STX_MMQ_TABLE.MAP;7
+Estimated map length:                             134. blocks
+                                              +---------------------+
+                                              ! Link Run Statistics !
+                                              +---------------------+
+Performance Indicators                            Page Faults	CPU Time	Elapsed Time
+----------------------                            -----------	--------	------------
+    Command processing:                                    41	00:00:00.15	00:00:00.22
+    Pass 1:                                                59	00:00:00.50	00:00:01.64
+    Allocation/Relocation:                                  7	00:00:00.01	00:00:00.07
+    Pass 2:                                                26	00:00:00.27	00:00:01.05
+    Map data after object module synopsis:                  4	00:00:00.03	00:00:00.06
+    Symbol table output:                                    0	00:00:00.01	00:00:00.03
+Total run values:                                         137	00:00:00.97	00:00:03.08
+Using a working set limited to 6368 pages and 2064 pages of data storage (excluding image)
+Total number object records read (both passes):   1194
+    of which 340 were in libraries and 211 were DEBUG data records containing 30285 bytes
+22317 bytes of DEBUG data were written,starting at VBN 188 with 44 blocks allocated
+Number of modules extracted explicitly             = 0
+    with 24 extracted to resolve undefined symbols
+188 library searches were for symbols not in the library searched
+A total of 0 global symbol table records was written
+LINK/MAP STX_MMQ_TABLE,SMS_MASS_SPEED,MRQMIN_SW,MRQCOF_SW,COVSRT_SW,GAUSSJ_SW,DPU_EQ,MMPQ_DPU_WSTICS,DISSECT_STICS_PHA,DIRECTION_REQ
+UESTS,TELESCOPE_ID,LIB_DIR:L1LIB/LIB,LIB_DIR:WIND_LIB/LIB,LIB_DIR:XTI_LIB/LIB

@@ -1,0 +1,616 @@
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   1
+                                                                10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	      1 	SUBROUTINE WIND_L1_READ_SR( unit, scirec_number, header, status )
+	      2 C+
+	      3 C
+	      4 C FUNCTIONAL DESCRIPTION:
+	      5 C
+	      6 C    This program reads the next Science Record from the specified L1 data file
+	      7 C    and stores it internally.  It returns the header record to the call.  It
+	      8 C    does not transfer any other data to the caller; this is done by the
+	      9 C    various WIND_L1_GET* routines.
+	     10 C
+	     11 C FORMAL PARAMETERS:
+	     12 C
+	     13 C     unit:
+	     14 C	  An INTEGER*4 variable indicating the Level 1 file to be read.
+	     15 C
+	     16 C     scirec_number:
+	     17 C	  An INTEGER*4 variable which will receive the number of the science
+	     18 C	  record which is read, if successful.
+	     19 C
+	     20 C     header:
+	     21 C	  A record variable of structure type ST_L1_SR_HEADER which will
+	     22 C	  receive the header of the next science record.
+	     23 C
+	     24 C     status:
+	     25 C	  An INTEGER*4 variable which will receive the read completion status.
+	     26 C	  A 1 indicates success.
+	     27 C
+	     28 C COMMON BLOCKS:
+	     29 C
+	     30 C     L1INFO	  contains arrays of unit numbers, each one's current science
+	     31 C		  record, and other control information
+	     32 C
+	     33 C DESIGN:
+	     34 C
+	     35 C     A complete science record is read in.  If reading any part of a science
+	     36 C     record gives an error no further read operations are done and the error
+	     37 C     code is returned.  If the first record is of the wrong record type it is
+	     38 C     discarded and reads are done until a record of the correct type is read.
+	     39 C
+	     40 C     Older format L1 files with different structures are accomodated.  They are
+	     41 C     detected by having an alternate record length for a particular record.
+	     42 C     For older formats the field elements of the older structure are copied
+	     43 C     into the newer structure.  This is done transparently to the calling
+	     44 C     program.
+	     45 C
+	     46 C
+	     47 C AUTHOR(S):
+	     48 C
+	     49 C	 L. Bleau
+	     50 C
+	     51 C Created:
+	     52 C
+	     53 C	 12-SEP-1994    L. Bleau
+	     54 C
+	     55 C This version:   1.11   10-MAR-1995
+	     56 C
+	     57 C Revised:
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   2
+                                                                10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	     58 C
+	     59 C Ver     Date     | Name  | Description
+	     60 C -----------------+-------+----------------------------------------------------
+	     61 C 1.1  27-SEP-1994 |  LRB  | changed code to allow reading of older format basic
+	     62 C                            core records; read into a buffer, then transfer to
+	     63 C                            fields of the structures (old or new), if old copy
+	     64 C                            fields individually into new structure
+	     65 C 1.1  13-OCT-1994 |  LRB  | changed comments; return error if record incorrect
+	     66 C                            length
+	     67 C 1.2  20-OCT-1994 |  LRB  | add extra read for header, change parameter list to
+	     68 C                            return header to caller
+	     69 C 1.3  24-OCT-1994 |  LRB  | zero out structures before reading in record
+	     70 C 1.4  24-OCT-1994 |  LRB  | for rates, use substring spec to do READs so char
+	     71 C                            variable doesn't get blank filled
+	     72 C 1.5  25-OCT-1994 |  LRB  | take care of special-case zero-length rates records
+	     73 C 1.6   5-DEC-1994 |  LRB  | L1 format has been changed (is now v 02), so add
+	     74 C                            capability of reading previous L1 formats (v 01
+	     75 C                            and before); change adds TLM_Mode field to CORE
+	     76 C 1.7  13-DEC-1994 |  LRB  | L1 format has been changed (is now v 03), so add
+	     77 C                            capability of reading previous L1 formats; change
+	     78 C                            adds room for a sixth HK (parameter MAX_HK); add
+	     79 C                            DATA statement for new variable max_version, which
+	     80 C                            is declared in L1READ.INC
+	     81 C 1.8  18-JAN-1995 |  LRB  | removed DATA stmt for max_version, put in L1READ.INC
+	     82 C 1.9   7-FEB-1995 |  LRB  | L1 format has been changed (is now v 04), only the
+	     83 C                            sci rec hdr has been changed, add code for backward
+	     84 C                            compatability; allow routine to continue process-
+	     85 C                            ing even with later version headers
+	     86 C 1.10  2-MAR-1995 |  LRB  | if file header is bad give SS$_BADFILEHDR status
+	     87 C                            value instead of 0
+	     88 C 1.11 10-MAR-1995 |  LRB  | make use of WIND condition codes for errors
+	     89 C-
+	     90 CDEC$	IDENT   '1.11'
+	     91 
+	     92 	IMPLICIT NONE
+	     93 
+	     94 	INCLUDE '($SSDEF)/NOLIST'
+	   1519 	INCLUDE '($RMSDEF)/NOLIST'
+	   2230 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   3
+1.11                                                            10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	   2768 	INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	   2900 	INCLUDE 'INC_DIR:L1READ.INC/NOLIST'
+	   2952 
+	   2953 	INTEGER*4 unit, scirec_number, status
+	   2954 	RECORD /ST_L1_SR_HEADER/ header
+	   2955 	CHARACTER version*2
+	   2956 
+	   2957 	INTEGER ii,jj,iii,nbytes,spin,L1_unit,transfer_bytes
+	   2958 	INTEGER forterr,rmsstc,rmsstv,lun,vaxerr
+	   2959 	RECORD /HKeep_old/ hkold
+	   2960 	RECORD /CORE_V1/ core_v1
+	   2961 	RECORD /OLD_CORE/ old_core
+	   2962 
+	   2963 	EXTERNAL WIND$_OUTRANGE,WIND$_BADFILEHDR
+	   2964 C
+	   2965 C First check if value of unit is within range
+	   2966 C
+	   2967 	IF (unit .lt. 1 .or. unit .gt. maxunits) THEN
+	   2968 	  status = %LOC(WIND$_OUTRANGE)
+	   2969 	  RETURN
+	   2970 	ENDIF
+	   2971 C
+	   2972 C Read one (1) science record
+	   2973 C First fetch internal Fortran unit number (for now they're the same)
+	   2974 C Then increment science record number and store into user's argument
+	   2975 C
+	   2976 	L1_unit = L1_units(unit)
+ C	   2977 D	TYPE *,'READ_SR: L1_unit, L1_units(unit), unit=',L1_unit,L1_units(unit),unit
+	   2978 	scirecnum(unit) = scirecnum(unit) + 1
+	   2979 	scirec_number = scirecnum(unit)
+ C	   2980 D	type *,'Reading science record ',scirec_number,' from unit ',L1_unit
+	   2981 C
+	   2982 C Read in the header record
+	   2983 C Check if it has 'HDRR' as its first 4 characeters.  If so it is a science
+	   2984 C record header; give it to the caller, store it internally, and read next
+	   2985 C record.  Also check header record's length.  If it is the same length as the
+	   2986 C caller's structure it is safe to pass it back to him.  If the header record
+	   2987 C is *longer* than the caller's data area pass back only the number of bytes
+	   2988 C that will fit in the caller's structure.  A warning message has already been
+	   2989 C output telling the user some header information will be lost, and to
+	   2990 C recompile and relink the application to remedy the problem.
+	   2991 C
+	   2992 C If this record does not begin with 'HDRR'  it does not have a science record
+	   2993 C headers or is improperly positioned.  Skip ahead until we reach a valid
+	   2994 C science record header.
+	   2995 C 
+	   2996 100	READ( L1_unit, 1002, IOSTAT=forterr, ERR=3000 ) nbytes,buffer(1:nbytes)
+	   2997 	  IF (forterr .ne. 0) GOTO 3000
+	   2998 	  IF (buffer(1:4) .eq. 'HDRR') THEN
+	   2999             transfer_bytes = MIN(nbytes,LEN(header.c_all))
+	   3000 	    header.c_all = buffer(1:transfer_bytes)
+	   3001 	    READ( L1_unit, 1002, IOSTAT=forterr, ERR=3000 ) nbytes,buffer
+	   3002 	    IF (forterr .ne. 0) GOTO 3000
+	   3003 	  ENDIF
+	   3004 C 
+	   3005 C Now check if the next record, which has already been read, starts with
+	   3006 C 'CORE'.  If it does not it is not a valid start of a science record.  Throw
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   4
+1.11                                                            10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	   3007 C it away and read ahead until we find a record of type 'HDRR' or 'CORE'.
+	   3008 C
+	   3009 	IF (buffer(1:4) .ne. 'CORE') GOTO 100
+	   3010 C
+	   3011 C Check the version of hte header record, and fill in missing fields if
+	   3012 C we are reading an earlier version.
+	   3013 C
+	   3014 	version = L1_header(unit).header_vers 
+	   3015 	IF (version .LT. '05') THEN
+	   3016 	  header.zero_swics_pha(1) = 0
+	   3017 	  header.zero_swics_pha(2) = 0
+	   3018 	  header.zero_mass_pha(1) = 0
+	   3019 	  header.zero_mass_pha(2) = 0
+	   3020 	  header.zero_stics_pha(1) = 0
+	   3021 	  header.zero_stics_pha(2) = 0
+	   3022 	ENDIF
+	   3023 	IF (version .LT. '03') THEN
+	   3024 	  header.present(1) = 0
+	   3025 	  header.present(2) = 0
+	   3026 	ENDIF
+	   3027 	L1_sci_rec_header(unit) = header
+	   3028 C
+	   3029 C The Core data record, also known as Basic, has now been read into buffer.
+	   3030 C Copy over depending on format, which is determined by length:
+	   3031 C Length  Ver  Format
+	   3032 C   7384   02  current format, just copy over into L1_SCI record
+	   3033 C   7144   01  previous format, copy into record CORE_V1 then move fields one
+	   3034 C              by one into new format structure
+	   3035 C   6484       old format, copy into record OLD_CORE then move fields one by one
+	   3036 C              into new format structure
+	   3037 C
+	   3038 	IF (forterr .ne. 0) GOTO 3000
+	   3039 	IF (nbytes .eq. 7384 .and. version .ge. '02') THEN
+	   3040 	  L1_SCI(unit).CCORE = buffer(1:nbytes)
+	   3041 	ELSE IF (nbytes .eq. 7144 .and. version .eq. '01') THEN
+	   3042 	  core_v1.CCORE = buffer(1:nbytes)
+	   3043           DO spin=0,59
+	   3044 	    L1_SCI(unit).EDB(spin).W_Time = core_v1.EDB(spin).W_Time
+	   3045 	    L1_SCI(unit).EDB(spin).SC_Time = core_v1.EDB(spin).SC_Time
+	   3046 	    L1_SCI(unit).EDB(spin).EPOCH = core_v1.EDB(spin).EPOCH
+	   3047 	    L1_SCI(unit).EDB(spin).SC_EPOCH = core_v1.EDB(spin).SC_EPOCH
+	   3048 	    L1_SCI(unit).EDB(spin).BYTE_SF = core_v1.EDB(spin).BYTE_SF
+	   3049 	    L1_SCI(unit).EDB(spin).SFperBlock = core_v1.EDB(spin).SFperBlock
+	   3050 	    L1_SCI(unit).EDB(spin).MeaSpin = core_v1.EDB(spin).MeaSpin
+	   3051 	    L1_SCI(unit).EDB(spin).SpinCnt = core_v1.EDB(spin).SpinCnt
+	   3052 	    L1_SCI(unit).EDB(spin).SWICS_Len = core_v1.EDB(spin).SWICS_Len
+	   3053 	    L1_SCI(unit).EDB(spin).STICS_Len = core_v1.EDB(spin).STICS_Len
+	   3054 	    L1_SCI(unit).EDB(spin).MASS_Len = core_v1.EDB(spin).MASS_Len
+	   3055 	    L1_SCI(unit).EDB(spin).SWICS_RATE_Size = core_v1.EDB(spin).SWICS_RATE_Size
+	   3056 	    L1_SCI(unit).EDB(spin).STICS_RATE_Size = core_v1.EDB(spin).STICS_RATE_Size
+	   3057 	    L1_SCI(unit).EDB(spin).SpareTime = core_v1.EDB(spin).SpareTime
+	   3058 	    L1_SCI(unit).EDB(spin).TLM_Mode = 256
+	   3059 	    L1_SCI(unit).EDB(spin).BitRate = core_v1.EDB(spin).BitRate
+	   3060 	    L1_SCI(unit).EDB(spin).HDB_FLAG = core_v1.EDB(spin).HDB_FLAG
+	   3061 	    L1_SCI(unit).EDB(spin).RAMCheck = core_v1.EDB(spin).RAMCheck
+	   3062 	    L1_SCI(unit).EDB(spin).SWICSPower = core_v1.EDB(spin).SWICSPower
+	   3063 	    L1_SCI(unit).EDB(spin).STICSPower = core_v1.EDB(spin).STICSPower
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   5
+1.11                                                            10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	   3064 	    L1_SCI(unit).EDB(spin).MASSPower = core_v1.EDB(spin).MASSPower
+	   3065 	    L1_SCI(unit).EDB(spin).ValCmdFl = core_v1.EDB(spin).ValCmdFl
+	   3066 	    L1_SCI(unit).EDB(spin).InvCmdFl = core_v1.EDB(spin).InvCmdFl
+	   3067 	    L1_SCI(unit).EDB(spin).CmdErrFl = core_v1.EDB(spin).CmdErrFl
+	   3068 	    L1_SCI(unit).EDB(spin).SWICS_HP = core_v1.EDB(spin).SWICS_HP
+	   3069 	    L1_SCI(unit).EDB(spin).SWICS_CP = core_v1.EDB(spin).SWICS_CP
+	   3070 	    L1_SCI(unit).EDB(spin).STICS_HP = core_v1.EDB(spin).STICS_HP
+	   3071 	    L1_SCI(unit).EDB(spin).STICS_CP = core_v1.EDB(spin).STICS_CP
+	   3072 	    L1_SCI(unit).EDB(spin).MASS_CP = core_v1.EDB(spin).MASS_CP
+	   3073 	    L1_SCI(unit).EDB(spin).MDisChar = core_v1.EDB(spin).MDisChar
+	   3074 	    L1_SCI(unit).EDB(spin).DeadTime = core_v1.EDB(spin).DeadTime
+	   3075 	    L1_SCI(unit).EDB(spin).WDisChar = core_v1.EDB(spin).WDisChar
+	   3076 	    L1_SCI(unit).EDB(spin).MHStep = core_v1.EDB(spin).MHStep
+	   3077 	    L1_SCI(unit).EDB(spin).MSPStep = core_v1.EDB(spin).MSPStep
+	   3078 	    L1_SCI(unit).EDB(spin).MSTStep = core_v1.EDB(spin).MSTStep
+	   3079 	    L1_SCI(unit).EDB(spin).WPStep = core_v1.EDB(spin).WPStep
+	   3080 	    L1_SCI(unit).EDB(spin).WSPStep = core_v1.EDB(spin).WSPStep
+	   3081 	    L1_SCI(unit).EDB(spin).WSTStep = core_v1.EDB(spin).WSTStep
+	   3082 	    L1_SCI(unit).EDB(spin).SSPStep = core_v1.EDB(spin).SSPStep
+	   3083 	    L1_SCI(unit).EDB(spin).SSTStep = core_v1.EDB(spin).SSTStep
+	   3084 	    L1_SCI(unit).EDB(spin).Qual = core_v1.EDB(spin).Qual
+	   3085 	    L1_SCI(unit).EDB(spin).CORE_Qual = core_v1.EDB(spin).CORE_Qual
+	   3086 	    L1_SCI(unit).EDB(spin).SW_BR_Qual = core_v1.EDB(spin).SW_BR_Qual
+	   3087 	    L1_SCI(unit).EDB(spin).SW_MR_Qual = core_v1.EDB(spin).SW_MR_Qual
+	   3088 	    L1_SCI(unit).EDB(spin).SW_ME1_Qual = core_v1.EDB(spin).SW_ME1_Qual
+	   3089 	    L1_SCI(unit).EDB(spin).SW_ME2_Qual = core_v1.EDB(spin).SW_ME2_Qual
+	   3090 	    L1_SCI(unit).EDB(spin).SW_ER_Qual = core_v1.EDB(spin).SW_ER_Qual
+	   3091 	    L1_SCI(unit).EDB(spin).ST_HMR_Qual = core_v1.EDB(spin).ST_HMR_Qual
+	   3092 	    L1_SCI(unit).EDB(spin).ST_SMR_Qual = core_v1.EDB(spin).ST_SMR_Qual
+	   3093 	    L1_SCI(unit).EDB(spin).ST_BR_Qual = core_v1.EDB(spin).ST_BR_Qual
+	   3094 	    L1_SCI(unit).EDB(spin).ST_OMR_Qual = core_v1.EDB(spin).ST_OMR_Qual
+	   3095 	    L1_SCI(unit).EDB(spin).ST_ER_Qual = core_v1.EDB(spin).ST_ER_Qual
+	   3096 	    L1_SCI(unit).EDB(spin).MA_UER_Qual = core_v1.EDB(spin).MA_UER_Qual
+	   3097 	    L1_SCI(unit).EDB(spin).MA_SER_Qual = core_v1.EDB(spin).MA_SER_Qual
+	   3098 	    L1_SCI(unit).EDB(spin).MA_BR_Qual = core_v1.EDB(spin).MA_BR_Qual
+	   3099 	    L1_SCI(unit).EDB(spin).MA_MR_Qual = core_v1.EDB(spin).MA_MR_Qual
+	   3100 	    L1_SCI(unit).EDB(spin).SW_P_Qual = core_v1.EDB(spin).SW_P_Qual
+	   3101 	    L1_SCI(unit).EDB(spin).ST_P_Qual = core_v1.EDB(spin).ST_P_Qual
+	   3102 	    L1_SCI(unit).EDB(spin).MA_P_Qual = core_v1.EDB(spin).MA_P_Qual
+	   3103 	  ENDDO
+	   3104 	ELSE IF (nbytes .eq. 6484) THEN
+	   3105 	  old_core.CCORE = buffer(1:nbytes)
+	   3106           DO spin=0,59
+	   3107 	    L1_SCI(unit).EDB(spin).W_Time = old_core.EDB(spin).W_Time
+	   3108 	    L1_SCI(unit).EDB(spin).SC_Time = old_core.EDB(spin).SC_Time
+	   3109 	    L1_SCI(unit).EDB(spin).EPOCH = old_core.EDB(spin).EPOCH
+	   3110 	    L1_SCI(unit).EDB(spin).SC_EPOCH = old_core.EDB(spin).SC_EPOCH
+	   3111 	    L1_SCI(unit).EDB(spin).BYTE_SF = old_core.EDB(spin).BYTE_SF
+	   3112 	    L1_SCI(unit).EDB(spin).SFperBlock = old_core.EDB(spin).SFperBlock
+	   3113 	    L1_SCI(unit).EDB(spin).MeaSpin = old_core.EDB(spin).MeaSpin
+	   3114 	    L1_SCI(unit).EDB(spin).SpinCnt = old_core.EDB(spin).SpinCnt
+	   3115 	    L1_SCI(unit).EDB(spin).SWICS_Len = old_core.EDB(spin).SWICS_Len
+	   3116 	    L1_SCI(unit).EDB(spin).STICS_Len = old_core.EDB(spin).STICS_Len
+	   3117 	    L1_SCI(unit).EDB(spin).MASS_Len = old_core.EDB(spin).MASS_Len
+	   3118 	    L1_SCI(unit).EDB(spin).SWICS_RATE_Size = old_core.EDB(spin).SWICS_RATE_Size
+	   3119 	    L1_SCI(unit).EDB(spin).STICS_RATE_Size = old_core.EDB(spin).STICS_RATE_Size
+	   3120 	    L1_SCI(unit).EDB(spin).SpareTime = old_core.EDB(spin).SpareTime
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   6
+1.11                                                            10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	   3121 	    L1_SCI(unit).EDB(spin).TLM_Mode = 256
+	   3122 	    L1_SCI(unit).EDB(spin).BitRate = old_core.EDB(spin).BitRate
+	   3123 	    L1_SCI(unit).EDB(spin).HDB_FLAG = old_core.EDB(spin).HDB_FLAG
+	   3124 	    L1_SCI(unit).EDB(spin).RAMCheck = old_core.EDB(spin).RAMCheck
+	   3125 	    L1_SCI(unit).EDB(spin).SWICSPower = old_core.EDB(spin).SWICSPower
+	   3126 	    L1_SCI(unit).EDB(spin).STICSPower = old_core.EDB(spin).STICSPower
+	   3127 	    L1_SCI(unit).EDB(spin).MASSPower = old_core.EDB(spin).MASSPower
+	   3128 	    L1_SCI(unit).EDB(spin).ValCmdFl = old_core.EDB(spin).ValCmdFl
+	   3129 	    L1_SCI(unit).EDB(spin).InvCmdFl = old_core.EDB(spin).InvCmdFl
+	   3130 	    L1_SCI(unit).EDB(spin).CmdErrFl = old_core.EDB(spin).CmdErrFl
+	   3131 	    L1_SCI(unit).EDB(spin).SWICS_HP = old_core.EDB(spin).SWICS_HP
+	   3132 	    L1_SCI(unit).EDB(spin).SWICS_CP = old_core.EDB(spin).SWICS_CP
+	   3133 	    L1_SCI(unit).EDB(spin).STICS_HP = old_core.EDB(spin).STICS_HP
+	   3134 	    L1_SCI(unit).EDB(spin).STICS_CP = old_core.EDB(spin).STICS_CP
+	   3135 	    L1_SCI(unit).EDB(spin).MASS_CP = old_core.EDB(spin).MASS_CP
+	   3136 	    L1_SCI(unit).EDB(spin).MDisChar = old_core.EDB(spin).MDisChar
+	   3137 	    L1_SCI(unit).EDB(spin).DeadTime = old_core.EDB(spin).DeadTime
+	   3138 	    L1_SCI(unit).EDB(spin).WDisChar = old_core.EDB(spin).WDisChar
+	   3139 	    L1_SCI(unit).EDB(spin).MHStep = old_core.EDB(spin).MHStep
+	   3140 	    L1_SCI(unit).EDB(spin).MSPStep = old_core.EDB(spin).MSPStep
+	   3141 	    L1_SCI(unit).EDB(spin).MSTStep = old_core.EDB(spin).MSTStep
+	   3142 	    L1_SCI(unit).EDB(spin).WPStep = old_core.EDB(spin).WPStep
+	   3143 	    L1_SCI(unit).EDB(spin).WSPStep = old_core.EDB(spin).WSPStep
+	   3144 	    L1_SCI(unit).EDB(spin).WSTStep = old_core.EDB(spin).WSTStep
+	   3145 	    L1_SCI(unit).EDB(spin).SSPStep = old_core.EDB(spin).SSPStep
+	   3146 	    L1_SCI(unit).EDB(spin).SSTStep = old_core.EDB(spin).SSTStep
+	   3147 	    L1_SCI(unit).EDB(spin).Qual = old_core.EDB(spin).Qual
+	   3148 	    L1_SCI(unit).EDB(spin).CORE_Qual = old_core.EDB(spin).CORE_Qual
+	   3149 	    L1_SCI(unit).EDB(spin).SW_BR_Qual = old_core.EDB(spin).SW_R_Qual
+	   3150 	    L1_SCI(unit).EDB(spin).SW_MR_Qual = old_core.EDB(spin).SW_R_Qual
+	   3151 	    L1_SCI(unit).EDB(spin).SW_ME1_Qual = old_core.EDB(spin).SW_R_Qual
+	   3152 	    L1_SCI(unit).EDB(spin).SW_ME2_Qual = old_core.EDB(spin).SW_R_Qual
+	   3153 	    L1_SCI(unit).EDB(spin).SW_ER_Qual = old_core.EDB(spin).SW_R_Qual
+	   3154 	    L1_SCI(unit).EDB(spin).ST_HMR_Qual = old_core.EDB(spin).ST_R_Qual
+	   3155 	    L1_SCI(unit).EDB(spin).ST_SMR_Qual = old_core.EDB(spin).ST_R_Qual
+	   3156 	    L1_SCI(unit).EDB(spin).ST_BR_Qual = old_core.EDB(spin).ST_R_Qual
+	   3157 	    L1_SCI(unit).EDB(spin).ST_OMR_Qual = old_core.EDB(spin).ST_R_Qual
+	   3158 	    L1_SCI(unit).EDB(spin).ST_ER_Qual = old_core.EDB(spin).ST_R_Qual
+	   3159 	    L1_SCI(unit).EDB(spin).MA_UER_Qual = old_core.EDB(spin).MA_R_Qual
+	   3160 	    L1_SCI(unit).EDB(spin).MA_SER_Qual = old_core.EDB(spin).MA_R_Qual
+	   3161 	    L1_SCI(unit).EDB(spin).MA_BR_Qual = old_core.EDB(spin).MA_R_Qual
+	   3162 	    L1_SCI(unit).EDB(spin).MA_MR_Qual = old_core.EDB(spin).MA_R_Qual
+	   3163 	    L1_SCI(unit).EDB(spin).SW_P_Qual = old_core.EDB(spin).SW_P_Qual
+	   3164 	    L1_SCI(unit).EDB(spin).ST_P_Qual = old_core.EDB(spin).ST_P_Qual
+	   3165 	    L1_SCI(unit).EDB(spin).MA_P_Qual = old_core.EDB(spin).MA_P_Qual
+	   3166 	  ENDDO
+	   3167         ELSE
+	   3168 	  status = %LOC(WIND$_BADFILEHDR)
+	   3169 	  RETURN
+	   3170 	ENDIF
+	   3171 C
+	   3172 C Read in the Housekeeping data blocks (HKs, MAX_HK of them) and the HDB
+	   3173 C Put them into BUFFER, then transfer them to proper structure
+	   3174 C Check number of bytes read to determine which structure to use
+	   3175 C
+	   3176 C If this is a version 01 or 02 L1 file there are only five HKs per L1 record.
+	   3177 C Copy this from buffer into record L1_HK since the first 918 bytes are
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   7
+1.11                                                            10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	   3178 C identical in structure.
+	   3179 C
+	   3180 C If this is an old version of the Level 1 file, read the Housekeeping
+	   3181 C structures (HK records, to be exact) into a record of type HKeep_old, which
+	   3182 C is 4 bytes shorter than later versions.  Then copy its components into a
+	   3183 C newer record of type HKeep, which includes the count field.  Set the count of
+	   3184 C the number of HKs to 5, the maximum, since we don't know how many there were.
+	   3185 C
+	   3186 C Although there are always MAX_HK HKs in this record, not all of them are
+	   3187 C always valid.
+	   3188 C Length     Ver  Format
+	   3189 C 1100 + 324  03  6 HKs plus 1 HDB
+	   3190 C  918 + 324  01  5 HKs plus 1 HDB
+	   3191 C  914 + 324      5 HKs plub 1 HDB, no HK count field
+	   3192 C
+	   3193 	READ( L1_unit, 1002, IOSTAT=forterr, ERR=3000 ) nbytes,buffer(1:nbytes)
+	   3194 	IF (version .ge. '03' .and. nbytes .eq. 1100 + 324) THEN
+	   3195 C New structure, copy it straight over
+	   3196 	  L1_HKeep(unit).CHK = buffer(1:1100)
+	   3197 	  L1_HDB(unit).CHDB = buffer(1+1100:1100+324)
+	   3198 	ELSE IF (version .ge. '01' .and. nbytes .eq. 918 + 324) THEN
+	   3199 C Version 01 structure, only 5 HKs.  Can copy straight over to version 03
+	   3200 C structure since first part of record is the same.
+	   3201 	  L1_HKeep(unit).CHK(1:918) = buffer(1:918)
+	   3202 	  L1_HDB(unit).CHDB     = buffer(1+918:918+324)
+	   3203 	ELSE IF (nbytes .eq. 914 + 324) THEN
+	   3204 C Old structure, copy into record of old type, then copy the data between old
+	   3205 C and current HK structures for later L1 files; see comment above.
+	   3206 	  hkold.CHK             = buffer(1:914)
+	   3207 	  L1_HDB(unit).CHDB     = buffer(1+914:914+324)
+	   3208 	  L1_HKeep(unit).HKcount = 5
+	   3209 	  DO iii=1,5
+	   3210 	    L1_HKeep(unit).hkset(iii) = hkold.hkset(iii)
+	   3211 	  ENDDO
+	   3212 	ELSE
+	   3213           TYPE *,'*** INVALID VERSION (',version,') OR HK+HDB RECORD LENGTH (',nbytes,')'
+	   3214 	  status = %LOC(WIND$_BADFILEHDR)
+	   3215 	  RETURN
+	   3216 	ENDIF
+ C	   3217 D	type *,'Num of bytes in HK record: ',nbytes
+ C	   3218 D	type *,'HKcount=',L1_HKeep(unit).HKcount
+	   3219 C
+	   3220 C Read in SWICS rates and PHA by voltage step for all 60 voltage steps
+	   3221 C
+	   3222 	DO II = 0, 59
+	   3223 	  L1_SWICS_RATE(unit).C_SW_RATE(II) = null_buffer(1:LEN(L1_SWICS_RATE(unit).C_SW_RATE(II)))
+	   3224 	  jj = L1_SCI(unit).edb(ii).SWICS_rate_size
+	   3225 	  IF (jj .eq. 0) THEN
+	   3226 	    jj = 4
+	   3227 	  ELSE
+	   3228 	    jj = jj + 5
+	   3229 	  ENDIF
+	   3230 	  READ(L1_unit,1001,IOSTAT=forterr,ERR=3000) L1_SWICS_RATE(unit).C_SW_RATE(II)(1:jj)
+	   3231 	  IF (forterr .ne. 0) GOTO 3000
+	   3232 	  JJ = L1_SCI( unit ).EDB( II ).SWICS_Len * 4 + 4
+	   3233 	  L1_SWICS_PHA(unit).C_SW_PHA(II) = null_buffer(1:LEN(L1_SWICS_PHA(unit).C_SW_PHA(II)))
+	   3234 	  READ( L1_unit, 1001, IOSTAT=forterr, ERR=3000 ) L1_SWICS_PHA(unit).C_SW_PHA(II)( 1:JJ )
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   8
+1.11                                                            10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+	   3235 	  IF (forterr .ne. 0) GOTO 3000
+	   3236 	END DO
+	   3237 C
+	   3238 C Read in MASS rates and PHA by voltage step for all 60 voltage steps
+	   3239 C
+	   3240 	DO II = 0, 59
+	   3241 	  L1_MASS_RATE(unit).C_MA_RATE(II) = null_buffer(1:LEN(L1_MASS_RATE(unit).C_MA_RATE(II)))
+	   3242 	  READ( L1_unit, 1001, IOSTAT=forterr, ERR=3000 ) L1_MASS_RATE(unit).C_MA_RATE(II)
+	   3243 	  IF (forterr .ne. 0) GOTO 3000
+	   3244 	  JJ = L1_SCI( unit ).EDB( II ).MASS_Len * 2 + 4
+	   3245 	  L1_MASS_PHA(unit).C_MA_PHA(II) = null_buffer(1:LEN(L1_MASS_PHA(unit).C_MA_PHA(II)))
+	   3246 	  READ( L1_unit, 1001, IOSTAT=forterr, ERR=3000 ) L1_MASS_PHA(unit).C_MA_PHA(II)( 1:JJ )
+	   3247 	  IF (forterr .ne. 0) GOTO 3000
+	   3248 	END DO
+	   3249 C
+	   3250 C Read in STICS rates and PHA by voltage step for all 60 voltage steps
+	   3251 C Since STICS rates at low bit rate have been concatenated, the rate records for
+	   3252 C successive spins will contain alternately 180 and zero values.  The core value
+	   3253 C STICS_rate_size, however, gives the index of the highest value stored, NOT
+	   3254 C the number of values.  So, a STICS_rate_size value of 179 indicates 180
+	   3255 C values.  Since rate values are concatenated there must be some means of
+	   3256 C indicating no rate values in a record; a zero is used.  In this case zero
+	   3257 C does NOT indicate one rate value, but none.  (Confused? So was I.)
+	   3258 C
+	   3259 	DO II = 0, 59
+	   3260 	  L1_STICS_RATE(unit).C_ST_RATE(II) = null_buffer(1:LEN(L1_STICS_RATE(unit).C_ST_RATE(II)))
+	   3261 	  jj = L1_SCI(unit).edb(ii).STICS_rate_size
+	   3262 	  IF (jj .eq. 0) THEN
+	   3263 	    jj = 4
+	   3264 	  ELSE
+	   3265 	    jj = jj + 5
+	   3266 	  ENDIF
+	   3267 	  READ( L1_unit, 1001, IOSTAT=forterr, ERR=3000 ) L1_STICS_RATE(unit).C_ST_RATE(II)(1:jj)
+	   3268 	  IF (forterr .ne. 0) GOTO 3000
+	   3269 	  jj = L1_SCI( unit ).EDB( II ).STICS_Len * 4 + 4
+	   3270 	  L1_STICS_PHA(unit).C_ST_PHA(II) = null_buffer(1:LEN(L1_STICS_PHA(unit).C_ST_PHA(II)))
+	   3271 	  READ( L1_unit, 1001, IOSTAT=forterr, ERR=3000 ) L1_STICS_PHA(unit).C_ST_PHA(II)( 1:JJ )
+	   3272 	  IF (forterr .ne. 0) GOTO 3000
+	   3273 	END DO
+	   3274 
+	   3275 	status = SS$_NORMAL
+	   3276 	RETURN
+	   3277 C
+	   3278 C Come here for read errors
+	   3279 C Convert Fortran error code into VMS error code and return to caller
+	   3280 C
+	   3281 3000	lun = L1_unit
+	   3282 	CALL ERRSNS(forterr,rmsstc,rmsstv,lun,vaxerr)
+	   3283 	status = rmsstc
+ C	   3284 D	type *,'Error while reading unit ',L1_unit,', error code=',forterr
+	   3285 	RETURN
+	   3286 C
+	   3287 C Format statements
+	   3288 C
+	   3289 1001	FORMAT( A )
+	   3290 1002	FORMAT( Q, A )
+	   3291 	END
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page   9
+1.11                            Symbol Table                    10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                14576 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                                28 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                7752   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 403 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 L1INFO                             3044160 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO2                              13042 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 L1BUF                                65534 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 NULLBUF                              65536 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated              3211675
+
+
+ENTRY POINTS
+
+    Address   Type  Name           
+                                   
+  3-00000000        WIND_L1_READ_SR
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name               Address   Type  Name          
+                                                                                                        
+  8-00000000  CHAR  BUFFER           7-000000A0  CHAR  MAX_VERSION          **      I*4   STATUS        
+  0-00000038# I*4   FORTERR          1-00000008  I*4   NBYTES         REG-00000012  I*4   TRANSFER_BYTES
+REG-########  I*4   II               9-00000000  CHAR  NULL_BUFFER          **      I*4   UNIT          
+REG-00000000  I*4   III              1-0000000C  I*4   RMSSTC           1-00000014  I*4   VAXERR        
+REG-########  I*4   JJ               1-00000010  I*4   RMSSTV           1-00000000  CHAR  VERSION       
+REG-00000007  I*4   L1_UNIT              **      I*4   SCIREC_NUMBER                                    
+  0-0000003C  I*4   LUN            REG-########  I*4   SPIN                                             
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+  1-000003B0  CORE_V1         CORE_V1                   7144   5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+      **      HEADER          ST_L1_SR_HEADER            244   1-00001F98  OLD_CORE        OLD_CORE                  6484
+  1-00000018  HKOLD           HKEEP_OLD                  914                                                             
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400                                                             
+
+
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page  10
+1.11                            Symbol Table                    10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+ARRAYS
+
+     Address  Type  Name                   Bytes  Dimensions
+
+  7-00000000  I*4   L1_UNITS                  80  (20)
+  9-00000000  I*1   NULL_BYTE_ARRAY        65534  (65534)
+  9-00000000  I*4   NULL_I4_ARRAY          65536  (16384)
+  7-00000050  I*4   SCIRECNUM                 80  (20)
+
+
+
+RECORD ARRAYS
+
+    Address   Name               Structure                 Bytes  Dimensions
+
+  6-002E0400  L1_HDB             HDBSTR                    6480  (20)
+  7-000000A2  L1_HEADER          ST_L1_FILE_HEADER         8000  (20)
+  6-002E1D50  L1_HKEEP           HKEEP                    22000  (20)
+  6-001FFD60  L1_MASS_PHA        MA_PHA                  919200  (20)
+  6-001F6760  L1_MASS_RATE       MA_RATE                  38400  (20)
+  6-00000000  L1_SCI             CORE                    147680  (20)
+  7-00001FE2  L1_SCI_REC_HEADER  ST_L1_SR_HEADER           4880  (20)
+  6-001432A0  L1_STICS_PHA       ST_PHA                  734400  (20)
+  6-0010D420  L1_STICS_RATE      ST_RATE                 220800  (20)
+  6-00047360  L1_SWICS_PHA       SW_PHA                  811200  (20)
+  6-000240E0  L1_SWICS_RATE      SW_RATE                 144000  (20)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  3-000000E0   100        **       1001       **       1002   3-00001C54   3000
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                     Type  Name                  
+                                                             
+        WIND$_BADFILEHDR               WIND$_OUTRANGE        
+
+WIND_L1_READ_SR                                                 21-APR-1995 16:15:43    DEC Fortran V6.2-508                Page  11
+1.11                            Symbol Table                    10-MAR-1995 13:29:05    [WIND.SOFTWARE.L1]WIND_L1_READ_SR.FOR;62
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_L1_READ_SR.LIS;25
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_L1_READ_SR.OBJ;19
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          5.66 seconds
+  Elapsed time:      9.22 seconds
+  Pagefaults:         758
+  I/O Count:           39

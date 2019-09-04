@@ -1,0 +1,157 @@
+WIND_L1_GET_HDB                                                 21-APR-1995 16:15:12    DEC Fortran V6.2-508                Page   1
+                                                                26-JAN-1995 17:57:17    SMS1:[WIND.SOFTWARE.L1]WIND_L1_GET_HDB.FOR;4
+
+	      1 	SUBROUTINE wind_l1_get_hdb( L1_unit, hdb_structure, status ) 
+	      2 C
+	      3 C This routine copies the Housekeeping Data Block (HDB) data structure from the
+	      4 C Science Record associated with unit L1_unit to the caller's argument
+	      5 C hdb_structure, which is a record of type HDBstr.  
+	      6 C
+	      7 C     This version:	20-SEP-1994
+	      8 C
+	      9 C     Creation:
+	     10 C	L. BLeau	20-SEP-1994
+	     11 C
+	     12 C     Revisions:
+	     13 C
+	     14 CDEC$	IDENT   '1.0'
+	     15 
+	     16 	IMPLICIT NONE
+	     17 
+	     18 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_L1_GET_HDB                                                 21-APR-1995 16:15:12    DEC Fortran V6.2-508                Page   2
+1.0                                                             26-JAN-1995 17:57:17    SMS1:[WIND.SOFTWARE.L1]WIND_L1_GET_HDB.FOR;4
+
+	    556 	INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	    688 	INCLUDE 'INC_DIR:L1READ.INC/NOLIST'
+	    740 
+	    741 	INTEGER*4 L1_unit, status
+	    742 	RECORD /HDBstr/ hdb_structure
+	    743 
+ C	    744 D	type *,'WIND_L1_GET_HDB: L1_unit=',L1_unit
+	    745 	hdb_structure.CHDB = L1_HDB(L1_unit).CHDB
+	    746 	status = 1
+	    747 
+	    748 	RETURN
+	    749 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                 112   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  40 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  3 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  4 L1INFO                             3044160 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  5 L1INFO2                              13042 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 L1BUF                                65534 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 NULLBUF                              65536 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated              3189068
+
+
+ENTRY POINTS
+
+    Address   Type  Name           
+                                   
+  1-00000000        WIND_L1_GET_HDB
+
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                               
+  6-00000000  CHAR  BUFFER        5-000000A0  CHAR  MAX_VERSION       **      I*4   STATUS     
+      **      I*4   L1_UNIT       7-00000000  CHAR  NULL_BUFFER                                
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+      **      HDB_STRUCTURE   HDBSTR                     324   3-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+  3-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400                                                             
+
+
+
+WIND_L1_GET_HDB                                                 21-APR-1995 16:15:12    DEC Fortran V6.2-508                Page   3
+1.0                             Symbol Table                    26-JAN-1995 17:57:17    SMS1:[WIND.SOFTWARE.L1]WIND_L1_GET_HDB.FOR;4
+
+ARRAYS
+
+     Address  Type  Name                   Bytes  Dimensions
+
+  5-00000000  I*4   L1_UNITS                  80  (20)
+  7-00000000  I*1   NULL_BYTE_ARRAY        65534  (65534)
+  7-00000000  I*4   NULL_I4_ARRAY          65536  (16384)
+  5-00000050  I*4   SCIRECNUM                 80  (20)
+
+
+
+RECORD ARRAYS
+
+    Address   Name               Structure                 Bytes  Dimensions
+
+  4-002E0400  L1_HDB             HDBSTR                    6480  (20)
+  5-000000A2  L1_HEADER          ST_L1_FILE_HEADER         8000  (20)
+  4-002E1D50  L1_HKEEP           HKEEP                    22000  (20)
+  4-001FFD60  L1_MASS_PHA        MA_PHA                  919200  (20)
+  4-001F6760  L1_MASS_RATE       MA_RATE                  38400  (20)
+  4-00000000  L1_SCI             CORE                    147680  (20)
+  5-00001FE2  L1_SCI_REC_HEADER  ST_L1_SR_HEADER           4880  (20)
+  4-001432A0  L1_STICS_PHA       ST_PHA                  734400  (20)
+  4-0010D420  L1_STICS_RATE      ST_RATE                 220800  (20)
+  4-00047360  L1_SWICS_PHA       SW_PHA                  811200  (20)
+  4-000240E0  L1_SWICS_RATE      SW_RATE                 144000  (20)
+
+
+WIND_L1_GET_HDB                                                 21-APR-1995 16:15:12    DEC Fortran V6.2-508                Page   4
+1.0                             Symbol Table                    26-JAN-1995 17:57:17    SMS1:[WIND.SOFTWARE.L1]WIND_L1_GET_HDB.FOR;4
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_L1_GET_HDB.LIS;20
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_L1_GET_HDB.OBJ;20
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.40 seconds
+  Elapsed time:      2.08 seconds
+  Pagefaults:         179
+  I/O Count:           16

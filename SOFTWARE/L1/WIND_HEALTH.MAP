@@ -1,0 +1,391 @@
+
+                                                                 7-DEC-1995 12:42        Linker A11-14                    Page    1
+                                             +------------------------+
+                                             ! Object Module Synopsis !
+                                             +------------------------+
+Module Name     Ident              Bytes      File                                Creation Date      Creator
+-----------     -----              -----      -----                               -------------      -------
+WIND_HEALTH     1.13               230728 WIND_HEALTH.OBJ;118                   7-DEC-1995 12:41  DEC Fortran V6.2-508
+WIND_HEALTH_INIT               
+                1.2                  4941 WIND_HEALTH_INIT.OBJ;13              21-NOV-1995 14:18  DEC Fortran V6.2-508
+FIND_STATS      1.3                  1328 [WIND.SOFTWARE.L1]FIND_STATS.OBJ;26   4-DEC-1995 16:30  DEC Fortran V6.2-508
+FIND_STATS_INT  1.2                  1152 FIND_STATS_INT.OBJ;2                 21-NOV-1995 14:18  DEC Fortran V6.2-508
+LIMIT_REPORT    1.2                  2840 LIMIT_REPORT.OBJ;16                  21-NOV-1995 14:18  DEC Fortran V6.2-508
+READ_LIMITS     1.2                  2978 [WIND.SOFTWARE.L1]READ_LIMITS.OBJ;13  4-DEC-1995 15:25  DEC Fortran V6.2-508
+COMPARE_TIME                         1400 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:14  DEC Fortran V6.2-508
+WIND_L1_CLOSE   1.1               3189560 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_BASIC              
+                1.0               3189080 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_HDB 1.0               3189068 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_HK  1.1               3189132 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_STICS              
+                1.0               3189188 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_OPEN    1.7               3192751 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_READ_SR 1.11              3211675 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WINDMSG         0                     891 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  Message A02-10
+CNVRT_T_YRMONDAY_TO_YEARDAY    
+                                      252 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+WIND_GET_FILENAME              
+                1.6                  2880 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:27  DEC Fortran V6.2-508
+CNVRT_YRMONDAY_TO_YEARDAY      
+                                      344 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+SELECT_FILE     1.4                 59888 SMS1:[WIND.LIB]WIND_LIB.OLB;5        20-JUN-1995 13:02  DEC Fortran V6.2-508
+TICHAR                                948 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TILOG                                1136 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TIXENT                               3376 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXDRC                                488 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXEIL                                908 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXLRN                               2240 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+CHCCSP                                964 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:14  DEC Fortran V6.2-508
+GET_IMAGE_INFO                       2480 SMS1:[GRPLIB]UMDCOMMON.OLB;3          8-MAR-1995 18:51  DEC Fortran V6.2-508
+GET_LOGICAL                           428 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:37  DEC Fortran V6.2-508
+VXDCL                                 288 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:35  DEC Fortran V6.2-508
+                                            +--------------------------+
+                                            ! Program Section Synopsis !
+                                            +--------------------------+
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 000130DF 000030E0 (      12512.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD 
+                WIND_HEALTH     00010000 00011427 00001428 (       5160.) OCTA  4
+                WIND_HEALTH_INIT                       
+                                00011430 000116AC 0000027D (        637.) OCTA  4
+                FIND_STATS      000116B0 0001170B 0000005C (         92.) OCTA  4
+                FIND_STATS_INT  00011710 00011747 00000038 (         56.) OCTA  4
+                LIMIT_REPORT    00011750 0001181F 000000D0 (        208.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.EXE;126                       7-DEC-1995 12:42        Linker A11-14                    Page    2
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 000130DF 000030E0 (      12512.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD   
+                READ_LIMITS     00011820 00011A7D 0000025E (        606.) OCTA  4
+                COMPARE_TIME    00011A80 00011C1F 000001A0 (        416.) OCTA  4
+                WIND_L1_CLOSE   00011C20 00011CAF 00000090 (        144.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00011CB0 00011CD7 00000028 (         40.) OCTA  4
+                WIND_L1_GET_HDB 00011CE0 00011D07 00000028 (         40.) OCTA  4
+                WIND_L1_GET_HK  00011D10 00011D3F 00000030 (         48.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00011D40 00011D77 00000038 (         56.) OCTA  4
+                WIND_L1_OPEN    00011D80 0001213E 000003BF (        959.) OCTA  4
+                WIND_L1_READ_SR 00012140 000122D2 00000193 (        403.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                000122E0 00012317 00000038 (         56.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00012320 0001251F 00000200 (        512.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00012520 0001253F 00000020 (         32.) OCTA  4
+                SELECT_FILE     00012540 0001280F 000002D0 (        720.) OCTA  4
+                TICHAR          00012810 000128A3 00000094 (        148.) OCTA  4
+                TILOG           000128B0 000129AF 00000100 (        256.) OCTA  4
+                TIXENT          000129B0 00012B97 000001E8 (        488.) OCTA  4
+                TIXDRC          00012BA0 00012C17 00000078 (        120.) OCTA  4
+                TIXEIL          00012C20 00012CAF 00000090 (        144.) OCTA  4
+                TIXLRN          00012CB0 00012E3B 0000018C (        396.) OCTA  4
+                CHCCSP          00012E40 00012EE7 000000A8 (        168.) OCTA  4
+                GET_IMAGE_INFO  00012EF0 0001303F 00000150 (        336.) OCTA  4
+                GET_LOGICAL     00013040 0001309F 00000060 (         96.) OCTA  4
+                VXDCL           000130A0 000130DF 00000040 (         64.) OCTA  4
+LIB$INITIALIZE                  00013150 00013153 00000004 (          4.) LONG  2 NOPIC,CON,REL,GBL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD 
+                WIND_HEALTH     00013150 00013153 00000004 (          4.) LONG  2
+$DATA$                          00020000 0002028F 00000290 (        656.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_HEALTH     00020000 000201DB 000001DC (        476.) OCTA  4
+                WIND_HEALTH_INIT                       
+                                000201E0 000201FF 00000020 (         32.) OCTA  4
+                WIND_L1_OPEN    00020200 00020203 00000004 (          4.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00020210 00020213 00000004 (          4.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00020220 0002027F 00000060 (         96.) OCTA  4
+                GET_IMAGE_INFO  00020280 00020283 00000004 (          4.) OCTA  4
+$IODATA$                        00020290 0002404F 00003DC0 (      15808.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_HEALTH     00020290 0002372F 000034A0 (      13472.) OCTA  4
+                LIMIT_REPORT    00023730 00023A5F 00000330 (        816.) OCTA  4
+                READ_LIMITS     00023A60 00023A83 00000024 (         36.) OCTA  4
+                WIND_L1_CLOSE   00023A90 00023AD7 00000048 (         72.) OCTA  4
+                WIND_L1_OPEN    00023AE0 00023B33 00000054 (         84.) OCTA  4
+                WIND_L1_READ_SR 00023B40 00023B5B 0000001C (         28.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00023B60 00023B8F 00000030 (         48.) OCTA  4
+                SELECT_FILE     00023B90 00023BC7 00000038 (         56.) OCTA  4
+                TICHAR          00023BD0 00023C27 00000058 (         88.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.EXE;126                       7-DEC-1995 12:42        Linker A11-14                    Page    3
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$IODATA$                        00020290 0002404F 00003DC0 (      15808.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD   
+                TILOG           00023C30 00023C6B 0000003C (         60.) OCTA  4
+                TIXENT          00023C70 00023EE3 00000274 (        628.) OCTA  4
+                TIXDRC          00023EF0 00023F0B 0000001C (         28.) OCTA  4
+                TIXEIL          00023F10 00023F37 00000028 (         40.) OCTA  4
+                TIXLRN          00023F40 0002404B 0000010C (        268.) OCTA  4
+INFO                            00024050 00024063 00000014 (         20.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_HEALTH     00024050 00024063 00000014 (         20.) OCTA  4
+                FIND_STATS      00024050 00024063 00000014 (         20.) OCTA  4
+                FIND_STATS_INT  00024050 00024063 00000014 (         20.) OCTA  4
+                LIMIT_REPORT    00024050 00024063 00000014 (         20.) OCTA  4
+L1INFO2                         00024070 00027361 000032F2 (      13042.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_L1_CLOSE   00024070 00027361 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00024070 00027361 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_HDB 00024070 00027361 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_HK  00024070 00027361 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00024070 00027361 000032F2 (      13042.) OCTA  4
+                WIND_L1_OPEN    00024070 00027361 000032F2 (      13042.) OCTA  4
+                WIND_L1_READ_SR 00024070 00027361 000032F2 (      13042.) OCTA  4
+L1_HEADERS                      00027370 000275F3 00000284 (        644.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_HEALTH     00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_HEALTH_INIT                       
+                                00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_L1_CLOSE   00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_HDB 00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_HK  00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_L1_OPEN    00027370 000275F3 00000284 (        644.) OCTA  4
+                WIND_L1_READ_SR 00027370 000275F3 00000284 (        644.) OCTA  4
+$CODE$                          00030000 0004868F 00018690 (      99984.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD 
+                WIND_HEALTH     00030000 0003FED3 0000FED4 (      65236.) OCTA  4
+                WIND_HEALTH_INIT                       
+                                0003FEE0 00040B77 00000C98 (       3224.) OCTA  4
+                FIND_STATS      00040B80 00041037 000004B8 (       1208.) OCTA  4
+                FIND_STATS_INT  00041040 0004146B 0000042C (       1068.) OCTA  4
+                LIMIT_REPORT    00041470 00041A4F 000005E0 (       1504.) OCTA  4
+                READ_LIMITS     00041A50 0004229F 00000850 (       2128.) OCTA  4
+                COMPARE_TIME    000422A0 0004265B 000003BC (        956.) OCTA  4
+                WIND_L1_CLOSE   00042660 000427F7 00000198 (        408.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00042800 0004287B 0000007C (        124.) OCTA  4
+                WIND_L1_GET_HDB 00042880 000428EF 00000070 (        112.) OCTA  4
+                WIND_L1_GET_HK  000428F0 00042997 000000A8 (        168.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                000429A0 00042A77 000000D8 (        216.) OCTA  4
+                WIND_L1_OPEN    00042A80 0004354B 00000ACC (       2764.) OCTA  4
+                WIND_L1_READ_SR 00043550 00045397 00001E48 (       7752.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.EXE;126                       7-DEC-1995 12:42        Linker A11-14                    Page    4
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$CODE$                          00030000 0004868F 00018690 (      99984.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD   
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                000453A0 0004545F 000000C0 (        192.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00045460 00045C23 000007C4 (       1988.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00045C30 00045D07 000000D8 (        216.) OCTA  4
+                SELECT_FILE     00045D10 00046807 00000AF8 (       2808.) OCTA  4
+                TICHAR          00046810 000469FB 000001EC (        492.) OCTA  4
+                TILOG           00046A00 00046C5B 0000025C (        604.) OCTA  4
+                TIXENT          00046C60 00047407 000007A8 (       1960.) OCTA  4
+                TIXDRC          00047410 0004747F 00000070 (        112.) OCTA  4
+                TIXEIL          00047480 0004766F 000001F0 (        496.) OCTA  4
+                TIXLRN          00047670 00047BAB 0000053C (       1340.) OCTA  4
+                CHCCSP          00047BB0 00047EC3 00000314 (        788.) OCTA  4
+                GET_IMAGE_INFO  00047ED0 00048473 000005A4 (       1444.) OCTA  4
+                GET_LOGICAL     00048480 000485AB 0000012C (        300.) OCTA  4
+                VXDCL           000485B0 0004868F 000000E0 (        224.) OCTA  4
+MSG$AAAAAAAAAAA                 00050000 0005000F 00000010 (         16.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00050000 0005000F 00000010 (         16.) LONG  2
+MSG$AAAAAAAAAAB                 00050010 00050013 00000004 (          4.) LONG  2   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00050010 00050013 00000004 (          4.) LONG  2
+MSG$AAAAAAAAAAC                 00050014 00050017 00000004 (          4.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00050014 00050017 00000004 (          4.) LONG  2
+MSG$SECTION                     00050018 0005037A 00000363 (        867.) BYTE  0   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00050018 0005037A 00000363 (        867.) BYTE  0
+$BSS$                           00060000 0009551F 00035520 (     218400.) 2 **  5 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_HEALTH     00060000 0008387F 00023880 (     145536.) OCTA  4
+                WIND_HEALTH_INIT                       
+                                00083880 0008395F 000000E0 (        224.) OCTA  4
+                FIND_STATS      00083960 00083967 00000008 (          8.) OCTA  4
+                FIND_STATS_INT  00083970 00083977 00000008 (          8.) OCTA  4
+                LIMIT_REPORT    00083980 000839EF 00000070 (        112.) OCTA  4
+                READ_LIMITS     000839F0 00083ABF 000000D0 (        208.) OCTA  4
+                COMPARE_TIME    00083AC0 00083ADB 0000001C (         28.) OCTA  4
+                WIND_L1_CLOSE   00083AE0 00083AF3 00000014 (         20.) OCTA  4
+                WIND_L1_OPEN    00083B00 00083B17 00000018 (         24.) OCTA  4
+                WIND_L1_READ_SR 00083B20 0008740F 000038F0 (      14576.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                00087410 00087413 00000004 (          4.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00087420 00087567 00000148 (        328.) OCTA  4
+                SELECT_FILE     00087570 0009515F 0000DBF0 (      56304.) OCTA  4
+                TICHAR          00095160 00095167 00000008 (          8.) OCTA  4
+                TILOG           00095170 00095173 00000004 (          4.) OCTA  4
+                TIXENT          00095180 000951D7 00000058 (         88.) OCTA  4
+                TIXDRC          000951E0 000951EF 00000010 (         16.) OCTA  4
+                TIXEIL          000951F0 000951FF 00000010 (         16.) OCTA  4
+                TIXLRN          00095200 00095217 00000018 (         24.) OCTA  4
+                CHCCSP          00095220 00095227 00000008 (          8.) OCTA  4
+                GET_IMAGE_INFO  00095240 000954F7 000002B8 (        696.) 2 **  5
+                GET_LOGICAL     00095500 0009551F 00000020 (         32.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.EXE;126                       7-DEC-1995 12:42        Linker A11-14                    Page    5
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+L1BUF                           00095520 000A551D 0000FFFE (      65534.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   00095520 000A551D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00095520 000A551D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_HDB 00095520 000A551D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_HK  00095520 000A551D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00095520 000A551D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_OPEN    00095520 000A551D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_READ_SR 00095520 000A551D 0000FFFE (      65534.) OCTA  4
+L1INFO                          000A5520 0038C85F 002E7340 (    3044160.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   000A5520 0038C85F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                000A5520 0038C85F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_HDB 000A5520 0038C85F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_HK  000A5520 0038C85F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                000A5520 0038C85F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_OPEN    000A5520 0038C85F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_READ_SR 000A5520 0038C85F 002E7340 (    3044160.) OCTA  4
+NULLBUF                         0038C860 0039C85F 00010000 (      65536.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   0038C860 0039C85F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                0038C860 0039C85F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_HDB 0038C860 0039C85F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_HK  0038C860 0039C85F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                0038C860 0039C85F 00010000 (      65536.) OCTA  4
+                WIND_L1_OPEN    0038C860 0039C85F 00010000 (      65536.) OCTA  4
+                WIND_L1_READ_SR 0038C860 0039C85F 00010000 (      65536.) OCTA  4
+REPORT                          0039C860 0039C913 000000B4 (        180.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_HEALTH     0039C860 0039C913 000000B4 (        180.) OCTA  4
+                WIND_HEALTH_INIT                       
+                                0039C860 0039C913 000000B4 (        180.) OCTA  4
+                LIMIT_REPORT    0039C860 0039C913 000000B4 (        180.) OCTA  4
+TICOMC                          0039C920 0039C9DB 000000BC (        188.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          0039C920 0039C9DB 000000BC (        188.) OCTA  4
+                TILOG           0039C920 0039C9DB 000000BC (        188.) OCTA  4
+                TIXENT          0039C920 0039C9DB 000000BC (        188.) OCTA  4
+                TIXDRC          0039C920 0039C9DB 000000BC (        188.) OCTA  4
+                TIXEIL          0039C920 0039C9DB 000000BC (        188.) OCTA  4
+                TIXLRN          0039C920 0039C9DB 000000BC (        188.) OCTA  4
+TICOMN                          0039C9E0 0039C9F7 00000018 (         24.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          0039C9E0 0039C9F7 00000018 (         24.) OCTA  4
+                TILOG           0039C9E0 0039C9F7 00000018 (         24.) OCTA  4
+                TIXENT          0039C9E0 0039C9F7 00000018 (         24.) OCTA  4
+                TIXDRC          0039C9E0 0039C9F7 00000018 (         24.) OCTA  4
+                TIXEIL          0039C9E0 0039C9F7 00000018 (         24.) OCTA  4
+                TIXLRN          0039C9E0 0039C9F7 00000018 (         24.) OCTA  4
+                                                +-----------------+
+                                                ! Symbols By Name !
+
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.EXE;126                       7-DEC-1995 12:42        Linker A11-14                    Page    6
+                                                +-----------------+
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+CHCCSP                          00012ED8-R                                              WIND_COMPARE_TIME_NE            00011AC0-R  
+CHLAST                          00012EC8-R                                              WIND_GET_FILENAME               000123F8-R  
+CHLCUC                          00012E78-R                                              WIND_HEALTH                     00010A40-R  
+CHPRFX                          00012E40-R                                              WIND_HEALTH_INIT                00011558-R  
+CNVRT_T_YRMONDAY_TO_YEARDAY     000122E0-R                                              WIND_L1_CLOSE                   00011C20-R  
+CNVRT_YRMONDAY_TO_YEARDAY       00012520-R                                              WIND_L1_GET_BASIC               00011CB0-R  
+COMPARE_TIME                    00011A80-R                                              WIND_L1_GET_HDB                 00011CE0-R  
+COMPARE_TIME_EQ                 00011B60-R                                              WIND_L1_GET_HK                  00011D10-R  
+COMPARE_TIME_GE                 00011BE0-R                                              WIND_L1_GET_STICS               00011D40-R  
+COMPARE_TIME_GT                 00011BA0-R                                              WIND_L1_OPEN                    00011F70-R  
+COMPARE_TIME_LE                 00011B20-R                                              WIND_L1_READ_SR                 000121F8-R  
+COMPARE_TIME_LT                 00011AE0-R                                              
+COMPARE_TIME_NE                 00011AA0-R                                              
+DUMP_STATS                      000113D0-R                                              
+FIND_AVG                        00010000-R                                              
+FIND_STATS                      000116B0-R                                              
+FIND_STATS_INT                  00011710-R                                              
+GET_IMAGE_INFO                  00012F70-R                                              
+GET_LOGICAL                     00013040-R                                              
+LIMIT_REPORT                    00011790-R                                              
+POLY                            00010018-R                                              
+POLY2                           00011408-R                                              
+READ_LIMITS                     00011920-R                                              
+SELECT_FILE                     00012708-R                                              
+TICHAR                          00012810-R                                              
+TILOG                           00012908-R                                              
+TIXDRC                          00012BA0-R                                              
+TIXEIL                          00012C20-R                                              
+TIXENT                          00012AA8-R                                              
+TIXLRN                          00012D60-R                                              
+VXDCL                           000130A0-R                                              
+WIND$_BADFILEHDR                081781C2                                                
+WIND$_BADRECLEN                 081780F8                                                
+WIND$_EMPTY                     08178100                                                
+WIND$_FACILITY                  00000817                                                
+WIND$_FILEFMT                   081780F0                                                
+WIND$_FILNAMFMT                 081781BA                                                
+WIND$_FILNOTOPN                 081781B2                                                
+WIND$_HDRFMT                    08178053                                                
+WIND$_INUSE                     0817819A                                                
+WIND$_INVHDRVER                 081781AA                                                
+WIND$_NONEXTFILE                081781CA                                                
+WIND$_OUTRANGE                  081781A2                                                
+WIND$_SUCCESS                   08178001                                                
+WIND$_TOOMANY                   08178192                                                
+WIND_COMPARE_TIME               00011A90-R                                              
+WIND_COMPARE_TIME_EQ            00011B80-R                                              
+WIND_COMPARE_TIME_GE            00011C00-R                                              
+WIND_COMPARE_TIME_GT            00011BC0-R                                              
+WIND_COMPARE_TIME_LE            00011B40-R                                              
+WIND_COMPARE_TIME_LT            00011B00-R                                              
+
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.EXE;126                       7-DEC-1995 12:42        Linker A11-14                    Page    7
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+	  Key for special characters above:
+		+--------------------+
+		! *  - Undefined     !
+		! A  - Alias Name    !
+		! I  - Internal Name !
+		! U  - Universal     !
+		! R  - Relocatable   !
+		! X  - External      !
+		! WK - Weak          !
+		+--------------------+
+
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.EXE;126                       7-DEC-1995 12:42        Linker A11-14                    Page    8
+                                                 +----------------+
+                                                 ! Image Synopsis !
+                                                 +----------------+
+Virtual memory allocated:                         00010000 003AFFFF 003A0000 (3801088. bytes, 7424. pages)
+Stack size:                                             20. pages
+Image header virtual block limits:                       1.        2. (    2. blocks)
+Image binary virtual block limits:                       3.      288. (  286. blocks)
+Image name and identification:                    WIND_HEALTH 1.13
+Number of files:                                        20.
+Number of modules:                                      37.
+Number of program sections:                             35.
+Number of global symbols:                             1499.
+Number of image sections:                               33.
+User transfer address:                            00010A40
+Debugger transfer address:                        00000340
+Number of code references to shareable images:          51.
+OTS transfer address - LIB$INITIALIZE:            000130E0
+Image type:                                       EXECUTABLE.
+Map format:                                       DEFAULT in file SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.MAP;13
+Estimated map length:                             144. blocks
+                                              +---------------------+
+                                              ! Link Run Statistics !
+                                              +---------------------+
+Performance Indicators                            Page Faults	CPU Time	Elapsed Time
+----------------------                            -----------	--------	------------
+    Command processing:                                    46	00:00:00.11	00:00:00.24
+    Pass 1:                                                76	00:00:00.55	00:00:02.00
+    Allocation/Relocation:                                  9	00:00:00.04	00:00:00.20
+    Pass 2:                                                31	00:00:00.48	00:00:01.64
+    Map data after object module synopsis:                  3	00:00:00.04	00:00:00.05
+    Symbol table output:                                    0	00:00:00.00	00:00:00.04
+Total run values:                                         165	00:00:01.22	00:00:04.19
+Using a working set limited to 6368 pages and 2226 pages of data storage (excluding image)
+Total number object records read (both passes):   1684
+    of which 347 were in libraries and 418 were DEBUG data records containing 60058 bytes
+36571 bytes of DEBUG data were written,starting at VBN 289 with 72 blocks allocated
+Number of modules extracted explicitly             = 0
+    with 26 extracted to resolve undefined symbols
+373 library searches were for symbols not in the library searched
+A total of 0 global symbol table records was written
+LINK/MAP WIND_HEALTH.OBJ,WIND_HEALTH_INIT.OBJ,FIND_STATS.OBJ,FIND_STATS_INT.OBJ,LIMIT_REPORT.OBJ,READ_LIMITS.OBJ,LIB_DIR:L1LIB/LIB,L
+IB_DIR:WIND_LIB/LIB,LIB_DIR:XTI_LIB/LIB

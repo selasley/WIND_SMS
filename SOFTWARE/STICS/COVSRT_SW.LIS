@@ -1,0 +1,130 @@
+COVSRT                                                           1-APR-1997 12:55:38    DEC Fortran V6.2-508                Page   1
+                                                                11-NOV-1996 15:46:36    SMS1:[WIND.SOFTWARE.STICS]COVSRT_SW.FOR;1
+
+	      1       SUBROUTINE COVSRT(COVAR,NCVM,MA,LISTA,MFIT)
+	      2       DIMENSION COVAR(NCVM,NCVM),LISTA(MFIT)
+	      3       DO 12 J=1,MA-1
+	      4         DO 11 I=J+1,MA
+	      5           COVAR(I,J)=0.
+	      6 11      CONTINUE
+	      7 12    CONTINUE
+	      8       DO 14 I=1,MFIT-1
+	      9         DO 13 J=I+1,MFIT
+	     10           IF(LISTA(J).GT.LISTA(I)) THEN
+	     11             COVAR(LISTA(J),LISTA(I))=COVAR(I,J)
+	     12           ELSE
+	     13             COVAR(LISTA(I),LISTA(J))=COVAR(I,J)
+	     14           ENDIF
+	     15 13      CONTINUE
+	     16 14    CONTINUE
+	     17       SWAP=COVAR(1,1)
+	     18       DO 15 J=1,MA
+	     19         COVAR(1,J)=COVAR(J,J)
+	     20         COVAR(J,J)=0.
+	     21 15    CONTINUE
+	     22       COVAR(LISTA(1),LISTA(1))=SWAP
+	     23       DO 16 J=2,MFIT
+	     24         COVAR(LISTA(J),LISTA(J))=COVAR(1,J)
+	     25 16    CONTINUE
+	     26       DO 18 J=2,MA
+	     27         DO 17 I=1,J-1
+	     28           COVAR(I,J)=COVAR(J,I)
+	     29 17      CONTINUE
+	     30 18    CONTINUE
+	     31       RETURN
+	     32       END
+
+COVSRT                                                           1-APR-1997 12:55:38    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                    11-NOV-1996 15:46:36    SMS1:[WIND.SOFTWARE.STICS]COVSRT_SW.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                1692   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  32 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1724
+
+
+ENTRY POINTS
+
+    Address   Type  Name  
+                          
+  1-00000000        COVSRT
+
+
+VARIABLES
+
+    Address   Type  Name     Address   Type  Name     Address   Type  Name
+                                                                          
+REG-########  I*4   I          **      I*4   MA         **      I*4   NCVM
+REG-########  I*4   J          **      I*4   MFIT REG-00000020  R*4   SWAP
+
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+      **      R*4   COVAR           **  (*, *)
+      **      I*4   LISTA           **  (*)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  1-00000000   11     1-00000280   13     1-00000000   15     1-00000000   17  
+  1-00000158   12     1-0000028C   14     1-00000000   16     1-000004FC   18  
+
+COVSRT                                                           1-APR-1997 12:55:38    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    11-NOV-1996 15:46:36    SMS1:[WIND.SOFTWARE.STICS]COVSRT_SW.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,BOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]COVSRT_SW.LIS;4
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]COVSRT_SW.OBJ;4
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.73 seconds
+  Elapsed time:      2.27 seconds
+  Pagefaults:         338
+  I/O Count:           10

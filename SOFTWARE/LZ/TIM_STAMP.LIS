@@ -1,0 +1,130 @@
+TIM_STAMP                                                       26-APR-1995 15:15:37    DEC Fortran V6.2-508                Page   1
+                                                                 8-MAR-1995 14:24:09    SMS1:[WIND.SOFTWARE.LZ]TIM_STAMP.FOR;5
+
+	      1       SUBROUTINE  TIM_STAMP
+	      2  
+	      3       INCLUDE	'INC_DIR:WIND_LUN.INC/NOLIST'
+	     33       INCLUDE	'INC_DIR:DIAG.INC/NOLIST'
+	     42  
+	     43       LOGICAL*4	A
+	     44  
+	     45       WRITE( TTOUT, 100) '+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+'
+	     46       WRITE( TTOUT, 100) '|                                 |'
+	     47       IF (.NOT. PRINTLZ_MODE) THEN
+	     48       WRITE( TTOUT, 100) '+          WIND_CD_READ           +'
+	     49       ELSE
+	     50       WRITE( TTOUT, 100) '+             PRINTLZ             +'
+	     51       ENDIF
+	     52       WRITE( TTOUT, 100) '|                                 |'
+	     53       WRITE( TTOUT, 100) '+          Version ' // PROG_VERSION // '          +'
+	     54       WRITE( TTOUT, 100) '|                                 |'
+	     55       WRITE( TTOUT, 100) '+             created             +'
+	     56       WRITE( TTOUT, 100) '|                                 |'
+	     57       WRITE( TTOUT, 100) '+     ' // LINK_DATE_TIME // '     +'
+	     58       WRITE( TTOUT, 100) '|                                 |'
+	     59       WRITE( TTOUT, 100) '+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+'
+	     60       WRITE( TTOUT, 120) 'IS THIS THE VERSION YOU WANT ?'
+	     61       A	= .TRUE.
+	     62       CALL TILOG( A, *999 )
+	     63       IF( .NOT. A )   GO TO 999
+	     64  100  FORMAT( 1H , T22, A35 )
+	     65  120  FORMAT( 1H , A, $ )
+	     66       RETURN
+	     67  
+	     68  999  STOP 999
+	     69       END
+
+TIM_STAMP                                                       26-APR-1995 15:15:37    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                     8-MAR-1995 14:24:09    SMS1:[WIND.SOFTWARE.LZ]TIM_STAMP.FOR;5
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $IODATA$                                48 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                1132   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 444 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  4 DIAG                                    48 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                 1672
+
+
+ENTRY POINTS
+
+    Address   Type  Name     
+                             
+  2-00000000        TIM_STAMP
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name               Address   Type  Name          
+                                                                                                        
+  0-00000038  L*4   A                4-00000004  L*4   INTER            4-0000000C  L*4   PRINTLZ_MODE  
+  4-00000000  I*4   DIAG             4-00000010  CHAR  LINK_DATE_TIME   4-00000027  CHAR  PROG_VERSION  
+  4-0000002C  L*4   HALT_IF_NO_EPH   4-00000008  L*4   NRT_MODE                                         
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+      **       100        **       120        **       999 
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name       
+                   
+        TILOG      
+
+TIM_STAMP                                                       26-APR-1995 15:15:37    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     8-MAR-1995 14:24:09    SMS1:[WIND.SOFTWARE.LZ]TIM_STAMP.FOR;5
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]TIM_STAMP.LIS;5
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]TIM_STAMP.OBJ;5
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.37 seconds
+  Elapsed time:      1.89 seconds
+  Pagefaults:         197
+  I/O Count:           14

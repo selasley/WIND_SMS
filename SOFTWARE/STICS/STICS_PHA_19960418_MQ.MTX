@@ -1,0 +1,38 @@
+  STICS  NM vs NQ MATRIX 
+  Run time  06:16:41    9-AUG-99
+         Input Level 1 Filename: SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19960418_V01.DAT;1
+  Clock selected: Wall     Trigger mode is   E                   
+  FIFO mode is OFF         TGS  mode is OFF
+  Telemetry mode is Science mode     
+  FILTERING CHOICES:
+          Voltage step selection =   0 to 31
+          Event type selection   =       ALL
+          Range selection        =     2 1 0
+          Range checking is OFF
+          Velocity range         =  260 to   1000
+          Selected Telescopes =   1, 2, 3  (-1=not selected)
+          Sectors     =   0 to 15
+          Telescope checking is  ON
+  Start Time:  19960418  06:00:00     End Time:  19960418  12:00:00
+  ALGORITHMS: 
+  DPU  E/Q =  6.1907 * (1.122586)**DVSTEP
+  DPU  M/Q = C1 * [ (E/Q) -  1.50 ]  *  (TOF)**2 , for m/q < 10.98
+  DPU  M/Q = C1 * [ (E/Q) -  2.50 ]  *  (TOF)**2 , for m/q > 10.98
+     where   C1 =  1.9159E-05
+            E(1) =  -351.6997    
+            E(2) =   32.78677    
+            E(3) =   65.57354    
+  (Default DPU M/Q coefficients used)
+  DPU Log(M) = A1 + A2*Log(E) + A3*Log(T) + A4*Log(E)*Log(T) + A5*[Log(E)]**2 + A6*[Log(T)]**3 
+                         , where T=measured TOF, E=measured Energy
+     A1 =  2.695750         B1 =  38.46050    
+     A2 =-0.8437660         B2 = -9.326890    
+     A3 = -2.380090         B3 = -26.30920    
+     A4 = 0.3856410         B4 =  4.262830    
+     A5 = 0.5131270E-01     B5 = 0.5672050    
+     A6 = 0.6900960E-01     B6 = 0.7628240    
+  (Default DPU mass coefficients used)
+  Emin = 21.00 keV    Emax =  2675.00 keV
+  Tmin = 11.00 nsec   Tmax =   408.00 nsec
+  MQ=MQmin * kQ**(Nq-1) :  kQ = 1.03097
+  M = Mmin * kM**(Nm-1) :  kM = 1.09468

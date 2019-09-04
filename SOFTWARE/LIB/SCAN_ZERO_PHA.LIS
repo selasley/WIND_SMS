@@ -1,0 +1,158 @@
+SCAN_ZERO_PHA                                                   21-APR-1995 15:27:08    DEC Fortran V6.2-508                Page   1
+                                                                 6-FEB-1995 19:10:45    SMS1:[WIND.SOFTWARE.LIB]SCAN_ZERO_PHA.FOR;1
+
+	      1       SUBROUTINE SCAN_ZERO_PHA( PHA, NBYTES, PHASIZE, ZERO_COUNT, WHERE )
+	      2 C
+	      3 C This subroutine scans a set of PHA words, counting the number of zero PHA
+	      4 C words which are non-zero.  This count (the number of zero PHA words) is
+	      5 C returned to the caller.  Since one of the arguments is the size (in bytes) of
+	      6 C a PHA word this routine can be used to examine PHA words from any of the
+	      7 C sensors. 
+	      8 C
+	      9 C Parameters:
+	     10 C
+	     11 C   PHA:
+	     12 C          A BYTE array containing the PHA words for a given sensor.
+	     13 C
+	     14 C   NBYTES:
+	     15 C          An INTEGER giving the length (in bytes) of the array PHA.  This is
+	     16 C          not the same as the number of PHA words, since a PHA word occupies
+	     17 C          either 2 or 4 bytes, depending on the sensor.
+	     18 C
+	     19 C   PHASIZE:
+	     20 C          An INTEGER specifying the number of bytes contained in a single PHA
+	     21 C          word.
+	     22 C
+	     23 C   ZERO_COUNT:
+	     24 C          An INTEGER which will contain, upon return, the number of zero
+	     25 C          PHA words.
+	     26 C
+	     27 C   WHERE:
+	     28 C          An INTEGER array of length 100.  Each element of WHERE gives the
+	     29 C          PHA word number (1 origin) of a PHA word which is zero.  The number
+	     30 C          of valid entries in WHERE is given by the argument ZERO_COUNT.
+	     31 C
+	     32 C
+	     33 C Created:  30-JAN-1995   Larry Bleau
+	     34 C
+	     35 C This version:  1-FEB-1995
+	     36 C
+	     37 C Revisions:
+	     38 C  1-FEB-1995     L. Bleau   added comments, changed NZERO to ZERO_COUNT
+	     39 C
+	     40       IMPLICIT NONE
+	     41       INTEGER NBYTES,ZERO_COUNT,PHASIZE
+	     42       INTEGER WHERE(100)
+	     43       BYTE PHA(NBYTES)
+	     44 C
+	     45       INTEGER NWORDS,I,J
+	     46       LOGICAL GOOD
+	     47 C
+	     48       ZERO_COUNT = 0
+	     49       NWORDS = NBYTES / PHASIZE
+	     50       IF (NWORDS .EQ. 0) RETURN
+	     51 C
+	     52       DO J=0,NWORDS-1
+	     53         GOOD = .FALSE.
+	     54 C
+	     55 C If any of the bytes which comprise the PHA word is non-zero count this PHA
+	     56 C word as good
+	     57 C
+
+SCAN_ZERO_PHA                                                   21-APR-1995 15:27:08    DEC Fortran V6.2-508                Page   2
+                                                                 6-FEB-1995 19:10:45    SMS1:[WIND.SOFTWARE.LIB]SCAN_ZERO_PHA.FOR;1
+
+	     58         DO I=1,PHASIZE
+	     59           IF (PHA(J*PHASIZE+I) .NE. 0) GOOD = .TRUE.
+	     60         ENDDO
+	     61 C Found one not good, same its index
+	     62         IF (.NOT. GOOD) THEN
+	     63           ZERO_COUNT = ZERO_COUNT + 1
+	     64           WHERE(ZERO_COUNT) = J
+	     65         ENDIF
+	     66       ENDDO
+	     67       RETURN
+	     68       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                 296   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  48 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  344
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  1-00000000        SCAN_ZERO_PHA
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                                                           
+REG-00000010  L*4   GOOD       REG-00000001  I*4   J          REG-00000000  I*4   NWORDS           **      I*4   ZERO_COUNT
+REG-00000011  I*4   I                **      I*4   NBYTES           **      I*4   PHASIZE                                  
+
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+      **      I*1   PHA             **  (*)
+      **      I*4   WHERE          400  (100)
+
+
+SCAN_ZERO_PHA                                                   21-APR-1995 15:27:08    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     6-FEB-1995 19:10:45    SMS1:[WIND.SOFTWARE.LIB]SCAN_ZERO_PHA.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]SCAN_ZERO_PHA.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]SCAN_ZERO_PHA.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.22 seconds
+  Elapsed time:      1.77 seconds
+  Pagefaults:         148
+  I/O Count:            8

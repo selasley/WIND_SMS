@@ -1,0 +1,163 @@
+WIND_L1_SKIP_SR                                                 21-APR-1995 16:15:53    DEC Fortran V6.2-508                Page   1
+                                                                26-JAN-1995 17:57:17    SMS1:[WIND.SOFTWARE.L1]WIND_L1_SKIP_SR.FOR;4
+
+	      1 	SUBROUTINE WIND_L1_SKIP_SR( unit, count, status )
+	      2 C+
+	      3 C 
+	      4 C FUNCTIONAL DESCRIPTION:
+	      5 C 
+	      6 C    This program reads and discards the next `count' Science Records from the
+	      7 C    specified L1 data file.  A call to WIND_L1_READ_SR must be made for the
+	      8 C    next Science Record to be available for accessing.  No data is transferred
+	      9 C    to the caller.
+	     10 C 
+	     11 C FORMAL PARAMETERS:
+	     12 C  
+	     13 C     unit:
+	     14 C	  An INTEGER*4 variable indicating the Level 1 file to be read.
+	     15 C  
+	     16 C     count:
+	     17 C	  An INTEGER*4 variable indicating the number of Science Records to be
+	     18 C         skipped.
+	     19 C      
+	     20 C     status:
+	     21 C	  An INTEGER*4 variable which will receive the read completion status.
+	     22 C	  A 1 indicates success.
+	     23 C  
+	     24 C COMMON BLOCKS:
+	     25 C  
+	     26 C     L1INFO	  contains arrays of unit numbers, each one's current science
+	     27 C		  record, and other control information
+	     28 C  
+	     29 C DESIGN:
+	     30 C  
+	     31 C     The routine WIND_L1_READ_SR is called the proper number of times.
+	     32 C 
+	     33 C AUTHOR(S): 
+	     34 C 
+	     35 C	 L. Bleau
+	     36 C 
+	     37 C Created: 
+	     38 C 
+	     39 C	 31-OCT-1994    L. Bleau
+	     40 C 
+	     41 C Revised:
+	     42 C 
+	     43 C        Date     | Name  | Description
+	     44 C ----------------+-------+-----------------------------------------------------
+	     45 C-
+	     46 CDEC$	IDENT   '1.0'
+	     47 
+	     48 	IMPLICIT NONE
+	     49 
+	     50 	INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	    182 
+	    183 	INTEGER*4 unit, count, status
+	    184 
+	    185 	INTEGER*4 i, scirec_number
+	    186 	RECORD /ST_L1_SR_HEADER/ header
+	    187 C
+	    188 	status = 1
+
+WIND_L1_SKIP_SR                                                 21-APR-1995 16:15:53    DEC Fortran V6.2-508                Page   2
+1.0                                                             26-JAN-1995 17:57:17    SMS1:[WIND.SOFTWARE.L1]WIND_L1_SKIP_SR.FOR;4
+
+	    189 	IF (count .lt. 1) RETURN
+	    190 	DO i=1,count
+	    191 	  CALL WIND_L1_READ_SR(unit,scirec_number,header,status)
+	    192 	  IF (status .ne. 1) RETURN
+	    193 	ENDDO
+	    194 	RETURN
+	    195 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                 248 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                    4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                 188   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                  64 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                 1148
+
+
+ENTRY POINTS
+
+    Address   Type  Name           
+                                   
+  3-00000000        WIND_L1_SKIP_SR
+
+
+VARIABLES
+
+    Address   Type  Name              Address   Type  Name              Address   Type  Name         
+                                                                                                     
+      **      I*4   COUNT           2-00000000  I*4   SCIREC_NUMBER       **      I*4   UNIT         
+REG-00000006  I*4   I                   **      I*4   STATUS                                         
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+  1-00000000  HEADER          ST_L1_SR_HEADER            244   5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400                                                             
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                 
+                             
+        WIND_L1_READ_SR      
+
+WIND_L1_SKIP_SR                                                 21-APR-1995 16:15:53    DEC Fortran V6.2-508                Page   3
+1.0                             Symbol Table                    26-JAN-1995 17:57:17    SMS1:[WIND.SOFTWARE.L1]WIND_L1_SKIP_SR.FOR;4
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_L1_SKIP_SR.LIS;20
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_L1_SKIP_SR.OBJ;20
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.24 seconds
+  Elapsed time:      1.67 seconds
+  Pagefaults:         126
+  I/O Count:           12

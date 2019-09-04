@@ -1,0 +1,801 @@
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   1
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	      1 /* Sabrina Sowers */
+	      2 /* Started:  June 17, 1993 */
+	      3 /* Generate a minimal, detached SFDU file for any ISTP formatted CDF file */
+	      4 /* Modifications:                                                         */
+	      5 /* K. Horrocks  5/25/95  ; Enhance to be able to read both R and Z vars   */
+	      6 /* R. Burley    5/31/95  ; Get Generation date from sys clock not data    */
+	      7 /*                       ; REFERENCE portion bounded by () not ''         */
+	      8 /* R. Burley    6/28/95  ; Each line should be followed by both a line-   */
+	      9 /*                       ; feed AND a carriage return.  The byte lengths  */
+	     10 /*                       ; of the R-label and CIO-label should not include*/
+	     11 /*                       ; their own lengths but SHOULD include the LF+CR */
+	     12 /*                       ; following it.  The CIO stop time has been fixed*/
+	     13 /*                       ; from 'END' time to 'STOP' time                 */
+	     14 /* R. Burley    8/8/95   ; Support Cluster Project by making the follow-  */
+	     15 /*                       ; ing enhancements: 1) Do not utilize the var-   */
+	     16 /*                       ; iable 'Epoch' for determining start/stop times,*/
+	     17 /*                       ; because Cluster's CSDS format does not require */
+	     18 /*                       ; it as ISTP's format does.  Instead, find the   */
+	     19 /*                       ; time variable by getting value of a DEPEND_0   */
+	     20 /*                       ; vattr which both formats share.  2) Search for */
+	     21 /*                       ; a gattr called 'Generation_date' to use to fill*/
+	     22 /*                       ; in that portion of the SFDU, if this gattr does*/
+	     23 /*                       ; not exist them use the computer clock time,    */
+	     24 /*                       ; 3) Use the value of the ADID_ref gattr for the */
+	     25 /*                       ; SFDU reference label, and if a value does not  */
+	     26 /*                       ; exist then resort to the adi.txt file.         */
+	     27 /* R. Burley   8/22/95   ; Bug in Determine_TimeVar.  Residual characters */
+	     28 /*                       ; could follow time variable name.  Before GET_  */
+	     29 /*                       ; from the CDF, overwrite aname with blanks.     */
+	     30 /*                       ; Increase size of datestr array in get_gen_date3*/
+	     31 /*                       ; to 32 characters.  Close adi file within loop  */
+	     32 /* R. Burley   4/15/96   ; Add .cdf to REFERENCE object                   */
+	     33 /* L. Bleau    6/25/96   ; in get_ref_label: add code to null-terminate	  */
+	     34 /*			 ; ADIDbuffer; change ConAuth and ACAI from *char */
+	     35 /*			 ; to char [] so initial value won't be in write- */
+	     36 /*			 ; protected memory, change later assignment from */
+	     37 /*			 ; pointer assignment to strcpy call; add extern  */
+	     38 /*			 ; declaration for function CDFdirList		  */
+	     39 /* L. Bleau    7/8/96    ; in get_ref_label: fix bug in directory name	  */
+	     40 /*                       ; syntax conversion code			  */
+	     41 
+	     42 #include <stdio.h>
+	    423 #include <stdlib.h>
+	    712 #include <string.h>
+	    838 #include <time.h>
+	   1035 #include <cdf.h>
+	   1860 
+	   1861 extern int CDFdirList();
+	   1862 
+	   1863 /****************************************************************************
+	   1864 ************************ ERROR STATUS HANDLER *******************************
+	   1865 ****************************************************************************/
+	   1866 
+	   1867 /* This function handles the CDF status codes */
+	   1868 
+	   1869 void error (CDFstatus status)
+	   1870 {
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   2
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   1871   char message [CDF_STATUSTEXT_LEN+1];
+	   1872 
+	   1873   if (status < CDF_WARN) {
+	   1874     CDFerror(status, message);	         /* A halting error has occurred */
+	   1875     printf("ATTENTION> %s\n", message);
+	   1876     exit(status);
+	   1877   }
+	   1878   else
+	   1879     if (status < CDF_OK) {
+	   1880       CDFerror(status, message);        /* Function may not have completed
+	   1881 					         correctly */
+	   1882       printf("ATTENTION> %s\n", message);
+	   1883       exit(1);
+	   1884     }
+	   1885     else
+	   1886       if (status > CDF_OK) {
+	   1887         CDFerror(status, message);      /* Function completed, but something
+	   1888 					       incorrect has occured */
+	   1889         printf("ATTENTION> %s\n", message);
+	   1890         exit(1);
+	   1891       }
+	   1892 return;
+	   1893 }
+	   1894 
+	   1895 
+	   1896 /****************************************************************************
+	   1897 ************************ GENERATION DATE FUNCTION ***************************
+	   1898 ****************************************************************************/
+	   1899 
+	   1900 /* This function extracts the generation date from the global scope
+	   1901        attribute "Logical_file_id". NOTE: The date extracted from the id
+	   1902 	    is an approximation and may not be the exact generation date */
+	   1903 
+	   1904 int get_gen_date (char *string, FILE *fp, int p_to_file, char *okay)
+	   1905 {
+	   1906   char str[11];			/* String to hold the formatted date */
+	   1907   char hold_date[9];		/* String to hold the unformatted date */
+	   1908   char *no_date="0000-00-00";	/* Used if an ivalid Logical_file_id */
+	   1909   char *k;		/* Pointer to the string with the generation date */
+	   1910   char *flag="F";	/* Flag */
+	   1911   int i=0, j=0, size=0;	/* Loop control variables/indices and gen_date size */
+	   1912 
+	   1913   k = string;
+	   1914    /* Increment address in k until at date or null encountered */
+	   1915   for (i=0; string[i] != '\0'; i++) { 
+	   1916     if (string[i] == '_') j++;
+	   1917     k++;
+	   1918     if (j==3) break;
+	   1919   }
+	   1920 
+	   1921     /* If the generation date does not exist, print default date to file
+	   1922 	    or the size of the date -- Sabrina Sowers */
+	   1923   if (string[i] == '\0') {
+	   1924     *okay = *flag;	    /* Set okay flag to false */
+	   1925     if (p_to_file) fprintf (fp, "Generation_Date = %s;\r\n", no_date);
+	   1926     else { size = strlen(no_date) + 21; return(size); }
+	   1927   }
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   3
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   1928   else {
+	   1929     for (i=0; k[i] != '_'; i++) hold_date[i] = k[i];    /* Get the date */
+	   1930     hold_date[i] = '\0';	    /* Insert null character */
+	   1931     /* Put date in generation date format: yyyy-mm-dd */
+	   1932     for (i=0; i<4; i++) str[i] = hold_date[i];
+	   1933     str[i] = '-';
+	   1934     for ( ; i<6; i++) str[i+1] = hold_date[i];
+	   1935     str[i+1] = '-';
+	   1936     for ( ; hold_date[i] != '\0'; i++) str[i+2] = hold_date[i];
+	   1937     str[i+2] = '\0';	/* Insert null character */
+	   1938     if (p_to_file) fprintf (fp, "Generation_Date = %s;\r\n", str);
+	   1939     else { size = strlen(str) + 21; return(size); }
+	   1940   }
+	   1941   return(size);
+	   1942 }
+	   1943 
+	   1944 /**********************************************************************/
+	   1945 /* Generate a YYYY-mm-dd date string based on system clock time       */
+	   1946 /**********************************************************************/
+	   1947 int get_gen_date2 (char *string, FILE *fp, int p_to_file, char *okay)
+	   1948 {
+	   1949   time_t current_time;
+	   1950   struct tm *ptrtime;
+	   1951   char datestr[12]="";
+	   1952   int size=0;
+	   1953 
+	   1954   time(&current_time);                     /* get time from sys clock */
+	   1955   ptrtime = localtime(&current_time);      /* breakdown to y m d      */
+	   1956   strftime(datestr,11,"%Y-%m-%d",ptrtime); /* format for output       */
+	   1957   if (p_to_file) fprintf(fp,"Generation_Date = %s;\r\n",datestr);
+	   1958   else size=strlen(datestr)+21;
+	   1959   return(size);
+	   1960 }
+	   1961 
+	   1962 
+	   1963 /**********************************************************************/
+	   1964 /* Generate a YYYY-mm-dd date string based on Generation Date gattr   */
+	   1965 /**********************************************************************/
+	   1966 int get_gen_date3 (CDFid id,char *string,FILE *fp,int p_to_file,char *okay)
+	   1967 {
+	   1968   long entryZero=0;
+	   1969   CDFstatus status;
+	   1970   char datestr[32]="";
+	   1971   int size=0;
+	   1972   status = CDFlib(SELECT_,CDF_,id,
+	   1973                           ATTR_NAME_,"Generation_date",
+	   1974                           gENTRY_,entryZero,
+	   1975                   GET_,gENTRY_DATA_,datestr,NULL_);
+	   1976   if (status != CDF_OK) { /* use current clock time */
+	   1977     size = get_gen_date2(string,fp,p_to_file,okay);
+	   1978   }
+	   1979   else {
+	   1980     if (p_to_file) fprintf(fp,"Generation_Date = %s;\r\n",datestr);
+	   1981     else size=strlen(datestr)+21;
+	   1982   }
+	   1983   return(size);
+	   1984 }
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   4
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   1985 
+	   1986 
+	   1987 /**********************************************************************/
+	   1988 /*          Determine which variable is the time variable             */
+	   1989 /**********************************************************************/
+	   1990 int Determine_TimeVar (CDFid id, char *varName)
+	   1991 {
+	   1992   CDFstatus status;
+	   1993   long nz,found,entryN;
+	   1994   char aname[31] = "";
+	   1995   char ablank[31]= "                              ";
+	   1996 
+	   1997   /* Get the number of variables in the open CDF */
+	   1998   status = CDFlib(SELECT_,CDF_,id,
+	   1999                   GET_,CDF_NUMzVARS_,&nz,NULL_);
+	   2000   if (status != CDF_OK) {
+	   2001     printf("ERROR>While determining the time variable ...\n");
+	   2002     printf("      Unable to get number of variables in CDF.\n");
+	   2003     error(status);
+	   2004   }
+	   2005   else { /* search all entrys for a value for depend_0 attribute */
+	   2006     found = 0; entryN = 0;
+	   2007     while ((found == 0)&&(entryN < nz)) {
+	   2008       strcpy(aname,ablank); /* clear if from previous get_ */      
+	   2009       status = CDFlib(SELECT_,CDF_,id,
+	   2010                               ATTR_NAME_,"DEPEND_0",
+	   2011                               zENTRY_,entryN,
+	   2012                       GET_,zENTRY_DATA_,aname,NULL_);
+	   2013       if (status != CDF_OK) entryN = entryN + 1;
+	   2014       else { 
+	   2015         strcat(aname,"");
+	   2016         strcpy(varName,aname); found = 1;
+	   2017       }
+	   2018     }
+	   2019     /* determine if the time variable was found or not */
+	   2020     if (found == 0) {
+	   2021       printf("ERROR>Unable to get value of a DEPEND_0 vattr.\n");
+	   2022       printf("      Unable to determine which variable represents time.\n");
+	   2023     }
+	   2024   }
+	   2025   return(found);
+	   2026 }
+	   2027 
+	   2028 /****************************************************************************
+	   2029 ************************ GLOBAL ATTRIBUTE FUNCTION **************************
+	   2030 ****************************************************************************/
+	   2031 
+	   2032 /* This function gets the necessary global scope attributes and reads and 
+	   2033      writes their values to file */
+	   2034 
+	   2035 int get_glob_attr (CDFid id, char *attrName, FILE *fp, int p_to_file,
+	   2036 			char *okay)
+	   2037 {
+	   2038   CDFstatus status;	    /* Returned status code */
+	   2039   long entryN;		    /* Entry number */
+	   2040   long numelems;	    /* Number of elements */
+	   2041   int glob_size=0;	    /* Global attribute size in bytes */
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   5
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2042   int g_date_size=0;	    /* Generation date size */
+	   2043   char *buffer;		    /* Buffer space */
+	   2044 
+	   2045   entryN = 0;
+	   2046   status = CDFlib(SELECT_, CDF_, id,
+	   2047                            ATTR_NAME_, attrName,
+	   2048 		           gENTRY_, entryN,
+	   2049 		  GET_, gENTRY_NUMELEMS_, &numelems,
+	   2050 		  NULL_);
+	   2051 
+	   2052   if (status < CDF_OK) {
+	   2053     if (status != NO_SUCH_ENTRY) error(status);
+	   2054   }
+	   2055   else {
+	   2056     buffer = (char *) malloc (numelems + 1);	/* Allocate buffer space */
+	   2057     if (buffer == NULL) printf ("Buffer for information is not allocated.\n");
+	   2058 
+	   2059     /* Get attribute value */
+	   2060     status = CDFlib(SELECT_, CDF_, id,
+	   2061                              ATTR_NAME_, attrName,
+	   2062 		             gENTRY_, entryN,
+	   2063 		    GET_, gENTRY_DATA_, buffer,
+	   2064 		    NULL_);
+	   2065     if (status != CDF_OK) error(status);
+	   2066     else {
+	   2067       buffer[numelems] = '\0';	/* Insert null character into buffer */
+	   2068 
+	   2069       /* If p_to_file is true, compare attribute name to comparison string.
+	   2070 	    If no match occurs, print to file. Otherwise, print the generation
+	   2071 		date to file -- Sabrina Sowers */
+	   2072       if (p_to_file) {
+	   2073         if ((strcmp(attrName, "Logical_file_id"))) {
+	   2074 
+	   2075           if (!(strcmp(attrName, "Data_version")))
+	   2076             fprintf (fp, "%s = %s;\r\n", attrName, buffer);
+	   2077           else fprintf (fp, "%s = \"%s\";\r\n", attrName, buffer);
+	   2078         }
+	   2079 	else g_date_size = get_gen_date3(id, buffer, fp, p_to_file, okay);
+	   2080 	free(buffer);
+	   2081       }
+	   2082 	    /* If p_to_file is false, compare attribute name to comparison
+	   2083 		  string.  If match occurs, get the generation date size and
+	   2084 		    return the global attribute size */
+	   2085       else {
+	   2086         if (!(strcmp(attrName, "Logical_file_id"))) {
+	   2087 	  g_date_size = get_gen_date3(id, buffer, fp, p_to_file, okay);
+	   2088           free(buffer);
+	   2089           return(g_date_size);
+	   2090         }
+	   2091         else {
+	   2092           if (!(strcmp(attrName, "Data_version")))
+	   2093             glob_size = strlen(attrName) + strlen(buffer) + 6;
+	   2094           else glob_size = strlen(attrName) + strlen(buffer) + 8;
+	   2095           free(buffer);
+	   2096           return(glob_size);
+	   2097         }
+	   2098       } 
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   6
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2099     }
+	   2100   }
+	   2101   return(glob_size);
+	   2102 }
+	   2103 
+	   2104 /****************************************************************************
+	   2105 ************************ EPOCH VARIABLE FUNCTION ****************************
+	   2106 ****************************************************************************/
+	   2107 
+	   2108 /* This function will read the Epoch rVariable from the current CDF file
+	   2109      and decipher the value */
+	   2110 
+	   2111 int get_epoch_var (CDFid id, char *varName, FILE *fp,
+	   2112 			int p_to_file)
+	   2113 {
+	   2114    CDFstatus status;	    /* Returned status code */
+	   2115    long maxRec;		    /* Maximum record for rVariable */
+	   2116    long varNum;		    /* Variable number */
+	   2117    long recNum;		    /* Record number */
+	   2118    long indices[2];	    /* Dimension indices */
+	   2119    long year, month, day, hour;	    /* For dates */
+	   2120    long minute, second, msec;
+	   2121    double value;		/* rVariable value */
+	   2122    int date_size=0;		/* Size in bytes dates take up */
+	   2123 
+	   2124    indices[0]=0; indices[1]=0;
+	   2125 /*  If p_to_file is true, get the start and end dates. Otherwise return the
+	   2126 	date_size -- Sabrina Sowers */
+	   2127 
+	   2128    if (p_to_file) {
+	   2129      status = CDFlib(SELECT_, CDF_, id,
+	   2130                               zVAR_NAME_, varName,
+	   2131 		     GET_, zVAR_NUMBER_, varName, &varNum,
+	   2132 		           zVAR_MAXREC_, &maxRec,
+	   2133 		     NULL_);
+	   2134 
+	   2135      if (status != CDF_OK) error(status);
+	   2136      else {
+	   2137         /* Check if CDF skeleton exists. If so, set dates to zero. Otherwise
+	   2138 	        get the start and end date */
+	   2139 
+	   2140        if (maxRec == -1) {
+	   2141          fprintf (fp, "Start_date = %04d-%02d-%02dT%02d:%02d:%02d.%03dZ;\r\n",
+	   2142 		    0,0,0,0,0,0,0);
+	   2143          fprintf (fp, "Stop_date = %04d-%02d-%02dT%02d:%02d:%02d.%03dZ;\r\n",
+	   2144 		    0,0,0,0,0,0,0);
+	   2145        }
+	   2146        else {
+	   2147 		    /* Get the value of the first record */
+	   2148          recNum = 0;
+	   2149 	 status = CDFlib(SELECT_, CDF_, id,
+	   2150                                   zVAR_, varNum,
+	   2151 			          zVAR_RECNUMBER_, recNum,
+	   2152 			          zVAR_DIMINDICES_, indices,
+	   2153 			 GET_, zVAR_DATA_, &value,
+	   2154 			 NULL_);
+	   2155          if (status != CDF_OK) error(status);
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   7
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2156            else {	    /* Decipher the variable value into date */
+	   2157              EPOCHbreakdown(value, &year, &month, &day, &hour, &minute,
+	   2158 			     &second, &msec);
+	   2159              fprintf (fp, "Start_date = %d-%02d-%02dT%02d:%02d:%02d.%03dZ;\r\n",
+	   2160 		    year, month, day, hour, minute, second, msec);
+	   2161            }
+	   2162 
+	   2163          /* Get the value of the last record */
+	   2164 
+	   2165          recNum = maxRec;
+	   2166          status = CDFlib(SELECT_, CDF_, id,
+	   2167                                   zVAR_, varNum,
+	   2168                                   zVAR_RECNUMBER_, recNum,
+	   2169                                   zVAR_DIMINDICES_, indices,
+	   2170                          GET_, zVAR_DATA_, &value,
+	   2171                          NULL_);
+	   2172          if (status != CDF_OK) error(status);
+	   2173          else {	    /* Decipher the variable value into date */
+	   2174            EPOCHbreakdown(value, &year, &month, &day, &hour, &minute,
+	   2175 			     &second, &msec);
+	   2176            fprintf (fp, "Stop_date = %d-%02d-%02dT%02d:%02d:%02d.%03dZ;\r\n",
+	   2177 		     year, month, day, hour, minute, second, msec);
+	   2178          }
+	   2179        }
+	   2180      }
+	   2181    }
+	   2182    else {
+	   2183      date_size = 79;
+	   2184      return(date_size);
+	   2185    }
+	   2186    return(date_size);
+	   2187 }
+	   2188 
+	   2189 /****************************************************************************
+	   2190 ************************ CONTENTS IDENTIFIER OBJECT *************************
+	   2191 ****************************************************************************/
+	   2192 
+	   2193 int get_CIO (CDFid id, FILE *fp, int p_to_file, char *okay)
+	   2194 {
+	   2195   CDFstatus status;	    /* Returned status code */
+	   2196   int CIOsize=0;			/* Contents Identifier Object size */
+	   2197   char attrName[CDF_ATTR_NAME_LEN+1];	/* Attribute name */
+	   2198   char varName[CDF_VAR_NAME_LEN+1];	/* Variable Name */
+	   2199   long attrNum;                         /* Attribute Number*/
+	   2200   long varNum;                          /* Variable Name */
+	   2201   long numelems;		/* Number of elements */
+	   2202 
+	   2203   /* Acquire the necessary global scope attributes -- Sabrina Sowers */
+	   2204 
+	   2205     status = CDFlib(SELECT_, CDF_, id,
+	   2206 		             ATTR_NAME_, "Project",
+	   2207                     GET_, ATTR_NAME_, attrName,
+	   2208 		    NULL_);
+	   2209     if (status != CDF_OK) {
+	   2210       printf ("\nERROR> Unable to find global attribute \"Project\".\n");
+	   2211       printf ("CDF file is not ISTP formatted.  Please modify.\n");
+	   2212       error(status);
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   8
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2213     }
+	   2214     CIOsize = get_glob_attr(id, attrName, fp, p_to_file, okay);
+	   2215 
+	   2216     status = CDFlib(SELECT_, CDF_, id,
+	   2217                              ATTR_NAME_, "Discipline",
+	   2218                     GET_, ATTR_NAME_, attrName,
+	   2219                     NULL_);
+	   2220     if (status != CDF_OK) {
+	   2221       printf ("\nERROR> Unable to find global attribute \"Discipline\".\n");
+	   2222       printf ("CDF file is not ISTP formatted.  Please modify.\n");
+	   2223       error(status);
+	   2224     }
+	   2225     CIOsize += get_glob_attr(id, attrName, fp, p_to_file, okay);
+	   2226 
+	   2227     status = CDFlib(SELECT_, CDF_, id,
+	   2228                              ATTR_NAME_, "Source_name",
+	   2229                     GET_, ATTR_NAME_, attrName,
+	   2230                     NULL_);
+	   2231     if (status != CDF_OK) {
+	   2232       printf ("\nERROR> Unable to find global attribute \"Source_name\".\n");
+	   2233       printf ("CDF file is not ISTP formatted.  Please modify.\n");
+	   2234       error(status);
+	   2235     }
+	   2236     CIOsize += get_glob_attr(id, attrName, fp, p_to_file, okay);
+	   2237 
+	   2238     status = CDFlib(SELECT_, CDF_, id,
+	   2239                              ATTR_NAME_, "Data_type",
+	   2240                     GET_, ATTR_NAME_, attrName,
+	   2241                     NULL_);
+	   2242     if (status != CDF_OK) {
+	   2243       printf ("\nERROR> Unable to find global attribute \"Data_type\".\n");
+	   2244       printf ("CDF file is not ISTP formatted.  Please modify.\n");
+	   2245       error(status);
+	   2246     }
+	   2247     CIOsize += get_glob_attr(id, attrName, fp, p_to_file, okay);
+	   2248 
+	   2249     status = CDFlib(SELECT_, CDF_, id,
+	   2250                              ATTR_NAME_, "Descriptor",
+	   2251                     GET_, ATTR_NAME_, attrName,
+	   2252                     NULL_);
+	   2253     if (status != CDF_OK) {
+	   2254       printf ("\nERROR> Unable to find global attribute \"Descriptor\".\n");
+	   2255       printf ("CDF file is not ISTP formatted.  Please modify.\n");
+	   2256       error(status);
+	   2257     }
+	   2258     CIOsize += get_glob_attr(id, attrName, fp, p_to_file, okay);
+	   2259 
+	   2260     /* Determine the name of the variable which contains the Epoch */
+	   2261     status = Determine_TimeVar(id, varName);
+	   2262 
+	   2263     CIOsize += get_epoch_var (id, varName, fp, p_to_file);
+	   2264 
+	   2265     /* Acquire the data version */
+	   2266     status = CDFlib(SELECT_, CDF_, id,
+	   2267                              ATTR_NAME_, "Data_version",
+	   2268                     GET_, ATTR_NAME_, attrName,
+	   2269                     NULL_);
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page   9
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2270     if (status != CDF_OK) {
+	   2271       printf ("\nERROR> Unable to find global attribute \"Data_version\".\n");
+	   2272       printf ("CDF file is not ISTP formatted.  Please modify.\n");
+	   2273       error(status);
+	   2274     }
+	   2275     CIOsize += get_glob_attr(id, attrName, fp, p_to_file, okay);
+	   2276 
+	   2277     status = CDFlib(SELECT_, CDF_, id,
+	   2278                              ATTR_NAME_, "Logical_file_id",
+	   2279                     GET_, ATTR_NAME_, attrName,
+	   2280                     NULL_);
+	   2281     if (status != CDF_OK) {
+	   2282       printf ("\nERROR> Unable to find global attribute \"Logical_file_id\".\n");
+	   2283       printf ("CDF file is not ISTP formatted.  Please modify.\n");
+	   2284       error(status);
+	   2285     }
+	   2286     CIOsize += get_glob_attr(id, attrName, fp, p_to_file, okay);
+	   2287 
+	   2288   return(CIOsize);
+	   2289 }
+	   2290 
+	   2291 /****************************************************************************
+	   2292 ************************ REFERENCE LABEL OBJECT *****************************
+	   2293 ****************************************************************************/
+	   2294 
+	   2295 int get_ref_label (CDFid id, char *CDFname, FILE *fp, FILE *adi,
+	   2296 		     int p_to_file, char *okay)
+	   2297 {
+	   2298   CDFstatus status;		/* Returned status code */
+	   2299   char *str, *p;                /* Pointer to adjusted CDFfilename */
+	   2300   char ConAuth[]="NSSD";	/* Control authority (default) */
+	   2301   char ACAI[]="0000";		/* Assigned Control Authority id (default) */
+	   2302   char *mission;		/* Mission identifier */
+	   2303   char *datatype;		/* Data type */
+	   2304   char *descr;			/* Descriptor */
+	   2305   char *buffer;			/* Buffer space */
+	   2306   char *MI, *DS, *DT, *CA, *AI;	    /* Buffers for file search */
+	   2307   char *T1, *T2, *T3;              /* Buffers for file search */
+	   2308   char ADIDbuffer[9];           /* buffer for ADID_ref */
+	   2309   int i, j, k;		/* Loop control variables */
+	   2310   int refsize;		/* Reference label size */
+	   2311   int success=0;	/* Success flag */
+	   2312   long numelems;	/* Number of elements */
+	   2313   long entryno=0;       /* entry number */
+	   2314 
+	   2315   str = CDFname;    /* Str points to the CDFfilename supplied by user */
+	   2316 
+	   2317   i = 0;
+	   2318   /* Check for device or node names in the CDFfilename.  If there, remove it. */
+	   2319   p = strstr(str, "::");	    /* search for nodename */
+	   2320   if (p != NULL) str = p+2;	    /* if found advance beyond "::" */
+	   2321   p = strchr(str, ':');		    /* search for device name */
+	   2322   if (p != NULL) str = p+1;	    /* if found advance beyond ':' */
+	   2323   p = str;
+	   2324 /* Note: The loop below needs the preceeding if or it will convert the '.'  */
+	   2325 /* which preceeds the file type to a '/' */
+	   2326   if (*p == '[')		    /* VMS directory name? */
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page  10
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2327     while (*p != '\0')		    /* replace VMS directory punctuation */
+	   2328     {				    /* with Unix-style '/' */
+	   2329       if (*p == '[' || *p == '.' || *p == ']') *p = '/';
+	   2330       if (*p == ']') break;
+	   2331     }
+	   2332 
+	   2333   if ((p_to_file) && (strcmp(okay, "F"))) {
+	   2334     /* Attempt to get the Control Authority info from ADID_ref gattr */
+	   2335     status = CDFlib(SELECT_, CDF_, id,
+	   2336                              ATTR_NAME_, "ADID_ref",
+	   2337                              gENTRY_, entryno,
+	   2338                     GET_, gENTRY_DATA_, ADIDbuffer, NULL_);
+	   2339     ADIDbuffer[8] = '\0';		/* CDFlib call doesn't end string
+	   2340 					   w/null; do it ourselves */
+	   2341     if ((status == CDF_OK)&&(strlen(ADIDbuffer) == 8)) {
+	   2342       for (i=0;i<4;i++) ConAuth[i]=ADIDbuffer[i]; 
+	   2343       for (j=0;j<4;j++,i++) ACAI[j]=ADIDbuffer[i]; 
+	   2344       /* Write the information to file */  
+	   2345       fprintf (fp, "%s\r\n", "REFERENCETYPE = ($CCSDS2);");
+	   2346       fprintf (fp, "%s%s%s%s%s%s\r\n", "LABEL = ", ConAuth, "3IF0", ACAI,
+	   2347   	           "00000001", ";");
+	   2348       fprintf (fp, "%s%s%s\r\n", "REFERENCE = (", str, ");");
+	   2349     }
+	   2350     else {
+	   2351       /* Attempt to get the Control Authority info from Logical_File_ID */
+	   2352       status = CDFlib(SELECT_, CDF_, id,
+	   2353                                ATTR_NAME_, "Logical_file_id",
+	   2354   		             gENTRY_, entryno,
+	   2355   		      GET_, gENTRY_NUMELEMS_, &numelems, NULL_);
+	   2356       if (status < CDF_OK) {
+	   2357         if (status != NO_SUCH_ENTRY) error(status);
+	   2358       }
+	   2359       else {
+	   2360         buffer = (char *) malloc (numelems + 1); /* Allocate buffer space */
+	   2361         if (buffer == NULL) printf ("Buffer for info not allocated.\n");
+	   2362         /* Get attribute value */
+	   2363         status = CDFlib(SELECT_, CDF_, id,
+	   2364                                  ATTR_NAME_, "Logical_file_id",
+	   2365   		                 gENTRY_, entryno,
+	   2366   		        GET_, gENTRY_DATA_, buffer, NULL_);
+	   2367         if (status != CDF_OK) error(status);
+	   2368         else {
+	   2369           buffer[numelems] = '\0';	/* Insert null character into buffer */
+	   2370 
+	   2371           mission = malloc (6);	/* Allocate memory space */
+	   2372           datatype = malloc (6);
+	   2373           descr = malloc (6);
+	   2374           /* Get the mission, datatype , descriptor from Logical_file_id */
+	   2375           for (i=0; buffer[i] != '_'; i++) mission[i] = buffer[i];
+	   2376           mission[i] = '\0';
+	   2377           for (j=0; buffer[i+j+1] != '_'; j++) datatype[j] = buffer[i+j+1];
+	   2378           datatype[j] = '\0';
+	   2379   	  /* Descriptor is currently a maximum of 4 letters. That is a
+	   2380 	     restriction adhered to in its extraction */
+	   2381           for (k=0; buffer[i+j+k+2] != '_'; k++) descr[k] = buffer[i+j+k+2];
+	   2382           if (k==3) {
+	   2383             descr[k] = ' ';
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page  11
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2384             descr[k+1] = '\0';
+	   2385           }
+	   2386           else descr[k] = '\0';
+	   2387           /* Allocate memory for the file search. This is restricted to the
+	   2388 	    current format of the ADI.TXT file */
+	   2389           MI = malloc (4); DS = malloc (6); DT = malloc (4);
+	   2390           T1 = malloc (17); T2 = malloc (20); T3 = malloc (25);
+	   2391           AI = malloc (6); CA = malloc (6);
+	   2392           i = 0; j = 0; k = 0;  /* Reinitialize the loop control variables */
+	   2393           /* Search for the existence of mission, datatype and descriptor while
+	   2394 	     not end of file adi.txt and success is false. If they exist,
+	   2395              get the Control Authority and Assigned Control Authority ID */
+	   2396           do {
+	   2397             fgets(MI, 3, adi);		    /* Get mission from file */
+	   2398             if (!(strcmp(MI, mission))) {	    /* If comparison, get descriptor */
+	   2399   	      if (fgetc(adi) ==EOF) printf("ADI FILE FORMAT ERROR\n");
+	   2400 	      fgets(DS, 5, adi);              /* Get descriptor from file */
+	   2401               if (!(strcmp(DS, descr))) {	    /* If comparison, get datatype */
+	   2402 	        if (fgetc(adi) ==EOF) printf("ADI FILE FORMAT ERROR\n");
+	   2403                 fgets(DT, 3, adi);	    /* Get datatype from file */
+	   2404                 if (!(strcmp(DT, datatype))) {  /* If comparison, get ACAI, CA */
+	   2405 		  if (fgetc(adi) ==EOF) printf("ADI FILE FORMAT ERROR\n");
+	   2406                   fgets(CA, 5, adi);	/* Get Control Authority */
+	   2407 		    strcpy (ConAuth, CA);
+	   2408                   fgets(AI, 5, adi);	/* Get the Control Authority Id */
+	   2409 		    strcpy (ACAI, AI);
+	   2410 		  success = 1;            /* Set success flag to true */
+	   2411                 }
+	   2412                 else fgets(T1, 16, adi);  /* Read to end of line */
+	   2413               }
+	   2414               else fgets(T2, 19, adi);	/* Read to end of line */
+	   2415             }
+	   2416             else fgets(T3, 24, adi);	/* Read to end of line */
+	   2417          } while ((!(feof(adi))) && (!(success==1)));
+	   2418 
+	   2419           /* Write the information to file */  
+	   2420           fprintf (fp, "%s\r\n", "REFERENCETYPE = ($CCSDS2);");
+	   2421           fprintf (fp, "%s%s%s%s%s%s\r\n", "LABEL = ", ConAuth, "3IF0", ACAI,
+	   2422   			 "00000001", ";");
+	   2423           fprintf (fp, "%s%s%s\r\n", "REFERENCE = (", str, ");");
+	   2424        }
+	   2425       }
+	   2426       /* Free allocated memory space */
+	   2427       free(DT); free(T1); free(T2);  free(T3);  free(AI); free(MI);
+	   2428       free(DS); free(mission);  free(datatype);  free(descr); free(buffer);
+	   2429     }
+	   2430 
+	   2431   }
+	   2432 
+	   2433   /*  If p_to_file is true and invalid Logical_file_id, print the
+	   2434 		default information to file */
+	   2435 
+	   2436   if ((p_to_file) && (strcmp(okay, "T"))) {
+	   2437     fprintf (fp, "%s%c\r\n", "REFERENCETYPE = ($CCSDS2);");
+	   2438     fprintf (fp, "%s%s%s%s%s%s\r\n", "LABEL = ", ConAuth, "3IF0", ACAI,
+	   2439 	"00000001", ";");
+	   2440     fprintf (fp, "%s%s%s\r\n", "REFERENCE = (", str, ");");
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page  12
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2441   }
+	   2442   else {
+	   2443     refsize = 26 + 8 + strlen(ConAuth) + 4 + strlen(ACAI) + 9 +
+	   2444 		 15 + strlen(str) + 6;
+	   2445     return(refsize);
+	   2446   }
+	   2447   return(refsize);
+	   2448 }
+	   2449 
+	   2450 /****************************************************************************
+	   2451 ******************************** MAIN PROGRAM *******************************
+	   2452 ****************************************************************************/
+	   2453 
+	   2454 main (int argc, char *argv[])
+	   2455 {
+	   2456   FILE *fp, *adi;	        /* file pointers */
+	   2457   CDFid id;		        /* CDF identifier */
+	   2458   CDFstatus status;	        /* Status code */
+	   2459   int CIOsize=0;		/* Contents Identifier Object size */
+	   2460   int REFsize=0;		/* Reference Label size */
+	   2461   int p_to_file=0;		/* Print to file flag */
+	   2462   int Z_label=0, R_label=0, K_label=0;    /* SFDU label sizes */
+	   2463   char *okay="T";		/* Flag */
+	   2464   int nCDFs,i,wild;
+	   2465   char **dirS;
+	   2466   char **CDFs;
+	   2467   char cname[80] = "";
+	   2468   char CDFname[80] = "";
+	   2469   char SFDUname[80] = "";
+	   2470 
+	   2471 
+	   2472   /* Check if correct number of arguments on command line */
+	   2473   if (argc != 4) {
+	   2474     printf ("\nIncorrect number of parameters entered on command line.\n");
+	   2475     printf ("Need to enter:\n");
+	   2476     printf ("makesfdu istp::sys$public:[sfdu_tools.bld_sfdu]adi.txt ");
+	   2477     printf ("CDFfilename SFDUfilename\n");
+	   2478     exit(1);
+	   2479   }
+	   2480 
+	   2481   strcpy(CDFname,argv[2]); /* copy CDF file name */
+	   2482   strcpy(SFDUname,argv[3]); /* copy SFDU file name */
+	   2483 
+	   2484   /* Check for single SFDU construction or for wildcard */
+	   2485   if (strcmp(CDFname,"*")==0)  {
+	   2486     nCDFs = CDFdirList ("*", &dirS, &CDFs); wild=1;
+	   2487   }
+	   2488   else { nCDFs = 1;  wild=0; }
+	   2489 
+	   2490   /* For all SFDU's to be created */
+	   2491   for (i=0; i<nCDFs; i++) {
+	   2492 
+	   2493     /* Open input CDF file */
+	   2494     if (wild==1) { strcpy(CDFname,*CDFs++); strcpy(argv[2],CDFname); }
+	   2495     status = CDFlib(OPEN_, CDF_, CDFname, &id,
+	   2496 		    NULL_);
+	   2497     if (status < CDF_WARN) {
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page  13
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+	   2498       printf ("\nProblem opening CDF file %s\n", argv[2]);
+	   2499       error(status); }
+	   2500     else {
+	   2501       status = CDFlib(SELECT_, CDF_, id,
+	   2502                                CDF_zMODE_, zMODEon2,
+	   2503 		      NULL_);
+	   2504       if (status != CDF_OK) {
+	   2505         printf ("\nProblem opening CDF file %s in z mode \n", argv[2]);
+	   2506         error(status);
+	   2507       }
+	   2508 
+	   2509       /* Open the ADI.TXT file */
+	   2510       if ((adi = fopen(argv[1], "r"))==NULL) {
+	   2511         printf ("\nError opening representative ADI.TXT file: '%s'\n", argv[1]);
+	   2512         printf ("Try:  istp::sys$public:[sfdu_tools.bld_sfdu]adi.txt\n");
+	   2513         exit(1);
+	   2514       }
+	   2515 
+	   2516       /* Open the SFDU file */
+	   2517       if (wild == 1) { strcpy(SFDUname,CDFname); strcat(SFDUname,".sfd");}
+	   2518       if ((fp = fopen(SFDUname, "w"))==NULL) {
+	   2519         printf ("\nError opening SFDU file '%s'\n", SFDUname);
+	   2520         exit(1);
+	   2521       }
+	   2522 
+	   2523       p_to_file = 0;
+	   2524       strcpy(cname,CDFname); strcat(cname,".cdf");
+	   2525       CIOsize = get_CIO(id, fp, p_to_file, okay);
+	   2526       REFsize = get_ref_label(id, cname, fp, adi, p_to_file, okay);
+	   2527       p_to_file = 1;
+	   2528       R_label = REFsize + 2;
+	   2529       K_label = CIOsize + 2;
+	   2530       Z_label = 20 + 20 + K_label + R_label;
+	   2531       fprintf (fp, "%s%08d", "CCSD1Z000001", Z_label);
+	   2532       fprintf (fp, "%s%08d\r\n", "NSSD1K000060", K_label);
+	   2533       CIOsize = get_CIO(id, fp, p_to_file, okay);
+	   2534       fprintf (fp, "%s%08d\r\n", "CCSD1R000003", R_label);
+	   2535       REFsize = get_ref_label(id, cname, fp, adi, p_to_file, okay);
+	   2536     }
+	   2537 
+	   2538     /* close the CDF file */
+	   2539     status = CDFlib(SELECT_, CDF_, id,
+	   2540                     CLOSE_, CDF_, NULL_);
+	   2541     if (status < CDF_OK) error(status);
+	   2542     fclose(fp); /* close the SFDU file */
+	   2543     fclose(adi); /* Close the represntative ADI.TXT file */
+	   2544 
+	   2545   } /* for all SFDUs to be generated */
+	   2546 }
+
+
+Command Line
+------- ----
+
+CC /ANSI_ALIAS/ASSUME=(ACCURACY_SENSITIVE,ALIGNED_OBJECTS,NOWRITABLE_STRING_LITERALS)
+/DEBUG=(TRACEBACK)/ENDIAN=LITTLE/EXTERN_MODEL=RELAXED_REFDEF/FLOAT=(G_FLOAT
+)/GRANULARITY=QUADWORD/INSTRUCTION_SET=FLOATING_POINT/L_DOUBLE_SIZE=128
+
+                                Source Listing                  11-SEP-1997 12:38:47    DEC C V4.0-000                      Page  14
+                                                                 8-JUL-1996 13:25:12    SMS1:[WIND.SOFTWARE.MAKESFDU]MAKESFDU.C;38
+
+/LIST/NOMACHINE_CODE/MEMBER_ALIGNMENT/NAMES=UPPERCASE/NESTED_INCLUDE_DIRECTORY=INCLUDE_FILE
+/NOOBJECT/OPTIMIZE=(LEVEL=4,UNROLL=0)/PREFIX=(ANSI_C89_ENTRIES)/PSECT_MODEL=NOMULTILANGUAGE
+/ROUNDING_MODE=NEAREST/SHOW=(HEADER,SOURCE)/SIGNED_CHAR/STANDARD=RELAXED_ANSI89
+/REENTRANCY=TOLERANT/WARNINGS
+/INCLUDE=(CDF$INC:)

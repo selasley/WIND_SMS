@@ -1,0 +1,257 @@
+WIND_CD_INIT                                                    23-FEB-1995 12:31:05    DEC Fortran V6.2-508                Page   1
+                                                                15-FEB-1995 12:35:50    SMS1:[WIND.SOFTWARE.LZ]WIND_CD_INIT.FOR;24
+
+	      1       SUBROUTINE WIND_CD_INIT
+	      2 C
+	      3 C     Serves to initialize values for the use of WIND_CD_READ
+	      4 C
+	      5 C     This version:   1.9   15-FEB-1995
+	      6 C
+	      7 C     Creation:
+	      8 C     H.BROER   8-APR-1994
+	      9 C
+	     10 C     Revisions:
+	     11 C      9-JUN-1994  H. Broer     update include files
+	     12 C     29-JUN-1994  H. Broer     revise HKset staring value
+	     13 C      9-SEP-1994  L. Bleau     change HKset to be array reference
+	     14 C     21-SEP-1994  L. BLeau     change HDBset initialization to 1
+	     15 C      4-OCT-1994  L. Bleau     initialize output science L1 record to 1
+	     16 C     27-OCT-1994  L. Bleau     changed name L1_sci_rec_cntr to sci_rec_cntr
+	     17 C     27-OCT-1994  L. Bleau     initialized L1_recs_written
+	     18 C     17-NOV-1994  L. Bleau     add code to translate logical name WIND_DIAG and
+	     19 C	                        set diagnostic level (DIAG variable)
+	     20 C 1.5  6-DEC-1994  L. Bleau     add call to JOB_MODE to obtain interactive flag
+	     21 C 1.6 15-DEC-1994  L. Bleau     initialize EDB counters to 0
+	     22 C 1.7 10-JAN-1995  L. Bleau  
+	     23 C 1.8  8-FEB-1995  L. Bleau     add code to translate logical name WIND_NRT_MODE
+	     24 C			        and set logical variable NRT_MODE if so; change
+	     25 C			        comment delimiters
+	     26 C 1.9 15-FEB-1995  J.PAQUETTE   removed refrence to HDBset since HDB is now
+	     27 C                  L. Bleau     indexed by EDBset
+	     28 C
+	     29 CDEC$ IDENT '1.9'
+	     30 
+	     31       IMPLICIT NONE
+	     32 
+	     33       INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_CD_INIT                                                    23-FEB-1995 12:31:05    DEC Fortran V6.2-508                Page   2
+1.9                                                             15-FEB-1995 12:35:50    SMS1:[WIND.SOFTWARE.LZ]WIND_CD_INIT.FOR;24
+
+	    569       INCLUDE 'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_CD_INIT                                                    23-FEB-1995 12:31:05    DEC Fortran V6.2-508                Page   3
+1.9                                                             15-FEB-1995 12:35:50    SMS1:[WIND.SOFTWARE.LZ]WIND_CD_INIT.FOR;24
+
+	    768       INCLUDE 'INC_DIR:WIND_L0_RECORD.INC/NOLIST'
+	    819       INTEGER DIAG
+	    820       LOGICAL INTER, NRT_MODE
+	    821       COMMON /DIAG/ DIAG, INTER, NRT_MODE
+	    822       INTEGER*4 GET_LOGICAL,ITEMP,NCH,MODE,SPIN,I
+	    823       LOGICAL*4 JOB_MODE
+	    824       CHARACTER*10 VALUE
+	    825 C
+	    826 C     INITIATE VALUES FOR PC-RECORDING
+	    827 C
+	    828       EDBset = 1
+	    829       HKset(1) = 0
+	    830       Sci_rec_cntr = 1
+	    831       L1_recs_written = 0
+	    832       EDB_Sum = 0
+	    833       EDB_Lost = 0
+	    834       EDB_Skip = 0
+	    835 C
+	    836 C Translate logical name WIND_DIAG
+	    837 C If it's defined decode as if an integer and store into common variable DIAG
+	    838 C
+	    839       NCH = GET_LOGICAL( 'WIND_DIAG', VALUE )
+	    840       IF (NCH .NE. 0) THEN
+	    841         READ( VALUE, 101, ERR=110 ) ITEMP
+	    842 101     FORMAT(I<NCH>)
+	    843         DIAG = ITEMP
+	    844 110     CONTINUE
+	    845       ENDIF
+	    846 C
+	    847 C Translate logical name WIND_NRT_MODE
+	    848 C If it's defined set common variable NRT_MODE to .TRUE., else leave it .FALSE.
+	    849 C
+	    850       NRT_MODE = .FALSE.
+	    851       NCH = GET_LOGICAL( 'WIND_NRT_MODE', VALUE )
+	    852       IF (NCH .NE. 0) NRT_MODE = .TRUE.
+	    853 C
+	    854 C Get job mode
+	    855 C Returns .TRUE. if interactive job, so store that info in INTER in common
+	    856 C block DIAG
+	    857 C
+	    858       INTER = JOB_MODE(MODE)
+	    859 C
+	    860 C Initialize 4-character header in each of the data structures
+	    861 C
+	    862       DO I=1,3
+	    863         DO SPIN=0,59                            
+	    864           SWICS_RATE(I).EDB(SPIN).SWRA = 'SWRA'   
+	    865           SWICS_PHA(I).EDB(SPIN).SWPH   = 'SWPH'     
+	    866           MASS_RATE(I).EDB(SPIN).MARA  = 'MARA'    
+	    867           MASS_PHA(I).EDB(SPIN).MAPH    = 'MAPH'      
+	    868           STICS_RATE(I).EDB(SPIN).STRA = 'STRA'   
+	    869           STICS_PHA(I).EDB(SPIN).STPH   = 'STPH'     
+	    870         END DO                                  
+	    871         SCI(I).CORE       = 'CORE'
+	    872         HDB(I).BDH.CCHDB  = 'HDB '
+	    873         HKeep(I).CCHK     = 'HK  '
+	    874       END DO
+
+WIND_CD_INIT                                                    23-FEB-1995 12:31:05    DEC Fortran V6.2-508                Page   4
+1.9                                                             15-FEB-1995 12:35:50    SMS1:[WIND.SOFTWARE.LZ]WIND_CD_INIT.FOR;24
+
+	    875 
+	    876       RETURN
+	    877 
+	    878       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   40 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                                36 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                1184   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 248 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 L0_RECORD                               38 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 DIAG                                    12 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               460878
+
+
+ENTRY POINTS
+
+    Address   Type  Name        
+                                
+  4-00000010        WIND_CD_INIT
+
+
+VARIABLES
+
+    Address   Type  Name                    Address   Type  Name                    Address   Type  Name               
+                                                                                                                       
+  8-00000006  L*1   BITRATE               7-00000004  I*4   L1_RECS_WRITTEN      11-00000022  I*2   SPHANUM            
+ 11-00000006  I*2   COREID                8-00000008  L*1   MASSPOWER           REG-00000012  I*4   SPIN               
+ 11-00000018  I*2   CORENUM               1-00000004  I*4   MASS_RATE_SIZE        8-00000010  I*4   SPINCOUNT          
+  7-00000014  I*4   CURR_SCI_REC_NUMBER  11-0000000C  I*2   MCOREID               8-00000009  L*1   STICSPOWER         
+  7-00000018  I*4   CURR_SPIN            11-0000001E  I*2   MCORENUM              1-00000008  I*4   STICS_H_RATE_SIZE  
+ 12-00000000  I*4   DIAG                  8-0000000C  I*4   MEASSPIN              1-0000000C  I*4   STICS_N_RATE_SIZE  
+  6-0006EEBC  I*4   EDBSET                2-00000010  I*4   MODE                  2-00000004  I*4   STICS_RATE_SIZE    
+  1-00000000  I*4   EDB_CORE_SIZE        11-00000012  I*2   MPHAID                8-00000004  L*1   SUBS_ID            
+  7-00000008  I*4   EDB_LOST             11-00000024  I*2   MPHANUM               8-00000007  L*1   SWICSPOWER         
+  7-0000000C  I*4   EDB_SKIP              2-00000000  I*4   NCH                   1-00000010  I*4   SWICS_H_RATE_SIZE  
+  7-00000010  I*4   EDB_SUM               7-0000001C  L*4   NEW_SCI_REC           1-00000014  I*4   SWICS_N_RATE_SIZE  
+  8-00000005  L*1   HDBFLAG              12-00000008  L*4   NRT_MODE              2-00000008  I*4   SWICS_RATE_SIZE    
+ 11-00000002  I*2   HDBRECID              8-0000000A  L*1   RAMCHECK              2-00000018  CHAR  VALUE              
+ 11-00000014  I*2   HDBRECNUM            11-00000000  I*2   RECORDID             11-00000008  I*2   WCOREID            
+ 11-00000004  I*2   HKRECID               7-00000000  I*4   SCI_REC_CNTR         11-0000001A  I*2   WCORENUM           
+ 11-00000016  I*2   HKRECNUM             11-0000000A  I*2   SCOREID              11-0000000E  I*2   WPHAID             
+  0-00000048  I*4   I                    11-0000001C  I*2   SCORENUM             11-00000020  I*2   WPHANUM            
+ 12-00000004  L*4   INTER                 8-00000000  I*4   SFPERBLOCK                                                 
+  2-0000000C  I*4   ITEMP                11-00000010  I*2   SPHAID                                                     
+
+
+WIND_CD_INIT                                                    23-FEB-1995 12:31:05    DEC Fortran V6.2-508                Page   5
+1.9                             Symbol Table                    15-FEB-1995 12:35:50    SMS1:[WIND.SOFTWARE.LZ]WIND_CD_INIT.FOR;24
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  9-000003CC  I*4   HDBTIME2            24  (2, 3)
+ 10-00000CF0  I*4   HKLOCI             300  (75)
+ 10-00000E1C  I*4   HKLOCJ             300  (75)
+ 10-00000CE4  I*4   HKSET               12  (3)
+  8-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  9-00000000  HDB         HDBSTR             972  (3)
+ 10-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label
+                                       
+      **       101        **       110 
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                Type  Name             
+                                                   
+  I*4   GET_LOGICAL         L*4   JOB_MODE         
+
+WIND_CD_INIT                                                    23-FEB-1995 12:31:05    DEC Fortran V6.2-508                Page   6
+1.9                             Symbol Table                    15-FEB-1995 12:35:50    SMS1:[WIND.SOFTWARE.LZ]WIND_CD_INIT.FOR;24
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_CD_INIT.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_CD_INIT.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.86 seconds
+  Elapsed time:      2.62 seconds
+  Pagefaults:         213
+  I/O Count:           20

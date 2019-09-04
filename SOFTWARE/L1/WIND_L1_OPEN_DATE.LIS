@@ -1,0 +1,327 @@
+WIND_L1_OPEN_DATE                                               28-SEP-1995 20:15:29    DEC Fortran V6.2-508                Page   1
+                                                                28-SEP-1995 20:15:27    [WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+	      1 	SUBROUTINE WIND_L1_OPEN_DATE(unit, year, month, day, data_version,
+	      2 	1 header, status)
+	      3  
+	      4 C+
+	      5 C 
+	      6 C FUNCTIONAL DESCRIPTION:	
+	      7 C 
+	      8 C    This routine opens a Level 1 format file onto the unit number given by the
+	      9 C    argument `unit'.  The filename is determined by parameters `year',
+	     10 C    `month', `day', and `data_version'.  The file is assumed to be located in
+	     11 C    a directory pointed to by the logical name DATA_DIR.  The file's file
+	     12 C    header record is then read into the argument `header'.  It is also
+	     13 C    retained in memory for future reference.  The fact that this unit is
+	     14 C    opened is recorded internally for future access.  A status code is
+	     15 C    returned in the argument `status'.
+	     16 C
+	     17 C FORMAL PARAMETERS:
+	     18 C  
+	     19 C     unit:
+	     20 C	  An INTEGER*4 variable specifying the Fortran unit number onto which
+	     21 C	  the L1 file will be opened.
+	     22 C      
+	     23 C     year:
+	     24 C	  An INTEGER*4 variable giving the year of the data set to be opened.
+	     25 C      
+	     26 C     month:
+	     27 C	  An INTEGER*4 variable giving the month of the data set to be opened or
+	     28 C	  a zero.
+	     29 C      
+	     30 C     day:
+	     31 C	  An INTEGER*4 variable giving the day of the month of the data set to
+	     32 C	  be opened.  If month is zero this parameter instead gives the day of
+	     33 C	  year of the data set.
+	     34 C      
+	     35 C     data_version:
+	     36 C	  An INTEGER*4 variable giving the version of the data set to be opened.
+	     37 C	  Valid values are 0-99.  There are two special case values for
+	     38 C	  data_version:
+	     39 C	    -1	use the highest data set version available for this file
+	     40 C	    -2	use the lowest data set version available for this file
+	     41 C      
+	     42 C     header:
+	     43 C	  A record variable of structure type ST_L1_FILE_HDR which will receive
+	     44 C	  the file header of the Level 1 file.
+	     45 C  
+	     46 C     status:
+	     47 C	  An INTEGER*4 variable which will receive, upon return, the status of
+	     48 C	  the open operation.  A 1 indicates success, all other values indicate
+	     49 C	  failure.
+	     50 C  
+	     51 C COMMON BLOCKS:
+	     52 C  
+	     53 C     None
+	     54 C  
+	     55 C DESIGN:
+	     56 C  
+	     57 C     If the parameter `month' is zero the parameter `day' is assumed to be the
+
+WIND_L1_OPEN_DATE                                               28-SEP-1995 20:15:29    DEC Fortran V6.2-508                Page   2
+                                                                28-SEP-1995 20:15:27    [WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+	     58 C     day of year.
+	     59 C     The filename will be constructed in the format WI_L1_SMS_yyyymmdd_Vvv.DAT.
+	     60 C     If data_version is 0 or -1 do a wildcard search for the filename.
+	     61 C     The L1 file is assumed to be located in the directory pointed to by the
+	     62 C     logical name DATA_DIR:.
+	     63 C     After the full filename with directory is constructed the routine
+	     64 C     WIND_L1_OPEN is called to perform the actual open.  See documentation on
+	     65 C     that routine for additional details.
+	     66 C  
+	     67 C 
+	     68 C This version:    28-SEP-1995
+	     69 C 
+	     70 C Created: 
+	     71 C 
+	     72 C	 28-SEP-1995    Larry Bleau
+	     73 C 
+	     74 C Revised:
+	     75 C 
+	     76 C	 Date     | Name  | Description
+	     77 C ----------------+-------+-----------------------------------------------------
+	     78 C [change_entry]
+	     79 C 
+	     80 C-
+	     81 CDEC$	IDENT '1.0'
+	     82 	IMPLICIT NONE
+	     83 	INCLUDE '($SSDEF)/NOLIST'
+	   1508 	INCLUDE '($RMSDEF)/NOLIST'
+	   2219 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_L1_OPEN_DATE                                               28-SEP-1995 20:15:29    DEC Fortran V6.2-508                Page   3
+1.0                                                             28-SEP-1995 20:15:27    [WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+	   2757 	INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	   2889 	INCLUDE 'INC_DIR:L1READ.INC/NOLIST'
+    1	   2918 	RECORD /ST_L1_SR_HEADER/ L1_sci_rec_header(maxunits)
+		.................................1                           
+%FORT-W-FLDMISALN, (1) Record contains one or more misaligned fields
+
+	   2941 C
+	   2942 	INTEGER*4 unit,year,month,day,data_version,status
+	   2943         RECORD /ST_L1_FILE_HEADER/ header
+	   2944 C
+	   2945 	INTEGER actual_month,actual_day,actual_version,context,nch
+	   2946 	INTEGER*4 LIB$FIND_FILE 
+	   2947 	CHARACTER*120 filename,filename2,pattern
+	   2948 	CHARACTER directory*9
+	   2949 	LOGICAL more_files
+	   2950 	DATA directory/'DATA_DIR:'/
+	   2951 C
+	   2952 	EXTERNAL WIND$_FILNOTOPN
+	   2953 C
+	   2954 C If month is zero assume day is the day of year.  Compute month and day from it
+	   2955 C and the current year.
+	   2956 C
+	   2957 	IF (month .eq. 0) THEN
+	   2958 c	    {executable_statement}...
+	   2959 	ELSE
+	   2960 	    actual_month = month
+	   2961 	    actual_day = day
+	   2962 	END IF
+	   2963 	actual_version = data_version
+	   2964 	IF (data_version .le. 0) THEN
+	   2965 C
+	   2966 C Construct a search pattern for the filename in the format
+	   2967 C WI_L1_SMS_yyyymmdd_V%%.DAT and search for it.
+	   2968 C If data_version is -1 caller wants highest (last) data set of this date; keep
+	   2969 C looping until we found the last file or there is an error.
+	   2970 C If data_version is -2 caller wants lowest (first) data set of this date; exit
+	   2971 C loop after finding first file.
+	   2972 C
+	   2973 	    WRITE (pattern, 1001) directory,year,actual_month,actual_day
+	   2974 1001	    FORMAT(A,'WI_L1_SMS_',I4,I2.2,I2.2,'_V%%.DAT')
+	   2975 	    nch = INDEX (pattern,' ') - 1
+	   2976 	    filename2 = ' '
+	   2977 C
+	   2978 	    more_files = .TRUE.
+	   2979 	    DO WHILE (more_files)
+	   2980 		status = LIB$FIND_FILE (pattern(1:nch), filename, context, , , , )
+	   2981 	type '(z8,1x,a)',status,filename(1:70)
+	   2982 		IF (status .eq. SS$_NORMAL) filename2 = filename
+	   2983 		IF (data_version .eq. -2    .or.
+	   2984 	1	    status .eq. RMS$_NMF    .or.
+	   2985 	1	    IAND (status, 1) .ne. 1) more_files = .FALSE.
+	   2986 	    END DO
+	   2987 C
+	   2988 C Done search, close out file search context
+	   2989 C If filename2 is non-blank it con tains the name of the file we want; otherwise
+	   2990 C there was an error of some type and status contains the appropriate condition
+	   2991 C code.
+
+WIND_L1_OPEN_DATE                                               28-SEP-1995 20:15:29    DEC Fortran V6.2-508                Page   4
+1.0                                                             28-SEP-1995 20:15:27    [WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+	   2992 C
+	   2993 120	    CALL LIB$FIND_FILE_END (context)
+	   2994 	    IF (filename2 .eq. ' ') RETURN
+	   2995 	    filename = filename2
+	   2996 	ELSE
+	   2997 C
+	   2998 C Construct the filename in the format WI_L1_SMS_yyyymmdd_Vvv.DAT
+	   2999 C The L1 file is assumed to be located in the directory pointed to by the
+	   3000 C logical name DATA_DIR:.
+	   3001 C
+	   3002 	    WRITE (filename, 1002) directory,year,actual_month,actual_day,
+	   3003 	1     actual_version
+	   3004 1002	    FORMAT(A,'WI_L1_SMS_',I4,I2.2,I2.2,'_V',I2.2,'.DAT')
+	   3005 	ENDIF
+	   3006 C
+	   3007 C We now have the full filename with directory constructed.
+	   3008 C Call the routine WIND_L1_OPEN to perform the actual open.
+	   3009 C
+	   3010 	nch = INDEX (filename,' ') - 1
+ C	   3011 D	TYPE *,'Calling WIND_L1_OPEN with filename=<',filename(1:nch),'>'
+	   3012 	CALL WIND_L1_OPEN( unit, filename, header, status )
+	   3013 	RETURN
+	   3014 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  16 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                  384 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               132 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                1220   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 272 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 L1_HEADERS                             648 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO                             3050560 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 L1INFO2                              13122 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 L1BUF                                65534 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 NULLBUF                              65536 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated              3197424
+
+
+ENTRY POINTS
+
+    Address   Type  Name             
+                                     
+  4-00000000        WIND_L1_OPEN_DATE
+
+
+
+WIND_L1_OPEN_DATE                                               28-SEP-1995 20:15:29    DEC Fortran V6.2-508                Page   5
+1.0                             Symbol Table                    28-SEP-1995 20:15:27    [WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name               Address   Type  Name          
+                                                                                                        
+  2-00000004  I*4   ACTUAL_DAY       1-00000000  CHAR  DIRECTORY       10-00000000  CHAR  NULL_BUFFER   
+  2-00000000  I*4   ACTUAL_MONTH     2-00000018  CHAR  FILENAME         2-00000108  CHAR  PATTERN       
+  2-00000008  I*4   ACTUAL_VERSION   2-00000090  CHAR  FILENAME2            **      I*4   STATUS        
+  9-00000000  CHAR  BUFFER           8-000000A0  CHAR  MAX_VERSION          **      I*4   UNIT          
+  2-0000000C  I*4   CONTEXT              **      I*4   MONTH                **      I*4   YEAR          
+      **      I*4   DATA_VERSION     2-00000014  L*4   MORE_FILES                                       
+      **      I*4   DAY              2-00000010  I*4   NCH                                              
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+      **      HEADER          ST_L1_FILE_HEADER          400   6-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            248
+  6-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400                                                             
+
+
+ARRAYS
+
+     Address  Type  Name                   Bytes  Dimensions
+
+  8-00000000  I*4   L1_UNITS                  80  (20)
+ 10-00000000  I*1   NULL_BYTE_ARRAY        65534  (65534)
+ 10-00000000  I*4   NULL_I4_ARRAY          65536  (16384)
+  8-00000050  I*4   SCIRECNUM                 80  (20)
+
+
+
+RECORD ARRAYS
+
+    Address   Name               Structure                 Bytes  Dimensions
+
+  7-002E1BC0  L1_HDB             HDBSTR                    6560  (20)
+  8-000000A2  L1_HEADER          ST_L1_FILE_HEADER         8000  (20)
+  7-002E3560  L1_HKEEP           HKEEP                    22240  (20)
+  7-00201520  L1_MASS_PHA        MA_PHA                  919200  (20)
+  7-001F7F20  L1_MASS_RATE       MA_RATE                  38400  (20)
+  7-00000000  L1_SCI             CORE                    153760  (20)
+  8-00001FE2  L1_SCI_REC_HEADER  ST_L1_SR_HEADER           4960  (20)
+  7-00144A60  L1_STICS_PHA       ST_PHA                  734400  (20)
+  7-0010EBE0  L1_STICS_RATE      ST_RATE                 220800  (20)
+  7-00048B20  L1_SWICS_PHA       SW_PHA                  811200  (20)
+  7-000258A0  L1_SWICS_RATE      SW_RATE                 144000  (20)
+
+
+
+
+WIND_L1_OPEN_DATE                                               28-SEP-1995 20:15:29    DEC Fortran V6.2-508                Page   6
+1.0                             Symbol Table                    28-SEP-1995 20:15:27    [WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+      **       120        **       1001       **       1002
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                      Type  Name                   
+                                                               
+  I*4   LIB$FIND_FILE                   WIND$_FILNOTOPN        
+        LIB$FIND_FILE_END               WIND_L1_OPEN           
+
+WIND_L1_OPEN_DATE                                               28-SEP-1995 20:15:29    DEC Fortran V6.2-508                Page   7
+1.0                             Symbol Table                    28-SEP-1995 20:15:27    [WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /DIAGNOSTICS=SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.DIA;3
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.OBJ;1
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.32 seconds
+  Elapsed time:      3.24 seconds
+  Pagefaults:         222
+  I/O Count:           44

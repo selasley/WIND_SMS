@@ -1,0 +1,116 @@
+WIND_JULIAN_TO_EPOCH                                            21-APR-1995 15:27:33    DEC Fortran V6.2-508                Page   1
+                                                                19-APR-1995 20:35:50    WIND_JULIAN_TO_EPOCH.FOR;3
+
+	      1       SUBROUTINE WIND_JULIAN_TO_EPOCH( EPOCH, JULIAN, STATUS )
+	      2 C	Routine to convert time expressed as EPOCH format (milliseconds AD)
+	      3 C	into JULIAN day format (days since 4713 BC)
+	      4 C
+	      5 C	Version	 6-Apr-1994
+	      6 C
+	      7 C	USAGE:
+	      8 C
+	      9 C	CALL WIND_JULIAN_TO_EPOCH( EPOCH, JULIAN, STATUS )
+	     10 C
+	     11 C	PARAMETERS:
+	     12 C
+	     13 C	REAL*8	EPOCH	! OUTPUT:  milliseconds since 1-JAN-0001 B.C.
+	     14 C				   to be compatible with GEOTAIL
+	     15 C		JULIAN	! INPUT:   days since 4713 B.C.
+	     16 C
+	     17 C	INTEGER*4 STATUS ! OUTPUT: 1 = SUCCESFUL OPERATION
+	     18 C
+	     19 C	Created:
+	     20 C	 4-APR-1994	H.BROER	University of Maryland, Space Physics Group
+	     21 C
+	     22 C Modification history:
+	     23 C	19-APR-1995	L. Bleau	changed comments
+	     24 C
+	     25       IMPLICIT NONE
+	     26 
+	     27       INTEGER*4 STATUS
+	     28 
+	     29       REAL*8	EPOCH,JULIAN
+	     30 C
+	     31       STATUS	= 1
+	     32 
+	     33       EPOCH	= ( JULIAN - 172106.D1 ) * 864.D5
+	     34 
+	     35       RETURN
+	     36       END
+
+WIND_JULIAN_TO_EPOCH                                            21-APR-1995 15:27:33    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                    19-APR-1995 20:35:50    WIND_JULIAN_TO_EPOCH.FOR;3
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                  36   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  32 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                   68
+
+
+ENTRY POINTS
+
+    Address   Type  Name                
+                                        
+  1-00000000        WIND_JULIAN_TO_EPOCH
+
+
+VARIABLES
+
+    Address   Type  Name       Address   Type  Name       Address   Type  Name  
+                                                                                
+      **      R*8   EPOCH        **      R*8   JULIAN       **      I*4   STATUS
+
+WIND_JULIAN_TO_EPOCH                                            21-APR-1995 15:27:33    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    19-APR-1995 20:35:50    WIND_JULIAN_TO_EPOCH.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]WIND_JULIAN_TO_EPOCH.LIS;6
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]WIND_JULIAN_TO_EPOCH.OBJ;6
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.17 seconds
+  Elapsed time:      1.52 seconds
+  Pagefaults:         209
+  I/O Count:            8

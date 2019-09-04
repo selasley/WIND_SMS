@@ -1,0 +1,41 @@
+From:	Herbert Broer
+To:	Bob Lundgren
+Subject:WIND Distribution CD-ROM
+Dear Bob,
+while I was preparing a program to read and interpret the Level 0 CD-ROM
+I found some facts which are not according to the
+	Data Format Control Document (DFCD) between the
+	International Solar-Terrestrial Physics (ISTP) Program
+	Information Processing Division (IPD)
+	Ground Data Processing System
+	and the
+	ISTP Mission Investigators
+	dated March 1993
+Document: 560-1DFD/0190
+	  CSC/TR-91/6014
+1.	The SWICS / MASS / STICS  ( SMS ) experiment is sometimes called
+	SMS and sometimes called SIC.  The CD-ROM contains the SMS data
+	under the pseudonym SIC.  The File Label Record also contains
+	the name 'SIC'.
+2.	It is nice and correct to show the bitpattern of the PB5 time code,
+	but it would be even nicer when it would be shown how its 56 bits
+	are placed within two INTEGER*4 words.
+3.	The descriptions of the EDIT files and keys just do not fit between
+	the document and the File Label Record.  I gave up.
+4.	The Telemetry Mode Indicator in the Data Record Header has the value 5.
+	The document does not show a mode 5.
+5.	The document and the data on the CD-ROM show more data for the house-
+	keeping then is allocated to the SMS experiment.  SMS has been allocated
+	byte 17 in minor frames 1, 11, 21, 31, 41, 51, 61, 71, 81, 91, 101, 111,
+	121, 131, 141, 151, 161, 171, 181, 191, 201, 211, 221, 231, and 241.
+	Byte 18 is allocated to SMS in minor frames 3, 7, 13, 17, 23, 27, 33,
+	37, 43, 47, 53, 57, 63, 67, 73, 77, 83, 87, 93, 97, 103, 107, 113, 117,
+	123, 127, 133, 137, 143, 147, 153, 157, 163, 167, 183, 187, 193, 197,
+	203, 207, 213, 217, 223, 227, 233, 237, 243, and 247.  This is a total
+	of 75 bytes.  The allocation is the same for Science, Contingency, or
+	Maneuver Mode.
+These are the discrepancies I found, what I did not find in the Header data was
+any indication of the Telemetry Rate.  Do you think it would be possible that
+the Data Record Header could be expanded to include that information ?  There
+is room, and since our data differs with the Telemetry Rate it certainly would
+be a valuable enhancement.

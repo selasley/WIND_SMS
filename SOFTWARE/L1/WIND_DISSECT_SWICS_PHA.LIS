@@ -1,0 +1,183 @@
+WIND_DISSECT_SWICS_PHA                                          21-APR-1995 16:15:01    DEC Fortran V6.2-508                Page   1
+                                                                26-JAN-1995 17:57:16    WIND_DISSECT_SWICS_PHA.FOR;3
+
+	      1       SUBROUTINE WIND_DISSECT_SWICS_PHA(PHA,SECTOR,ENERGY,RANGE,SSD_ID,
+	      2      *                                  TIME_OF_FLIGHT)
+	      3 C+
+	      4 C 
+	      5 C FUNCTIONAL DESCRIPTION:	
+	      6 C 
+	      7 C    This subroutine extracts the sector, range, energy, SSD ID, and time of
+	      8 C    flight fields from a WIND SWICS PHA word and returns each component to
+	      9 C    the caller as an INTEGER*4 quantity.
+	     10 C
+	     11 C    NOTE: This routine only works for SWICS PHA words.
+	     12 C 
+	     13 C FORMAL PARAMETERS:
+	     14 C  
+	     15 C     PHA:
+	     16 C	  A BYTE array of length 4 containing the SWICS PHA word to be
+	     17 C	  dissected. 
+	     18 C      
+	     19 C     SECTOR:
+	     20 C	  An INTEGER*4 variable which will receive the extracted sector field
+	     21 C         of the PHA word.
+	     22 C      
+	     23 C     ENERGY:
+	     24 C	  An INTEGER*4 variable which will receive the extracted energy field
+	     25 C         of the PHA word.
+	     26 C      
+	     27 C     RANGE:
+	     28 C	  An INTEGER*4 variable which will receive the extracted and decoded
+	     29 C         range field of the PHA word.
+	     30 C      
+	     31 C     SSD_ID:
+	     32 C	  An INTEGER*4 variable which will receive the extracted SSD ID
+	     33 C         field of the PHA word.
+	     34 C      
+	     35 C     TIME_OF_FLIGHT:
+	     36 C	  An INTEGER*4 variable which will receive the extracted time of flight
+	     37 C         field of the PHA word.
+	     38 C      
+	     39 C DESIGN:
+	     40 C  
+	     41 C     Use MVBITS to extract a bit field and store it into an INTEGER*4 variable.
+	     42 C  
+	     43 C A SWICS PHA word is 32 bits long and is coded as follows:
+	     44 C
+	     45 C   MSB
+	     46 C    31  30  29  28  27  26  25  24  23  22  21  20  19  18  17  16
+	     47 C     0   0   0   0  <-- Sector -->  <-----      Energy      ----->
+	     48 C
+	     49 C                                                               LSB
+	     50 C    15  14  13  12  11  10   9   8   7   6   5   4   3   2   1   0
+	     51 C    <--  Range -->  SSD_ID   <----       Time of Flight      ---->
+	     52 C    
+	     53 C 
+	     54 C This version:   17-JAN-1995
+	     55 C 
+	     56 C Created: 
+	     57 C 
+
+WIND_DISSECT_SWICS_PHA                                          21-APR-1995 16:15:01    DEC Fortran V6.2-508                Page   2
+                                                                26-JAN-1995 17:57:16    WIND_DISSECT_SWICS_PHA.FOR;3
+
+	     58 C	17-NOV-1994    J.PAQUETTE
+	     59 C 
+	     60 C Revised:
+	     61 C 
+	     62 C  17-JAN-1995   L. Bleau   copied from SWICS_PHA_TABLE.FOR, made its own
+	     63 C                           routine, added comments
+	     64 C 
+	     65 C-
+	     66       INTEGER*4 SECTOR,ENERGY,RANGE,SSD_ID,TIME_OF_FLIGHT
+	     67       INTEGER*4 ITEMP
+	     68       BYTE PHA(4)
+	     69 C
+	     70       SECTOR = 0
+	     71       ITEMP = PHA(1)
+	     72       CALL MVBITS( ITEMP, 0, 4, SECTOR, 0 )
+	     73 C
+	     74       ENERGY = PHA(2)
+	     75       ENERGY = IAND( ENERGY, 255 )
+	     76 C
+	     77       ITEMP = PHA(3)
+	     78       RANGE = 0
+	     79       CALL MVBITS( ITEMP, 4, 4, RANGE, 0 )
+	     80 C
+	     81       SSD_ID = 0
+	     82       CALL MVBITS( ITEMP, 2, 2, SSD_ID, 0 )
+	     83 C
+	     84       TIME_OF_FLIGHT = ISHFT( IAND( ITEMP, 3 ), 8 )
+	     85       ITEMP = PHA(4)
+	     86       TIME_OF_FLIGHT = TIME_OF_FLIGHT + IAND( ITEMP, 255 )
+	     87 C
+	     88       RETURN
+	     89       END
+
+WIND_DISSECT_SWICS_PHA                                          21-APR-1995 16:15:01    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    26-JAN-1995 17:57:16    WIND_DISSECT_SWICS_PHA.FOR;3
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                 336   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  72 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  408
+
+
+ENTRY POINTS
+
+    Address   Type  Name                  
+                                          
+  1-00000000        WIND_DISSECT_SWICS_PHA
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name          
+                                                                     
+      **      I*4   ENERGY               **      I*4   SECTOR        
+  0-00000018# I*4   ITEMP                **      I*4   SSD_ID        
+      **      I*4   RANGE                **      I*4   TIME_OF_FLIGHT
+
+
+ARRAYS
+
+     Address  Type  Name        Bytes  Dimensions
+
+      **      I*1   PHA             4  (4)
+
+
+WIND_DISSECT_SWICS_PHA                                          21-APR-1995 16:15:01    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    26-JAN-1995 17:57:16    WIND_DISSECT_SWICS_PHA.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_DISSECT_SWICS_PHA.LIS;9
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_DISSECT_SWICS_PHA.OBJ;9
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.16 seconds
+  Elapsed time:      1.85 seconds
+  Pagefaults:         123
+  I/O Count:            9

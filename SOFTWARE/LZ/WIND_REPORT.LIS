@@ -1,0 +1,393 @@
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   1
+                                                                12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+	      1       SUBROUTINE WIND_REPORT( TEXT, NVALUES, IARRAY )
+	      2 C
+	      3 C   This subroutine is a tool to track possible problems in the processing of
+	      4 C WIND Level Zero data files.  It is called by various routines when those
+	      5 C routines encounter a condition which should be reported.  This can range from
+	      6 C a minor annoyance to a major error.  WIND_REPORT writes the information on a
+	      7 C single line to the WIND report file.  
+	      8 C
+	      9 C  Parameters:
+	     10 C
+	     11 C    TEXT:
+	     12 C
+	     13 C	A CHARACTER variable or constant whose contents give a fuller
+	     14 C	explanation of the condition being reported.  This can be formatted
+	     15 C	by the calling routine using an internal WRITE statement, or it can
+	     16 C	be a FAO (Formatted Ascii Output) string containing embedded format
+	     17 C	specifiers.  The length of this argument may vary from one call to the
+	     18 C	next.
+	     19 C
+	     20 C    NVALUES:
+	     21 C
+	     22 C	An INTEGER*4 value indicating the number of integer values required
+	     23 C	by the format string TEXT.  The position of each of these values 
+	     24 C	is denoted by the three characters "!UL" within the format string.
+	     25 C	If no values need be included in the message NVALUES should be 0.
+	     26 C	                                                                       
+	     27 C    IARRAY:
+	     28 C
+	     29 C	An INTEGER*4 array which contains the integer values to be formatted
+	     30 C	and included in the final message.  This array is NVALUES in length.
+	     31 C	This argument is ignored if NVALUES is zero.
+	     32 C
+	     33 C
+	     34 C WIND_REPORT writes the information on a single line to the WIND report file. 
+	     35 C The first time WIND_REPORT is called it opens the report file.  If the report
+	     36 C file does not exist it is created; if it already exists lines are appended to
+	     37 C it. 
+	     38 C
+	     39 C The report file name is derived from the L1 filename and is located in the
+	     40 C same directory as the L1 file. 
+	     41 C
+	     42 C The following information is written into the report file each time
+	     43 C WIND_REPORT is called: the current science record counter, the current spin
+	     44 C (Mspin in WIND_CD_READ), and a string formatted by the LIB$FAO system
+	     45 C service.  In addition, the first time WIND_REPORT is called a header is
+	     46 C written to the file giving the input Level Zero filename, the date and time,
+	     47 C and other useful information.
+	     48 C The format of the report file entry is given below.
+	     49 C
+	     50 C Sci Rec 
+	     51 C Counter  Spin Text of msg
+	     52 C nnnnnnnn  ss  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	     53 C 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+	     54 C          1         2         3         4         5         6         7         8         9        10
+	     55 C 
+	     56 C   This version:   1.3   12-APR-1995
+	     57 C
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   2
+                                                                12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+	     58 C   Created by:
+	     59 C
+	     60 C       Larry Bleau    9-FEB-1995
+	     61 C 
+	     62 C   Revisions:
+	     63 C 1.1	10-FEB-1995	L. Bleau	completely rewrote
+	     64 C 1.2	23-FEB-1995	L. Bleau	do nothing if PRINTLZ_MODE set
+	     65 C 1.3	12-APR-1995	L. Bleau	added include L1INFO.INC
+	     66 C
+	     67 CDEC$	IDENT  '1.3'
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   3
+1.3                                                             12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+	     69 	IMPLICIT NONE
+	     70 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   4
+1.3                                                             12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+	    608 	INCLUDE 'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   5
+1.3                                                             12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+	    790 	INCLUDE 'INC_DIR:WIND_LUN.INC/NOLIST'
+	    820 	INCLUDE 'INC_DIR:DIAG.INC/NOLIST'
+	    829 	INCLUDE 'INC_DIR:L1INFO.INC/NOLIST'
+	    857 	INCLUDE '($FORIOSDEF)/NOLIST'
+	   1219 
+	   1220 	CHARACTER*(*) TEXT
+	   1221 	INTEGER*4 NVALUES, IARRAY(10)
+	   1222 C
+	   1223 	INTEGER ISTAT,IPOS,NCH,DEVDIR_LEN,NCH0,NCH1,I
+	   1224 	INTEGER*2 OUTLEN
+	   1225 	INTEGER SYS$FAOL
+	   1226 	CHARACTER DATETIME*23,DEVDIR*60,REPNAME*90,LINE*200
+	   1227 	LOGICAL FILE_OPEN
+	   1228 
+	   1229 	CHARACTER*80 FILENAME, FIL1NAME
+	   1230 	COMMON /FILE/  FILENAME, FIL1NAME
+	   1231 C
+	   1232 C If PRINTLZ mode don't do anything
+	   1233 C
+	   1234 	IF (PRINTLZ_MODE) RETURN
+	   1235 C
+	   1236 C Check if file is already open
+	   1237 C
+	   1238 	INQUIRE( LOGF_Lun, OPENED=FILE_OPEN )
+	   1239 	IF (.NOT. FILE_OPEN) THEN
+	   1240 C
+	   1241 C Create report file each time to keep info from diffrent runs separate
+	   1242 C Construct report filename from the L1 filename and make it reside in the same
+	   1243 C directory as the L1 file.  Change the file extension to .REPORT for most
+	   1244 C cases.  For NRT data, where the extension is not .DAT and serves to
+	   1245 C distinguish different data sets, make the extension part of the filename (see
+	   1246 C case 2 below) and add .REPORT as the new extension.
+	   1247 C
+	   1248 C 1)  WI_L1_SMS_yyyymmdd_Vvv.DAT   WI_L1_SMS_yyyymmdd_Vvv.REPORT
+	   1249 C 2)  WI_L1_SMS_yyyymmdd_Vvv.kkkk  WI_L1_SMS_yyyymmdd_Vvv_kkkk.REPORT
+	   1250 C 3)  yymmdd_Vvv.DAT               yymmdd_Vvv.REPORT
+	   1251 C
+	   1252 	  REPNAME = FIL1NAME
+	   1253 	  IPOS = INDEX( REPNAME, ';' )		! strip off version #
+	   1254 	  IF (IPOS .NE. 0) REPNAME(IPOS:) = ' '
+	   1255 	  NCH = INDEX( REPNAME, ' ') - 1	! get # of chars
+	   1256 	  IF (IPOS .EQ. -1) NCH = LEN(REPNAME)
+	   1257 	  IPOS = INDEX( REPNAME, ']' )		! extract device, directory
+	   1258 	  IF (IPOS .NE. 0) THEN
+	   1259 	    DEVDIR = REPNAME(1:IPOS)		! save device/directory
+	   1260 	    DEVDIR_LEN = IPOS
+	   1261 	    REPNAME = REPNAME(IPOS+1:)
+	   1262 	    NCH = NCH - IPOS
+	   1263 	  ELSE
+	   1264 	    DEVDIR = '[]'
+	   1265 	    DEVDIR_LEN = 2
+	   1266 	  ENDIF
+	   1267 	  IPOS = INDEX( REPNAME, '.' )		! locate file type
+	   1268 	  IF (IPOS .EQ. 0) THEN			! none, add one
+	   1269 	    REPNAME(NCH+1:NCH+7) = '.REPORT'
+	   1270 	    IPOS = NCH + 1
+	   1271 	    NCH = NCH + 7
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   6
+1.3                                                             12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+	   1272 	  ELSE					! if .DAT just replace
+	   1273 	    IF (REPNAME(IPOS:IPOS+3) .EQ. '.DAT' .AND. IPOS+3 .EQ. NCH) THEN
+	   1274 	      REPNAME(IPOS:IPOS+6) = '.REPORT'
+	   1275 	      NCH = IPOS + 6
+	   1276 	    ELSE				! not .DAT, keep file type
+	   1277 	      REPNAME(IPOS:IPOS) = '_'		! combine it with filename
+	   1278 	      REPNAME(NCH+1:NCH+7) = '.REPORT'	! and use standard file type
+	   1279 	      IPOS = NCH + 1
+	   1280 	      NCH = NCH + 7
+	   1281 	    ENDIF
+	   1282 	  ENDIF
+	   1283 c	type *,'report name = "',repname(1:nch),'"'
+	   1284 c	type *,'device/direcory = "',devdir(1:devdir_len),'"'
+	   1285 C
+	   1286 C Now create and open file
+	   1287 C
+	   1288 	  OPEN( UNIT          = LOGF_Lun,
+	   1289      &        FILE            = REPNAME(1:NCH),
+	   1290      &        DEFAULTFILE     = DEVDIR(1:DEVDIR_LEN),
+	   1291      &        STATUS          = 'NEW',
+	   1292      &        ACCESS          = 'SEQUENTIAL',
+	   1293      &        RECORDSIZE      = 200,
+	   1294      &        CARRIAGECONTROL = 'LIST',
+	   1295      &        IOSTAT	      = ISTAT,
+	   1296      &        ERR             = 900 )
+	   1297 C
+	   1298 C Get information to write header to report file
+	   1299 C This includes:
+	   1300 C   name of LZ file
+	   1301 C   name of L1 file
+	   1302 C   current date and time
+	   1303 C
+	   1304 	  CALL LIB$DATE_TIME(DATETIME)
+	   1305 C
+	   1306 C Get lengths of filenames
+	   1307 C
+	   1308 	  NCH0 = INDEX( FILENAME, ' ') - 1
+	   1309 	  IF (NCH0 .EQ. -1) NCH0 = LEN(FILENAME)
+	   1310 	  NCH1 = INDEX( FIL1NAME, ' ') - 1
+	   1311 	  IF (NCH1 .EQ. -1) NCH1 = LEN(FIL1NAME)
+	   1312 C
+	   1313 C Write header info into report file
+	   1314 C
+	   1315 	  WRITE(LOGF_Lun, 101) REPNAME(1:IPOS-1),FILENAME(1:NCH0),
+	   1316      &			       FIL1NAME(1:NCH1),DATETIME(1:20)
+	   1317 101	FORMAT( T<MAX(40-(IPOS+9)/2,1)>,'Data Set: ',A//
+	   1318      &		'Level Zero file:  ',A/
+	   1319      &		'Level 1 file:     ',A/
+	   1320      &		'Date/Time of run: ',A/
+	   1321      &		/
+	   1322      &		' Sci Rec  Spin'/
+	   1323      &		' Counter  Num  Message'/
+	   1324      &		'========  ==   =========================================================')
+	   1325 	ENDIF
+	   1326 C
+	   1327 C Common Code
+	   1328 C Using parameters caller passed in IARRAY, format the output string using
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   7
+1.3                                                             12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+	   1329 C the system service $FAO
+	   1330 C
+	   1331 	IF (NVALUES .NE. 0) THEN
+	   1332 	  ISTAT = SYS$FAOL( TEXT, OUTLEN, LINE, IARRAY)
+	   1333 	  IF (ISTAT .NE. 1) THEN
+	   1334 	    WRITE(LINE,102) ISTAT
+	   1335 102	    FORMAT('ERROR CALLING FAO ROUTINE, ISTAT=',I8)
+	   1336 	    OUTLEN = 41
+	   1337 	  ENDIF
+	   1338 	ELSE
+	   1339 	  LINE = TEXT
+	   1340 	  OUTLEN = LEN(TEXT)
+	   1341 	ENDIF
+	   1342 C
+	   1343 C Write info into report file
+	   1344 C
+	   1345 	IF (Curr_Spin .NE. -1) THEN
+	   1346 	  WRITE(LOGF_Lun,103) Curr_Sci_Rec_Number,Curr_Spin,LINE(1:OUTLEN)
+	   1347 103	  FORMAT(I8,2X,I2,3X,A)
+	   1348 	ELSE
+	   1349 	  WRITE(LOGF_Lun,104) Curr_Sci_Rec_Number,LINE(1:OUTLEN)
+	   1350 104	  FORMAT(I8,2X,'  ',3X,A)
+	   1351 	END IF
+	   1352 	RETURN
+	   1353 C
+	   1354 900	TYPE 105,ISTAT
+	   1355 105	FORMAT(/' *** Cannot open REPORT file, Fortran error code ',I5/)
+	   1356 	RETURN
+	   1357 	END
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   8
+1.3                             Symbol Table                    12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                  416 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               484 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                2528   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 426 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 DIAG                                    48 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 L1INFO                                  40 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 FILE                                   160 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               463390
+
+
+ENTRY POINTS
+
+    Address   Type  Name       
+                               
+  4-00000030        WIND_REPORT
+
+
+VARIABLES
+
+    Address   Type  Name                    Address   Type  Name                    Address   Type  Name               
+                                                                                                                       
+  7-00000006  L*1   BITRATE               7-00000005  L*1   HDBFLAG              10-0000000C  L*4   PRINTLZ_MODE       
+ 11-00000014  I*4   CURR_SCI_REC_NUMBER   2-00000018  I*4   I                    10-00000027  CHAR  PROG_VERSION       
+ 11-00000018  I*4   CURR_SPIN            10-00000004  L*4   INTER                 7-0000000A  L*1   RAMCHECK           
+  2-00000020  CHAR  DATETIME              2-00000000  I*4   IPOS                  2-00000078  CHAR  REPNAME            
+  2-00000038  CHAR  DEVDIR                0-00000048# I*4   ISTAT                11-00000000  I*4   SCI_REC_CNTR       
+REG-00000018  I*4   DEVDIR_LEN           11-00000004  I*4   L1_RECS_WRITTEN       7-00000000  I*4   SFPERBLOCK         
+ 10-00000000  I*4   DIAG                  2-000000D8  CHAR  LINE                  7-00000010  I*4   SPINCOUNT          
+  6-0006EEBC  I*4   EDBSET               10-00000010  CHAR  LINK_DATE_TIME        7-00000009  L*1   STICSPOWER         
+  1-00000000  I*4   EDB_CORE_SIZE         7-00000008  L*1   MASSPOWER             1-00000008  I*4   STICS_H_RATE_SIZE  
+ 11-00000008  I*4   EDB_LOST              1-00000004  I*4   MASS_RATE_SIZE        1-0000000C  I*4   STICS_N_RATE_SIZE  
+ 11-0000000C  I*4   EDB_SKIP              7-0000000C  I*4   MEASSPIN              2-00000010  I*4   STICS_RATE_SIZE    
+ 11-00000010  I*4   EDB_SUM             REG-########  I*4   NCH                   7-00000004  L*1   SUBS_ID            
+ 11-00000020  L*4   EPH_AVAIL           REG-0000000A  I*4   NCH0                  7-00000007  L*1   SWICSPOWER         
+ 12-00000050  CHAR  FIL1NAME            REG-0000000B  I*4   NCH1                  1-00000010  I*4   SWICS_H_RATE_SIZE  
+ 12-00000000  CHAR  FILENAME             11-0000001C  L*4   NEW_SCI_REC           1-00000014  I*4   SWICS_N_RATE_SIZE  
+  2-0000001C  L*4   FILE_OPEN            10-00000008  L*4   NRT_MODE              2-00000014  I*4   SWICS_RATE_SIZE    
+ 11-00000024  L*4   FROM_CD                   **      I*4   NVALUES                   **      CHAR  TEXT               
+ 10-0000002C  L*4   HALT_IF_NO_EPH        2-00000008  I*2   OUTLEN                                                     
+
+
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page   9
+1.3                             Symbol Table                    12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  8-000003CC  I*4   HDBTIME2            24  (2, 3)
+  9-00000CF0  I*4   HKLOCI             300  (75)
+  9-00000E1C  I*4   HKLOCJ             300  (75)
+  9-00000CE4  I*4   HKSET               12  (3)
+      **      I*4   IARRAY              40  (10)
+  7-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+      **       101        **       103        **       105 
+      **       102        **       104    4-00000000   900 
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                  Type  Name               
+                                                       
+        LIB$DATE_TIME         I*4   SYS$FAOL           
+
+WIND_REPORT                                                     30-NOV-1995 14:18:06    DEC Fortran V6.2-508                Page  10
+1.3                             Symbol Table                    12-APR-1995 19:17:59    SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.FOR;22
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.LIS;20
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_REPORT.OBJ;29
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.39 seconds
+  Elapsed time:      3.09 seconds
+  Pagefaults:         234
+  I/O Count:           40

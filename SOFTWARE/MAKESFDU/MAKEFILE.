@@ -1,0 +1,47 @@
+#------------------------------------------------------------------------------
+#
+#  NSSDC/makeSFDU
+#
+#  Version 2.0, 31-May-96, Hughes STX.
+#
+#  Modification history:
+#
+#   2.0  Original Version of Makefile during Unix port EAG
+#
+#------------------------------------------------------------------------------
+.SILENT:
+SHELL=/bin/sh
+COPTIONS=
+COPTIONSld=
+SYSLIBS=
+INCLUDEcdf= $(CDF_HOME)/src/include
+TOOLScdf= $(CDF_HOME)/src/tools
+CFLAGS=$(COPTIONS) -I$(INCLUDEcdf)
+CFLAGSld=$(COPTIONSld) -lm
+LIBCDFa=$(CDF_HOME)/lib/libcdf.a
+LIBs1=$(LIBCDFa) $(SYSLIBS)
+CONFIGh=$(INCLUDEcdf)/config.h
+CDFh=$(INCLUDEcdf)/cdf.h
+CDFDISTh=$(INCLUDEcdf)/cdfdist.h $(CDFh) $(CONFIGh)
+CDFTOOLSh=$(INCLUDEcdf)/cdftools.h $(CDFDISTh)
+makeSFDUobjs=makeSFDU.o $(TOOLScdf)/toolbox1.o $(TOOLScdf)/toolbox3.o
+#------------------------------------------------------------------------------
+# Compile/link.
+#------------------------------------------------------------------------------
+all: makeSFDU
+makeSFDU: $(makeSFDUobjs)
+	@echo $(CC) $(CFLAGSld) -o $@ $(makeSFDUobjs) $(LIBs1)
+	      $(CC) $(CFLAGSld) -o $@ $(makeSFDUobjs) $(LIBs1)
+.c.o:
+	@echo $(CC) $(CFLAGS) -c $<
+	      $(CC) $(CFLAGS) -c $<
+makeSFDU.o:	makeSFDU.c
+#------------------------------------------------------------------------------
+# Clean/purge.
+#------------------------------------------------------------------------------
+clean:
+	@-rm -f *.o
+	@-rm -f makeSFDU
+	@-rm -f core
+	@-rm -f *~
+	@-rm -f *#

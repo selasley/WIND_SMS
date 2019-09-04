@@ -1,0 +1,176 @@
+DISSECT_STICS_PHA                                                1-APR-1997 12:55:19    DEC Fortran V6.2-508                Page   1
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]DISSECT_STICS_PHA.FOR;4
+
+	      1 C
+	      2       SUBROUTINE DISSECT_STICS_PHA(PHA,STOP_ID,START_RANGE,ENERGY,
+	      3      .                       SECTOR,SSD_ID,TIME_OF_FLIGHT,PSTART,RANGE)
+	      4 C
+	      5 C     This subroutine does bit computations to get Stop ID, Start ID, 
+	      6 C     Energy, Sector, SSD ID, and Time of flight for STICS PHA words on WIND
+	      7 C
+	      8 C      
+	      9 C DESIGN:
+	     10 C  
+	     11 C     Use MVBITS to extract a bit field and store it into an INTEGER*4 variable.
+	     12 C  
+	     13 C     A STICS PHA word is 32 bits long and is coded as follows:
+	     14 C
+	     15 C   MSB
+	     16 C    31  30  29  28  27  26  25  24  23  22  21  20  19  18  17  16
+	     17 C   Stop_ID  < Start_ID&Range >  <-----        Energy        ----->
+	     18 C
+	     19 C                                                               LSB
+	     20 C    15  14  13  12  11  10   9   8   7   6   5   4   3   2   1   0
+	     21 C    <-- Sector -->  SSD_ID   <----       Time of Flight      ---->
+	     22 C
+	     23 C     The Start_ID&Range field actually has the Start_ID and Range values 
+	     24 C     encoded into it using the formula
+	     25 C
+	     26 C     Start_ID&Range = 3 * Start_ID + Range
+	     27 
+	     28 C     MODIFICATION HISTORY
+	     29 C     created by ABG from an early version called DISSECT_PHA by J Paquette. 
+	     30 C     and comments from L. Bleau
+	     31 C     version 1:  6 Jan 95
+	     32 
+	     33 
+	     34       IMPLICIT NONE
+	     35 
+	     36 C     dissected pha word:
+	     37       INTEGER*4 ENERGY,		!compressed energy channel (9 bit)
+	     38      .          SECTOR,         !azimuthal sector (0-15)
+	     39      .          SSD_ID,         !solid state detector id (0-3)
+	     40      .          STOP_ID,        !stop mcp id
+	     41      .          START_RANGE,PSTART,RANGE,  !combined start anode and range
+	     42      .          TIME_OF_FLIGHT  !time of flight channel (10 bit)
+	     43               
+	     44       INTEGER*4 ITEMP		!temporary variable
+	     45       BYTE PHA(4)               !the entire pha word
+	     46 C
+	     47       STOP_ID = 0
+	     48       ITEMP = PHA(1)
+	     49       CALL MVBITS( ITEMP, 6, 2, STOP_ID, 0 )
+	     50 C
+	     51       START_RANGE = 0
+	     52       CALL MVBITS( ITEMP, 1, 5, START_RANGE, 0 )
+	     53 C
+	     54       ENERGY = 0
+	     55       ENERGY = ISHFT( IAND( ITEMP, 1 ), 8 )
+	     56       ITEMP = PHA(2)
+	     57       ENERGY = ENERGY + IAND( ITEMP, 255 )
+
+DISSECT_STICS_PHA                                                1-APR-1997 12:55:19    DEC Fortran V6.2-508                Page   2
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]DISSECT_STICS_PHA.FOR;4
+
+	     58 C
+	     59       SECTOR = 0
+	     60       ITEMP = PHA(3)
+	     61       CALL MVBITS( ITEMP, 4, 4, SECTOR, 0 )
+	     62 C
+	     63       SSD_ID = 0
+	     64       CALL MVBITS( ITEMP, 2, 2, SSD_ID, 0 )
+	     65 
+	     66 C
+	     67       TIME_OF_FLIGHT = 0
+	     68       TIME_OF_FLIGHT = ISHFT( IAND( ITEMP, 3 ), 8 )
+	     69       ITEMP = PHA(4)
+	     70       TIME_OF_FLIGHT = TIME_OF_FLIGHT + IAND( ITEMP, 255 )
+	     71 
+	     72 C     Get START and RANGE from START_RANGE  , where
+	     73 C	                   START_RANGE = START ANODE*3 + PHA RANGE
+	     74 
+	     75       PSTART = 0
+	     76       RANGE  = 0
+	     77       PSTART = START_RANGE/3
+	     78       RANGE  = START_RANGE - 3*PSTART
+	     79 
+	     80       RETURN
+	     81       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                 492   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                 112 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  604
+
+
+ENTRY POINTS
+
+    Address   Type  Name             
+                                     
+  1-00000000        DISSECT_STICS_PHA
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name               Address   Type  Name          
+                                                                                                        
+      **      I*4   ENERGY               **      I*4   SECTOR               **      I*4   TIME_OF_FLIGHT
+  0-00000008# I*4   ITEMP                **      I*4   SSD_ID                                           
+      **      I*4   PSTART               **      I*4   START_RANGE                                      
+      **      I*4   RANGE                **      I*4   STOP_ID                                          
+
+
+
+DISSECT_STICS_PHA                                                1-APR-1997 12:55:19    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]DISSECT_STICS_PHA.FOR;4
+
+ARRAYS
+
+     Address  Type  Name        Bytes  Dimensions
+
+      **      I*1   PHA             4  (4)
+
+
+DISSECT_STICS_PHA                                                1-APR-1997 12:55:19    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]DISSECT_STICS_PHA.FOR;4
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]DISSECT_STICS_PHA.LIS;9
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]DISSECT_STICS_PHA.OBJ;9
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.19 seconds
+  Elapsed time:      1.84 seconds
+  Pagefaults:         247
+  I/O Count:           10

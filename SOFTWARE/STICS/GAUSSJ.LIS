@@ -1,0 +1,192 @@
+GAUSSJ                                                          15-JAN-1997 13:38:02    DEC Fortran V6.2-508                Page   1
+                                                                29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]GAUSSJ.FOR;1
+
+	      1 c**************************************************************************************
+	      2 c
+	      3       SUBROUTINE GAUSSJ(A,N,NP,B,M,MP,sm_flag)
+	      4 c     m.r.c. modified 15 Dec 1994 to set sm_flag true if sigular matrix
+	      5 c     changed a(icol,icol) sing matrix condition to .eq. 0
+	      6       PARAMETER (NMAX=50)
+	      7       DIMENSION A(NP,NP),B(NP,MP),IPIV(NMAX),INDXR(NMAX),INDXC(NMAX)
+	      8       logical sm_flag   ! .true. indicates a singular matirx error
+	      9       sm_flag = .false.
+	     10       DO 11 J=1,N
+	     11         IPIV(J)=0
+	     12 11    CONTINUE
+	     13       DO 22 I=1,N
+	     14         BIG=0.
+	     15         DO 13 J=1,N
+	     16           IF(IPIV(J).NE.1)THEN
+	     17             DO 12 K=1,N
+	     18               IF (IPIV(K).EQ.0) THEN
+	     19                 IF (ABS(A(J,K)).GE.BIG)THEN
+	     20                   BIG=ABS(A(J,K))
+	     21                   IROW=J
+	     22                   ICOL=K
+	     23                 ENDIF
+	     24               ELSE IF (IPIV(K).GT.1) THEN
+	     25 c               type *,'Singular matrix'
+	     26                 sm_flag = .true.
+	     27                 return
+	     28               ENDIF
+	     29 12          CONTINUE
+	     30           ENDIF
+	     31 13      CONTINUE
+	     32         IPIV(ICOL)=IPIV(ICOL)+1
+	     33         IF (IROW.NE.ICOL) THEN
+	     34           DO 14 L=1,N
+	     35             DUM=A(IROW,L)
+	     36             A(IROW,L)=A(ICOL,L)
+	     37             A(ICOL,L)=DUM
+	     38 14        CONTINUE
+	     39           DO 15 L=1,M
+	     40             DUM=B(IROW,L)
+	     41             B(IROW,L)=B(ICOL,L)
+	     42             B(ICOL,L)=DUM
+	     43 15        CONTINUE
+	     44         ENDIF
+	     45         INDXR(I)=IROW
+	     46         INDXC(I)=ICOL
+	     47         IF (abs(A(ICOL,ICOL)) .lt. 5.9e-39) then   ! will effect overflow error
+	     48 c         type *,'Singular matrix.'
+	     49           sm_flag = .true.
+	     50           return
+	     51         endif
+	     52         PIVINV=1./A(ICOL,ICOL)
+	     53         A(ICOL,ICOL)=1.
+	     54         DO 16 L=1,N
+	     55           A(ICOL,L)=A(ICOL,L)*PIVINV
+	     56 16      CONTINUE
+	     57         DO 17 L=1,M
+
+GAUSSJ                                                          15-JAN-1997 13:38:02    DEC Fortran V6.2-508                Page   2
+                                                                29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]GAUSSJ.FOR;1
+
+	     58           B(ICOL,L)=B(ICOL,L)*PIVINV
+	     59 17      CONTINUE
+	     60         DO 21 LL=1,N
+	     61           IF(LL.NE.ICOL)THEN
+	     62             DUM=A(LL,ICOL)
+	     63             A(LL,ICOL)=0.
+	     64             DO 18 L=1,N
+	     65               A(LL,L)=A(LL,L)-A(ICOL,L)*DUM
+	     66 18          CONTINUE
+	     67             DO 19 L=1,M
+	     68               B(LL,L)=B(LL,L)-B(ICOL,L)*DUM
+	     69 19          CONTINUE
+	     70           ENDIF
+	     71 21      CONTINUE
+	     72 22    CONTINUE
+	     73       DO 24 L=N,1,-1
+	     74         IF(INDXR(L).NE.INDXC(L))THEN
+	     75           DO 23 K=1,N
+	     76             DUM=A(K,INDXR(L))
+	     77             A(K,INDXR(L))=A(K,INDXC(L))
+	     78             A(K,INDXC(L))=DUM
+	     79 23        CONTINUE
+	     80         ENDIF
+	     81 24    CONTINUE
+	     82       RETURN
+	     83       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                  608 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                3796   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  48 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 4452
+
+
+ENTRY POINTS
+
+    Address   Type  Name  
+                          
+  2-00000000        GAUSSJ
+
+
+VARIABLES
+
+    Address   Type  Name        Address   Type  Name        Address   Type  Name        Address   Type  Name   
+                                                                                                               
+REG-00000020  R*4   BIG       1-00000000  I*4   IROW    REG-00000007  I*4   LL            **      I*4   NP     
+REG-########  R*4   DUM     REG-########  I*4   J             **      I*4   M       REG-0000002A  R*4   PIVINV 
+REG-00000002  I*4   I       REG-########  I*4   K             **      I*4   MP            **      L*4   SM_FLAG
+  1-00000004# I*4   ICOL    REG-########  I*4   L             **      I*4   N                                  
+
+
+
+GAUSSJ                                                          15-JAN-1997 13:38:02    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]GAUSSJ.FOR;1
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+      **      R*4   A               **  (*, *)
+      **      R*4   B               **  (*, *)
+  1-00000198  I*4   INDXC          200  (50)
+  1-000000D0  I*4   INDXR          200  (50)
+  1-00000008  I*4   IPIV           200  (50)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label     Address   Label
+                                                                                                   
+  2-00000000   11     2-00000000   14     2-00000000   17     2-00000B00   21     2-00000BD8   24  
+  2-00000230   12     2-00000000   15     2-00000000   18     2-00000B0C   22                      
+  2-0000023C   13     2-00000000   16     2-00000000   19     2-00000000   23                      
+
+GAUSSJ                                                          15-JAN-1997 13:38:02    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    29-JUL-1996 16:15:14    SMS1:[WIND.SOFTWARE.STICS]GAUSSJ.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,BOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]GAUSSJ.LIS;9
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]GAUSSJ.OBJ;9
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.67 seconds
+  Elapsed time:      3.26 seconds
+  Pagefaults:         407
+  I/O Count:           10

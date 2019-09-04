@@ -1,0 +1,248 @@
+WIND_L1_CLOSE                                                   21-APR-1995 16:15:04    DEC Fortran V6.2-508                Page   1
+                                                                10-MAR-1995 13:29:02    SMS1:[WIND.SOFTWARE.L1]WIND_L1_CLOSE.FOR;6
+
+	      1    	SUBROUTINE WIND_L1_CLOSE( unit, status )
+	      2 C+
+	      3 C
+	      4 C FUNCTIONAL DESCRIPTION: 
+	      5 C 
+	      6 C     This routine closes the Level 1 format file specified by the argument
+	      7 C     `unit'.  Internal data structures associated with this unit are released
+	      8 C     or cleared, as appropriate.  A status code is returned in the argument
+	      9 C     `status'.
+	     10 C 
+	     11 C FORMAL PARAMETERS:
+	     12 C  
+	     13 C     unit:
+	     14 C           An INTEGER*4 variable specifying the Fortran unit number of the L1
+	     15 C           file to be closed.  Allowable values for unit are 1-20.
+	     16 C      
+	     17 C     status:
+	     18 C           An INTEGER*4 variable which will receive, upon return, the status
+	     19 C           of the close operation.  A 1 indicates success, all other values
+	     20 C           indicate failure.
+	     21 C 
+	     22 C COMMON BLOCKS:
+	     23 C  
+	     24 C     The common block L1INFO is updated to reflect information about this file.
+	     25 C  
+	     26 C DESIGN:
+	     27 C  
+	     28 C     After the file is opened successfully it is flagged internally to be open
+	     29 C     and its science record counter is set to zero.  The first record is then
+	     30 C     read.  If it is a valid L1 file header it is returned to the caller; if
+	     31 C     not the file is rewound and all blanks are returned in the header.
+	     32 C
+	     33 C
+	     34 C This version:   1.1   10-MAR-1995
+	     35 C
+	     36 C AUTHOR(S): 
+	     37 C 
+	     38 C	 Larry Bleau
+	     39 C 
+	     40 C Created: 
+	     41 C 
+	     42 C	 31-OCT-1994    L. Bleau
+	     43 C 
+	     44 C Revised:
+	     45 C 
+	     46 C	 Date     | Name  | Description
+	     47 C ----------------+-------+-----------------------------------------------------
+	     48 C 1.1 10-MAR-1995 |  LRB  | make use of WIND condition codes for errors
+	     49 C
+	     50 C-
+	     51 CDEC$	IDENT   '1.1'
+	     52 
+	     53 	IMPLICIT NONE
+	     54 
+	     55 	INCLUDE '($SSDEF)/NOLIST'
+	   1480 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_L1_CLOSE                                                   21-APR-1995 16:15:04    DEC Fortran V6.2-508                Page   2
+1.1                                                             10-MAR-1995 13:29:02    SMS1:[WIND.SOFTWARE.L1]WIND_L1_CLOSE.FOR;6
+
+	   2018 	INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	   2150 	INCLUDE 'INC_DIR:L1READ.INC/NOLIST'
+	   2202 
+	   2203 	INTEGER*4 unit,status
+	   2204 
+	   2205 	INTEGER forterr,rmsstc,rmsstv,lun,vaxerr
+	   2206 
+	   2207 	EXTERNAL WIND$_OUTRANGE
+	   2208 C
+	   2209 C First check if value of unit is within range
+	   2210 C
+	   2211 	IF (unit .lt. 1 .or. unit .gt. maxunits) THEN
+	   2212 	  status = %LOC(WIND$_OUTRANGE)
+	   2213 	  RETURN
+	   2214 	ENDIF
+	   2215 C
+	   2216 C Next check if this data structure is active
+	   2217 C If not, return immediately
+	   2218 C If so, proceed with the CLOSE
+	   2219 C
+	   2220 	IF (L1_units(unit) .eq. 0) THEN
+	   2221 	  status = SS$_NORMAL
+	   2222 	  RETURN
+	   2223 	ENDIF
+	   2224 C
+	   2225 C Close the file
+	   2226 C 
+	   2227 	CLOSE (	UNIT	= L1_units(unit),
+	   2228      +		ERR	= 2000,			! Return if error
+	   2229      +		IOSTAT	= status)
+	   2230 	IF (status .ne. 0) GOTO 2000
+	   2231 	L1_units(unit) = 0
+	   2232 	scirecnum(unit) = 0
+	   2233 	status = SS$_NORMAL
+	   2234 	RETURN
+	   2235 C
+	   2236 C Come here for errors
+	   2237 C
+	   2238 2000	TYPE 2001, status
+	   2239 2001	FORMAT(' *** ERROR in WIND_L1_CLOSE, Fortran status =', I6, ' ***')
+	   2240 	CALL ERRSNS(forterr,rmsstc,rmsstv,lun,vaxerr)
+	   2241 	status = rmsstc
+	   2242 	RETURN
+	   2243 	END
+
+WIND_L1_CLOSE                                                   21-APR-1995 16:15:04    DEC Fortran V6.2-508                Page   3
+1.1                             Symbol Table                    10-MAR-1995 13:29:02    SMS1:[WIND.SOFTWARE.L1]WIND_L1_CLOSE.FOR;6
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   20 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                                72 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                 408   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 144 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 L1INFO                             3044160 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO2                              13042 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 L1BUF                                65534 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 NULLBUF                              65536 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated              3189560
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  3-00000000        WIND_L1_CLOSE
+
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                                                               
+  8-00000000  CHAR  BUFFER        7-000000A0  CHAR  MAX_VERSION   1-00000008  I*4   RMSSTV        1-00000010  I*4   VAXERR     
+  1-00000000  I*4   FORTERR       9-00000000  CHAR  NULL_BUFFER       **      I*4   STATUS                                     
+  1-0000000C  I*4   LUN           1-00000004  I*4   RMSSTC            **      I*4   UNIT                                       
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes
+                                                            
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400
+  5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+
+
+ARRAYS
+
+     Address  Type  Name                   Bytes  Dimensions
+
+  7-00000000  I*4   L1_UNITS                  80  (20)
+  9-00000000  I*1   NULL_BYTE_ARRAY        65534  (65534)
+  9-00000000  I*4   NULL_I4_ARRAY          65536  (16384)
+  7-00000050  I*4   SCIRECNUM                 80  (20)
+
+
+
+
+WIND_L1_CLOSE                                                   21-APR-1995 16:15:04    DEC Fortran V6.2-508                Page   4
+1.1                             Symbol Table                    10-MAR-1995 13:29:02    SMS1:[WIND.SOFTWARE.L1]WIND_L1_CLOSE.FOR;6
+
+RECORD ARRAYS
+
+    Address   Name               Structure                 Bytes  Dimensions
+
+  6-002E0400  L1_HDB             HDBSTR                    6480  (20)
+  7-000000A2  L1_HEADER          ST_L1_FILE_HEADER         8000  (20)
+  6-002E1D50  L1_HKEEP           HKEEP                    22000  (20)
+  6-001FFD60  L1_MASS_PHA        MA_PHA                  919200  (20)
+  6-001F6760  L1_MASS_RATE       MA_RATE                  38400  (20)
+  6-00000000  L1_SCI             CORE                    147680  (20)
+  7-00001FE2  L1_SCI_REC_HEADER  ST_L1_SR_HEADER           4880  (20)
+  6-001432A0  L1_STICS_PHA       ST_PHA                  734400  (20)
+  6-0010D420  L1_STICS_RATE      ST_RATE                 220800  (20)
+  6-00047360  L1_SWICS_PHA       SW_PHA                  811200  (20)
+  6-000240E0  L1_SWICS_RATE      SW_RATE                 144000  (20)
+
+
+
+LABELS
+
+    Address   Label     Address   Label
+                                       
+  3-00000000   2000       **       2001
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                
+                            
+        WIND$_OUTRANGE      
+
+WIND_L1_CLOSE                                                   21-APR-1995 16:15:04    DEC Fortran V6.2-508                Page   5
+1.1                             Symbol Table                    10-MAR-1995 13:29:02    SMS1:[WIND.SOFTWARE.L1]WIND_L1_CLOSE.FOR;6
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_L1_CLOSE.LIS;22
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_L1_CLOSE.OBJ;22
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.03 seconds
+  Elapsed time:      2.71 seconds
+  Pagefaults:         176
+  I/O Count:           23

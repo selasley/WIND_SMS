@@ -1,0 +1,161 @@
+MFIT                            Source Listing                  19-JAN-2000 15:13:35  Compaq Fortran V7.2-780           Page 1
+                                                                19-JAN-2000 14:57:44  SMS1:[WIND.SOFTWARE.SWICS]MFIT.FOR;15
+
+	      1 	SUBROUTINE MFIT(V1,F1,V2,F2,V3,F3,N,V0,SIG)
+	      2 C
+	      3 C***************************************************************************
+	      4 C	given three points this subroutine solves the convective maxwellian,
+	      5 C
+	      6 C		f(r,v) = N*(pi*sigma)^(-3/2) * exp(-(v-v0)^2/sigma)
+	      7 C			where sigma = 2kT/m
+	      8 C
+	      9 C	for N (density), v0, and sigma.
+	     10 C
+	     11 C	this program is derived from GFIT.
+	     12 C
+	     13 C	written by C. Shafer, July 14, 1992
+	     14 C
+	     15 C	Dec. 4, 1992 - altered to use 1-D rather than 3-D calculation.
+	     16 C
+	     17 C***************************************************************************
+	     18 C
+	     19 C				DECLARATIONS
+	     20      	IMPLICIT NONE
+	     21 C
+	     22 	REAL*4
+	     23      .   F1, F2, F3				!counts
+	     24 C
+	     25      	REAL*4
+	     26      .   V1, V2, V3,
+	     27      .	 V0, N, SIG					!velocities, center
+	     28 C							density, & sigma
+	     29      	REAL*4
+	     30      .	 PI/3.14159/,
+	     31      .	 LF1F2, LF2F3					!log values
+	     32 C
+	     33 C***************************************************************************
+	     34 C
+	     35 C				STATEMENTS
+	     36 C
+	     37      	IF (F1/F2.LE.0 .OR. F2/F3.LE.0) THEN
+	     38      	  V0 = 0.0
+	     39      	  N = 0.0
+	     40      	  SIG = 0.0
+	     41      	ELSE
+	     42 C							calculate v0
+	     43           LF1F2 = LOG(F1/F2)
+	     44      	  LF2F3 = LOG(F2/F3)
+	     45 C
+	     46      	  V0 = ((V3*V3 - V2*V2)*LF1F2 - (V2*V2 - V1*V1)*LF2F3) / 
+	     47      .		(2*((V1-V2)*LF2F3 - (V2-V3)*LF1F2))
+	     48 C
+	     49 C     							calculate sigma
+	     50      	  SIG = (V2*V2 - V1*V1 + 2*V0*(V1-V2)) / LF1F2
+	     51 C
+	     52 C							calculate n
+	     53      	  IF (SIG.GT.0) THEN
+	     54      	    N = SQRT(PI*SIG) * F2 * EXP(((V2-V0)**2)/SIG)
+	     55      	    N = N * 1E-15				!unit correction
+	     56 C					now n[cm^-3], f[sec/km^4], v[km/s]
+	     57      	  ELSE
+
+MFIT                            Source Listing                  19-JAN-2000 15:13:35  Compaq Fortran V7.2-780           Page 2
+                                                                19-JAN-2000 14:57:44  SMS1:[WIND.SOFTWARE.SWICS]MFIT.FOR;15
+
+	     58      	    N = 0.0
+	     59      	  END IF
+	     60 C
+	     61      	END IF						!f1/f2<0
+	     62 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 408   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 112 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  524
+
+
+ENTRY POINTS
+
+ Address      Name
+                  
+  2-00000000  MFIT
+
+
+VARIABLES
+
+ Address      Type  Name   Address      Type  Name   Address      Type  Name   Address      Type  Name 
+                                                                                                       
+      **      R*4   F1          **      R*4   LF1F2   1-00000000  R*4   PI          **      R*4   V1   
+      **      R*4   F2          **      R*4   LF2F3       **      R*4   SIG         **      R*4   V2   
+      **      R*4   F3          **      R*4   N           **      R*4   V0          **      R*4   V3   
+
+MFIT                            Source Listing                  19-JAN-2000 15:13:35  Compaq Fortran V7.2-780           Page 3
+                                                                19-JAN-2000 14:57:44  SMS1:[WIND.SOFTWARE.SWICS]MFIT.FOR;15
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(NONATURAL,PACKED,NOSTANDARD,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ARCHITECTURE=GENERIC
+  /ASSUME=(ACCURACY_SENSITIVE,ALTPARAM,NOBUFFERED_IO,NOBYTERECL,NODUMMY_ALIASES,NOFP_CONSTANT,NOINT_CONSTANT,NOMINUS0,
+           NOUNDERSCORE,NOSOURCE_INCLUDE)
+  /NOAUTOMATIC
+  /NOBY_REF_CALL
+  /CHECK=(BOUNDS,FORMAT,FP_EXCEPTIONS,OUTPUT_CONVERSION,OVERFLOW,POWER,UNDERFLOW)
+  /CONVERT=NATIVE
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /NODEFINE
+  /DOUBLE_SIZE=64
+  /NOD_LINES
+  /ERROR_LIMIT=30
+  /EXTEND_SOURCE
+  /F77
+  /FLOAT=G_FLOAT
+  /GRANULARITY=QUADWORD
+  /IEEE_MODE=FAST
+  /INTEGER_SIZE=32
+  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE
+  /NOMODULE
+  /NAMES=UPPERCASE
+  /OPTIMIZE=(INLINE=SPEED,LEVEL=4,NOLOOPS,NOPIPELINE,TUNE=GENERIC,UNROLL=0)
+  /NOPAD_SOURCE
+  /REAL_SIZE=32
+  /NORECURSIVE
+  /REENTRANCY=NONE
+  /ROUNDING_MODE=NEAREST
+  /NOSEPARATE_COMPILATION
+  /SEVERITY=(WARNING=WARNING)
+  /SHOW=(INCLUDE,MAP)
+  /SOURCE_FORM=FIXED
+  /STANDARD=NONE
+  /NOSYNCHRONOUS_EXCEPTIONS
+  /NOSYNTAX_ONLY
+  /NOTIE
+  /VMS
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,GRANULARITY,NOTRUNCATED_SOURCE,UNCALLED,UNINITIALIZED,
+           NOUNUSED,USAGE)
+
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=FORT$INCLUDE:
+  /LIST=SMS1:[WIND.SOFTWARE.SWICS]MFIT.LIS;1
+  /OBJECT=SMS1:[WIND.SOFTWARE.SWICS]MFIT.OBJ;1
+  /NOLIBRARY
+
+COMPILER: Compaq Fortran V7.2-780-4293Q
+
+MFIT                            Source Listing                  19-JAN-2000 15:13:35  Compaq Fortran V7.2-780           Page 4
+                                                                19-JAN-2000 14:57:44  SMS1:[WIND.SOFTWARE.SWICS]MFIT.FOR;15
+
+COMPILATION STATISTICS
+
+  CPU time:          0.54 seconds
+  Elapsed time:      0.74 seconds
+  Pagefaults:         654
+  I/O Count:           11

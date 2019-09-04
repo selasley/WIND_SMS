@@ -1,0 +1,94 @@
+To:	William B. Poland
+	Goddard Space Flight Center
+	Greenbelt, Maryland  20771
+	Code 730.4
+Phone:	(301) 286-8592
+FAX:	(301) 286-1783
+	
+From:	Herbert Broer
+	University of Maryland
+	Physics Department
+	Space Physics Group
+	College Park, MD 20742-4111
+Phone:	(301) 405-6223
+FAX:	(301) 314-9547
+Subject: Conversion of Julian date  to Gregorian Calender date
+Mr. William B. Poland,
+here are some samples of my test routine converting Julian dates
+into Gregorian year, month, and days, even showing the times of day
+as we discussed on the phone.  I hope these samples will clarify things,
+either way that you may show me some mistakes in my conversion or that
+a number in the blue book, CCSDS 301.0-B-2: TIME CODE FORMATS, appendix C,
+page C-3 is in error.
+I appreciate your generous offer to send me selected books which are marked
+on the list appended hereto.
+Best regards
+ JULIAN DATE =     2415020.500
+        YEAR =  1900
+       MONTH =     1
+         DAY =     1
+        HOUR =     0
+      MINUTE =     0
+      SECOND =     0
+ MILLISECOND =     0
+JULIAN DATE =     2415020.500
+       YEAR =  1900
+      MONTH =     1
+        DAY =     1
+       HOUR =     0
+     MINUTE =     0
+     SECOND =     0
+MILLISECOND =     0
+MICROSECOND =     0
+
+ JULIAN DATE =     2436203.500
+        YEAR =  1957
+       MONTH =    12
+         DAY =    31
+        HOUR =     0
+      MINUTE =     0
+      SECOND =     0
+ MILLISECOND =     0
+JULIAN DATE =     2436203.500
+       YEAR =  1957
+      MONTH =    12
+        DAY =    31
+       HOUR =     0
+     MINUTE =     0
+     SECOND =     0
+MILLISECOND =     0
+MICROSECOND =     0
+ JULIAN DATE =     2436204.500
+        YEAR =  1958
+       MONTH =     1
+         DAY =     1
+        HOUR =     0
+      MINUTE =     0
+      SECOND =     0
+ MILLISECOND =     0
+JULIAN DATE =     2436204.500
+       YEAR =  1958
+      MONTH =     1
+        DAY =     1
+       HOUR =     0
+     MINUTE =     0
+     SECOND =     0
+MILLISECOND =     0
+MICROSECOND =     0
+ JULIAN DATE =     2440000.500
+        YEAR =  1968
+       MONTH =     5
+         DAY =    24
+        HOUR =     0
+      MINUTE =     0
+      SECOND =     0
+ MILLISECOND =     0
+JULIAN DATE =     2440000.500
+       YEAR =  1968
+      MONTH =     5
+        DAY =    24
+       HOUR =     0
+     MINUTE =     0
+     SECOND =     0
+MILLISECOND =     0
+MICROSECOND =     0

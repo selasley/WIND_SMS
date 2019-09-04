@@ -1,0 +1,283 @@
+MMPQ_DPU_WSTICS                                                  1-APR-1997 12:55:16    DEC Fortran V6.2-508                Page   1
+                                                                28-SEP-1996 00:51:45    [WIND.SOFTWARE.STICS]MMPQ_DPU_WSTICS.FOR;29
+
+	      1       SUBROUTINE MMPQ_DPU_WSTICS(DPPSP,DPPSM,DVSTEP,ECHN,TCHN,
+	      2      .                           MPQ,M,NM,NQ,DRANGE)
+	      3 C*******************************************************************
+	      4 C     This SUBROUTINE calculates the MASS and MASS/CHARGE given    * 
+	      5 C     the status of the +/- DPPS, DV Step number, the compressed   *
+	      6 C     energy channel number,and the time-of-flight channel number  *
+	      7 C     for WIND-STICS. The algorithms are those used by the DPU     *
+	      8 C     as of July 17, 1992.                                         *
+	      9 C     Original version 9-Jan-95  K.Chotoo               	   *
+	     10 C     History:                                                     *
+	     11 C                13.Jan.95   add nm,nq,drange  (ABG)               *
+	     12 C		 28.Sep.96   now TOF=0 will give MPQ = 0           *
+	     13 c*******************************************************************
+	     14       IMPLICIT NONE
+	     15 
+	     16       REAL*4 A(6),	!mass coefficients
+	     17      .       B(6),      !NM coefficients
+	     18      .       C1,C2A,C2B	!mass/charge coefficients
+	     19 C			 C1= time of flight **2 of 1 keV proton
+	     20 C			 C2= carbon foil correction
+	     21       REAL*4 D1,D2,	!E/Q coefficients, D1= analyzer constant
+	     22 C			                   D2= step resolution
+	     23      .       E(3)
+	     24       INTEGER*4 DPPSP,  !enable bit for dpps plus plate
+	     25      .          DPPSM,  !enable bit for dpps minus plate
+	     26      .          DVSTEP, !deflection voltage step number 
+	     27      .          ECHN    !compressed energy channel number
+	     28       REAL*4 ED,        !decompressed energy channel number            
+	     29      .       EMEAS,     !measured energy in keV
+	     30      .       EMIN,EMAX, !measurable energy range in keV 
+	     31      .       EPQ,       !E/Q
+	     32      .       M,         !mass in amu
+	     33      .       MPQ	!mass per charge in amu/e
+	     34       INTEGER*4 NM,NQ,		     	!mass bin, m/q bin
+	     35      .          NM_MAX, NQ_MAX, 	!max bin values
+	     36      .          DRANGE			!calculated range
+	     37       REAL*4 MMAX,MMIN,   !measurable mass range in amu
+	     38      .       MQMAX,MQMIN, !measurable m/q range in amu/e
+	     39      .       KM,KQ        !NM, NQ resolution parameters
+	     40    
+	     41       INTEGER*4 TCHN    !time channel number
+	     42       REAL*4 TEMP,         
+	     43      .       TMIN,TMAX, !measurable time-of-flight range in ns
+	     44      .       TOF,       !measured time-of-flight in ns
+	     45      .       XX,YY
+	     46      
+	     47 C     Initialize constants with default dpu values (ref:  pages 345-349
+	     48 C	of WIND SMS COMMAND AND DATA FORMATS FOR THE SMS INSTRUMENT R.3.0)
+	     49 C					
+	     50       A(1) = 2.69575
+	     51       A(2) = -0.843766
+	     52       A(3) = -2.38009
+	     53       A(4) = 0.385641
+	     54       A(5) = 0.0513127
+	     55       A(6) = 0.0690096
+	     56 
+	     57       B(1) = 38.4605
+
+MMPQ_DPU_WSTICS                                                  1-APR-1997 12:55:16    DEC Fortran V6.2-508                Page   2
+                                                                28-SEP-1996 00:51:45    [WIND.SOFTWARE.STICS]MMPQ_DPU_WSTICS.FOR;29
+
+	     58       B(2) = -9.32689
+	     59       B(3) = -26.3092
+	     60       B(4) = 4.26283
+	     61       B(5) = 0.567205
+	     62       B(6) = 0.762824
+	     63 
+	     64       C1 = 1.9159E-05
+	     65       C2A= 1.5
+	     66       C2B= 2.5
+	     67       D1 = 6.190722
+	     68       D2 = 1.1225857
+	     69 
+	     70       E(1) = -351.6997334
+	     71       E(2) = 32.7867706
+	     72       E(3) = 65.5735412
+	     73 
+	     74       EMIN = 21.0
+	     75       EMAX = 2675.0
+	     76       TMIN = 11.0
+	     77       TMAX = 408.0
+	     78       MMIN  = 0.5
+	     79       MMAX  = 95.0
+	     80       MQMIN =  0.9
+	     81       MQMAX = 42.0 
+	     82       NM_MAX  = 59
+	     83       NQ_MAX  = 126
+	     84 
+	     85       KM = (MMAX/MMIN)**(1./FLOAT(NM_MAX))
+	     86       KQ = (MQMAX/MQMIN)**(1./FLOAT(NQ_MAX))
+	     87 
+	     88 C     Energy Channel Number (ECHN) must first be decompressed (ED) 
+	     89 C     from 9-bit to 10-bit
+	     90       IF (ECHN .LT. 256) ED = ECHN
+	     91       IF ((ECHN .GE. 256).AND.(ECHN .LT. 384))ED = 2.0*ECHN - 256.0 + 0.5
+	     92       IF (ECHN .GE. 384) ED = 4.0*ECHN - 1024.0 + 1.5
+	     93 
+	     94 
+	     95 C     Calculate the e/q value based on the default dpu algorithm and constants.
+	     96           IF(IAND(DPPSP, DPPSM).EQ.1)THEN               !both plates on
+	     97             EPQ = D1 * (D2**DVSTEP)
+	     98           ELSE IF (DPPSP.EQ.1 .OR. DPPSM.EQ.1) THEN     !one plate on  
+	     99             EPQ = 0.5 * D1 * (D2**DVSTEP)                
+	    100           ELSE                                          !neither plate on
+	    101             EPQ = 0
+	    102           ENDIF
+	    103     
+	    104 C     Calculate measured energy in keV from decompressed channel number
+	    105       EMEAS = (ED + 6)/0.37654782
+	    106      
+	    107 C     Calculate time of flight in ns from time channel number
+	    108       TOF = (TCHN - 44)/2.3725306895
+	    109 
+	    110 
+	    111       IF (TOF .GT. 0) THEN
+	    112          MPQ = C1*(EPQ - C2A)*(TOF**2) 			  !Calculate mass per charge in amu/e
+	    113          IF (MPQ .GE. 11.0) MPQ = C1*(EPQ - C2B)*(TOF**2)   
+	    114          NQ = E(1) + E(2)*LOG(D1* (D2**DVSTEP) - C2A) +
+
+MMPQ_DPU_WSTICS                                                  1-APR-1997 12:55:16    DEC Fortran V6.2-508                Page   3
+                                                                28-SEP-1996 00:51:45    [WIND.SOFTWARE.STICS]MMPQ_DPU_WSTICS.FOR;29
+
+	    115      .     E(3)*LOG(TOF)
+	    116          IF (NQ .GE. 83)       
+	    117      .      NQ = E(1) + E(2)*LOG(D1* (D2**DVSTEP) - C2B) +
+	    118      .     	 E(3)*LOG(TOF)
+	    119          IF (NQ .GE. 126) NQ = 127	!M/Q overflow
+	    120          IF (NQ .LT. 0  ) NQ = 0	!M/Q underflow
+	    121       ELSE
+	    122 	 MPQ = 0
+	    123          NQ = 0
+	    124       ENDIF
+	    125 
+	    126 C     Calculate mass in amu
+	    127       IF ((EMEAS .GT. EMIN) .AND. (EMEAS .LT. EMAX) .AND.                
+	    128      .    (TOF   .GT. TMIN) .AND. (TOF   .LT. TMAX) ) THEN
+	    129 
+	    130          XX = LOG(EMEAS)
+	    131          YY = LOG(TOF)
+	    132          TEMP = A(1) + A(2)*XX + A(3)*YY + A(4)*XX*YY
+	    133          TEMP = TEMP + A(5)*XX*XX + A(6)*YY*YY*YY
+	    134          M = EXP(TEMP)
+	    135 
+	    136          NM = B(1) + B(2)*XX + B(3)*YY + B(4)*XX*YY +
+	    137      .        B(5)*XX*XX + B(6)*YY*YY*YY
+	    138 
+	    139          IF (M .GE. MMAX) THEN
+	    140               NM =  59
+	    141 	 ELSE IF (M .LE. MMIN) THEN
+	    142               NM =  60
+	    143 	 ENDIF
+	    144       ELSE IF(EMEAS .LE. EMIN) THEN
+	    145 	 M   = 0
+	    146          NM  = 0
+	    147       ELSE IF (EMEAS .GE. EMAX) THEN
+	    148 	 M   = 0
+	    149          NM  = 61
+	    150       ELSE IF (TOF .LE. TMIN) THEN
+	    151          M   = 0 
+	    152 	 NM  = 62
+	    153       ELSE IF (TOF .GE. TMAX) THEN
+	    154 	 M   = 0
+	    155          NM  = 63
+	    156       END IF             
+	    157 
+	    158 
+	    159 C     Determine expected range value based on Nm and Nq values
+	    160       IF (  (NM.GE.33  .AND.  NM.LE.58)    .AND.
+	    161      .      (NQ.GE.11  .AND.  NQ.LE.82) )  THEN
+	    162 	 DRANGE = 0
+	    163       ELSE IF ( (NM.GE.0  .AND. NM.LE.58 )  .AND.
+	    164      .          (NQ.GE.83 .AND. NQ.LE.126) ) THEN
+	    165 	 DRANGE = 1
+	    166       ELSE IF (( (NM.GE.0  .AND. NM.LE.58)   .AND.
+	    167      .           (NQ.GE.1  .AND. NQ.LE.10) ) .OR.
+	    168      .         ( (NM.GE.0  .AND. NM.LE.32)   .AND.
+	    169      .           (NQ.GE.11 .AND. NQ.LE.82) )) THEN
+	    170          DRANGE = 2
+	    171       ELSE
+
+MMPQ_DPU_WSTICS                                                  1-APR-1997 12:55:16    DEC Fortran V6.2-508                Page   4
+                                                                28-SEP-1996 00:51:45    [WIND.SOFTWARE.STICS]MMPQ_DPU_WSTICS.FOR;29
+
+	    172 	 DRANGE = -1    ! undefined
+	    173       ENDIF
+	    174 
+	    175       RETURN
+	    176       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   64 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                1612   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 260 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1936
+
+
+ENTRY POINTS
+
+    Address   Type  Name           
+                                   
+  2-00000000        MMPQ_DPU_WSTICS
+
+
+VARIABLES
+
+    Address   Type  Name       Address   Type  Name       Address   Type  Name       Address   Type  Name  
+                                                                                                           
+  0-00000008  R*4   C1           **      I*4   ECHN     0-00000018  R*4   MMAX         **      I*4   TCHN  
+      **      R*4   C2A      1-00000000  R*4   ED           **      R*4   MMIN   REG-00000030  R*4   TEMP  
+REG-00000024  R*4   C2B      0-00000010  R*4   EMAX         **      R*4   MPQ      0-00000014  R*4   TMAX  
+REG-00000023  R*4   D1       0-0000001C  R*4   EMEAS        **      R*4   MQMAX        **      R*4   TMIN  
+REG-00000028  R*4   D2       0-0000000C  R*4   EMIN         **      R*4   MQMIN  REG-00000029  R*4   TOF   
+      **      I*4   DPPSM  REG-00000027  R*4   EPQ          **      I*4   NM     REG-00000022  R*4   XX    
+      **      I*4   DPPSP        **      R*4   KM           **      I*4   NM_MAX REG-00000020  R*4   YY    
+      **      I*4   DRANGE       **      R*4   KQ           **      I*4   NQ                               
+      **      I*4   DVSTEP       **      R*4   M            **      I*4   NQ_MAX                           
+
+
+ARRAYS
+
+     Address  Type  Name        Bytes  Dimensions
+
+  1-00000004  R*4   A              24  (6)
+  1-0000001C  R*4   B              24  (6)
+  1-00000034  R*4   E              12  (3)
+
+
+MMPQ_DPU_WSTICS                                                  1-APR-1997 12:55:16    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    28-SEP-1996 00:51:45    [WIND.SOFTWARE.STICS]MMPQ_DPU_WSTICS.FOR;29
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]MMPQ_DPU_WSTICS.LIS;19
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]MMPQ_DPU_WSTICS.OBJ;17
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.83 seconds
+  Elapsed time:      2.43 seconds
+  Pagefaults:         193
+  I/O Count:            9

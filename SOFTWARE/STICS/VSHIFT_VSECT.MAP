@@ -1,0 +1,756 @@
+
+                                                                20-MAY-1998 23:40        Linker A11-14                    Page    1
+                                             +------------------------+
+                                             ! Object Module Synopsis !
+                                             +------------------------+
+Module Name     Ident              Bytes      File                                Creation Date      Creator
+-----------     -----              -----      -----                               -------------      -------
+VSHIFT_VSECT                       165140 VSHIFT_VSECT.OBJ;10                  20-MAY-1998 23:40  DEC Fortran V6.2-508
+DPU_EQ                                300 [WIND.SOFTWARE.STICS]DPU_EQ.OBJ;8     1-APR-1997 12:55  DEC Fortran V6.2-508
+MMPQ_DPU_WSTICS                      1936 MMPQ_DPU_WSTICS.OBJ;17                1-APR-1997 12:55  DEC Fortran V6.2-508
+DISSECT_STICS_PHA              
+                                      604 DISSECT_STICS_PHA.OBJ;9               1-APR-1997 12:55  DEC Fortran V6.2-508
+TELESCOPE_ID                         1112 TELESCOPE_ID.OBJ;2                   26-MAR-1997 19:18  DEC Fortran V6.2-508
+GET_SWE_KP                           6410 GET_SWE_KP.OBJ;10                    17-OCT-1997 02:59  DEC Fortran V6.2-508
+GET_MFI_KP                           8538 GET_MFI_KP.OBJ;2                     17-OCT-1997 03:00  DEC Fortran V6.2-508
+ION_IDENTIFIER                       1752 ION_IDENTIFIER.OBJ;12                15-JAN-1997 13:38  DEC Fortran V6.2-508
+T2_ION_IDENTIFIER              
+                                     1752 T2_ION_IDENTIFIER.OBJ;1              25-FEB-1997 23:49  DEC Fortran V6.2-508
+VOLTAGE_CHECK                        1528 VOLTAGE_CHECK.OBJ;12                 15-JAN-1997 13:38  DEC Fortran V6.2-508
+WSTICSEFF                            3988 [WIND.SOFTWARE.STICS]WSTICSEFF.OBJ;9 15-JAN-1997 13:38  DEC Fortran V6.2-508
+COMPARE_TIME                         1400 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:14  DEC Fortran V6.2-508
+WIND_DECOMPRESS                      1544 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_CLOSE   1.1               3189560 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_BASIC              
+                1.0               3189080 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_HDB 1.0               3189068 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_STICS              
+                1.0               3189188 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_OPEN    1.7               3192751 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_OPEN_NEXT              
+                1.2               3192834 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_READ_SR 1.11              3211675 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WINDMSG         0                     891 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  Message A02-10
+CDFFSI          V1.0                 9469 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:37  DEC C V4.0-000
+CDFFII          V1.0                20968 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:37  DEC C V4.0-000
+CDFMISC2        V1.0                24136 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:34  DEC C V4.0-000
+EPOCHUF         V1.0                 2288 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:38  DEC C V4.0-000
+CDFED           V1.0                31692 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:38  DEC C V4.0-000
+CDFMISC3        V1.0                37904 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:35  DEC C V4.0-000
+CDFSTR          V1.0                 3776 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:35  DEC C V4.0-000
+CDFHUFF         V1.0                12452 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:36  DEC C V4.0-000
+CDFGZIP         V1.0                45800 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:37  DEC C V4.0-000
+CDFRLE          V1.0                 1700 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:37  DEC C V4.0-000
+EPOCHU          V1.0                 8917 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:38  DEC C V4.0-000
+CDFMEM          V1.0                 1639 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:36  DEC C V4.0-000
+CDFMISC1        V1.0                26864 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:34  DEC C V4.0-000
+CDFREAD         V1.0                15396 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:35  DEC C V4.0-000
+CDFVALID        V1.0                 1912 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:36  DEC C V4.0-000
+VSTREAM         V1.0                12304 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:38  DEC C V4.0-000
+CDFWRITE        V1.0                14988 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:35  DEC C V4.0-000
+CDFALLOC        V1.0                11860 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:36  DEC C V4.0-000
+DIRUTILS        V1.0                  792 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:38  DEC C V4.0-000
+CDFTEXT         V1.0                12518 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:36  DEC C V4.0-000
+CDFLIB          V1.0                 1500 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:32  DEC C V4.0-000
+CDFCLO          V1.0                 3556 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:33  DEC C V4.0-000
+CDFCON          V1.0                 9004 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:34  DEC C V4.0-000
+
+                                                                20-MAY-1998 23:40        Linker A11-14                    Page    2
+Module Name     Ident              Bytes      File                                Creation Date      Creator
+-----------     -----              -----      -----                               -------------      -------
+CDFCRE          V1.0                 7708 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:32  DEC C V4.0-000
+CDFDEL          V1.0                24824 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:33  DEC C V4.0-000
+CDFGET          V1.0                29542 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:33  DEC C V4.0-000
+CDFOPE          V1.0                 3769 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:32  DEC C V4.0-000
+CDFPUT1         V1.0                14352 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:33  DEC C V4.0-000
+CDFSEL          V1.0                11724 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:34  DEC C V4.0-000
+CDFHYPER        V1.0                 7384 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:36  DEC C V4.0-000
+CDFPUT2         V1.0                13904 CDF$HOME:[LIB]LIBCDF.OLB;1            5-SEP-1997 16:34  DEC C V4.0-000
+C$FILEVECTORS   V4.5-1               1672 SYS$COMMON:[SYSLIB]VAXCRTL.OLB;3      1-APR-1994 19:37  MACRO-64 V1.1-087
+CNVRT_T_YRMONDAY_TO_YEARDAY    
+                                      252 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+CNVRT_YRDY_TO_YRMNDY           
+                VER 1.02              348 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+CNVRT_YRMONDAY_TO_YEARDAY      
+                                      344 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+WIND_GET_FILENAME              
+                1.6                  2880 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:27  DEC Fortran V6.2-508
+SELECT_FILE     1.4                115888 SMS1:[WIND.LIB]WIND_LIB.OLB;5        16-JAN-1996 14:57  DEC Fortran V6.2-508
+TICHAR                                948 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TILOG                                1136 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TIXENT                               3376 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXDRC                                488 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXEIL                                908 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXLRN                               2240 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+CHCCSP                                964 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:14  DEC Fortran V6.2-508
+VXDCL                                 288 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:35  DEC Fortran V6.2-508
+                                            +--------------------------+
+                                            ! Program Section Synopsis !
+                                            +--------------------------+
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 0001993F 00009940 (      39232.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD 
+                VSHIFT_VSECT    00010000 00010A57 00000A58 (       2648.) OCTA  4
+                DPU_EQ          00010A60 00010AA3 00000044 (         68.) OCTA  4
+                MMPQ_DPU_WSTICS 00010AB0 00010BB3 00000104 (        260.) OCTA  4
+                DISSECT_STICS_PHA                      
+                                00010BC0 00010C2F 00000070 (        112.) OCTA  4
+                TELESCOPE_ID    00010C30 00010C3F 00000010 (         16.) OCTA  4
+                GET_SWE_KP      00010C40 00010E35 000001F6 (        502.) OCTA  4
+                GET_MFI_KP      00010E40 00011035 000001F6 (        502.) OCTA  4
+                ION_IDENTIFIER  00011040 00011153 00000114 (        276.) OCTA  4
+                T2_ION_IDENTIFIER                      
+                                00011160 00011273 00000114 (        276.) OCTA  4
+                VOLTAGE_CHECK   00011280 000112B7 00000038 (         56.) OCTA  4
+                WSTICSEFF       000112C0 000113F3 00000134 (        308.) OCTA  4
+                COMPARE_TIME    00011400 0001159F 000001A0 (        416.) OCTA  4
+                WIND_DECOMPRESS 000115A0 00011617 00000078 (        120.) OCTA  4
+                WIND_L1_CLOSE   00011620 000116AF 00000090 (        144.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                000116B0 000116D7 00000028 (         40.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page    3
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 0001993F 00009940 (      39232.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD   
+                WIND_L1_GET_HDB 000116E0 00011707 00000028 (         40.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00011710 00011747 00000038 (         56.) OCTA  4
+                WIND_L1_OPEN    00011750 00011B0E 000003BF (        959.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00011B10 00011CC5 000001B6 (        438.) OCTA  4
+                WIND_L1_READ_SR 00011CD0 00011E62 00000193 (        403.) OCTA  4
+                CDFFSI          00011E70 000121E7 00000378 (        888.) OCTA  4
+                CDFFII          000121F0 000125F7 00000408 (       1032.) OCTA  4
+                CDFMISC2        00012600 00012F1F 00000920 (       2336.) OCTA  4
+                EPOCHUF         00012F20 0001317F 00000260 (        608.) OCTA  4
+                CDFED           00013180 0001384F 000006D0 (       1744.) OCTA  4
+                CDFMISC3        00013850 0001410F 000008C0 (       2240.) OCTA  4
+                CDFSTR          00014110 000143AF 000002A0 (        672.) OCTA  4
+                CDFHUFF         000143B0 0001481F 00000470 (       1136.) OCTA  4
+                CDFGZIP         00014820 00014FC7 000007A8 (       1960.) OCTA  4
+                CDFRLE          00014FD0 0001505F 00000090 (        144.) OCTA  4
+                EPOCHU          00015060 00015630 000005D1 (       1489.) OCTA  4
+                CDFMEM          00015640 0001571F 000000E0 (        224.) OCTA  4
+                CDFMISC1        00015720 00016147 00000A28 (       2600.) OCTA  4
+                CDFREAD         00016150 00016407 000002B8 (        696.) OCTA  4
+                CDFVALID        00016410 0001654F 00000140 (        320.) OCTA  4
+                VSTREAM         00016550 00016A7F 00000530 (       1328.) OCTA  4
+                CDFWRITE        00016A80 00016D4F 000002D0 (        720.) OCTA  4
+                CDFALLOC        00016D50 000170EF 000003A0 (        928.) OCTA  4
+                DIRUTILS        000170F0 000171FF 00000110 (        272.) OCTA  4
+                CDFTEXT         00017200 0001728F 00000090 (        144.) OCTA  4
+                CDFLIB          00017290 0001738F 00000100 (        256.) OCTA  4
+                CDFCLO          00017390 000174DF 00000150 (        336.) OCTA  4
+                CDFCON          000174E0 0001760F 00000130 (        304.) OCTA  4
+                CDFCRE          00017610 000178DF 000002D0 (        720.) OCTA  4
+                CDFDEL          000178E0 00017D9F 000004C0 (       1216.) OCTA  4
+                CDFGET          00017DA0 00018179 000003DA (        986.) OCTA  4
+                CDFOPE          00018180 00018384 00000205 (        517.) OCTA  4
+                CDFPUT1         00018390 0001864F 000002C0 (        704.) OCTA  4
+                CDFSEL          00018650 000187DF 00000190 (        400.) OCTA  4
+                CDFHYPER        000187E0 000188CF 000000F0 (        240.) OCTA  4
+                CDFPUT2         000188D0 00018C9F 000003D0 (        976.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                00018CA0 00018CD7 00000038 (         56.) OCTA  4
+                CNVRT_YRDY_TO_YRMNDY                   
+                                00018CE0 00018CFF 00000020 (         32.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00018D00 00018D1F 00000020 (         32.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00018D20 00018F1F 00000200 (        512.) OCTA  4
+                SELECT_FILE     00018F20 000191EF 000002D0 (        720.) OCTA  4
+                TICHAR          000191F0 00019283 00000094 (        148.) OCTA  4
+                TILOG           00019290 0001938F 00000100 (        256.) OCTA  4
+                TIXENT          00019390 00019577 000001E8 (        488.) OCTA  4
+                TIXDRC          00019580 000195F7 00000078 (        120.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page    4
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 0001993F 00009940 (      39232.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD   
+                TIXEIL          00019600 0001968F 00000090 (        144.) OCTA  4
+                TIXLRN          00019690 0001981B 0000018C (        396.) OCTA  4
+                CHCCSP          00019820 000198C7 000000A8 (        168.) OCTA  4
+                VXDCL           000198D0 0001990F 00000040 (         64.) OCTA  4
+$LITERAL$                       000199B0 0001DE1F 00004470 (      17520.) OCTA  4   PIC,CON,REL,LCL,  SHR,NOEXE,NOWRT,NOVEC,  MOD 
+                CDFFSI          000199B0 000199C8 00000019 (         25.) OCTA  4
+                CDFFII          000199D0 0001A597 00000BC8 (       3016.) OCTA  4
+                CDFMISC2        0001A5A0 0001A98B 000003EC (       1004.) OCTA  4
+                CDFED           0001A990 0001AB2F 000001A0 (        416.) OCTA  4
+                CDFMISC3        0001AB30 0001AB67 00000038 (         56.) OCTA  4
+                CDFGZIP         0001AB70 0001AB87 00000018 (         24.) OCTA  4
+                EPOCHU          0001AB90 0001ACEB 0000015C (        348.) OCTA  4
+                CDFMEM          0001ACF0 0001ADBE 000000CF (        207.) OCTA  4
+                CDFMISC1        0001ADC0 0001ADDB 0000001C (         28.) OCTA  4
+                CDFREAD         0001ADE0 0001AF73 00000194 (        404.) OCTA  4
+                CDFVALID        0001AF80 0001B0A3 00000124 (        292.) OCTA  4
+                CDFWRITE        0001B0B0 0001B243 00000194 (        404.) OCTA  4
+                CDFTEXT         0001B250 0001CD6D 00001B1E (       6942.) OCTA  4
+                CDFLIB          0001CD70 0001CD8F 00000020 (         32.) OCTA  4
+                CDFCON          0001CD90 0001D0B3 00000324 (        804.) OCTA  4
+                CDFDEL          0001D0C0 0001D323 00000264 (        612.) OCTA  4
+                CDFGET          0001D330 0001D717 000003E8 (       1000.) OCTA  4
+                CDFPUT1         0001D720 0001D97F 00000260 (        608.) OCTA  4
+                CDFSEL          0001D980 0001DBEB 0000026C (        620.) OCTA  4
+                CDFPUT2         0001DBF0 0001DE13 00000224 (        548.) OCTA  4
+$link$                          0001DE20 0001E2DF 000004C0 (       1216.) QUAD  3 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD 
+                C$FILEVECTORS   0001DE20 0001E2DF 000004C0 (       1216.) QUAD  3
+LIB$INITIALIZE                  0001E2E0 0001E2E3 00000004 (          4.) LONG  2 NOPIC,CON,REL,GBL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD 
+                VSHIFT_VSECT    0001E2E0 0001E2E3 00000004 (          4.) LONG  2
+$DATA$                          00020000 0002067F 00000680 (       1664.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                VSHIFT_VSECT    00020000 00020443 00000444 (       1092.) OCTA  4
+                DPU_EQ          00020450 00020457 00000008 (          8.) OCTA  4
+                GET_SWE_KP      00020460 00020467 00000008 (          8.) OCTA  4
+                GET_MFI_KP      00020470 00020477 00000008 (          8.) OCTA  4
+                WSTICSEFF       00020480 0002054F 000000D0 (        208.) OCTA  4
+                WIND_L1_OPEN    00020550 00020553 00000004 (          4.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00020560 000205BF 00000060 (         96.) OCTA  4
+                CDFMEM          000205C0 000205C3 00000004 (          4.) OCTA  4
+                CDFLIB          000205D0 000205D7 00000008 (          8.) OCTA  4
+                CNVRT_YRDY_TO_YRMNDY                   
+                                000205E0 0002060F 00000030 (         48.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00020610 0002066F 00000060 (         96.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00020670 00020673 00000004 (          4.) OCTA  4
+$IODATA$                        00020680 00021D9F 00001720 (       5920.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                VSHIFT_VSECT    00020680 000216DF 00001060 (       4192.) OCTA  4
+                GET_SWE_KP      000216E0 00021723 00000044 (         68.) OCTA  4
+                GET_MFI_KP      00021730 00021773 00000044 (         68.) OCTA  4
+                WSTICSEFF       00021780 000217A3 00000024 (         36.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page    5
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$IODATA$                        00020680 00021D9F 00001720 (       5920.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD   
+                WIND_L1_CLOSE   000217B0 000217F7 00000048 (         72.) OCTA  4
+                WIND_L1_OPEN    00021800 00021853 00000054 (         84.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00021860 00021887 00000028 (         40.) OCTA  4
+                WIND_L1_READ_SR 00021890 000218AB 0000001C (         28.) OCTA  4
+                WIND_GET_FILENAME                      
+                                000218B0 000218DF 00000030 (         48.) OCTA  4
+                SELECT_FILE     000218E0 00021917 00000038 (         56.) OCTA  4
+                TICHAR          00021920 00021977 00000058 (         88.) OCTA  4
+                TILOG           00021980 000219BB 0000003C (         60.) OCTA  4
+                TIXENT          000219C0 00021C33 00000274 (        628.) OCTA  4
+                TIXDRC          00021C40 00021C5B 0000001C (         28.) OCTA  4
+                TIXEIL          00021C60 00021C87 00000028 (         40.) OCTA  4
+                TIXLRN          00021C90 00021D9B 0000010C (        268.) OCTA  4
+L1INFO2                         00021DA0 00025091 000032F2 (      13042.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_L1_CLOSE   00021DA0 00025091 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00021DA0 00025091 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_HDB 00021DA0 00025091 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00021DA0 00025091 000032F2 (      13042.) OCTA  4
+                WIND_L1_OPEN    00021DA0 00025091 000032F2 (      13042.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00021DA0 00025091 000032F2 (      13042.) OCTA  4
+                WIND_L1_READ_SR 00021DA0 00025091 000032F2 (      13042.) OCTA  4
+L1_HEADERS                      000250A0 00025323 00000284 (        644.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                VSHIFT_VSECT    000250A0 00025323 00000284 (        644.) OCTA  4
+                WIND_L1_CLOSE   000250A0 00025323 00000284 (        644.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                000250A0 00025323 00000284 (        644.) OCTA  4
+                WIND_L1_GET_HDB 000250A0 00025323 00000284 (        644.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                000250A0 00025323 00000284 (        644.) OCTA  4
+                WIND_L1_OPEN    000250A0 00025323 00000284 (        644.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000250A0 00025323 00000284 (        644.) OCTA  4
+                WIND_L1_READ_SR 000250A0 00025323 00000284 (        644.) OCTA  4
+$CODE                           00030000 000301C7 000001C8 (        456.) QUAD  3   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD 
+                C$FILEVECTORS   00030000 000301C7 000001C8 (        456.) QUAD  3
+$CODE$                          000301D0 000A05E7 00070418 (     459800.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD 
+                VSHIFT_VSECT    000301D0 000372B3 000070E4 (      28900.) OCTA  4
+                DPU_EQ          000372C0 0003739F 000000E0 (        224.) OCTA  4
+                MMPQ_DPU_WSTICS 000373A0 000379EB 0000064C (       1612.) OCTA  4
+                DISSECT_STICS_PHA                      
+                                000379F0 00037BDB 000001EC (        492.) OCTA  4
+                TELESCOPE_ID    00037BE0 00038027 00000448 (       1096.) OCTA  4
+                GET_SWE_KP      00038030 0003954F 00001520 (       5408.) OCTA  4
+                GET_MFI_KP      00039550 0003B297 00001D48 (       7496.) OCTA  4
+                ION_IDENTIFIER  0003B2A0 0003B863 000005C4 (       1476.) OCTA  4
+                T2_ION_IDENTIFIER                      
+                                0003B870 0003BE33 000005C4 (       1476.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page    6
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$CODE$                          000301D0 000A05E7 00070418 (     459800.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD   
+                VOLTAGE_CHECK   0003BE40 0003C02F 000001F0 (        496.) OCTA  4
+                WSTICSEFF       0003C030 0003CD2B 00000CFC (       3324.) OCTA  4
+                COMPARE_TIME    0003CD30 0003D0EB 000003BC (        956.) OCTA  4
+                WIND_DECOMPRESS 0003D0F0 0003D677 00000588 (       1416.) OCTA  4
+                WIND_L1_CLOSE   0003D680 0003D817 00000198 (        408.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                0003D820 0003D89B 0000007C (        124.) OCTA  4
+                WIND_L1_GET_HDB 0003D8A0 0003D90F 00000070 (        112.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                0003D910 0003D9E7 000000D8 (        216.) OCTA  4
+                WIND_L1_OPEN    0003D9F0 0003E4BB 00000ACC (       2764.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                0003E4C0 0003F07F 00000BC0 (       3008.) OCTA  4
+                WIND_L1_READ_SR 0003F080 00040EC7 00001E48 (       7752.) OCTA  4
+                CDFFSI          00040ED0 0004303B 0000216C (       8556.) OCTA  4
+                CDFFII          00043040 00047257 00004218 (      16920.) OCTA  4
+                CDFMISC2        00047260 0004C39B 0000513C (      20796.) OCTA  4
+                EPOCHUF         0004C3A0 0004CA2F 00000690 (       1680.) OCTA  4
+                CDFED           0004CA30 00053D8B 0000735C (      29532.) OCTA  4
+                CDFMISC3        00053D90 0005C8A7 00008B18 (      35608.) OCTA  4
+                CDFSTR          0005C8B0 0005D4CF 00000C20 (       3104.) OCTA  4
+                CDFHUFF         0005D4D0 00060103 00002C34 (      11316.) OCTA  4
+                CDFGZIP         00060110 0006AC37 0000AB28 (      43816.) OCTA  4
+                CDFRLE          0006AC40 0006B253 00000614 (       1556.) OCTA  4
+                EPOCHU          0006B260 0006CE07 00001BA8 (       7080.) OCTA  4
+                CDFMEM          0006CE10 0006D2C3 000004B4 (       1204.) OCTA  4
+                CDFMISC1        0006D2D0 0007317B 00005EAC (      24236.) OCTA  4
+                CDFREAD         00073180 00076957 000037D8 (      14296.) OCTA  4
+                CDFVALID        00076960 00076E73 00000514 (       1300.) OCTA  4
+                VSTREAM         00076E80 0007995F 00002AE0 (      10976.) OCTA  4
+                CDFWRITE        00079960 0007CF87 00003628 (      13864.) OCTA  4
+                CDFALLOC        0007CF90 0007FA43 00002AB4 (      10932.) OCTA  4
+                DIRUTILS        0007FA50 0007FC57 00000208 (        520.) OCTA  4
+                CDFTEXT         0007FC60 00081197 00001538 (       5432.) OCTA  4
+                CDFLIB          000811A0 00081653 000004B4 (       1204.) OCTA  4
+                CDFCLO          00081660 000822F3 00000C94 (       3220.) OCTA  4
+                CDFCON          00082300 000841D7 00001ED8 (       7896.) OCTA  4
+                CDFCRE          000841E0 00085D2B 00001B4C (       6988.) OCTA  4
+                CDFDEL          00085D30 0008B703 000059D4 (      22996.) OCTA  4
+                CDFGET          0008B710 000922B3 00006BA4 (      27556.) OCTA  4
+                CDFOPE          000922C0 00092F73 00000CB4 (       3252.) OCTA  4
+                CDFPUT1         00092F80 0009626F 000032F0 (      13040.) OCTA  4
+                CDFSEL          00096270 00098C3F 000029D0 (      10704.) OCTA  4
+                CDFHYPER        00098C40 0009A827 00001BE8 (       7144.) OCTA  4
+                CDFPUT2         0009A830 0009D88B 0000305C (      12380.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                0009D890 0009D94F 000000C0 (        192.) OCTA  4
+                CNVRT_YRDY_TO_YRMNDY                   
+                                0009D950 0009DA5B 0000010C (        268.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                0009DA60 0009DB37 000000D8 (        216.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page    7
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$CODE$                          000301D0 000A05E7 00070418 (     459800.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD   
+                WIND_GET_FILENAME                      
+                                0009DB40 0009E303 000007C4 (       1988.) OCTA  4
+                SELECT_FILE     0009E310 0009EE07 00000AF8 (       2808.) OCTA  4
+                TICHAR          0009EE10 0009EFFB 000001EC (        492.) OCTA  4
+                TILOG           0009F000 0009F25B 0000025C (        604.) OCTA  4
+                TIXENT          0009F260 0009FA07 000007A8 (       1960.) OCTA  4
+                TIXDRC          0009FA10 0009FA7F 00000070 (        112.) OCTA  4
+                TIXEIL          0009FA80 0009FC6F 000001F0 (        496.) OCTA  4
+                TIXLRN          0009FC70 000A01AB 0000053C (       1340.) OCTA  4
+                CHCCSP          000A01B0 000A04C3 00000314 (        788.) OCTA  4
+                VXDCL           000A04D0 000A05AF 000000E0 (        224.) OCTA  4
+MSG$AAAAAAAAAAA                 000B0000 000B000F 00000010 (         16.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         000B0000 000B000F 00000010 (         16.) LONG  2
+MSG$AAAAAAAAAAB                 000B0010 000B0013 00000004 (          4.) LONG  2   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         000B0010 000B0013 00000004 (          4.) LONG  2
+MSG$AAAAAAAAAAC                 000B0014 000B0017 00000004 (          4.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         000B0014 000B0017 00000004 (          4.) LONG  2
+MSG$SECTION                     000B0018 000B037A 00000363 (        867.) BYTE  0   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         000B0018 000B037A 00000363 (        867.) BYTE  0
+$BSS$                           000C0000 000FEE4F 0003EE50 (     257616.) 2 **  5 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                VSHIFT_VSECT    000C0000 000DF2AB 0001F2AC (     127660.) 2 **  5
+                MMPQ_DPU_WSTICS 000DF2B0 000DF2EF 00000040 (         64.) OCTA  4
+                GET_SWE_KP      000DF2F0 000DF497 000001A8 (        424.) OCTA  4
+                GET_MFI_KP      000DF4A0 000DF66F 000001D0 (        464.) OCTA  4
+                VOLTAGE_CHECK   000DF680 000DFA4F 000003D0 (        976.) 2 **  5
+                WSTICSEFF       000DFA50 000DFABF 00000070 (        112.) OCTA  4
+                COMPARE_TIME    000DFAC0 000DFADB 0000001C (         28.) OCTA  4
+                WIND_DECOMPRESS 000DFAE0 000DFAE7 00000008 (          8.) OCTA  4
+                WIND_L1_CLOSE   000DFAF0 000DFB03 00000014 (         20.) OCTA  4
+                WIND_L1_OPEN    000DFB10 000DFB27 00000018 (         24.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000DFB30 000DFC7F 00000150 (        336.) OCTA  4
+                WIND_L1_READ_SR 000DFC80 000E356F 000038F0 (      14576.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                000E3570 000E3573 00000004 (          4.) OCTA  4
+                WIND_GET_FILENAME                      
+                                000E3580 000E36C7 00000148 (        328.) OCTA  4
+                SELECT_FILE     000E36D0 000FED7F 0001B6B0 (     112304.) OCTA  4
+                TICHAR          000FED80 000FED87 00000008 (          8.) OCTA  4
+                TILOG           000FED90 000FED93 00000004 (          4.) OCTA  4
+                TIXENT          000FEDA0 000FEDF7 00000058 (         88.) OCTA  4
+                TIXDRC          000FEE00 000FEE0F 00000010 (         16.) OCTA  4
+                TIXEIL          000FEE10 000FEE1F 00000010 (         16.) OCTA  4
+                TIXLRN          000FEE20 000FEE37 00000018 (         24.) OCTA  4
+                CHCCSP          000FEE40 000FEE47 00000008 (          8.) OCTA  4
+L1BUF                           000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_HDB 000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_STICS                      
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page    8
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+L1BUF                           000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD   
+                                000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_OPEN    000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4
+                WIND_L1_READ_SR 000FEE50 0010EE4D 0000FFFE (      65534.) OCTA  4
+L1INFO                          0010EE50 003F618F 002E7340 (    3044160.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   0010EE50 003F618F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                0010EE50 003F618F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_HDB 0010EE50 003F618F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                0010EE50 003F618F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_OPEN    0010EE50 003F618F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                0010EE50 003F618F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_READ_SR 0010EE50 003F618F 002E7340 (    3044160.) OCTA  4
+NULLBUF                         003F6190 0040618F 00010000 (      65536.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   003F6190 0040618F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                003F6190 0040618F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_HDB 003F6190 0040618F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                003F6190 0040618F 00010000 (      65536.) OCTA  4
+                WIND_L1_OPEN    003F6190 0040618F 00010000 (      65536.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                003F6190 0040618F 00010000 (      65536.) OCTA  4
+                WIND_L1_READ_SR 003F6190 0040618F 00010000 (      65536.) OCTA  4
+TICOMC                          00406190 0040624B 000000BC (        188.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          00406190 0040624B 000000BC (        188.) OCTA  4
+                TILOG           00406190 0040624B 000000BC (        188.) OCTA  4
+                TIXENT          00406190 0040624B 000000BC (        188.) OCTA  4
+                TIXDRC          00406190 0040624B 000000BC (        188.) OCTA  4
+                TIXEIL          00406190 0040624B 000000BC (        188.) OCTA  4
+                TIXLRN          00406190 0040624B 000000BC (        188.) OCTA  4
+TICOMN                          00406250 00406267 00000018 (         24.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          00406250 00406267 00000018 (         24.) OCTA  4
+                TILOG           00406250 00406267 00000018 (         24.) OCTA  4
+                TIXENT          00406250 00406267 00000018 (         24.) OCTA  4
+                TIXDRC          00406250 00406267 00000018 (         24.) OCTA  4
+                TIXEIL          00406250 00406267 00000018 (         24.) OCTA  4
+                TIXLRN          00406250 00406267 00000018 (         24.) OCTA  4
+                                                +-----------------+
+                                                ! Symbols By Name !
+                                                +-----------------+
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+ABORTACCESS                     00015F68-R                                              ALLOCATEIR                      00015CC0-R  
+ACCESS                          0001E090-R                                              ALLOCATEMEMORY                  00015660-R  
+ADDTOVSTATS                     00016130-R                                              ALLOCATERECORDS                 00016D70-R  
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page    9
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+ALPHABETIC                      00014320-R                                              CDF_LIB_22                      00012578-R  
+APPENDTODIR                     000171C8-R                                              CDF_LIB_23                      00012598-R  
+BUILDFILEPATH                   00015B70-R                                              CDF_LIB_24                      000125B8-R  
+BUILDPADBUFFER                  00013C68-R                                              CDF_LIB_25                      000125D8-R  
+CALCBF                          000127C8-R                                              CDF_LIB_4                       00012338-R  
+CALCCOMPRESSIONPCT              00014000-R                                              CDF_LIB_5                       00012358-R  
+CALCDIMPARMS                    00015C28-R                                              CDF_LIB_6                       00012378-R  
+CALCNUMDIMVALUES                000127B0-R                                              CDF_LIB_7                       00012398-R  
+CALCPHYRECBYTES                 00014050-R                                              CDF_LIB_8                       000123B8-R  
+CALCRECVALUES                   00012798-R                                              CDF_LIB_9                       000123D8-R  
+CALLOCATEMEMORY                 00015700-R                                              CDF_OPEN                        00011EF0-R  
+CATCHRX                         00014290-R                                              CDF_VAR_CLOSE                   000121A0-R  
+CDFCLO                          00017430-R                                              CDF_VAR_CREATE                  000120A0-R  
+CDFCON                          00017570-R                                              CDF_VAR_GET                     00012140-R  
+CDFCOPYRIGHT                    00017220-R                                              CDF_VAR_HYPER_GET               00012180-R  
+CDFCRE                          00017770-R                                              CDF_VAR_HYPER_PUT               00012160-R  
+CDFDEL                          000179D0-R                                              CDF_VAR_INQUIRE                 00012100-R  
+CDFELEMSIZE                     00012C60-R                                              CDF_VAR_NUM                     000120C0-R  
+CDFGET                          00017F90-R                                              CDF_VAR_PUT                     00012120-R  
+CDFIDTOINT32                    00012DA8-R                                              CDF_VAR_RENAME                  000120E0-R  
+CDFLIB                          00017308-R                                              CG_TRANS                        00010A08-R  
+CDFOPE                          00018280-R                                              CHCCSP                          000198B8-R  
+CDFPUT1                         000184F0-R                                              CHDIR                           0001E0B0-R  
+CDFPUT2                         00018AB0-R                                              CHECKENTRYOP                    00012D20-R  
+CDFSEL                          00018710-R                                              CHLAST                          000198A8-R  
+CDFSTATUSTEXT                   00017260-R                                              CHLCUC                          00019858-R  
+CDF_ATTR_CREATE                 00011FB0-R                                              CHMOD                           0001E0D0-R  
+CDF_ATTR_ENTRY_INQUIRE          00012030-R                                              CHOWN                           0001E0F0-R  
+CDF_ATTR_GET                    00012080-R                                              CHPRFX                          00019820-R  
+CDF_ATTR_INQUIRE                00012010-R                                              CLEARBIT32                      00015AE8-R  
+CDF_ATTR_NUM                    00011FD0-R                                              CLEARBYTES                      00015C60-R  
+CDF_ATTR_PUT                    00012050-R                                              CLEARERR                        0001E110-R  
+CDF_ATTR_RENAME                 00011FF0-R                                              CLOSELRUVAR                     00012D00-R  
+CDF_CLOSE                       00011F70-R                                              CLOSEVARFILES                   00015870-R  
+CDF_CREATE                      00011E90-R                                              CNVRT_T_YRMONDAY_TO_YEARDAY     00018CA0-R  
+CDF_DELETE                      00011F90-R                                              CNVRT_YRDY_TO_YRMNDY            00018CE0-R  
+CDF_DOC                         00011F10-R                                              CNVRT_YRMONDAY_TO_YEARDAY       00018D00-R  
+CDF_ERROR                       000121C0-R                                              COLTOROW                        00013D70-R  
+CDF_INQUIRE                     00011F50-R                                              COMPARE_TIME                    00011400-R  
+CDF_LIB                         00012280-R                                              COMPARE_TIME_EQ                 000114E0-R  
+CDF_LIB_10                      000123F8-R                                              COMPARE_TIME_GE                 00011560-R  
+CDF_LIB_11                      00012418-R                                              COMPARE_TIME_GT                 00011520-R  
+CDF_LIB_12                      00012438-R                                              COMPARE_TIME_LE                 000114A0-R  
+CDF_LIB_13                      00012458-R                                              COMPARE_TIME_LT                 00011460-R  
+CDF_LIB_14                      00012478-R                                              COMPARE_TIME_NE                 00011420-R  
+CDF_LIB_15                      00012498-R                                              COMPRESS                        00012E10-R  
+CDF_LIB_16                      000124B8-R                                              COMPRESSAHUFF0                  000144C0-R  
+CDF_LIB_17                      000124D8-R                                              COMPRESSGZIP                    00014840-R  
+CDF_LIB_18                      000124F8-R                                              COMPRESSHUFF0                   00014420-R  
+CDF_LIB_19                      00012518-R                                              COMPRESSIONPARMSCOUNT           00012DE0-R  
+CDF_LIB_20                      00012538-R                                              COMPRESSRLE0                    00014FF0-R  
+CDF_LIB_21                      00012558-R                                              COMPUTEEPOCH                    00015400-R  
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page   10
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+COMPUTE_EPOCH                   00013150-R                                              FINDENTRYBYNUMBER               00012A48-R  
+CONFIGURENEWZMODE               000129A0-R                                              FINDLASTATTR                    00012A80-R  
+CONVERSIONFUNCTION              00013368-R                                              FINDLASTENTRY                   00012AA0-R  
+CONVERTBUFFER                   00013268-R                                              FINDPREVENTRY                   00012AC0-R  
+COPYBYTES                       00013F60-R                                              FINDVARBYNAME                   00012AE0-R  
+COPYCDF                         00013960-R                                              FINDVARBYNUMBER                 00012B00-R  
+CORRECTBLOCKINGFACTORS          00015E20-R                                              FLUSHSTAGE                      00013EA0-R  
+CORRECTEPOCH                    00015E60-R                                              FP1DOUBLENEGTOPOS               00013790-R  
+CORRECTSCOPES                   00015DD0-R                                              FP1SINGLENEGTOPOS               00013748-R  
+CORRECTV20EOF                   00015740-R                                              FP1TOFP2DOUBLENEGTOPOS          00013708-R  
+CORRECTV20OFFSETS               000157E0-R                                              FP1TOFP2SINGLENEGTOPOS          000136C8-R  
+CTOFORTSTRING                   000142C0-R                                              FP1TOFP34SINGLE                 000133A0-R  
+DECIMAL                         00014338-R                                              FP1TOFP34SINGLENEGTOPOS         000133C0-R  
+DECOMPRESS                      00012E70-R                                              FP1TOFP3DOUBLE                  00013498-R  
+DECOMPRESSAHUFF0                00014508-R                                              FP1TOFP3DOUBLENEGTOPOS          000134B0-R  
+DECOMPRESSCDF                   00013870-R                                              FP1TOFP4DOUBLE                  000134D0-R  
+DECOMPRESSGZIP                  00014890-R                                              FP1TOFP4DOUBLENEGTOPOS          000134E8-R  
+DECOMPRESSHUFF0                 00014488-R                                              FP2DOUBLENEGTOPOS               000137A8-R  
+DECOMPRESSRLE0                  00015040-R                                              FP2SINGLENEGTOPOS               00013760-R  
+DECOMPRESSTOSTAGE               00012ED0-R                                              FP2TOFP1DOUBLENEGTOPOS          00013728-R  
+DEFAULTPADBUFFER                00012BB0-R                                              FP2TOFP1SINGLENEGTOPOS          000136E8-R  
+DEFAULTPADVALUE                 00012B80-R                                              FP2TOFP34SINGLE                 000133E0-R  
+DELETE                          0001E130-R                                              FP2TOFP34SINGLENEGTOPOS         000133F8-R  
+DELETECDFFILES                  00015FC0-R                                              FP2TOFP3DOUBLE                  00013508-R  
+DELETEENTRY                     00015FE0-R                                              FP2TOFP3DOUBLENEGTOPOS          00013520-R  
+DELETEFILE                      00015F10-R                                              FP2TOFP4DOUBLE                  00013540-R  
+DESCRTOREF                      000141B8-R                                              FP2TOFP4DOUBLENEGTOPOS          00013558-R  
+DESCRTOREFNUL                   000141D0-R                                              FP34SINGLENEGTOPOS              00013778-R  
+DISSECT_STICS_PHA               00010BC0-R                                              FP34TOFP1SINGLE                 00013418-R  
+DPU_DEFAULT_COEFF               000100C8-R                                              FP34TOFP1SINGLENEGTOPOS         00013440-R  
+DPU_EQ                          00010A60-R                                              FP34TOFP2SINGLE                 00013460-R  
+DUP                             0001E150-R                                              FP34TOFP2SINGLENEGTOPOS         00013478-R  
+DUP2                            0001E170-R                                              FP3DOUBLELIMIT                  000137F0-R  
+ENCODEEPOCH                     000151C0-R                                              FP3DOUBLENEGTOPOS               000137C0-R  
+ENCODEEPOCH1                    000151E8-R                                              FP3TOFP1DOUBLE                  00013578-R  
+ENCODEEPOCH2                    00015208-R                                              FP3TOFP1DOUBLENEGTOPOS          00013590-R  
+ENCODEEPOCH3                    00015228-R                                              FP3TOFP2DOUBLE                  000135B0-R  
+ENCODEEPOCHX                    000152B8-R                                              FP3TOFP2DOUBLENEGTOPOS          000135C8-R  
+ENCODE_EPOCH                    00013020-R                                              FP3TOFP4DOUBLE                  000135E8-R  
+ENCODE_EPOCH1                   00013060-R                                              FP3TOFP4DOUBLENEGTOPOS          00013600-R  
+ENCODE_EPOCH2                   00013090-R                                              FP4DOUBLENEGTOPOS               000137D8-R  
+ENCODE_EPOCH3                   000130C0-R                                              FP4TOFP1DOUBLE                  00013620-R  
+ENCODE_EPOCHX                   000130F0-R                                              FP4TOFP1DOUBLENEGTOPOS          00013638-R  
+EPOCHBREAKDOWN                  00015420-R                                              FP4TOFP2DOUBLE                  00013658-R  
+EPOCH_BREAKDOWN                 00013120-R                                              FP4TOFP2DOUBLENEGTOPOS          00013670-R  
+EQUIVDATATYPES                  00012C78-R                                              FP4TOFP3DOUBLE                  00013690-R  
+EXPANDPATH                      00017110-R                                              FP4TOFP3DOUBLENEGTOPOS          000136A8-R  
+FEOF                            0001E190-R                                              FPTYPE                          00012C48-R  
+FERROR                          0001E1B0-R                                              FREECDFID                       00012CE0-R  
+FINDATTRBYNAME                  000129E0-R                                              FREEMEMORY                      000156E0-R  
+FINDATTRBYNUMBER                00012A28-R                                              FREESTRINGS                     00014170-R  
+FINDCDF                         00015B00-R                                              FSYNC                           0001E1D0-R  
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page   11
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+GET_MFI_KP                      00010F00-R                                              PARSEEPOCH                      00015080-R  
+GET_SWE_KP                      00010D30-R                                              PARSEEPOCH1                     00015110-R  
+HOSTDECODING                    00012C18-R                                              PARSEEPOCH2                     00015180-R  
+HOSTENCODING                    00012C00-R                                              PARSEEPOCH3                     000151A0-R  
+HYPERREAD                       00018800-R                                              PARSE_EPOCH                     00012F40-R  
+HYPERREADDIM                    00018848-R                                              PARSE_EPOCH1                    00012F90-R  
+HYPERWRITE                      00018878-R                                              PARSE_EPOCH2                    00012FC0-R  
+HYPERWRITEDIM                   000188B0-R                                              PARSE_EPOCH3                    00012FF0-R  
+INCRINDICESCOL                  00013DB0-R                                              PREPENDX                        000142A8-R  
+INCRINDICESROW                  00013D98-R                                              PREVRECORD                      00013B00-R  
+INDEXINGSTATISTICS              00013C20-R                                              PRINTABLE                       000142D8-R  
+INDICESVALUEOFFSET              00012930-R                                              PRIORTO                         00015D70-R  
+INITCUROBJECTSSTATES            000129C8-R                                              READ32                          00016170-R  
+INITCURRENTVAR                  00012660-R                                              READ32S                         000161A0-R  
+INITNEWVXR                      00016FC0-R                                              READADR                         00016288-R  
+INITSCRATCH                     00013E30-R                                              READAEDR                        000162A8-R  
+INITVAR                         00012688-R                                              READCCR                         00016388-R  
+INITVAR2                        00012720-R                                              READCDR                         00016210-R  
+INITVARSTAGE                    00013DC8-R                                              READCPR                         000163A8-R  
+INT32TOCDFID                    00012D90-R                                              READCVVR                        000163E8-R  
+INTEGERORDER                    00012C30-R                                              READGDR                         00016250-R  
+ION_IDENTIFIER                  000110C0-R                                              READIRSIZE                      000161C0-R  
+ISDESCR                         000141A0-R                                              READIRTYPE                      000161F0-R  
+ISREG                           00017140-R                                              READSPR                         000163C8-R  
+KILLABORTEDCDF                  00015F48-R                                              READUIR                         00016368-R  
+LASTRECORD                      000128F8-R                                              READVARELEMS                    00013D28-R  
+LOCATECURRENTVAR                00012638-R                                              READVARVALUES                   00013CD0-R  
+LOWERCASE                       00014308-R                                              READVDR                         000162E0-R  
+MAKELOWER                       00014380-R                                              READVVR                         00016348-R  
+MAKELOWERSTRING                 00015AA0-R                                              READVXR                         00016320-R  
+MAKEUPPER                       00014398-R                                              REALLOCATEMEMORY                000156B0-R  
+MAKEUPPERSTRING                 00015A70-R                                              RECORDBYTEOFFSET                00012970-R  
+MAXINT                          000160E8-R                                              REMOVE                          0001E230-R  
+MAXINT32                        00016100-R                                              REMOVEUIRS                      00015D50-R  
+MAXLONG                         00016118-R                                              RENAME                          0001E250-R  
+MININT                          000160A0-R                                              RESIZEIR                        00015D08-R  
+MININT32                        000160B8-R                                              REVERSE2                        00013808-R  
+MINLONG                         000160D0-R                                              REVERSE4                        00013820-R  
+MKDIR                           0001E1F0-R                                              REVERSE8                        00013838-R  
+MKTEMP                          0001E210-R                                              ROWTOCOL                        00013D48-R  
+MMPQ_DPU_WSTICS                 00010B18-R                                              SCRATCHDIRECTORY                00013E60-R  
+MODINDEXOFFSET                  00013F80-R                                              SEARCHFORRECORD                 00013BD8-R  
+NEGATIVEZEROREAL4               00015A10-R                                              SELECT_FILE                     000190E8-R  
+NEGATIVEZEROREAL8               00015A28-R                                              SETBIT32                        00015AD0-R  
+NEXTRECORD                      00013B90-R                                              SETCURGRENTRY                   00012D50-R  
+NULPAD                          00015BF0-R                                              SETCURZENTRY                    00012D70-R  
+NULTERMINATE                    00014130-R                                              SHORTENCDR                      00015DB0-R  
+NULTERMINATEMAX                 00015C48-R                                              SHORTENVDRS                     00015DF0-R  
+OMR_EFF                         00010190-R                                              SPACING                         00014350-R  
+OPENVAR                         00012858-R                                              SPARSENESSPARMSCOUNT            00012DF8-R  
+PADBUFFER                       00012BD0-R                                              STAT                            0001E270-R  
+PADUNRECORDS                    00016010-R                                              STICS_ION_VELOCITY              00010150-R  
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page   12
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+STRCATX                         00014260-R                                              V_OPEN                          00016810-R  
+STRCMPITB                       00012C90-R                                              V_PUTC                          000169C0-R  
+STRCPYX                         00014230-R                                              V_READ                          00016938-R  
+STRIPTRAILINGBLANKS             00015A40-R                                              V_SCRATCH                       00016890-R  
+SX                              00012620-R                                              V_SEEK                          000168D8-R  
+T2_ION_IDENTIFIER               000111E0-R                                              V_SETCACHE                      000168B8-R  
+TELESCOPE_ID                    00010C30-R                                              V_TELL                          000168F0-R  
+TICHAR                          000191F0-R                                              V_WRITE                         00016980-R  
+TILOG                           000192E8-R                                              WASTEIR                         00015C78-R  
+TIMESTAMP                       000155D8-R                                              WIND$_BADFILEHDR                081781C2    
+TIXDRC                          00019580-R                                              WIND$_BADRECLEN                 081780F8    
+TIXEIL                          00019600-R                                              WIND$_EMPTY                     08178100    
+TIXENT                          00019488-R                                              WIND$_FACILITY                  00000817    
+TIXLRN                          00019740-R                                              WIND$_FILEFMT                   081780F0    
+TMPFILE                         0001E290-R                                              WIND$_FILNAMFMT                 081781BA    
+TMPNAM                          0001E2B0-R                                              WIND$_FILNOTOPN                 081781B2    
+TRAILER                         000141F0-R                                              WIND$_HDRFMT                    08178053    
+UMASK                           0001E2D0-R                                              WIND$_INUSE                     0817819A    
+UPDATECONVERSIONS               00012800-R                                              WIND$_INVHDRVER                 081781AA    
+UPDATEDOTCDF                    00015830-R                                              WIND$_NONEXTFILE                081781CA    
+UPDATEMAXREC                    00015C08-R                                              WIND$_OUTRANGE                  081781A2    
+UPDATENEWZMODE                  00012820-R                                              WIND$_SUCCESS                   08178001    
+UPDATEVXRTAILINVDR              000170D0-R                                              WIND$_TOOMANY                   08178192    
+UPPERCASE                       000142F0-R                                              WIND_COMPARE_TIME               00011410-R  
+USER_NMNQ_COEFF                 00010298-R                                              WIND_COMPARE_TIME_EQ            00011500-R  
+USER_NMNQ_PHA_BINNED            00010020-R                                              WIND_COMPARE_TIME_GE            00011580-R  
+USER_REQUESTS_DATA_TYPE         00010230-R                                              WIND_COMPARE_TIME_GT            00011540-R  
+VALIDATECOMPRESSION             00016538-R                                              WIND_COMPARE_TIME_LE            000114C0-R  
+VALIDATTRNAME                   00016490-R                                              WIND_COMPARE_TIME_LT            00011480-R  
+VALIDATTRSCOPE                  000164D0-R                                              WIND_COMPARE_TIME_NE            00011440-R  
+VALIDCDFNAME                    00016430-R                                              WIND_COMPRESS                   000115A0-R  
+VALIDDATATYPE                   000164B0-R                                              WIND_DECOMPRESS                 000115F8-R  
+VALIDDECODING                   00016520-R                                              WIND_GET_FILENAME               00018DF8-R  
+VALIDENCODING                   000164E8-R                                              WIND_L1_CLOSE                   00011620-R  
+VALIDVARNAME                    00016470-R                                              WIND_L1_GET_BASIC               000116B0-R  
+VALUEOFFSETINDICES              00012948-R                                              WIND_L1_GET_HDB                 000116E0-R  
+VARIABLETYPE                    00012DC0-R                                              WIND_L1_GET_STICS               00011710-R  
+VARIDENTITY                     00012840-R                                              WIND_L1_OPEN                    00011940-R  
+VERIFYNOENTRIESWRITTEN          00012B60-R                                              WIND_L1_OPEN_NEXT               00011BC0-R  
+VERIFYNOPADSSPECIFIED           00012B40-R                                              WIND_L1_READ_SR                 00011D88-R  
+VERIFYNORECORDSWRITTEN          00012B20-R                                              WRITE32                         00016AA0-R  
+VISIBLE                         00014368-R                                              WRITE32S                        00016AD0-R  
+VOLTAGE_CHECK                   00011280-R                                              WRITEACCESS                     000158F0-R  
+VSHIFT_VSECT                    00010620-R                                              WRITEADR                        00016BB0-R  
+VXDCL                           000198D0-R                                              WRITEAEDR                       00016BD0-R  
+V_CLEAR                         000169E0-R                                              WRITEBUFFER                     00015988-R  
+V_CLOSE                         00016A30-R                                              WRITECCR                        00016CD0-R  
+V_DELETE                        00016A50-R                                              WRITECDR                        00016B40-R  
+V_EOF                           00016908-R                                              WRITECOMPRESSEDCDF              000138F0-R  
+V_ERROR                         00016920-R                                              WRITECPR                        00016CF0-R  
+V_FLUSH                         000169F8-R                                              WRITECVVR                       00016D30-R  
+V_GETC                          000169A0-R                                              WRITEGDR                        00016B70-R  
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page   13
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+WRITEIRSIZE                     00016AF0-R                                              
+WRITEIRTYPE                     00016B20-R                                              
+WRITEPADVALUES                  00016080-R                                              
+WRITESPR                        00016D10-R                                              
+WRITEUIR                        00016CB0-R                                              
+WRITEVARELEMS                   00013AB0-R                                              
+WRITEVARVALUES                  00013A20-R                                              
+WRITEVDR                        00016C10-R                                              
+WRITEVVR                        00016C90-R                                              
+WRITEVXR                        00016C60-R                                              
+WSTICSEFF                       00011340-R                                              
+access                          0001DE30-R                                              
+chdir                           0001DE50-R                                              
+chmod                           0001DE70-R                                              
+chown                           0001DE90-R                                              
+clearerr                        0001DEB0-R                                              
+delete                          0001DED0-R                                              
+dup                             0001DEF0-R                                              
+dup2                            0001DF10-R                                              
+feof                            0001DF30-R                                              
+ferror                          0001DF50-R                                              
+fsync                           0001DF70-R                                              
+mkdir                           0001DF90-R                                              
+mktemp                          0001DFB0-R                                              
+remove                          0001DFD0-R                                              
+rename                          0001DFF0-R                                              
+stat                            0001E010-R                                              
+tmpfile                         0001E030-R                                              
+tmpnam                          0001E050-R                                              
+umask                           0001E070-R                                              
+	  Key for special characters above:
+		+--------------------+
+		! *  - Undefined     !
+		! A  - Alias Name    !
+		! I  - Internal Name !
+		! U  - Universal     !
+		! R  - Relocatable   !
+		! X  - External      !
+		! WK - Weak          !
+		+--------------------+
+
+SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.EXE;10                   20-MAY-1998 23:40        Linker A11-14                    Page   14
+                                                 +----------------+
+                                                 ! Image Synopsis !
+                                                 +----------------+
+Virtual memory allocated:                         00010000 0041FFFF 00410000 (4259840. bytes, 8320. pages)
+Stack size:                                             20. pages
+Image header virtual block limits:                       1.        2. (    2. blocks)
+Image binary virtual block limits:                       3.     1066. ( 1064. blocks)
+Image name and identification:                    VSHIFT_VSECT  
+Number of files:                                        25.
+Number of modules:                                      76.
+Number of program sections:                             38.
+Number of global symbols:                             3133.
+Number of image sections:                               40.
+User transfer address:                            00010620
+Debugger transfer address:                        00000340
+Number of code references to shareable images:         118.
+OTS transfer address - LIB$INITIALIZE:            00019940
+Image type:                                       EXECUTABLE.
+Map format:                                       DEFAULT in file SMS1:[WIND.SOFTWARE.STICS]VSHIFT_VSECT.MAP;10
+Estimated map length:                             259. blocks
+                                              +---------------------+
+                                              ! Link Run Statistics !
+                                              +---------------------+
+Performance Indicators                            Page Faults	CPU Time	Elapsed Time
+----------------------                            -----------	--------	------------
+    Command processing:                                    52	00:00:00.14	00:00:00.36
+    Pass 1:                                                82	00:00:00.74	00:00:03.06
+    Allocation/Relocation:                                  7	00:00:00.02	00:00:00.09
+    Pass 2:                                                81	00:00:00.94	00:00:03.51
+    Map data after object module synopsis:                  4	00:00:00.12	00:00:00.13
+    Symbol table output:                                    0	00:00:00.00	00:00:00.03
+Total run values:                                         226	00:00:01.96	00:00:07.20
+Using a working set limited to 8768 pages and 3466 pages of data storage (excluding image)
+Total number object records read (both passes):   2547
+    of which 899 were in libraries and 351 were DEBUG data records containing 45653 bytes
+32321 bytes of DEBUG data were written,starting at VBN 1067 with 64 blocks allocated
+Number of modules extracted explicitly             = 0
+    with 59 extracted to resolve undefined symbols
+614 library searches were for symbols not in the library searched
+A total of 0 global symbol table records was written
+LINK/MAP VSHIFT_VSECT,DPU_EQ,MMPQ_DPU_WSTICS,DISSECT_STICS_PHA,TELESCOPE_ID,GET_SWE_KP,GET_MFI_KP,ION_IDENTIFIER,T2_ION_IDENTIFIER,V
+OLTAGE_CHECK,WSTICSEFF,LIB_DIR:L1LIB/LIB,CDF$LIB:LIBCDF/LIBRARY,SYS$LIBRARY:VAXCRTL/LIB,LIB_DIR:WIND_LIB/LIB,LIB_DIR:XTI_LIB/LIB

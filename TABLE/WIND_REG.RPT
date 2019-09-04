@@ -1,0 +1,78 @@
+Query Summary      Page i
+Run time: Thu  6-Oct-1994 (279) 13:12:25
+ 
+Time Period: 1994 306 00:00
+             1995 120 00:00
+Output - File: /home/peredo/workarea/wind_reg.rpt
+         lines per page: 1
+ 
+Formats and units:
+    Day/Time format: YYYY DDD HH:MM
+    Degrees/Hemisphere format: Decimal degrees with 1 place(s).
+        Longitude -180 to 180, latitude -90 to 90.
+    Distance format: Earth radii with 2 place(s).
+ 
+ 
+Satellite: WIND
+ 
+May be located in any region
+
+WIND                                 Page:   1
+  Start Time  |   Stop Time  |   Region       
+yyyy ddd hh:mm|yyyy ddd hh:mm|                
+1994 306 00:00 1994 306 03:48 Intpl Med       
+1994 306 04:00 1994 306 06:12 D Msheath       
+1994 306 06:24 1994 306 09:48 D Msphere/S Oval
+1994 306 10:00 1994 306 10:00 D Msphere       
+1994 306 10:12 1994 306 10:24 D Psphere       
+1994 306 10:36 1994 306 11:12 N Psphere       
+1994 306 11:24 1994 306 11:24 D Psphere       
+1994 306 11:36 1994 306 13:36 D Msphere       
+1994 306 13:48 1994 306 15:24 D Msphere/N Oval
+1994 306 15:36 1994 306 18:24 D Msheath       
+1994 306 18:36 1994 320 18:36 Intpl Med       
+1994 320 18:48 1994 320 20:48 D Msheath       
+1994 320 21:00 1994 320 23:24 D Msphere/S Oval
+1994 320 23:36 1994 321 00:24 D Msphere       
+1994 321 00:36 1994 321 01:00 D Psphere       
+1994 321 01:12 1994 321 02:12 N Psphere       
+1994 321 02:24 1994 321 02:24 D Psphere       
+1994 321 02:36 1994 321 04:24 D Msphere       
+1994 321 04:36 1994 321 06:24 D Msphere/S Oval
+1994 321 06:36 1994 321 10:00 D Msheath       
+1994 321 10:12 1994 335 07:00 Intpl Med       
+1994 335 07:12 1994 335 09:12 D Msheath       
+1994 335 09:24 1994 335 09:48 D Msphere/S Clft
+1994 335 10:00 1994 335 12:00 D Msphere/S Oval
+1994 335 12:12 1994 335 13:00 D Msphere       
+1994 335 13:12 1994 335 13:36 D Psphere       
+1994 335 13:48 1994 335 15:00 N Psphere       
+1994 335 15:12 1994 335 15:48 N Msphere       
+1994 335 16:00 1994 335 16:24 D Msphere       
+1994 335 16:36 1994 335 18:36 D Msphere/N Oval
+1994 335 18:48 1994 335 19:48 D Msphere/S Oval
+1994 335 20:00 1994 336 00:24 D Msheath       
+1994 336 00:36 1994 346 20:36 Intpl Med       
+1994 346 20:48 1994 346 23:00 D Msheath       
+1994 346 23:12 1994 346 23:36 D Msphere/S Clft
+1994 346 23:48 1994 347 02:00 D Msphere/S Oval
+1994 347 02:12 1994 347 03:00 D Msphere       
+1994 347 03:12 1994 347 03:36 D Psphere       
+1994 347 03:48 1994 347 04:48 N Psphere       
+1994 347 05:00 1994 347 06:12 N Msphere       
+1994 347 06:24 1994 347 07:12 N Msphere/N Oval
+1994 347 07:24 1994 347 10:36 D Msphere/N Oval
+1994 347 10:48 1994 347 16:12 D Msheath       
+1994 347 16:24 1994 358 11:12 Intpl Med       
+1994 358 11:24 1994 358 13:48 D Msheath       
+1994 358 14:00 1994 358 15:48 D Msphere/S Oval
+1994 358 16:00 1994 358 17:36 D Msphere       
+1994 358 17:48 1994 358 18:36 D Psphere       
+1994 358 18:48 1994 358 20:12 N Psphere       
+1994 358 20:24 1994 358 20:36 N Msphere       
+1994 358 20:48 1994 358 21:36 N Msphere/N Oval
+1994 358 21:48 1994 359 03:12 N Msphere/S Oval
+1994 359 03:24 1994 359 03:48 N Msheath       
+1994 359 04:00 1994 359 11:00 D Msheath       
+1994 359 11:12 1995 120 00:00 Intpl Med       
+****************** End of report. ******************

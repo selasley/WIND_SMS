@@ -1,0 +1,58 @@
+makeSFDU is a portable tool that can generate a minimal detached 
+Standard Formatted Data Unit (SFDU) from a CDF file which complies 
+with the International Solar-Terrestrial Physics (ISTP) Key Parameter 
+Generation Software (KPGS) Standard and Conventions (12/92).
+1) To acquire makeSFDU:
+     anonymous ftp to nssdc.gsfc.nasa.gov
+     for Unix tar file:
+     cd /pub/tools/istp/unix
+     binary
+     get makeSFDU20.tar
+     for VMS backup file
+     cd /pub/tools/istp/vms
+     binary
+     get makeSFDU20.bck
+1a)If you have aquired makesfdu from a unix server such as nssdc.gsfc.nasa.gov
+   anonymous ftp site, and are running VMS, you must first correct the backup
+   save set from the different file characteristics of unix by:
+     $SET FILE /ATTRIBUTE=(LRL:32256,ORG:SEQ,RAT:NONE,RFM:FIX) -
+      makesfdu20.bck
+2) To expand the tar file:
+     tar xvf makeSFDU20.tar
+   To expand the backup save set:
+     $backup/log makeSFDU20.BCK/Save_Set []
+3) To make in Unix:
+     setenv CDF_HOME top_level_CDFdistribution_directory
+     make
+   To compile and link in VMS:
+     $@makeSFDUlink host::device:[top_level_CDFdistribution_directory]
+4) To execute makeSFDU: (VMS: after defining makeSFDU to system)
+     $makeSFDU adi.txt CDFfilename SFDUfilename
+     adi.txt     >The name of the Authority and Description Identifier file.
+                  This is an ASCII text file which contains the Authority 
+                  numbers for various projects and instruments.  It is 
+                  expected that this file will be updated periodically.
+     CDFfilename >The name of the CDF file to be read in order to generate
+                  the SFDU file.  The .cdf extension is added automatically
+                  and is *not* needed in the filename.  If you wish to generate
+                  SFDU files for all CDF's in a directory, use an asterisk
+                  as the wildcard. (Note: on Unix platforms, the asterisk
+                  must be within quotes: '*').
+     SFDUfilename>The name of the SFDU file to be generated.  Since no 
+                  standard extension has been defined, you should provide one
+                  in the filename.  If you wish to generate SFDU files for
+                  all CDF's in a directory, use an asterisk as the wildcard. 
+                  (Note: on Unix platforms, the asterisk must be within quotes
+                  '*').  The extension is truncated at 3 characters.
+Richard Burley
+NASA/Goddard Space Flight Center/Code 632
+Greenbelt, Maryland, 20771     USA
+(301)286-2864     FAX(301)286-1771
+burley@nssdca.gsfc.nasa.gov
+updated 6/3/96
+Emily A. Greene
+NSSDC/Hughes STX
+7701 Greenbelt Rd. Suite 400
+Greenbelt, MD 20770
+(301)441-4234
+emily.greene@gsfc.nasa.gov

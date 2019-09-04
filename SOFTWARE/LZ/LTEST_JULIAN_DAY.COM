@@ -1,0 +1,9 @@
+$ ! LTEST_JULIAN_DAY.COM	Version 28-Mar-1994
+$
+$    LINK -
+       TEST_JULIAN_DAY, -
+       LIB_DIR:WIND_LIB/LIBR, -
+       [GEOTAIL.L1.OBJ]L1_OBJ_LIB/LIBR
+$
+$    EXIT
+

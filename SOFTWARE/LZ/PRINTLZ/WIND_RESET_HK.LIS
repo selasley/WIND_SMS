@@ -1,0 +1,266 @@
+WIND_RESET_HK                                                   23-FEB-1995 12:31:14    DEC Fortran V6.2-508                Page   1
+                                                                 9-FEB-1995 20:43:30    SMS1:[WIND.SOFTWARE.LZ]WIND_RESET_HK.FOR;25
+
+	      1       SUBROUTINE WIND_RESET_HK( sr_index )
+	      2 C
+	      3 C	Check if second HK is in sync with this science record.  If it is,
+	      4 C	remove the first HK and adjust the HK counter.
+	      5 C	Also store last HK block from this Science Record into HK block area
+	      6 C	for next Science Record
+	      7 C
+	      8 C     Parameters:
+	      9 C	sr_index  INTEGER giving index of Science Record to examine for HK
+	     10 C		synchronicity.  This is one less than the science record which
+	     11 C		should receive a duplicate copy of this record's last HK. 
+	     12 C
+	     13 C     This version:   1.7   9-FEB-1995 
+	     14 C
+	     15 C     Creation:
+	     16 C	L. Bleau  9-SEP-1994
+	     17 C
+	     18 C     Revisions:
+	     19 C	16-SEP-1994	L.Bleau		added code to check if 1st HK is dup-
+	     20 C					licate and remove it if it is; change
+	     21 C					meaning of parameter to which sci rec
+	     22 C					to operate upon
+	     23 C	20-SEP-1994	L.Bleau		made removal of first HK contingent
+	     24 C					upon there being more than one HK
+	     25 C       27-OCT-1994     L. Bleau        made WRITE statements to KB conditional,
+	     26 C                                       added common block DIAG
+	     27 C       27-OCT-1994     L. Bleau        changed name L1_sci_rec_cntr to sci_rec_cntr
+	     28 C        4-NOV-1994     L. Bleau        change DO loop index to go no higher
+	     29 C                                       than 5
+	     30 C	13-DEC-1994	L. Bleau	replace max number of HKs (was 5) with
+	     31 C					parameter MAX_HK (now 6)
+	     32 C 1.7	13-JAN-1995	L. Bleau	set TIMEDIFF to 0.0 if EDB(0).SC_EPOCH
+	     33 C					is zero; see comments for more details
+	     34 C	 9-FEB-1995	L. Bleau	change comment delimiters
+	     35 C	 9-FEB-1995	L. Bleau	change include stmt to use EDBDEF.INC
+	     36 C					and EDBVARS.INC instead of EDB.INC only
+	     37 C
+	     38 CDEC$ IDENT   '1.7'
+	     39 
+	     40       IMPLICIT NONE
+	     41  
+	     42       INCLUDE	'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_RESET_HK                                                   23-FEB-1995 12:31:14    DEC Fortran V6.2-508                Page   2
+1.7                                                              9-FEB-1995 20:43:30    SMS1:[WIND.SOFTWARE.LZ]WIND_RESET_HK.FOR;25
+
+	    578       INCLUDE	'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_RESET_HK                                                   23-FEB-1995 12:31:14    DEC Fortran V6.2-508                Page   3
+1.7                                                              9-FEB-1995 20:43:30    SMS1:[WIND.SOFTWARE.LZ]WIND_RESET_HK.FOR;25
+
+	    777  
+	    778       INTEGER sr_index
+	    779       INTEGER hk_index, II
+	    780       REAL*8 TIMEDIFF
+	    781 
+	    782       INTEGER DIAG
+	    783       COMMON /DIAG/ DIAG
+	    784 C
+	    785 C Science record sr_index has the completed copy of the most recent
+	    786 C science record.  It may also have an extra HK at its beginning which should
+	    787 C not have been duplicated from the previous science record.
+	    788 C
+	    789 C This routine examines this science record and compares the times of the EDB
+	    790 C and the second HK (the first HK was duplicated from the previous science
+	    791 C record and is guaranteed to have a much earlier time stamp).  If the times
+	    792 C reasonably match (within 1 sec) remove the first HK by copying the rest of the
+	    793 C HKs down one position.  Remember to adjust the counter of number of valid HKs
+	    794 C (HKset(sr_index)).
+	    795 C
+	    796 C We're safe accessing science record sr_index+1, by the way, since we are
+	    797 C either called with a 1 or a 2 as an argument, so sr_index+1 will never be
+	    798 C larger than 3, which is the number of science records kept in memory.
+	    799 C
+	    800 C The EDB's and the HK's are asynchronous.  Because of this, the last HK of the
+	    801 C previous Science Record is copied to the first HK of the current Science
+	    802 C Record by this routine.  However, as time goes on, the start times of the HK
+	    803 C and the EDB will periodically come into sync for one Science Record. If the
+	    804 C start times of the HK and the EDB are nearly identical, then ensure that the
+	    805 C last HK of the previous science record is not repeated in this science
+	    806 C record.  This is done by copying the HK records down one position and
+	    807 C decrementing HK count.  If, however, for some strange reason, there is only
+	    808 C one HK in the sr_index'th science record, leave it alone.
+	    809 C
+	    810 C NOTE: If there is no science data the SC_EPOCH field of EDB(0) will have been
+	    811 C zeroed, resulting in a large value for TIMEDIFF.  This will cause an HK to
+	    812 C be duplicated, which is not what is wanted.  Set TIMEDIFF to 0.0 to force the
+	    813 C duplicate HK to be overwritten by later HKs.
+	    814 C
+	    815       TIMEDIFF = ABS(SCI(sr_index).EDB(0).SC_EPOCH - HKeep(sr_index).HKset(2).SC_EPOCH)
+	    816       IF (SCI(sr_index).EDB(0).SC_EPOCH .EQ. 0.0) TIMEDIFF = 0.0
+	    817       IF(DIAG .LE. 1) write(19,*) 'RESET_HK: edb,hk times=',sci(sr_index).edb(0).sc_epoch,hkeep(sr_index).hkset(2).s
+	    817 c_epoch
+	    818       IF(DIAG .LE. 1) write(19,*) 'RESET_HK: edb,hk time diff=',TIMEDIFF
+	    819  
+	    820       IF(TIMEDIFF .LT. 1000.0 .AND. HKset(sr_index) .GT. 1) THEN
+	    821  
+	    822         DO hk_index=2,MIN( HKset(sr_index), MAX_HK)
+	    823           HKeep( sr_index ).HKSET(hk_index-1).W_TIME   = HKeep( sr_index ).HKSET(hk_index).W_TIME
+	    824           HKeep( sr_index ).HKSET(hk_index-1).SC_TIME  = HKeep( sr_index ).HKSET(hk_index).SC_TIME
+	    825           HKeep( sr_index ).HKSET(hk_index-1).EPOCH    = HKeep( sr_index ).HKSET(hk_index).EPOCH
+	    826           HKeep( sr_index ).HKSET(hk_index-1).SC_EPOCH = HKeep( sr_index ).HKSET(hk_index).SC_EPOCH
+	    827           DO II = 1, 75
+	    828             HKeep( sr_index ).HKSET(hk_index-1).HK(II) = HKeep( sr_index ).HKSET(hk_index).HK(II)
+	    829           END DO
+	    830         END DO
+	    831         IF(DIAG .LE. 1) WRITE(19,*) ' DECREMENTING HKset; was ',HKset(sr_index)
+	    832         HKset( sr_index ) = HKset(sr_index) - 1
+
+WIND_RESET_HK                                                   23-FEB-1995 12:31:14    DEC Fortran V6.2-508                Page   4
+1.7                                                              9-FEB-1995 20:43:30    SMS1:[WIND.SOFTWARE.LZ]WIND_RESET_HK.FOR;25
+
+	    833         HKeep( sr_index ).HKcount = HKset( sr_index )
+	    834       ENDIF
+	    835 C 
+	    836 C At this point we have a consistent science record with no duplicate HKs in the
+	    837 C science record pointed to by sr_index.  The record at index sr_index+1 was
+	    838 C recently vacated by a copy operation which the caller did and will be filled
+	    839 C in later on.  Since we don't know at this point if the next EDB and next HK
+	    840 C will be synchronous, we'll assume they will not be and save the last HK of the
+	    841 C just-completed science record into the first HK position of the science record
+	    842 C being formed.  This routine, when next called, will detect when the HK we
+	    843 C copied over is actually a duplicate (ie, not needed) and remove it (see
+	    844 C comments above), so we needn't worry about that just now.
+	    845 C 
+	    846       HKeep( sr_index+1 ).HKSET(1).W_TIME   = HKeep( sr_index ).HKSET(HKset(sr_index)).W_TIME
+	    847       HKeep( sr_index+1 ).HKSET(1).SC_TIME  = HKeep( sr_index ).HKSET(HKset(sr_index)).SC_TIME
+	    848       HKeep( sr_index+1 ).HKSET(1).EPOCH    = HKeep( sr_index ).HKSET(HKset(sr_index)).EPOCH
+	    849       HKeep( sr_index+1 ).HKSET(1).SC_EPOCH = HKeep( sr_index ).HKSET(HKset(sr_index)).SC_EPOCH
+	    850       DO II = 1, 75
+	    851           HKeep( sr_index+1 ).HKSET(1).HK(II) = HKeep( sr_index ).HKSET(HKset(sr_index)).HK(II)
+	    852       END DO
+	    853  
+	    854       IF(DIAG .LE. 1) WRITE(19,*) ' SCI-REC=',SCI_REC_CNTR
+	    855       IF(DIAG .LE. 1) WRITE(19,*) 'RESET_HK: MOVING LAST HK TO NEXT SCI REC, COPIED FROM HK INDEX=',HKset(sr_index)
+	    856       HKset(sr_index+1) = 1
+	    857       IF(DIAG .LE. 1) write(19,*) 'RESET_HK: HKset array=',(hkset(ii),ii=1,3)
+	    858       RETURN
+	    859       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                2652   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 362 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 DIAG                                     4 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               462346
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  3-00000000        WIND_RESET_HK
+
+
+
+WIND_RESET_HK                                                   23-FEB-1995 12:31:14    DEC Fortran V6.2-508                Page   5
+1.7                             Symbol Table                     9-FEB-1995 20:43:30    SMS1:[WIND.SOFTWARE.LZ]WIND_RESET_HK.FOR;25
+
+VARIABLES
+
+    Address   Type  Name                    Address   Type  Name                    Address   Type  Name               
+                                                                                                                       
+  7-00000006  L*1   BITRATE             REG-########  I*4   II                    7-00000009  L*1   STICSPOWER         
+  6-00000014  I*4   CURR_SCI_REC_NUMBER   6-00000004  I*4   L1_RECS_WRITTEN       1-00000008  I*4   STICS_H_RATE_SIZE  
+  6-00000018  I*4   CURR_SPIN             7-00000008  L*1   MASSPOWER             1-0000000C  I*4   STICS_N_RATE_SIZE  
+ 10-00000000  I*4   DIAG                  1-00000004  I*4   MASS_RATE_SIZE        2-00000000  I*4   STICS_RATE_SIZE    
+  5-0006EEBC  I*4   EDBSET                7-0000000C  I*4   MEASSPIN              7-00000004  L*1   SUBS_ID            
+  1-00000000  I*4   EDB_CORE_SIZE         6-0000001C  L*4   NEW_SCI_REC           7-00000007  L*1   SWICSPOWER         
+  6-00000008  I*4   EDB_LOST              7-0000000A  L*1   RAMCHECK              1-00000010  I*4   SWICS_H_RATE_SIZE  
+  6-0000000C  I*4   EDB_SKIP              6-00000000  I*4   SCI_REC_CNTR          1-00000014  I*4   SWICS_N_RATE_SIZE  
+  6-00000010  I*4   EDB_SUM               7-00000000  I*4   SFPERBLOCK            2-00000004  I*4   SWICS_RATE_SIZE    
+  7-00000005  L*1   HDBFLAG               7-00000010  I*4   SPINCOUNT             0-00000038# R*8   TIMEDIFF           
+REG-00000017  I*4   HK_INDEX                  **      I*4   SR_INDEX                                                   
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  5-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  8-000003CC  I*4   HDBTIME2            24  (2, 3)
+  9-00000CF0  I*4   HKLOCI             300  (75)
+  9-00000E1C  I*4   HKLOCJ             300  (75)
+  9-00000CE4  I*4   HKSET               12  (3)
+  7-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  5-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  5-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  5-00000000  SCI         CORE             22152  (3)
+  5-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  5-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  5-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  5-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+WIND_RESET_HK                                                   23-FEB-1995 12:31:14    DEC Fortran V6.2-508                Page   6
+1.7                             Symbol Table                     9-FEB-1995 20:43:30    SMS1:[WIND.SOFTWARE.LZ]WIND_RESET_HK.FOR;25
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_RESET_HK.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_RESET_HK.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.22 seconds
+  Elapsed time:      2.97 seconds
+  Pagefaults:         367
+  I/O Count:           16

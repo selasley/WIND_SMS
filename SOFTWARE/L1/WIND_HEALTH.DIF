@@ -1,0 +1,974 @@
+DEC/CMS File Comparison Utility
+Files Compared By BLEAU On 17-NOV-1995 22:16:32
+   (1)  Element WIND_HEALTH.FOR Generation 8
+   (2)  SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 79   
+      2)C
+      2)      INTEGER MAX_ENTITY
+      2)      PARAMETER (MAX_ENTITY = 500)
+      2)C
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 115  
+      1)      INTEGER SWICS_PAPS_CL, SWICS_Start_MCPPS_CL, SWICS_Stop_MCPPS_CL, MASS_HPS_CL,
+      1)     &        MASS_Start_MCPPS_CL, MASS_Stop_MCPPS_CL, STICS_MCPPS_0_CL, STICS_MCPPS_1_CL,
+      1)     &        STICS_MCPPS_2_CL, STICS_MCPPS_3_CL, STICS_MCPPS_4_CL, STICS_MCPPS_5_CL,
+      1)     &        STICS_TOFPS_MCPPS_6_CL
+      1)      REAL*4  SWICS_PAPS_CV, SWICS_Start_MCPPS_CV, SWICS_Stop_MCPPS_CV, MASS_HPS_CV,
+      1)     &        MASS_Start_MCPPS_CV, MASS_Stop_MCPPS_CV, STICS_MCPPS_0_CV, STICS_MCPPS_1_CV,
+      1)     &        STICS_MCPPS_2_CV, STICS_MCPPS_3_CV, STICS_MCPPS_4_CV, STICS_MCPPS_5_CV,
+      1)     &        STICS_TOFPS_MCPPS_6_CV
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 119  
+      2)C      INTEGER SWICS_PAPS_CL, SWICS_START_MCPPS_CL, SWICS_STOP_MCPPS_CL, MASS_HPS_CL,
+      2)C     &        MASS_START_MCPPS_CL, MASS_STOP_MCPPS_CL, STICS_MCPPS_0_CL, STICS_MCPPS_1_CL,
+      2)C     &        STICS_MCPPS_2_CL, STICS_MCPPS_3_CL, STICS_MCPPS_4_CL, STICS_MCPPS_5_CL,
+      2)C     &        STICS_TOFPS_MCPPS_6_CL
+      2)C      REAL*4  SWICS_PAPS_CV, SWICS_START_MCPPS_CV, SWICS_STOP_MCPPS_CV, MASS_HPS_CV,
+      2)C     &        MASS_START_MCPPS_CV, MASS_STOP_MCPPS_CV, STICS_MCPPS_0_CV, STICS_MCPPS_1_CV,
+      2)C     &        STICS_MCPPS_2_CV, STICS_MCPPS_3_CV, STICS_MCPPS_4_CV, STICS_MCPPS_5_CV,
+      2)C     &        STICS_TOFPS_MCPPS_6_CV
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 133  
+      1)      RECORD /HOUSEKEEPING_STATS/ ENTITY(400)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 137  
+      2)      RECORD /HOUSEKEEPING_STATS/ ENTITY(MAX_ENTITY)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 152  
+      1)      CALL READ_LIMITS(ENTITY,400,N1,N2)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 156  
+      2)      CALL READ_LIMITS(ENTITY,MAX_ENTITY,N1,N2)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 858  
+      1)        SWICS_PAPS_CL = IAND(HDB.DAT(61), 255)
+      1)        SWICS_PAPS_CV = 190.96 - 117.15 * SWICS_PAPS_CL 
+      1)        SWICS_Start_MCPPS_CL = IAND(HDB.DAT(62), 255)
+      1)        SWICS_Start_MCPPS_CV = 1.129 + 16.303 * SWICS_Start_MCPPS_CL 
+      1)        SWICS_Stop_MCPPS_CL = IAND(HDB.DAT(63), 255)
+      1)        SWICS_Stop_MCPPS_CV = 1.564 + 12.181 * SWICS_Stop_MCPPS_CL 
+      1)        MASS_HPS_CL = IAND(HDB.DAT(110), 255)
+      1)        MASS_HPS_CV = -19.5 + 132.08 * MASS_HPS_CL 
+      1)        MASS_Start_MCPPS_CL = IAND(HDB.DAT(112), 255)
+      1)        MASS_Start_MCPPS_CV = 12.2 + 18.294 * MASS_Start_MCPPS_CL 
+      1)        MASS_Stop_MCPPS_CL = IAND(HDB.DAT(114), 255)
+      1)        MASS_Stop_MCPPS_CV = 0.2 + 13.452 * MASS_Stop_MCPPS_CL 
+      1)        STICS_MCPPS_0_CL = IAND(HDB.DAT(17), 255)
+      1)        STICS_MCPPS_0_CV = -11.081 + 12.535 * STICS_MCPPS_0_CL 
+      1)        STICS_MCPPS_1_CL = IAND(HDB.DAT(18), 255)
+      1)        STICS_MCPPS_1_CV = -7.7568 + 12.535 * STICS_MCPPS_1_CL 
+      1)        STICS_MCPPS_2_CL = IAND(HDB.DAT(19), 255)
+      1)        STICS_MCPPS_2_CV = -9.4054 + 12.524 * STICS_MCPPS_2_CL
+      1)        STICS_MCPPS_3_CL = IAND(HDB.DAT(20), 255)
+      1)        STICS_MCPPS_3_CV  = -7.1081 + 12.526 * STICS_MCPPS_3_CL 
+      1)        STICS_MCPPS_4_CL = IAND(HDB.DAT(21), 255)
+      1)        STICS_MCPPS_4_CV = -8.5135 + 12.541* STICS_MCPPS_4_CL 
+      1)        STICS_MCPPS_5_CL = IAND(HDB.DAT(22), 255)
+      1)        STICS_MCPPS_5_CV = -10.081 + 12.565 * STICS_MCPPS_5_CL
+      1)        STICS_TOFPS_MCPPS_6_CL  = IAND(HDB.DAT(23), 255)
+      1)        STICS_TOFPS_MCPPS_6_CV = -3.0764 + 4.5362 * STICS_TOFPS_MCPPS_6_CL
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 862  
+      2)C        SWICS_PAPS_CL = IAND(HDB.DAT(61), 255)
+      2)C        SWICS_PAPS_CV = 190.96 - 117.15 * SWICS_PAPS_CL 
+      2)C        SWICS_START_MCPPS_CL = IAND(HDB.DAT(62), 255)
+      2)C        SWICS_START_MCPPS_CV = 1.129 + 16.303 * SWICS_START_MCPPS_CL 
+      2)C        SWICS_STOP_MCPPS_CL = IAND(HDB.DAT(63), 255)
+      2)C        SWICS_STOP_MCPPS_CV = 1.564 + 12.181 * SWICS_STOP_MCPPS_CL 
+      2)        VALUE = IAND(HDB.DAT(61), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(SWICS_PAPS_CL))
+      2)        EVALUE = 190.96 - 117.15 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(SWICS_PAPS_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(62), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(SWICS_START_MCPPS_CL))
+      2)        EVALUE = 1.129 + 16.303 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(SWICS_START_MCPPS_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(63), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(SWICS_STOP_MCPPS_CL))
+      2)        EVALUE = 1.564 + 12.181 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(SWICS_STOP_MCPPS_CV))
+      2)C
+      2)C        MASS_HPS_CL = IAND(HDB.DAT(110), 255)
+      2)C        MASS_HPS_CV = -19.5 + 132.08 * MASS_HPS_CL 
+      2)C        MASS_START_MCPPS_CL = IAND(HDB.DAT(112), 255)
+      2)C        MASS_START_MCPPS_CV = 12.2 + 18.294 * MASS_START_MCPPS_CL 
+      2)C        MASS_STOP_MCPPS_CL = IAND(HDB.DAT(114), 255)
+      2)C        MASS_STOP_MCPPS_CV = 0.2 + 13.452 * MASS_STOP_MCPPS_CL 
+      2)        VALUE = IAND(HDB.DAT(110), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(MASS_HPS_CL))
+      2)        EVALUE = -19.5 + 132.08 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(MASS_HPS_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(112), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(MASS_START_MCPPS_CL))
+      2)        EVALUE = 12.2 + 18.294 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(MASS_START_MCPPS_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(114), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(MASS_STOP_MCPPS_CL))
+      2)        EVALUE = 0.2 + 13.452 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(MASS_STOP_MCPPS_CV))
+      2)C
+      2)C        STICS_MCPPS_0_CL = IAND(HDB.DAT(17), 255)
+      2)C        STICS_MCPPS_0_CV = -11.081 + 12.535 * STICS_MCPPS_0_CL 
+      2)C        STICS_MCPPS_1_CL = IAND(HDB.DAT(18), 255)
+      2)C        STICS_MCPPS_1_CV = -7.7568 + 12.535 * STICS_MCPPS_1_CL 
+      2)C        STICS_MCPPS_2_CL = IAND(HDB.DAT(19), 255)
+      2)C        STICS_MCPPS_2_CV = -9.4054 + 12.524 * STICS_MCPPS_2_CL
+      2)C        STICS_MCPPS_3_CL = IAND(HDB.DAT(20), 255)
+      2)C        STICS_MCPPS_3_CV  = -7.1081 + 12.526 * STICS_MCPPS_3_CL 
+      2)C        STICS_MCPPS_4_CL = IAND(HDB.DAT(21), 255)
+      2)C        STICS_MCPPS_4_CV = -8.5135 + 12.541* STICS_MCPPS_4_CL 
+      2)C        STICS_MCPPS_5_CL = IAND(HDB.DAT(22), 255)
+      2)C        STICS_MCPPS_5_CV = -10.081 + 12.565 * STICS_MCPPS_5_CL
+      2)C        STICS_TOFPS_MCPPS_6_CL  = IAND(HDB.DAT(23), 255)
+      2)C        STICS_TOFPS_MCPPS_6_CV = -3.0764 + 4.5362 * STICS_TOFPS_MCPPS_6_CL
+      2)        VALUE = IAND(HDB.DAT(17), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(STICS_MCPPS_0_CL))
+      2)        EVALUE = -11.081 + 12.535 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(STICS_MCPPS_0_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(18), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(STICS_MCPPS_1_CL))
+      2)        EVALUE = -7.7568 + 12.535 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(STICS_MCPPS_1_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(19), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(STICS_MCPPS_2_CL))
+      2)        EVALUE = -9.4054 + 12.524 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(STICS_MCPPS_2_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(20), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(STICS_MCPPS_3_CL))
+      2)        EVALUE = -7.1081 + 12.526 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(STICS_MCPPS_3_CV ))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(21), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(STICS_MCPPS_4_CL))
+      2)        EVALUE = -8.5135 + 12.541* VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(STICS_MCPPS_4_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(22), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(STICS_MCPPS_5_CL))
+      2)        EVALUE = -10.081 + 12.565 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(STICS_MCPPS_5_CV))
+      2)C
+      2)        VALUE = IAND(HDB.DAT(23), 255)
+      2)	CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(STICS_TOFPS_MCPPS_6_CL))
+      2)        EVALUE = -3.0764 + 4.5362 * VALUE
+      2)	CALL FIND_STATS(VALUE,EVALUE,ENTITY(STICS_TOFPS_MCPPS_6_CV))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1167 
+      1)     &		SWICS_PAPS_CL, SWICS_PAPS_CV
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1235 
+      2)     &		INT(ENTITY(SWICS_PAPS_CL).LAST_VALUE),
+      2)     &		ENTITY(SWICS_PAPS_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1239 
+      1)     &		SWICS_Start_MCPPS_CL, SWICS_Start_MCPPS_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1308 
+      2)     &		INT(ENTITY(SWICS_START_MCPPS_CL).LAST_VALUE),
+      2)     &		ENTITY(SWICS_START_MCPPS_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1247 
+      1)     &		SWICS_Stop_MCPPS_CL, SWICS_Stop_MCPPS_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1317 
+      2)     &		INT(ENTITY(SWICS_STOP_MCPPS_CL).LAST_VALUE),
+      2)     &		ENTITY(SWICS_STOP_MCPPS_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1402 
+      1)     &		MASS_HPS_CL, MASS_HPS_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1473 
+      2)     &		INT(ENTITY(MASS_HPS_CL).LAST_VALUE),
+      2)     &		ENTITY(MASS_HPS_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1410 
+      1)     &		MASS_Start_MCPPS_CL, MASS_Start_MCPPS_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1482 
+      2)     &		INT(ENTITY(MASS_START_MCPPS_CL).LAST_VALUE),
+      2)     &		ENTITY(MASS_START_MCPPS_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1418 
+      1)     &		MASS_Stop_MCPPS_CL, MASS_Stop_MCPPS_CV
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1491 
+      2)     &		INT(ENTITY(MASS_STOP_MCPPS_CL).LAST_VALUE),
+      2)     &		ENTITY(MASS_STOP_MCPPS_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1496 
+      1)     &		STICS_MCPPS_0_CL, STICS_MCPPS_0_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1570 
+      2)     &		INT(ENTITY(STICS_MCPPS_0_CL).LAST_VALUE),
+      2)     &		ENTITY(STICS_MCPPS_0_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1504 
+      1)     &		STICS_MCPPS_1_CL, STICS_MCPPS_1_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1579 
+      2)     &		INT(ENTITY(STICS_MCPPS_1_CL).LAST_VALUE),
+      2)     &		ENTITY(STICS_MCPPS_1_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1512 
+      1)     &		STICS_MCPPS_2_CL, STICS_MCPPS_2_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1588 
+      2)     &		INT(ENTITY(STICS_MCPPS_2_CL).LAST_VALUE),
+      2)     &		ENTITY(STICS_MCPPS_2_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1520 
+      1)     &		STICS_MCPPS_3_CL, STICS_MCPPS_3_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1597 
+      2)     &		INT(ENTITY(STICS_MCPPS_3_CL).LAST_VALUE),
+      2)     &		ENTITY(STICS_MCPPS_3_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1528 
+      1)     &		STICS_MCPPS_4_CL, STICS_MCPPS_4_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1606 
+      2)     &		INT(ENTITY(STICS_MCPPS_4_CL).LAST_VALUE),
+      2)     &		ENTITY(STICS_MCPPS_4_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1536 
+      1)     &		STICS_MCPPS_5_CL, STICS_MCPPS_5_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1615 
+      2)     &		INT(ENTITY(STICS_MCPPS_5_CL).LAST_VALUE),
+      2)     &		ENTITY(STICS_MCPPS_5_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1544 
+      1)     &		STICS_TOFPS_MCPPS_6_CL, STICS_TOFPS_MCPPS_6_CV 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1624 
+      2)     &		INT(ENTITY(STICS_TOFPS_MCPPS_6_CL).LAST_VALUE),
+      2)     &		ENTITY(STICS_TOFPS_MCPPS_6_CV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1668 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1672 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1674 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(TELEMETRY_FORMAT))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1681 
+      2)	VALUE = 11130
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1685 
+      2)	VALUE = 5565
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1687 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(TELEMETRY_RATE))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1693 
+      2)      CALL FIND_STATS(1,SPIN_PERIOD,ENTITY(SPIN_PERIOD_IDX))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1607 
+      1)2200  FORMAT(1X,'     Spin Rate: ',F5.2)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1695 
+      2)2200  FORMAT(1X,'     Spin Period: ',F5.2)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1616 
+      1)      WRITE(11,2300) IAND(HDB.DAT(188), 63)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1704 
+      2)      VALUE = IAND(HDB.DAT(188), 63)
+      2)      WRITE(11,2300) VALUE
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(RESET_COUNTER))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1710 
+      2)      CALL FIND_STATS_INT(RESET_CAUSE,ENTITY(LAST_RESET_CAUSE))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1623 
+      1)      WRITE(11,2320)  IAND(HDB.DAT(236), 15)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1714 
+      2)      VALUE = IAND(HDB.DAT(236), 15)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LATCHUP_COUNTER_MAIN))
+      2)      WRITE(11,2320)  VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1626 
+      1)      WRITE(11,2330) IAND(HDB.DAT(234), 15)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1719 
+      2)      VALUE = IAND(HDB.DAT(234), 15)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LATCHUP_COUNTER_MEMORY))
+      2)      WRITE(11,2330) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1629 
+      1)      WRITE(11,2340) ISHFT(IAND(HDB.DAT(234), 240), -4)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1724 
+      2)      VALUE = ISHFT(IAND(HDB.DAT(234), 240), -4)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LATCHUP_COUNTER_MP))
+      2)      WRITE(11,2340) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1632 
+      1)      WRITE(11,2350) IAND(HDB.DAT(235), 15)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1729 
+      2)      VALUE = IAND(HDB.DAT(235), 15)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LATCHUP_COUNTER_SWICS))
+      2)      WRITE(11,2350) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1635 
+      1)      WRITE(11,2360) ISHFT(IAND(HDB.DAT(235), 240), -4)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1734 
+      2)      VALUE = ISHFT(IAND(HDB.DAT(235), 240), -4)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LATCHUP_COUNTER_STICS))
+      2)      WRITE(11,2360) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1638 
+      1)      WRITE(11,2370) ISHFT(IAND(HDB.DAT(236), 240), -4)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1739 
+      2)      VALUE = ISHFT(IAND(HDB.DAT(236), 240), -4)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LATCHUP_COUNTER_MASS))
+      2)      WRITE(11,2370) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1641 
+      1)      WRITE(11,2400) IAND(HDB.DAT(169), 255)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1744 
+      2)      VALUE = IAND(HDB.DAT(169), 255)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(RAM_ERROR_COUNTER))
+      2)      WRITE(11,2400) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1644 
+      1)      WRITE(11,2410) IAND(HDB.DAT(170), 255)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1749 
+      2)      VALUE = IAND(HDB.DAT(170), 255)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(ROM_ERROR_COUNTER))
+      2)      WRITE(11,2410) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1757 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1761 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1763 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(PROM_BANK_SELECTION))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1768 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1772 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1774 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(PROM_TOGGLE_MODE_ENABLED))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1779 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1783 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1785 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(PROGRAM_PATCH_ACTIVE))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1671 
+      1)      WRITE(11, 2700) IAND(HDB.DAT(176), 255)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1787 
+      2)      VALUE = IAND(HDB.DAT(176), 255)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(VALID_CMD_COUNTER))
+      2)      WRITE(11, 2700) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1673 
+      1)      WRITE(11, 2710) IAND(HDB.DAT(180), 255)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1791 
+      2)      VALUE = IAND(HDB.DAT(180), 255)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(INVALID_CMD_COUNTER))
+      2)      WRITE(11, 2710) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1799 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1803 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1805 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(COMMAND_REPEAT_SWICS))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1810 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1814 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1816 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(COMMAND_REPEAT_MASS))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1821 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1825 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1827 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(COMMAND_REPEAT_STICS))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1832 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1836 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1838 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(HV_RECONFIG_WITHOUT_HV))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1708 
+      1)      WRITE(11,3000) IAND(HDB.DAT(165), 15), OFFSET
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1840 
+      2)      VALUE = IAND(HDB.DAT(165), 15)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SUN_SECTOR))
+      2)      CALL FIND_STATS_INT(OFFSET,ENTITY(SUN_SECTOR_OFFSET))
+      2)      WRITE(11,3000) VALUE, OFFSET
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1849 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1853 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1855 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SUN_SECTOR_CLOCK_SRC))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1860 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1864 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1866 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SUN_SECTOR_CLOCK_OK))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1871 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1875 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1877 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SUN_PULSE_OK))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1737 
+      1)      IF(BTEST(HDB.DAT(173),0))STICS_COVER  = 'ON '
+      1)      IF(BTEST(HDB.DAT(173),1))STICS_HEATER = 'ON '
+      1)      IF(BTEST(HDB.DAT(173),2))SWICS_COVER  = 'ON '
+      1)      IF(BTEST(HDB.DAT(173),3))SWICS_HEATER = 'ON '
+      1)      IF(BTEST(HDB.DAT(173),4))MASS_COVER   = 'ON '
+      1)      IF(BTEST(HDB.DAT(173),5))STICS_MAIN   = 'ON '
+      1)      IF(BTEST(HDB.DAT(173),6))SWICS_MAIN   = 'ON ' 
+      1)      IF(BTEST(HDB.DAT(173),7))MASS_MAIN    = 'ON '
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1881 
+      2)C      IF(BTEST(HDB.DAT(173),0))STICS_COVER  = 'ON '
+      2)C      IF(BTEST(HDB.DAT(173),1))STICS_HEATER = 'ON '
+      2)C      IF(BTEST(HDB.DAT(173),2))SWICS_COVER  = 'ON '
+      2)C      IF(BTEST(HDB.DAT(173),3))SWICS_HEATER = 'ON '
+      2)C      IF(BTEST(HDB.DAT(173),4))MASS_COVER   = 'ON '
+      2)C      IF(BTEST(HDB.DAT(173),5))STICS_MAIN   = 'ON '
+      2)C      IF(BTEST(HDB.DAT(173),6))SWICS_MAIN   = 'ON ' 
+      2)C      IF(BTEST(HDB.DAT(173),7))MASS_MAIN    = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(173),0,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(STICS_COVER_IDX))
+      2)      IF (VALUE .EQ. 1) STICS_COVER  = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(173),1,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(STICS_HEATER_IDX))
+      2)      IF (VALUE .EQ. 1) STICS_HEATER = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(173),2,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SWICS_COVER_IDX))
+      2)      IF (VALUE .EQ. 1) SWICS_COVER  = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(173),3,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SWICS_HEATER_IDX))
+      2)      IF (VALUE .EQ. 1) SWICS_HEATER = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(173),4,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_COVER_IDX))
+      2)      IF (VALUE .EQ. 1) MASS_COVER   = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(173),5,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(STICS_MAIN_IDX))
+      2)      IF (VALUE .EQ. 1) STICS_MAIN   = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(173),6,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SWICS_MAIN_IDX))
+      2)      IF (VALUE .EQ. 1) SWICS_MAIN   = 'ON ' 
+      2)      VALUE = IBITS(HDB.DAT(173),7,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_MAIN_IDX))
+      2)      IF (VALUE .EQ. 1) MASS_MAIN    = 'ON '
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1758 
+      1)      IF(BTEST(HDB.DAT(187),0))STICS_CONFIG   = 'Error '
+      1)      IF(BTEST(HDB.DAT(187),1))STICS_SNAPSHOT = 'Error '
+      1)      IF(BTEST(HDB.DAT(187),2))SWICS_CONFIG   = 'Error '
+      1)      IF(BTEST(HDB.DAT(187),3))SWICS_SNAPSHOT = 'Error '
+      1)      IF(BTEST(HDB.DAT(187),4))MASS_CONFIG    = 'Error '
+      1)      IF(BTEST(HDB.DAT(187),5))MASS_SNAPSHOT  = 'Error '
+      1)      IF(BTEST(HDB.DAT(187),6))LOAD_CONFIG    = 'Error '
+      1)      IF(BTEST(HDB.DAT(187),7))LOAD_SNAPSHOT  = 'Error '
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1926 
+      2)C      IF(BTEST(HDB.DAT(187),0))STICS_CONFIG   = 'Error '
+      2)C      IF(BTEST(HDB.DAT(187),1))STICS_SNAPSHOT = 'Error '
+      2)C      IF(BTEST(HDB.DAT(187),2))SWICS_CONFIG   = 'Error '
+      2)C      IF(BTEST(HDB.DAT(187),3))SWICS_SNAPSHOT = 'Error '
+      2)C      IF(BTEST(HDB.DAT(187),4))MASS_CONFIG    = 'Error '
+      2)C      IF(BTEST(HDB.DAT(187),5))MASS_SNAPSHOT  = 'Error '
+      2)C      IF(BTEST(HDB.DAT(187),6))LOAD_CONFIG    = 'Error '
+      2)C      IF(BTEST(HDB.DAT(187),7))LOAD_SNAPSHOT  = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),0,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(STICS_CONFIG_IDX))
+      2)      IF (VALUE .EQ. 1) STICS_CONFIG   = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),1,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(STICS_SNAPSHOT_IDX))
+      2)      IF (VALUE .EQ. 1) STICS_SNAPSHOT = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),2,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SWICS_CONFIG_IDX))
+      2)      IF (VALUE .EQ. 1) SWICS_CONFIG   = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),3,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(SWICS_SNAPSHOT_IDX))
+      2)      IF (VALUE .EQ. 1) SWICS_SNAPSHOT = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),4,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_CONFIG_IDX))
+      2)      IF (VALUE .EQ. 1) MASS_CONFIG    = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),5,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_SNAPSHOT_IDX))
+      2)      IF (VALUE .EQ. 1) MASS_SNAPSHOT  = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),6,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LOAD_CONFIG_IDX))
+      2)      IF (VALUE .EQ. 1) LOAD_CONFIG    = 'Error '
+      2)      VALUE = IBITS(HDB.DAT(187),7,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(LOAD_SNAPSHOT_IDX))
+      2)      IF (VALUE .EQ. 1) LOAD_SNAPSHOT  = 'Error '
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1781 
+      1)      IF(BTEST(HDB.DAT(107),0))MASS_HPS       = 'ON '
+      1)      IF(BTEST(HDB.DAT(107),1))MASS_STOP_MCP  = 'ON '
+      1)      IF(BTEST(HDB.DAT(107),2))MASS_START_MCP = 'ON '
+      1)      IF(BTEST(HDB.DAT(107),3))MASS_COM_ADPS  = 'ON '
+      1)      IF(BTEST(HDB.DAT(107),4))MASS_COM_DPPS  = 'ON '
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 1973 
+      2)C      IF(BTEST(HDB.DAT(107),0))MASS_HPS       = 'ON '
+      2)C      IF(BTEST(HDB.DAT(107),1))MASS_STOP_MCP  = 'ON '
+      2)C      IF(BTEST(HDB.DAT(107),2))MASS_START_MCP = 'ON '
+      2)C      IF(BTEST(HDB.DAT(107),3))MASS_COM_ADPS  = 'ON '
+      2)C      IF(BTEST(HDB.DAT(107),4))MASS_COM_DPPS  = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(107),0,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_HPS_ENABLE))
+      2)      IF (VALUE .EQ. 1) MASS_HPS       = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(107),1,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_STOP_MCP_ENABLE))
+      2)      IF (VALUE .EQ. 1) MASS_STOP_MCP  = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(107),2,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_START_MCP_ENABLE))
+      2)      IF (VALUE .EQ. 1) MASS_START_MCP = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(107),3,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_COM_ADPS_ENABLE))
+      2)      IF (VALUE .EQ. 1) MASS_COM_ADPS  = 'ON '
+      2)      VALUE = IBITS(HDB.DAT(107),4,1)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_COM_DPPS_ENABLE))
+      2)      IF (VALUE .EQ. 1) MASS_COM_DPPS  = 'ON '
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1797 
+      1)      WRITE(11, 4000) MASS_HPS, IAND(HDB.DAT(111), 255), IAND(HDB.DAT(110), 255), ENTITY(MASS_HPS_OUTV_AR).LAST_VALUE,
+      1)     &                MASS_STOP_MCP, IAND(HDB.DAT(115), 255), IAND(HDB.DAT(114), 255), ENTITY(MASS_STOP_MCPPSV_AR).LAST_VAL*
+      1)     &                MASS_START_MCP, IAND(HDB.DAT(113), 255), IAND(HDB.DAT(112), 255), ENTITY(MASS_START_MCPPSV_AR).LAST_V*
+      1)     &                MASS_COM_ADPS, IAND(HDB.DAT(232), 255), IAND(HDB.DAT(233), 255), 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2004 
+      2)      CALL FIND_STATS_INT(IAND(HDB.DAT(111), 255), ENTITY(MASS_HPS_LIMIT))
+      2)      CALL FIND_STATS_INT(IAND(HDB.DAT(115), 255), ENTITY(MASS_STOP_MCP_LIMIT))
+      2)      CALL FIND_STATS_INT(IAND(HDB.DAT(113), 255), ENTITY(MASS_START_MCP_LIMIT))
+      2)      CALL FIND_STATS_INT(IAND(HDB.DAT(232), 255), ENTITY(MASS_ADPS_LIMIT))
+      2)      CALL FIND_STATS_INT(IAND(HDB.DAT(233), 255), ENTITY(MASS_ADPS_LEVEL))
+      2)      WRITE(11, 4000) MASS_HPS, INT(ENTITY(MASS_HPS_LIMIT).LAST_VALUE), 
+      2)     &                  INT(ENTITY(MASS_HPS_CL).LAST_VALUE), 
+      2)     &                  ENTITY(MASS_HPS_OUTV_AR).LAST_VALUE,
+      2)     &                MASS_STOP_MCP, INT(ENTITY(MASS_STOP_MCP_LIMIT).LAST_VALUE), 
+      2)     &                  INT(ENTITY(MASS_STOP_MCPPS_CL).LAST_VALUE), 
+      2)     &                  ENTITY(MASS_STOP_MCPPSV_AR).LAST_VALUE,
+      2)     &                MASS_START_MCP, INT(ENTITY(MASS_START_MCP_LIMIT).LAST_VALUE), 
+      2)     &                  INT(ENTITY(MASS_START_MCPPS_CL).LAST_VALUE), 
+      2)     &                  ENTITY(MASS_START_MCPPSV_AR).LAST_VALUE,
+      2)     &                MASS_COM_ADPS, INT(ENTITY(MASS_ADPS_LIMIT).LAST_VALUE), 
+      2)     &                  INT(ENTITY(MASS_ADPS_LEVEL).LAST_VALUE), 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2032 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2036 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2038 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(ADPS_AUTO_CALC))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2043 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2047 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2049 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(ADPS_STEPPING_SEQ))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2054 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2058 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2060 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(ADPS_TABLE))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2065 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2069 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2071 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_DPPS_STEPPING_SEQ))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1842 
+      1)      WRITE(11, 4200) IAND(HDB.DAT(133), 255)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2073 
+      2)      VALUE = IAND(HDB.DAT(133), 255)
+      2)      CALL FIND_STATS(VALUE,FLOAT(VALUE),ENTITY(FSR_LIMIT))
+      2)      WRITE(11, 4200) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2081 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2085 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2087 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(DISCHARGE_OCCURRED))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2092 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2096 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2098 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(INTERNAL_CALLIB))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1861 
+      1)      WRITE(11, 4420) IAND(HDB.DAT(116), 15)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2100 
+      2)      VALUE = IAND(HDB.DAT(116), 15)
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(CALLIB_LEVEL))
+      2)      WRITE(11, 4420) VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2108 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2112 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2114 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_TEST_TABLES))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2119 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2123 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2125 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_CMD_ECHO_CHK))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2130 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2134 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2136 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_PHA_FIFO_MODE))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2141 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2145 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2147 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(STOP_PREAMP_POWER))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2152 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2156 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2158 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(START_PREAMP1_POWER))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2163 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2167 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2169 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(START_PREAMP2_POWER))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2174 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2178 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2180 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_MULT_STOPS))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2185 
+      2)	VALUE = 1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2189 
+      2)	VALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2191 
+      2)      CALL FIND_STATS_INT(VALUE,ENTITY(MASS_MULT_STARTS))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1949 
+      1)C border preceeding the upper border with a given rate.  By ding this if any of
+      1)C the border values are not what they are expected to be the user will be
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2214 
+      2)C border preceeding the upper border with a given rate.  By doing this if any
+      2)C of the border values are not what they are expected to be the user will be
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1954 
+      1)	CALL FIND_STATS(MR(1,I),FLOAT(MR(1,I)),ENTITY(MR_BORDER+2*I))
+      1)	CALL FIND_STATS(MR(2,I),FLOAT(MR(2,I)),ENTITY(MR_BORDER+2*I+1))
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2219 
+      2)	CALL FIND_STATS_INT(MR(1,I),ENTITY(MR_BORDER+2*I))
+      2)	CALL FIND_STATS_INT(MR(2,I),ENTITY(MR_BORDER+2*I+1))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 1976 
+      1)      CALL FIND_STATS(BR0_BR1_BORDER,FLOAT(BR0_BR1_BORDER),ENTITY(BR0_BR1_BORDER_IDX))
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2241 
+      2)      CALL FIND_STATS_INT(BR0_BR1_BORDER,ENTITY(BR0_BR1_BORDER_IDX))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 2003 
+      1)5400  CONTINUE
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2268 
+      2)        CALL FIND_STATS_INT(IBITS(HDB.DAT(24),I,1),ENTITY(STICS_MCPPS0_ENABLE_IDX+I))
+      2)        CALL FIND_STATS_INT(IAND(HDB.DAT(10+I), 255), ENTITY(STICS_MCPPS0_LIMIT+I))
+      2)        CALL FIND_STATS_INT(IAND(HDB.DAT(17+I), 255), ENTITY(STICS_MCPPS0_LEVEL+I))
+      2)5400  CONTINUE                                
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2274 
+      2)      CALL FIND_STATS_INT(IBITS(HDB.DAT(24),6,1),ENTITY(STICS_TOFPS_ENABLE))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2276 
+      2)      CALL FIND_STATS_INT(IBITS(HDB.DAT(24),7,1),ENTITY(STICS_PLUS_DPPS_ENABLE))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2278 
+      2)      CALL FIND_STATS_INT(IBITS(HDB.DAT(25),0,1),ENTITY(STICS_MINUS_DPPS_ENABLE))
+      2)C
+      2)      CALL FIND_STATS_INT(IAND(HDB.DAT(16), 255), ENTITY(STICS_TOFPS_LIMIT))
+      2)      CALL FIND_STATS_INT(IAND(HDB.DAT(23), 255), ENTITY(STICS_TOFPS_LEVEL))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 2009 
+      1)      STICS_MCPPS_MEAS_V(0) = -7.806   + 1.959E1 * IAND(HDB.DAT(27), 255)
+      1)      STICS_MCPPS_MEAS_V(1) = -3.475   + 1.950E1 * IAND(HDB.DAT(28), 255)
+      1)      STICS_MCPPS_MEAS_V(2) = -9.405   + 1.957E1 * IAND(HDB.DAT(29), 255)
+      1)      STICS_MCPPS_MEAS_V(3) = -1.950E1 + 1.984E1 * IAND(HDB.DAT(30), 255)
+      1)      STICS_MCPPS_MEAS_V(4) = -1.436E1 + 1.984E1 * IAND(HDB.DAT(31), 255)
+      1)      STICS_MCPPS_MEAS_V(5) = -7.293   + 1.969E1 * IAND(HDB.DAT(32), 255)
+      1)      STICS_TOFPS_MEAS_V    = -5.518   + 1.961E1 * IAND(HDB.DAT(33), 255)
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2283 
+      2)C      STICS_MCPPS_MEAS_V(0) = -7.806   + 1.959E1 * IAND(HDB.DAT(27), 255)
+      2)C      STICS_MCPPS_MEAS_V(1) = -3.475   + 1.950E1 * IAND(HDB.DAT(28), 255)
+      2)C      STICS_MCPPS_MEAS_V(2) = -9.405   + 1.957E1 * IAND(HDB.DAT(29), 255)
+      2)C      STICS_MCPPS_MEAS_V(3) = -1.950E1 + 1.984E1 * IAND(HDB.DAT(30), 255)
+      2)C      STICS_MCPPS_MEAS_V(4) = -1.436E1 + 1.984E1 * IAND(HDB.DAT(31), 255)
+      2)C      STICS_MCPPS_MEAS_V(5) = -7.293   + 1.969E1 * IAND(HDB.DAT(32), 255)
+      2)C      STICS_TOFPS_MEAS_V    = -5.518   + 1.961E1 * IAND(HDB.DAT(33), 255)
+      2)      STICS_MCPPS_MEAS_V(0) = ENTITY(STICS_MCPPS0_OUTV).LAST_VALUE
+      2)      STICS_MCPPS_MEAS_V(1) = ENTITY(STICS_MCPPS1_OUTV).LAST_VALUE
+      2)      STICS_MCPPS_MEAS_V(2) = ENTITY(STICS_MCPPS2_OUTV).LAST_VALUE
+      2)      STICS_MCPPS_MEAS_V(3) = ENTITY(STICS_MCPPS3_OUTV).LAST_VALUE
+      2)      STICS_MCPPS_MEAS_V(4) = ENTITY(STICS_MCPPS4_OUTV).LAST_VALUE
+      2)      STICS_MCPPS_MEAS_V(5) = ENTITY(STICS_MCPPS5_OUTV).LAST_VALUE
+      2)      STICS_TOFPS_MEAS_V    = ENTITY(STICS_TOFPS_OUTV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element WIND_HEALTH.FOR(8) Line 2028 
+      1)     &                STICS_MCPPS(0), IAND(HDB.DAT(10), 255), IAND(HDB.DAT(17), 255), ENTITY(STICS_MCPPS0_OUTV).LAST_VALUE,
+      1)     &                STICS_MCPPS(1), IAND(HDB.DAT(11), 255), IAND(HDB.DAT(18), 255), ENTITY(STICS_MCPPS1_OUTV).LAST_VALUE,*
+      1)     &                STICS_MCPPS(2), IAND(HDB.DAT(12), 255), IAND(HDB.DAT(19), 255), ENTITY(STICS_MCPPS2_OUTV).LAST_VALUE,*
+      1)     &                STICS_MCPPS(3), IAND(HDB.DAT(13), 255), IAND(HDB.DAT(20), 255), ENTITY(STICS_MCPPS3_OUTV).LAST_VALUE,*
+      1)     &                STICS_MCPPS(4), IAND(HDB.DAT(14), 255), IAND(HDB.DAT(21), 255), ENTITY(STICS_MCPPS4_OUTV).LAST_VALUE,*
+      1)     &                STICS_MCPPS(5), IAND(HDB.DAT(15), 255), IAND(HDB.DAT(22), 255), ENTITY(STICS_MCPPS5_OUTV).LAST_VALUE,*
+      1)     &                STICS_TOFPS, IAND(HDB.DAT(16), 255), IAND(HDB.DAT(23), 255), ENTITY(STICS_TOFPS_OUTV).LAST_VALUE
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2309 
+      2)     &                ( STICS_MCPPS(I),
+      2)     &                  INT(ENTITY(STICS_MCPPS0_LIMIT+I).LAST_VALUE),
+      2)     &                  INT(ENTITY(STICS_MCPPS0_LEVEL+I).LAST_VALUE),
+      2)     &                  ENTITY(STICS_MCPPS0_OUTV).LAST_VALUE,
+      2)     &                I=0,5),
+      2)     &                STICS_TOFPS, INT(ENTITY(STICS_TOFPS_LIMIT).LAST_VALUE),
+      2)     &                  INT(ENTITY(STICS_TOFPS_LEVEL).LAST_VALUE),
+      2)     &                  ENTITY(STICS_TOFPS_OUTV).LAST_VALUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2522 
+      2)      CALL FIND_STATS_INT(STICS_TRIGGER_MODE,ENTITY(STICS_TRIGGER_MODE_IDX))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2575 
+      2)C
+      2)      CALL FIND_STATS_INT(SSD_1_THRESHOLD,ENTITY(SSD_1_THRESHOLD_IDX))
+      2)      CALL FIND_STATS_INT(SSD_2_THRESHOLD,ENTITY(SSD_2_THRESHOLD_IDX))
+      2)      CALL FIND_STATS_INT(SSD_3_THRESHOLD,ENTITY(SSD_3_THRESHOLD_IDX))
+      2)C
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2678 
+      2)	EVALUE = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2682 
+      2)	EVALUE = -10
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2686 
+      2)	EVALUE = 10
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2690 
+      2)	EVALUE = 5
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2694 
+      2)	EVALUE = -5
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2698 
+      2)	EVALUE = -999
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2700 
+      2)      CALL FIND_STATS(TAC_SLOPE,EVALUE,ENTITY(TAC_SLOPE_IDX))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2703 
+      2)      CALL FIND_STATS_INT(SWICS_TRIGGER_MODE,ENTITY(SWICS_TRIGGER_MODE_IDX))
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;201 Line 2819 
+      2)      type *,'MAIL/NOSELF/SUBJ="Problems with '//L1NAME(1:NCHL1)
+      2)     &		     //'" '//L1FILENAME(1:NCH2)//' '//MAIL_LIST(1:NCHMAIL)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+**** End of Differences ****

@@ -1,0 +1,262 @@
+ION_IDENTIFIER                                                  15-JAN-1997 13:38:06    DEC Fortran V6.2-508                Page   1
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]ION_IDENTIFIER.FOR;14
+
+	      1 
+	      2 	SUBROUTINE ION_IDENTIFIER(CALCM,CALCMQ,		!input mass, mass/charge
+	      3      .                                MASS,Q,INDEX)	!output mass,charge,array index
+	      4 	
+	      5 C	29-MAR-1996 BY K. CHOTOO using SPECIES_IDENTIFIER as template
+	      6 
+	      7 	IMPLICIT NONE
+	      8 
+	      9 	REAL*4 CALCM,CALCMQ 		!INPUT:  values for mass, m/q derived from pha 
+	     10 C					         and algorithms
+	     11 	REAL*4 MASS, Q			!RETURN: mass, charge, and array position of assumed species
+	     12 	INTEGER*4 INDEX
+	     13 
+	     14 	MASS = -1
+	     15 	Q    = -1
+	     16 	INDEX= -1
+	     17 
+	     18 	IF(CALCM.EQ.0)THEN
+	     19 	     IF(CALCMQ.GE.0.9 .AND. CALCMQ.LT.1.2588)THEN
+	     20 					MASS = 1.000		! H+,   1  (DCR, use same index as TCR for now)
+	     21 					   Q = 1.00
+	     22 				       INDEX = 1
+	     23 	     ENDIF
+	     24 	     IF(CALCMQ.GE.1.6066 .AND. CALCMQ.LE.2.3167) THEN
+	     25 					MASS = 3.971     	!4He+2, 2  (DCR, use same index as TCR for now)
+	     26 					   Q = 2.00
+	     27 				       INDEX = 2
+	     28              ENDIF
+	     29 	     IF(CALCMQ.GE.3.5507 .AND. CALCMQ.LE.4.6723) THEN
+	     30 					MASS = 3.971    	!4He+1, 3  (DCR, use same index as TCR for now)
+	     31 					   Q = 1.00
+	     32 				       INDEX = 3
+	     33              ENDIF
+	     34 	ENDIF
+	     35 
+	     36 	IF((CALCM.GE.0.5 .AND. CALCM.LE.2.1261).AND.
+	     37      .     (CALCMQ.GE.0.90 .AND. CALCMQ.LE.1.2588))THEN	
+	     38 					MASS = 1.000		! H+,   1  (TCR)
+	     39 					   Q = 1.00
+	     40 				       INDEX = 1
+	     41 	ENDIF
+	     42 	
+	     43         IF(CALCM.GE.1.7742 .AND. CALCM.LE.6.8920)THEN           !New He boxes, Mass different from DPU definition
+	     44 	     IF(CALCMQ.GE.1.7077 .AND. CALCMQ.LE.2.3167) THEN
+	     45 					MASS = 3.971     	!4He+2, 2  (TCR)
+	     46 					   Q = 2.00
+	     47 				       INDEX = 2
+	     48              ENDIF
+	     49 	     IF(CALCMQ.GE.3.5507 .AND. CALCMQ.LE.4.6723) THEN
+	     50 					MASS = 3.971    	!4He+1, 3  (TCR)
+	     51 					   Q = 1.00
+	     52 				       INDEX = 3
+	     53              ENDIF
+	     54         ENDIF
+	     55 
+	     56 	IF(CALCM.GE.9.0409 .AND. CALCM.LE.12.9830)THEN
+	     57 	     IF(CALCMQ.GE.1.8713 .AND. CALCMQ.LE.2.1796) THEN
+
+ION_IDENTIFIER                                                  15-JAN-1997 13:38:06    DEC Fortran V6.2-508                Page   2
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]ION_IDENTIFIER.FOR;14
+
+	     58 					MASS = 11.916     	!C+6,   4
+	     59 					   Q = 6.00
+	     60 				       INDEX = 4
+	     61              ENDIF
+	     62 	     IF(CALCMQ.GE.2.2471 .AND. CALCMQ.LE.2.5387) THEN
+	     63 					MASS = 11.916     	!C+5,   5
+	     64 					   Q = 5.00
+	     65 				       INDEX = 5
+	     66              ENDIF
+	     67 	     IF(CALCMQ.GE.2.8681 .AND. CALCMQ.LE.3.2402) THEN
+	     68 					MASS = 11.916       	!C+4,   6
+	     69 					   Q = 4.00
+	     70 				       INDEX = 6
+	     71              ENDIF
+	     72         ENDIF
+	     73 
+	     74 	IF( (CALCM.GE.14.2120 .AND. CALCM.LE.20.4090).AND.
+	     75      .      (CALCMQ.GE.2.1141 .AND. CALCMQ.LE.2.4624) ) THEN
+	     76 					MASS = 15.872		!O+7,   7
+	     77 					   Q = 7.00
+	     78 				       INDEX = 7       
+	     79         ENDIF
+	     80 
+	     81 	IF( (CALCM.GE.10.834 .AND. CALCM.LE.20.409).AND.
+	     82      .      (CALCMQ.GE.2.5387 .AND. CALCMQ.LE.2.8681) ) THEN
+	     83 					MASS = 15.872		!O+6,   8
+	     84 					   Q = 6.00
+	     85 				       INDEX = 8       
+	     86         ENDIF
+	     87 
+	     88 	IF( (CALCM.GE.4.7994 .AND. CALCM.LE.79.277).AND.
+	     89      .      (CALCMQ.GE.14.890 .AND. CALCMQ.LE.20.20) ) THEN
+	     90 					MASS = 15.872		!O+1,   9
+	     91 					   Q = 1.00
+	     92 				       INDEX = 9       
+	     93 	ENDIF
+	     94 
+	     95 	IF( (CALCM.GE.17.031 .AND. CALCM.LE.22.341).AND.
+	     96      .      (CALCMQ.GE.2.3167 .AND. CALCMQ.LE.2.5387) ) THEN
+	     97 					MASS = 20.019		!Ne+8,  10
+	     98 					   Q = 8.00
+	     99 				       INDEX = 10       
+	    100        	ENDIF
+	    101 
+	    102 	IF(CALCM.GE.22.341 .AND. CALCM.LE.26.772) THEN
+	    103              IF(CALCMQ.GE.2.2471 .AND. CALCMQ.LE.2.5387) THEN
+	    104 					MASS = 24.112		!Mg+10, 11
+	    105 					   Q = 10.00
+	    106 				       INDEX = 11
+	    107 	     ENDIF
+	    108        	     IF(CALCMQ.GE.2.8681 .AND. CALCMQ.LE.3.2402) THEN
+	    109 					MASS = 24.112		!Mg+8,  12
+	    110 					   Q = 8.00
+	    111 				       INDEX = 12
+	    112 	     ENDIF
+	    113         ENDIF
+	    114 
+
+ION_IDENTIFIER                                                  15-JAN-1997 13:38:06    DEC Fortran V6.2-508                Page   3
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]ION_IDENTIFIER.FOR;14
+
+	    115 	IF(CALCM.GE.26.772 .AND. CALCM.LE.38.445) THEN
+	    116              IF(CALCMQ.GE.2.1796 .AND. CALCMQ.LE.2.3885) THEN
+	    117 					MASS = 27.863		!Si+12, 13
+	    118 					   Q = 12.00
+	    119 				       INDEX = 13
+	    120 	     ENDIF
+	    121        	     IF(CALCMQ.GE.2.9569 .AND. CALCMQ.LE.3.2402) THEN
+	    122 					MASS = 27.863		!Si+9,  14
+	    123 					   Q = 9.00
+	    124 				       INDEX = 14
+	    125 	     ENDIF
+	    126        	     IF(CALCMQ.GE.3.2402 .AND. CALCMQ.LE.3.6607) THEN
+	    127 					MASS = 27.863		!Si+8,  15
+	    128 					   Q = 8.00
+	    129 				       INDEX = 15
+	    130 	     ENDIF
+	    131         ENDIF
+	    132 
+	    133 	IF(CALCM.GE.38.445 .AND. CALCM.LE.79.277) THEN
+	    134              IF(CALCMQ.GE.3.3406 .AND. CALCMQ.LE.3.5507) THEN
+	    135 					MASS = 55.404		!Fe+16, 16
+	    136 					   Q = 16.00
+	    137 				       INDEX = 16
+	    138 	     ENDIF
+	    139        	     IF(CALCMQ.GE.3.7741 .AND. CALCMQ.LE.4.1357) THEN
+	    140 					MASS = 55.404		!Fe+14, 17
+	    141 					   Q = 14.00
+	    142 				       INDEX = 17
+	    143 	     ENDIF
+	    144        	     IF(CALCMQ.GE.4.3958 .AND. CALCMQ.LE.4.8170) THEN
+	    145 					MASS = 55.404		!Fe+12, 18
+	    146 					   Q = 12.00
+	    147 				       INDEX = 18
+	    148 	     ENDIF
+	    149        	     IF(CALCMQ.GE.4.8170 .AND. CALCMQ.LE.5.2786) THEN
+	    150 					MASS = 55.404		!Fe+11, 19
+	    151 					   Q = 11.00
+	    152 				       INDEX = 19
+	    153 	     ENDIF
+	    154        	     IF(CALCMQ.GE.5.2786 .AND. CALCMQ.LE.5.7843) THEN
+	    155 					MASS = 55.404		!Fe+10, 20
+	    156 					   Q = 10.00
+	    157 				       INDEX = 20
+	    158 	     ENDIF
+	    159        	     IF(CALCMQ.GE.5.7843 .AND. CALCMQ.LE.6.5349) THEN
+	    160 					MASS = 55.404		!Fe+9,  21
+	    161 					   Q = 9.00
+	    162 				       INDEX = 21
+	    163 	     ENDIF
+	    164        	     IF(CALCMQ.GE.6.5349 .AND. CALCMQ.LE.7.3828) THEN
+	    165 					MASS = 55.404		!Fe+8,  22
+	    166 					   Q = 8.00
+	    167 				       INDEX = 22
+	    168 	     ENDIF
+	    169 
+	    170 	ENDIF
+	    171 
+
+ION_IDENTIFIER                                                  15-JAN-1997 13:38:06    DEC Fortran V6.2-508                Page   4
+                                                                29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]ION_IDENTIFIER.FOR;14
+
+	    172         RETURN
+	    173         END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                1476   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                 276 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1752
+
+
+ENTRY POINTS
+
+    Address   Type  Name          
+                                  
+  1-00000000        ION_IDENTIFIER
+
+
+VARIABLES
+
+    Address   Type  Name       Address   Type  Name       Address   Type  Name  
+                                                                                
+      **      R*4   CALCM        **      I*4   INDEX        **      R*4   Q     
+      **      R*4   CALCMQ       **      R*4   MASS                             
+
+ION_IDENTIFIER                                                  15-JAN-1997 13:38:06    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    29-JUL-1996 16:15:14    [WIND.SOFTWARE.STICS]ION_IDENTIFIER.FOR;14
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,BOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]ION_IDENTIFIER.LIS;10
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]ION_IDENTIFIER.OBJ;12
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.73 seconds
+  Elapsed time:      2.32 seconds
+  Pagefaults:         209
+  I/O Count:           10

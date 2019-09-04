@@ -1,0 +1,340 @@
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   1
+                                                                25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+	      1       SUBROUTINE WIND_PRINT_HK ( Major_Frame_Count, SET_NO, SYNC_WORD )
+	      2 C
+	      3 C  This version:   1.0   25-JAN-1995
+	      4 C
+	      5 C       This subroutine (taken from WIND_SAVE_HK) extracts the housekeeping 
+	      6 C       data from the LZ-file and builds the HK array including the quality
+	      7 C       flag for every value.
+	      8 C       This routine should be called by PRINTLZ whenever a new major frame is
+	      9 C       accessed.
+	     10 C       2 sets of housekeeping data are maintained, currently set #2 is
+	     11 C       the older one.
+	     12 C
+	     13 C  USAGE and PARAMETERS:
+	     14 C       CALL WIND_SAVE_HK( MajorFrame_Count, SET_NO )
+	     15 C
+	     16 C               MajorFrame_Count        = NEW major frame counter
+	     17 C               SET_NO                  = 0 -> MAX_HK 
+	     18 C
+	     19 C  CREATION:
+	     20 C       25-JAN-1995     J.PAQUETTE
+	     21 C  REVISIONS:
+	     22 C
+	     23 CDEC$ IDENT   '1.0'
+	     24 
+	     25       IMPLICIT NONE
+	     26 
+	     27       INCLUDE   'INC_DIR:EDB.INC/NOLIST'
+
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   2
+1.0                                                             25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+	    818       INCLUDE   'INC_DIR:L0_DATA_Record.INC/NOLIST'
+
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   3
+1.0                                                             25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+	    986       INCLUDE   'INC_DIR:WIND_LUN.INC/NOLIST'
+	   1016       INCLUDE   '($SSDEF)/NOLIST'
+	   2441 
+	   2442       INTEGER*4         II,                     ! internal pointer
+	   2443      +                  IJ,                     ! internal pointer
+	   2444      +                  ISTAT,                  ! FUNCTION STATUS
+	   2445      +                  JJ,                     ! internal pointer
+	   2446      +                  Major_Frame_Count,      ! Input Variable
+	   2447      +                  SET_NO,                  ! number of HKs
+	   2448      +                  jjj
+	   2449       LOGICAL           SYNC_WORD
+	   2450 
+	   2451       INTEGER DIAG
+	   2452       COMMON /DIAG/ DIAG
+	   2453 
+	   2454       SET_NO = SET_NO + 1
+	   2455       IF( SET_NO .GT. MAX_HK ) THEN
+	   2456         SET_NO=MAX_HK
+	   2457         HKeep( EDBset ).HKcount = SET_NO
+	   2458 C
+	   2459 C If we have more than MAX_HK HK's and we have found a sync word, then we have an error
+	   2460 C condition; inform the user.  MAX_HK is currently 6.
+	   2461 C
+	   2462         IF(SYNC_WORD)THEN
+	   2463           WRITE( TTOUT, *) '*** ERROR: MORE THAN ',MAX_HK,' HKs; SET_NO=',SET_NO
+	   2464           WRITE( TTOUT, *) ' '
+	   2465 C
+	   2466 C If we have more than MAX_HK HK's and we have not found a sync word, then
+	   2467 C there is HK data, but no science data; the DPU is off.  Flag the rest of the
+	   2468 C current science record as bad, then output the data in SCI(1).  Since we call
+	   2469 C the same output routine as used by WIND_CD_READ all the proper operations
+	   2470 C will get done.
+	   2471 C Remember to reset the HK counter.  
+	   2472 C Don't call WIND_RESET_HK since there are no EDBs with which to compare times.
+	   2473 C
+	   2474         ELSE
+	   2475           CALL WIND_DPU_OFF
+	   2476           WRITE(28,9995) (HKeep( EDBset ).HKSET( SET_NO ).HK(jjj).BVAL,JJJ=1,75)
+	   2477  9995     FORMAT(' HK',/,(1X,20Z3.2))
+	   2478           CALL WIND_MOVE_DOWN_L1
+	   2479           SET_NO = 1
+	   2480         ENDIF
+	   2481       ENDIF
+	   2482 C
+	   2483       HKeep( EDBset ).HKcount = SET_NO
+	   2484 
+	   2485       DO JJ = 1, 75
+	   2486           II    = HKLOCI( JJ )
+	   2487           IJ    = HKLOCJ( JJ )
+	   2488           HKeep( EDBset ).HKSET( SET_NO ).HK(JJ).BVAL   = DR_MinFr_SMS( II, IJ )
+	   2489           HKeep( EDBset ).HKSET( SET_NO ).HK(JJ).QUAL   = DR_MinFr_QUAL( IJ )
+	   2490       END DO
+	   2491 
+	   2492       HKeep( EDBset ).HKSET( SET_NO ).EPOCH     = DR_BEG_EPOCH
+	   2493       HKeep( EDBset ).HKSET( SET_NO ).SC_EPOCH  = DR_SC_EPOCH
+	   2494       CALL EPOCH_TO_ITIME( DR_BEG_EPOCH, HKeep( EDBset ).HKSET( SET_NO ).W_Time, ISTAT )
+	   2495       IF( ISTAT .NE. SS$_NORMAL )       STOP 0902
+
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   4
+1.0                                                             25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+	   2496       CALL EPOCH_TO_ITIME( DR_SC_EPOCH, HKeep( EDBset ).HKSET( SET_NO ).SC_Time, ISTAT )
+	   2497       IF( ISTAT .NE. SS$_NORMAL )       STOP 0903
+	   2498 
+	   2499       IF(DIAG .LE. 1) WRITE( 20, 197 )  HKeep( EDBset ).HKSET( SET_NO ).EPOCH,
+	   2500      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_EPOCH,
+	   2501      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.YEAR,
+	   2502      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.YEAR,
+	   2503      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.DOY,
+	   2504      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.DOY,
+	   2505      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.HR,
+	   2506      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.HR,
+	   2507      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.MIN,
+	   2508      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.MIN,
+	   2509      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.SEC,
+	   2510      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.SEC,
+	   2511      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.CSEC,
+	   2512      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.CSEC,
+	   2513      :                  Major_Frame_Count, SET_NO,
+	   2514      :                  ( HKeep( EDBset ).HKSET( SET_NO ).HK(JJ).BVAL, JJ = 1, 75 )
+	   2515   197 FORMAT( 1H0, ' HOUSE KEEPING *** TIME:', 2F20.3 /,
+	   2516      :                  T19,'YEAR:', I16, I20, /,
+	   2517      :                  T20,'DOY:',  I16, I20, /,
+	   2518      :                  T19,'HOUR:', I16, I20, /,
+	   2519      :                  T16,'MINUTES:',I16,I20,/,
+	   2520      :                  T16,'SECONDS:',I16,I20,/,
+	   2521      :                  T21, 'cs:',  I16, I20, /,
+	   2522      :                  ' MAJOR FRAME COUNT =', I11, ',  SET_NO =', I3, 
+	   2523      :                  /, 1X, 5Z4.2, /, 7( /, 1X, 5Z4.2, 3X, 5Z4.2 ) ) 
+	   2524 
+	   2525       IF(DIAG .LE. 1) WRITE( 19, 198 )  Major_Frame_Count, SET_NO,
+	   2526      :                  HKeep( EDBset ).HKSET( SET_NO ).EPOCH,
+	   2527      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.YEAR,
+	   2528      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.DOY,
+	   2529      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.HR,
+	   2530      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.MIN,
+	   2531      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.SEC,
+	   2532      :                  HKeep( EDBset ).HKSET( SET_NO ).W_Time.CSEC,
+	   2533      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_EPOCH,
+	   2534      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.YEAR,
+	   2535      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.DOY,
+	   2536      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.HR,
+	   2537      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.MIN,
+	   2538      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.SEC,
+	   2539      :                  HKeep( EDBset ).HKSET( SET_NO ).SC_Time.CSEC
+	   2540   198 FORMAT( 1H0, ' HOUSE KEEPING *** MAJOR FRAME COUNT =',I11,',  SET_NO =', I3,  /,
+	   2541      :                  1X,F20.3,5X,6I5/1X,F20.3,5X,6I5)
+	   2542       IF(DIAG .LE. 2) WRITE(19,*) 'SAVE_HK: HKSET ARRAY=',(HKSET(II),II=1,3)
+	   2543       RETURN
+	   2544 
+	   2545       END
+
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   5
+1.0                             Symbol Table                    25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46024 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   12 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               464 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                6468   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 418 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 13 DIAG                                     4 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               539286
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  4-00000000        WIND_PRINT_HK
+
+
+VARIABLES
+
+    Address   Type  Name                       Address   Type  Name                       Address   Type  Name                  
+                                                                                                                                
+  8-00000006  L*1   BITRATE                 11-00000020  I*4   DR_BEG_MICSEC                **      I*4   MAJOR_FRAME_COUNT     
+  7-00000014  I*4   CURR_SCI_REC_NUMBER     11-0000001C  I*4   DR_BEG_MSEC              8-00000008  L*1   MASSPOWER             
+  7-00000018  I*4   CURR_SPIN               11-00000014  I*4   DR_BEG_YEAR              1-00000004  I*4   MASS_RATE_SIZE        
+  1-00000018  CHAR  C_BIG_NULL_BUFFER       11-00000000  I*4   DR_INSTR_NUM             8-0000000C  I*4   MEASSPIN              
+ 12-00000000  CHAR  C_DR2_BUFFER            11-00000024  I*4   DR_NUM_MINFR_FILL        7-0000001C  L*4   NEW_SCI_REC           
+ 11-00000000  CHAR  C_DR_BUFFER             11-00000028  I*4   DR_NUM_MINFR_SYNC_ERR   11-00003210  R*8   PREF_EPOCH            
+  1-00000018  CHAR  C_NULL_BUFFER           11-00000004  I*4   DR_PHYS_REC_NUM          8-0000000A  L*1   RAMCHECK              
+ 13-00000000  I*4   DIAG                    11-00003208  R*8   DR_SC_EPOCH              7-00000000  I*4   SCI_REC_CNTR          
+ 12-00000018  I*4   DR2_BEG_DOY             11-0000002C  I*4   DR_TLM_MODE                  **      I*4   SET_NO                
+ 12-00003200  R*8   DR2_BEG_EPOCH            6-0006EEBC  I*4   EDBSET                   8-00000000  I*4   SFPERBLOCK            
+ 12-00000008  I*4   DR2_BEG_MAJFR_CNT        1-00000000  I*4   EDB_CORE_SIZE            8-00000010  I*4   SPINCOUNT             
+ 12-00000020  I*4   DR2_BEG_MICSEC           7-00000008  I*4   EDB_LOST                 8-00000009  L*1   STICSPOWER            
+ 12-0000001C  I*4   DR2_BEG_MSEC             7-0000000C  I*4   EDB_SKIP                 1-00000008  I*4   STICS_H_RATE_SIZE     
+ 12-00000014  I*4   DR2_BEG_YEAR             7-00000010  I*4   EDB_SUM                  1-0000000C  I*4   STICS_N_RATE_SIZE     
+ 12-00000000  I*4   DR2_INSTR_NUM            8-00000005  L*1   HDBFLAG                  2-00000000  I*4   STICS_RATE_SIZE       
+ 12-00000024  I*4   DR2_NUM_MINFR_FILL     REG-########  I*4   II                       8-00000004  L*1   SUBS_ID               
+ 12-00000028  I*4   DR2_NUM_MINFR_SYNC_ERR REG-0000001A  I*4   IJ                       8-00000007  L*1   SWICSPOWER            
+ 12-00000004  I*4   DR2_PHYS_REC_NUM         2-00000008  I*4   ISTAT                    1-00000010  I*4   SWICS_H_RATE_SIZE     
+ 12-00003208  R*8   DR2_SC_EPOCH           REG-########  I*4   JJ                       1-00000014  I*4   SWICS_N_RATE_SIZE     
+ 12-0000002C  I*4   DR2_TLM_MODE           REG-00000007  I*4   JJJ                      2-00000004  I*4   SWICS_RATE_SIZE       
+ 11-00000018  I*4   DR_BEG_DOY              11-0000321C  L*1   L0_FILE_READONLY             **      L*4   SYNC_WORD             
+ 11-00003200  R*8   DR_BEG_EPOCH            11-00003218  I*4   L0_FILE_REC_PNTR                                                 
+ 11-00000008  I*4   DR_BEG_MAJFR_CNT         7-00000004  I*4   L1_RECS_WRITTEN                                                  
+
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   6
+1.0                             Symbol Table                    25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+
+
+ARRAYS
+
+     Address  Type  Name                          Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA                      1980  (0:10, 0:59, 3)
+ 12-0000000C  I*4   DR2_BEG_SC_CLOCK                  8  (2)
+ 12-00000000  I*1   DR2_BUFFER                    13300  (13300)
+ 12-00000000  I*1   DR2_BUFFER_CONTINGENCY        13300  (13300)
+ 12-0000012A  I*1   DR2_FILL                          2  (2)
+ 12-0000012C  I*1   DR2_MINFR                     12500  (12500)
+ 12-0000012C  I*1   DR2_MINFR_3DP                 12500  (50, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_EPA                  6000  (24, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_KON                  1500  (6, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_MFI                  6250  (25, 0:249)
+ 12-00000030  I*1   DR2_MINFR_QUAL                  250  (0:249)
+ 12-0000012C  I*1   DR2_MINFR_SMS                 10500  (42, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_SWE                 11250  (45, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_TGR                  5250  (21, 0:249)
+ 12-0000012C  I*1   DR2_MINFR_WAV                 11250  (45, 0:249)
+ 11-0000000C  I*4   DR_BEG_SC_CLOCK                   8  (2)
+ 11-00000000  I*1   DR_BUFFER                     13300  (13300)
+ 11-00000000  I*1   DR_BUFFER_CONTINGENCY         13300  (13300)
+ 11-0000012A  I*1   DR_FILL                           2  (2)
+ 11-0000012C  I*1   DR_MINFR                      12500  (12500)
+ 11-0000012C  I*1   DR_MINFR_3DP                  12500  (50, 0:249)
+ 11-0000012C  I*1   DR_MINFR_EPA                   6000  (24, 0:249)
+ 11-0000012C  I*1   DR_MINFR_KON                   1500  (6, 0:249)
+ 11-0000012C  I*1   DR_MINFR_MFI                   6250  (25, 0:249)
+ 11-00000030  I*1   DR_MINFR_QUAL                   250  (0:249)
+ 11-0000012C  I*1   DR_MINFR_SMS                  10500  (42, 0:249)
+ 11-0000012C  I*1   DR_MINFR_SWE                  11250  (45, 0:249)
+ 11-0000012C  I*1   DR_MINFR_TGR                   5250  (21, 0:249)
+ 11-0000012C  I*1   DR_MINFR_WAV                  11250  (45, 0:249)
+  9-000003CC  I*4   HDBTIME2                         24  (2, 3)
+ 10-00000CF0  I*4   HKLOCI                          300  (75)
+ 10-00000E1C  I*4   HKLOCJ                          300  (75)
+ 10-00000CE4  I*4   HKSET                            12  (3)
+  1-00000018  I*1   NULL_BUFFER                   46000  (46000)
+  8-0000000B  L*1   SPARFLAGS                         1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  9-00000000  HDB         HDBSTR             972  (3)
+ 10-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   7
+1.0                             Symbol Table                    25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+      **       197        **       198        **       9995
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                      Type  Name                      Type  Name                   
+                                                                                               
+        EPOCH_TO_ITIME                  WIND_DPU_OFF                    WIND_MOVE_DOWN_L1      
+
+WIND_PRINT_HK                                                   23-FEB-1995 12:31:08    DEC Fortran V6.2-508                Page   8
+1.0                             Symbol Table                    25-JAN-1995 16:51:46    WIND_PRINT_HK.FOR;4
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_PRINT_HK.LIS;6
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_PRINT_HK.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          2.64 seconds
+  Elapsed time:      4.54 seconds
+  Pagefaults:         570
+  I/O Count:           37

@@ -1,0 +1,389 @@
+
+                                                                21-FEB-1997 12:13        Linker A11-14                    Page    1
+                                             +------------------------+
+                                             ! Object Module Synopsis !
+                                             +------------------------+
+Module Name     Ident              Bytes      File                                Creation Date      Creator
+-----------     -----              -----      -----                               -------------      -------
+MAGNETO_SPECTRA                    741694 MAGNETO_SPECTRA.OBJ;6                21-FEB-1997 12:13  DEC Fortran V6.2-508
+DPU_EQ                                300 [WIND.SOFTWARE.STICS]DPU_EQ.OBJ;6    16-JAN-1997 01:12  DEC Fortran V6.2-508
+MMPQ_DPU_WSTICS                      1936 MMPQ_DPU_WSTICS.OBJ;15               16-JAN-1997 01:12  DEC Fortran V6.2-508
+DISSECT_STICS_PHA              
+                                      604 DISSECT_STICS_PHA.OBJ;7              16-JAN-1997 01:13  DEC Fortran V6.2-508
+ION_IDENTIFIER                       1752 ION_IDENTIFIER.OBJ;12                15-JAN-1997 13:38  DEC Fortran V6.2-508
+VOLTAGE_CHECK                        1528 VOLTAGE_CHECK.OBJ;12                 15-JAN-1997 13:38  DEC Fortran V6.2-508
+WSTICSEFF                            3988 [WIND.SOFTWARE.STICS]WSTICSEFF.OBJ;9 15-JAN-1997 13:38  DEC Fortran V6.2-508
+COMPARE_TIME                         1400 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:14  DEC Fortran V6.2-508
+WIND_DECOMPRESS                      1544 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_CLOSE   1.1               3189560 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_BASIC              
+                1.0               3189080 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_HDB 1.0               3189068 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_GET_STICS              
+                1.0               3189188 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_OPEN    1.7               3192751 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_OPEN_NEXT              
+                1.2               3192834 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WIND_L1_READ_SR 1.11              3211675 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  DEC Fortran V6.2-508
+WINDMSG         0                     891 SMS1:[WIND.LIB]L1LIB.OLB;24          21-APR-1995 16:15  Message A02-10
+CNVRT_T_YRMONDAY_TO_YEARDAY    
+                                      252 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+WIND_GET_FILENAME              
+                1.6                  2880 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:27  DEC Fortran V6.2-508
+CNVRT_YRMONDAY_TO_YEARDAY      
+                                      344 SMS1:[WIND.LIB]WIND_LIB.OLB;5        21-APR-1995 15:26  DEC Fortran V6.2-508
+SELECT_FILE     1.4                115888 SMS1:[WIND.LIB]WIND_LIB.OLB;5        16-JAN-1996 14:57  DEC Fortran V6.2-508
+TICHAR                                948 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TILOG                                1136 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:52  DEC Fortran V6.2-508
+TIXENT                               3376 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXDRC                                488 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXEIL                                908 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+TIXLRN                               2240 SMS1:[WIND.LIB]XTI_LIB.OLB;2         16-DEC-1994 12:53  DEC Fortran V6.2-508
+CHCCSP                                964 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:14  DEC Fortran V6.2-508
+VXDCL                                 288 SMS1:[GRPLIB]UMDCOMMON.OLB;3          9-DEC-1994 16:35  DEC Fortran V6.2-508
+                                            +--------------------------+
+                                            ! Program Section Synopsis !
+                                            +--------------------------+
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 000123BF 000023C0 (       9152.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD 
+                MAGNETO_SPECTRA 00010000 00010881 00000882 (       2178.) OCTA  4
+                DPU_EQ          00010890 000108D3 00000044 (         68.) OCTA  4
+                MMPQ_DPU_WSTICS 000108E0 000109E3 00000104 (        260.) OCTA  4
+                DISSECT_STICS_PHA                      
+                                000109F0 00010A5F 00000070 (        112.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.EXE;6                 21-FEB-1997 12:13        Linker A11-14                    Page    2
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$LINK$                          00010000 000123BF 000023C0 (       9152.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,NOVEC,  MOD   
+                ION_IDENTIFIER  00010A60 00010B73 00000114 (        276.) OCTA  4
+                VOLTAGE_CHECK   00010B80 00010BB7 00000038 (         56.) OCTA  4
+                WSTICSEFF       00010BC0 00010CF3 00000134 (        308.) OCTA  4
+                COMPARE_TIME    00010D00 00010E9F 000001A0 (        416.) OCTA  4
+                WIND_DECOMPRESS 00010EA0 00010F17 00000078 (        120.) OCTA  4
+                WIND_L1_CLOSE   00010F20 00010FAF 00000090 (        144.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00010FB0 00010FD7 00000028 (         40.) OCTA  4
+                WIND_L1_GET_HDB 00010FE0 00011007 00000028 (         40.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00011010 00011047 00000038 (         56.) OCTA  4
+                WIND_L1_OPEN    00011050 0001140E 000003BF (        959.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00011410 000115C5 000001B6 (        438.) OCTA  4
+                WIND_L1_READ_SR 000115D0 00011762 00000193 (        403.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                00011770 000117A7 00000038 (         56.) OCTA  4
+                WIND_GET_FILENAME                      
+                                000117B0 000119AF 00000200 (        512.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                000119B0 000119CF 00000020 (         32.) OCTA  4
+                SELECT_FILE     000119D0 00011C9F 000002D0 (        720.) OCTA  4
+                TICHAR          00011CA0 00011D33 00000094 (        148.) OCTA  4
+                TILOG           00011D40 00011E3F 00000100 (        256.) OCTA  4
+                TIXENT          00011E40 00012027 000001E8 (        488.) OCTA  4
+                TIXDRC          00012030 000120A7 00000078 (        120.) OCTA  4
+                TIXEIL          000120B0 0001213F 00000090 (        144.) OCTA  4
+                TIXLRN          00012140 000122CB 0000018C (        396.) OCTA  4
+                CHCCSP          000122D0 00012377 000000A8 (        168.) OCTA  4
+                VXDCL           00012380 000123BF 00000040 (         64.) OCTA  4
+$DATA$                          00020000 000205BF 000005C0 (       1472.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                MAGNETO_SPECTRA 00020000 000203FF 00000400 (       1024.) OCTA  4
+                DPU_EQ          00020400 00020407 00000008 (          8.) OCTA  4
+                WSTICSEFF       00020410 000204DF 000000D0 (        208.) OCTA  4
+                WIND_L1_OPEN    000204E0 000204E3 00000004 (          4.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000204F0 0002054F 00000060 (         96.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00020550 00020553 00000004 (          4.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                00020560 000205BF 00000060 (         96.) OCTA  4
+$IODATA$                        000205C0 00021B1F 00001560 (       5472.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                MAGNETO_SPECTRA 000205C0 000214F3 00000F34 (       3892.) OCTA  4
+                WSTICSEFF       00021500 00021523 00000024 (         36.) OCTA  4
+                WIND_L1_CLOSE   00021530 00021577 00000048 (         72.) OCTA  4
+                WIND_L1_OPEN    00021580 000215D3 00000054 (         84.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000215E0 00021607 00000028 (         40.) OCTA  4
+                WIND_L1_READ_SR 00021610 0002162B 0000001C (         28.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00021630 0002165F 00000030 (         48.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.EXE;6                 21-FEB-1997 12:13        Linker A11-14                    Page    3
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$IODATA$                        000205C0 00021B1F 00001560 (       5472.) OCTA  4 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,  MOD   
+                SELECT_FILE     00021660 00021697 00000038 (         56.) OCTA  4
+                TICHAR          000216A0 000216F7 00000058 (         88.) OCTA  4
+                TILOG           00021700 0002173B 0000003C (         60.) OCTA  4
+                TIXENT          00021740 000219B3 00000274 (        628.) OCTA  4
+                TIXDRC          000219C0 000219DB 0000001C (         28.) OCTA  4
+                TIXEIL          000219E0 00021A07 00000028 (         40.) OCTA  4
+                TIXLRN          00021A10 00021B1B 0000010C (        268.) OCTA  4
+L1INFO2                         00021B20 00024E11 000032F2 (      13042.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                WIND_L1_CLOSE   00021B20 00024E11 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00021B20 00024E11 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_HDB 00021B20 00024E11 000032F2 (      13042.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00021B20 00024E11 000032F2 (      13042.) OCTA  4
+                WIND_L1_OPEN    00021B20 00024E11 000032F2 (      13042.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00021B20 00024E11 000032F2 (      13042.) OCTA  4
+                WIND_L1_READ_SR 00021B20 00024E11 000032F2 (      13042.) OCTA  4
+L1_HEADERS                      00024E20 000250A3 00000284 (        644.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,  MOD 
+                MAGNETO_SPECTRA 00024E20 000250A3 00000284 (        644.) OCTA  4
+                WIND_L1_CLOSE   00024E20 000250A3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00024E20 000250A3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_HDB 00024E20 000250A3 00000284 (        644.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00024E20 000250A3 00000284 (        644.) OCTA  4
+                WIND_L1_OPEN    00024E20 000250A3 00000284 (        644.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00024E20 000250A3 00000284 (        644.) OCTA  4
+                WIND_L1_READ_SR 00024E20 000250A3 00000284 (        644.) OCTA  4
+$CODE$                          00030000 0003F7BF 0000F7C0 (      63424.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD 
+                MAGNETO_SPECTRA 00030000 00036C2F 00006C30 (      27696.) OCTA  4
+                DPU_EQ          00036C30 00036D0F 000000E0 (        224.) OCTA  4
+                MMPQ_DPU_WSTICS 00036D10 0003735B 0000064C (       1612.) OCTA  4
+                DISSECT_STICS_PHA                      
+                                00037360 0003754B 000001EC (        492.) OCTA  4
+                ION_IDENTIFIER  00037550 00037B13 000005C4 (       1476.) OCTA  4
+                VOLTAGE_CHECK   00037B20 00037D0F 000001F0 (        496.) OCTA  4
+                WSTICSEFF       00037D10 00038A0B 00000CFC (       3324.) OCTA  4
+                COMPARE_TIME    00038A10 00038DCB 000003BC (        956.) OCTA  4
+                WIND_DECOMPRESS 00038DD0 00039357 00000588 (       1416.) OCTA  4
+                WIND_L1_CLOSE   00039360 000394F7 00000198 (        408.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00039500 0003957B 0000007C (        124.) OCTA  4
+                WIND_L1_GET_HDB 00039580 000395EF 00000070 (        112.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                000395F0 000396C7 000000D8 (        216.) OCTA  4
+                WIND_L1_OPEN    000396D0 0003A19B 00000ACC (       2764.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                0003A1A0 0003AD5F 00000BC0 (       3008.) OCTA  4
+                WIND_L1_READ_SR 0003AD60 0003CBA7 00001E48 (       7752.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.EXE;6                 21-FEB-1997 12:13        Linker A11-14                    Page    4
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+$CODE$                          00030000 0003F7BF 0000F7C0 (      63424.) OCTA  4   PIC,CON,REL,LCL,  SHR,  EXE,NOWRT,NOVEC,  MOD   
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                0003CBB0 0003CC6F 000000C0 (        192.) OCTA  4
+                WIND_GET_FILENAME                      
+                                0003CC70 0003D433 000007C4 (       1988.) OCTA  4
+                CNVRT_YRMONDAY_TO_YEARDAY              
+                                0003D440 0003D517 000000D8 (        216.) OCTA  4
+                SELECT_FILE     0003D520 0003E017 00000AF8 (       2808.) OCTA  4
+                TICHAR          0003E020 0003E20B 000001EC (        492.) OCTA  4
+                TILOG           0003E210 0003E46B 0000025C (        604.) OCTA  4
+                TIXENT          0003E470 0003EC17 000007A8 (       1960.) OCTA  4
+                TIXDRC          0003EC20 0003EC8F 00000070 (        112.) OCTA  4
+                TIXEIL          0003EC90 0003EE7F 000001F0 (        496.) OCTA  4
+                TIXLRN          0003EE80 0003F3BB 0000053C (       1340.) OCTA  4
+                CHCCSP          0003F3C0 0003F6D3 00000314 (        788.) OCTA  4
+                VXDCL           0003F6E0 0003F7BF 000000E0 (        224.) OCTA  4
+MSG$AAAAAAAAAAA                 00040000 0004000F 00000010 (         16.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040000 0004000F 00000010 (         16.) LONG  2
+MSG$AAAAAAAAAAB                 00040010 00040013 00000004 (          4.) LONG  2   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040010 00040013 00000004 (          4.) LONG  2
+MSG$AAAAAAAAAAC                 00040014 00040017 00000004 (          4.) LONG  2   PIC,OVR,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040014 00040017 00000004 (          4.) LONG  2
+MSG$SECTION                     00040018 0004037A 00000363 (        867.) BYTE  0   PIC,CON,REL,LCL,NOSHR,NOEXE,NOWRT,  VEC,  MOD 
+                WINDMSG         00040018 0004037A 00000363 (        867.) BYTE  0
+$BSS$                           00050000 0011BEEF 000CBEF0 (     835312.) 2 **  5 NOPIC,CON,REL,LCL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                MAGNETO_SPECTRA 00050000 000FC6D3 000AC6D4 (     706260.) 2 **  5
+                MMPQ_DPU_WSTICS 000FC6E0 000FC71F 00000040 (         64.) OCTA  4
+                VOLTAGE_CHECK   000FC720 000FCAEF 000003D0 (        976.) 2 **  5
+                WSTICSEFF       000FCAF0 000FCB5F 00000070 (        112.) OCTA  4
+                COMPARE_TIME    000FCB60 000FCB7B 0000001C (         28.) OCTA  4
+                WIND_DECOMPRESS 000FCB80 000FCB87 00000008 (          8.) OCTA  4
+                WIND_L1_CLOSE   000FCB90 000FCBA3 00000014 (         20.) OCTA  4
+                WIND_L1_OPEN    000FCBB0 000FCBC7 00000018 (         24.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                000FCBD0 000FCD1F 00000150 (        336.) OCTA  4
+                WIND_L1_READ_SR 000FCD20 0010060F 000038F0 (      14576.) OCTA  4
+                CNVRT_T_YRMONDAY_TO_YEARDAY            
+                                00100610 00100613 00000004 (          4.) OCTA  4
+                WIND_GET_FILENAME                      
+                                00100620 00100767 00000148 (        328.) OCTA  4
+                SELECT_FILE     00100770 0011BE1F 0001B6B0 (     112304.) OCTA  4
+                TICHAR          0011BE20 0011BE27 00000008 (          8.) OCTA  4
+                TILOG           0011BE30 0011BE33 00000004 (          4.) OCTA  4
+                TIXENT          0011BE40 0011BE97 00000058 (         88.) OCTA  4
+                TIXDRC          0011BEA0 0011BEAF 00000010 (         16.) OCTA  4
+                TIXEIL          0011BEB0 0011BEBF 00000010 (         16.) OCTA  4
+                TIXLRN          0011BEC0 0011BED7 00000018 (         24.) OCTA  4
+                CHCCSP          0011BEE0 0011BEE7 00000008 (          8.) OCTA  4
+L1BUF                           0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4
+
+SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.EXE;6                 21-FEB-1997 12:13        Linker A11-14                    Page    5
+Psect Name      Module Name       Base     End           Length            Align                 Attributes
+----------      -----------       ----     ---           ------            -----                 ----------
+L1BUF                           0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD   
+                WIND_L1_GET_HDB 0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4
+                WIND_L1_OPEN    0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4
+                WIND_L1_READ_SR 0011BEF0 0012BEED 0000FFFE (      65534.) OCTA  4
+L1INFO                          0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_HDB 0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_OPEN    0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4
+                WIND_L1_READ_SR 0012BEF0 0041322F 002E7340 (    3044160.) OCTA  4
+NULLBUF                         00413230 0042322F 00010000 (      65536.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                WIND_L1_CLOSE   00413230 0042322F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_BASIC                      
+                                00413230 0042322F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_HDB 00413230 0042322F 00010000 (      65536.) OCTA  4
+                WIND_L1_GET_STICS                      
+                                00413230 0042322F 00010000 (      65536.) OCTA  4
+                WIND_L1_OPEN    00413230 0042322F 00010000 (      65536.) OCTA  4
+                WIND_L1_OPEN_NEXT                      
+                                00413230 0042322F 00010000 (      65536.) OCTA  4
+                WIND_L1_READ_SR 00413230 0042322F 00010000 (      65536.) OCTA  4
+TICOMC                          00423230 004232EB 000000BC (        188.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          00423230 004232EB 000000BC (        188.) OCTA  4
+                TILOG           00423230 004232EB 000000BC (        188.) OCTA  4
+                TIXENT          00423230 004232EB 000000BC (        188.) OCTA  4
+                TIXDRC          00423230 004232EB 000000BC (        188.) OCTA  4
+                TIXEIL          00423230 004232EB 000000BC (        188.) OCTA  4
+                TIXLRN          00423230 004232EB 000000BC (        188.) OCTA  4
+TICOMN                          004232F0 00423307 00000018 (         24.) OCTA  4 NOPIC,OVR,REL,GBL,NOSHR,NOEXE,  WRT,NOVEC,NOMOD 
+                TICHAR          004232F0 00423307 00000018 (         24.) OCTA  4
+                TILOG           004232F0 00423307 00000018 (         24.) OCTA  4
+                TIXENT          004232F0 00423307 00000018 (         24.) OCTA  4
+                TIXDRC          004232F0 00423307 00000018 (         24.) OCTA  4
+                TIXEIL          004232F0 00423307 00000018 (         24.) OCTA  4
+                TIXLRN          004232F0 00423307 00000018 (         24.) OCTA  4
+                                                +-----------------+
+                                                ! Symbols By Name !
+                                                +-----------------+
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+CHCCSP                          00012368-R                                              CHLAST                          00012358-R  
+
+SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.EXE;6                 21-FEB-1997 12:13        Linker A11-14                    Page    6
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+CHLCUC                          00012308-R                                              WIND_COMPARE_TIME_NE            00010D40-R  
+CHPRFX                          000122D0-R                                              WIND_COMPRESS                   00010EA0-R  
+CNVRT_T_YRMONDAY_TO_YEARDAY     00011770-R                                              WIND_DECOMPRESS                 00010EF8-R  
+CNVRT_YRMONDAY_TO_YEARDAY       000119B0-R                                              WIND_GET_FILENAME               00011888-R  
+COMPARE_TIME                    00010D00-R                                              WIND_L1_CLOSE                   00010F20-R  
+COMPARE_TIME_EQ                 00010DE0-R                                              WIND_L1_GET_BASIC               00010FB0-R  
+COMPARE_TIME_GE                 00010E60-R                                              WIND_L1_GET_HDB                 00010FE0-R  
+COMPARE_TIME_GT                 00010E20-R                                              WIND_L1_GET_STICS               00011010-R  
+COMPARE_TIME_LE                 00010DA0-R                                              WIND_L1_OPEN                    00011240-R  
+COMPARE_TIME_LT                 00010D60-R                                              WIND_L1_OPEN_NEXT               000114C0-R  
+COMPARE_TIME_NE                 00010D20-R                                              WIND_L1_READ_SR                 00011688-R  
+DISSECT_STICS_PHA               000109F0-R                                              WSTICSEFF                       00010C40-R  
+DPU_DEFAULT_COEFF               00010138-R                                              
+DPU_EQ                          00010890-R                                              
+ION_IDENTIFIER                  00010AE0-R                                              
+MAGNETO_SPECTRA                 00010548-R                                              
+MMPQ_DPU_WSTICS                 00010948-R                                              
+OMR_EFF                         00010038-R                                              
+SELECT_FILE                     00011B98-R                                              
+TELESCOPE_ID                    000100D8-R                                              
+TICHAR                          00011CA0-R                                              
+TILOG                           00011D98-R                                              
+TIXDRC                          00012030-R                                              
+TIXEIL                          000120B0-R                                              
+TIXENT                          00011F38-R                                              
+TIXLRN                          000121F0-R                                              
+USER_NMNQ_COEFF                 00010288-R                                              
+USER_NMNQ_PHA_BINNED            00010090-R                                              
+USER_REQUESTS_DATA_TYPE         00010218-R                                              
+USER_REQUESTS_DIRECTION         00010190-R                                              
+VOLTAGE_CHECK                   00010B80-R                                              
+VXDCL                           00012380-R                                              
+WIND$_BADFILEHDR                081781C2                                                
+WIND$_BADRECLEN                 081780F8                                                
+WIND$_EMPTY                     08178100                                                
+WIND$_FACILITY                  00000817                                                
+WIND$_FILEFMT                   081780F0                                                
+WIND$_FILNAMFMT                 081781BA                                                
+WIND$_FILNOTOPN                 081781B2                                                
+WIND$_HDRFMT                    08178053                                                
+WIND$_INUSE                     0817819A                                                
+WIND$_INVHDRVER                 081781AA                                                
+WIND$_NONEXTFILE                081781CA                                                
+WIND$_OUTRANGE                  081781A2                                                
+WIND$_SUCCESS                   08178001                                                
+WIND$_TOOMANY                   08178192                                                
+WIND_COMPARE_TIME               00010D10-R                                              
+WIND_COMPARE_TIME_EQ            00010E00-R                                              
+WIND_COMPARE_TIME_GE            00010E80-R                                              
+WIND_COMPARE_TIME_GT            00010E40-R                                              
+WIND_COMPARE_TIME_LE            00010DC0-R                                              
+WIND_COMPARE_TIME_LT            00010D80-R                                              
+
+SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.EXE;6                 21-FEB-1997 12:13        Linker A11-14                    Page    7
+Symbol                          Value       Symbol                          Value       Symbol                          Value       
+------                          -----       ------                          -----       ------                          -----       
+	  Key for special characters above:
+		+--------------------+
+		! *  - Undefined     !
+		! A  - Alias Name    !
+		! I  - Internal Name !
+		! U  - Universal     !
+		! R  - Relocatable   !
+		! X  - External      !
+		! WK - Weak          !
+		+--------------------+
+
+SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.EXE;6                 21-FEB-1997 12:13        Linker A11-14                    Page    8
+                                                 +----------------+
+                                                 ! Image Synopsis !
+                                                 +----------------+
+Virtual memory allocated:                         00010000 0043FFFF 00430000 (4390912. bytes, 8576. pages)
+Stack size:                                             20. pages
+Image header virtual block limits:                       1.        2. (    2. blocks)
+Image binary virtual block limits:                       3.      190. (  188. blocks)
+Image name and identification:                    MAGNETO_SPECTRA  
+Number of files:                                        18.
+Number of modules:                                      35.
+Number of program sections:                             24.
+Number of global symbols:                             1500.
+Number of image sections:                               33.
+User transfer address:                            00010548
+Debugger transfer address:                        00000340
+Number of code references to shareable images:          45.
+Image type:                                       EXECUTABLE.
+Map format:                                       DEFAULT in file SMS1:[WIND.SOFTWARE.STICS]MAGNETO_SPECTRA.MAP;6
+Estimated map length:                             132. blocks
+                                              +---------------------+
+                                              ! Link Run Statistics !
+                                              +---------------------+
+Performance Indicators                            Page Faults	CPU Time	Elapsed Time
+----------------------                            -----------	--------	------------
+    Command processing:                                    40	00:00:00.13	00:00:00.15
+    Pass 1:                                                56	00:00:00.38	00:00:00.91
+    Allocation/Relocation:                                  7	00:00:00.03	00:00:00.08
+    Pass 2:                                                24	00:00:00.28	00:00:00.99
+    Map data after object module synopsis:                  4	00:00:00.02	00:00:00.05
+    Symbol table output:                                    0	00:00:00.00	00:00:00.03
+Total run values:                                         131	00:00:00.84	00:00:02.24
+Using a working set limited to 6368 pages and 2063 pages of data storage (excluding image)
+Total number object records read (both passes):   1140
+    of which 327 were in libraries and 210 were DEBUG data records containing 32507 bytes
+24515 bytes of DEBUG data were written,starting at VBN 191 with 48 blocks allocated
+Number of modules extracted explicitly             = 0
+    with 23 extracted to resolve undefined symbols
+184 library searches were for symbols not in the library searched
+A total of 0 global symbol table records was written
+LINK/MAP MAGNETO_SPECTRA,DPU_EQ,MMPQ_DPU_WSTICS,DISSECT_STICS_PHA,ION_IDENTIFIER,VOLTAGE_CHECK,WSTICSEFF,LIB_DIR:L1LIB/LIB,LIB_DIR:W
+IND_LIB/LIB,LIB_DIR:XTI_LIB/LIB

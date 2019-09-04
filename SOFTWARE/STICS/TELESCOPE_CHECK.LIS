@@ -1,0 +1,175 @@
+TELESCOPE_CHECK                                                  1-APR-1997 12:55:22    DEC Fortran V6.2-508                Page   1
+                                                                29-JUL-1996 16:15:16    [WIND.SOFTWARE.STICS]TELESCOPE_CHECK.FOR;1
+
+	      1 C
+	      2        SUBROUTINE TELESCOPE_CHECK (TIME_OF_FLIGHT,ENERGY,
+	      3      .                PSTART,STOP_ID,SSD_ID, CHECK_TELE)
+	      4 
+	      5 
+	      6        INTEGER*4 ENERGY,
+	      7      .           TIME_OF_FLIGHT,
+	      8      .           PSTART,
+	      9      .           STOP_ID,
+	     10      .           SSD_ID,
+	     11      .           CHECK_TELE
+	     12 
+	     13 
+	     14                  CHECK_TELE = 0		!initialize
+	     15 
+	     16 C                ssd checks
+	     17 	  	 IF (SSD_ID.EQ.0 .AND. ENERGY.NE.0) CHECK_TELE = 1
+	     18 	         IF (SSD_ID.EQ.1 
+	     19      .               .AND.
+	     20      .                    (PSTART.NE.1 .AND. PSTART.NE.2 .AND.
+	     21      .                     PSTART.NE.7 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     22 	         IF (SSD_ID.EQ.2 
+	     23      .               .AND.
+	     24      .                (PSTART.NE.3 .AND. PSTART.NE.4 .AND.
+	     25      .                 PSTART.NE.8 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     26 	         IF (SSD_ID.EQ.3 
+	     27      .                 .AND.
+	     28      .                (PSTART.NE.5 .AND. PSTART.NE.6 .AND.
+	     29      .                 PSTART.NE.9 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     30 	         IF (SSD_ID.EQ.1 
+	     31      .               .AND.
+	     32      .                (STOP_ID.NE.1 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     33 	         IF (SSD_ID.EQ.2 
+	     34      .               .AND.
+	     35      .                (STOP_ID.NE.2 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     36 	         IF (SSD_ID.EQ.3 
+	     37      .               .AND.
+	     38      .                (STOP_ID.NE.3 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     39 
+	     40 C                stop checks
+	     41 	  	 IF (STOP_ID.EQ.0 .AND. TIME_OF_FLIGHT.NE.0) CHECK_TELE = 1
+	     42 	         IF (STOP_ID.EQ.1 
+	     43      .               .AND.
+	     44      .                    (PSTART.NE.1 .AND. PSTART.NE.2 .AND.
+	     45      .                     PSTART.NE.7 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     46 	         IF (STOP_ID.EQ.2 
+	     47      .               .AND.
+	     48      .                (PSTART.NE.3 .AND. PSTART.NE.4 .AND.
+	     49      .                 PSTART.NE.8 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     50 	         IF (STOP_ID.EQ.3 
+	     51      .                 .AND.
+	     52      .                (PSTART.NE.5 .AND. PSTART.NE.6 .AND.
+	     53      .                 PSTART.NE.9 .AND. PSTART.NE.0) ) CHECK_TELE = 1
+	     54 	         IF (STOP_ID.EQ.1 
+	     55      .               .AND.
+	     56      .                (SSD_ID.NE.1 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     57 	         IF (STOP_ID.EQ.2 
+
+TELESCOPE_CHECK                                                  1-APR-1997 12:55:22    DEC Fortran V6.2-508                Page   2
+                                                                29-JUL-1996 16:15:16    [WIND.SOFTWARE.STICS]TELESCOPE_CHECK.FOR;1
+
+	     58      .               .AND.
+	     59      .                (SSD_ID.NE.2 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     60 	         IF (STOP_ID.EQ.3 
+	     61      .               .AND.
+	     62      .                (SSD_ID.NE.3 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     63 
+	     64 
+	     65 C                start checks
+	     66 	  	 IF (PSTART.EQ.0 .AND. TIME_OF_FLIGHT.NE.0) CHECK_TELE = 1
+	     67 	         IF ( (PSTART.EQ.1 .OR. PSTART.EQ.2  .OR. PSTART.EQ.7)
+	     68      .               .AND.
+	     69      .                (STOP_ID.NE.1 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     70 	         IF ( (PSTART.EQ.3 .OR. PSTART.EQ.4  .OR. PSTART.EQ.8)
+	     71      .               .AND.
+	     72      .                (STOP_ID.NE.2 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     73 	         IF ( (PSTART.EQ.5 .OR. PSTART.EQ.6  .OR. PSTART.EQ.9)
+	     74      .               .AND.
+	     75      .                (STOP_ID.NE.3 .AND. STOP_ID.NE.0) ) CHECK_TELE = 1
+	     76 
+	     77 	         IF ( (PSTART.EQ.1 .OR. PSTART.EQ.2  .OR. PSTART.EQ.7)
+	     78      .               .AND.
+	     79      .                (SSD_ID.NE.1 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     80 	         IF ( (PSTART.EQ.3 .OR. PSTART.EQ.4  .OR. PSTART.EQ.8)
+	     81      .               .AND.
+	     82      .                (SSD_ID.NE.2 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     83 	         IF ( (PSTART.EQ.5 .OR. PSTART.EQ.6  .OR. PSTART.EQ.9)
+	     84      .               .AND.
+	     85      .                (SSD_ID.NE.3 .AND. SSD_ID.NE.0) ) CHECK_TELE = 1
+	     86 
+	     87 
+	     88        RETURN
+	     89        END
+
+TELESCOPE_CHECK                                                  1-APR-1997 12:55:22    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    29-JUL-1996 16:15:16    [WIND.SOFTWARE.STICS]TELESCOPE_CHECK.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                 908   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  16 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  924
+
+
+ENTRY POINTS
+
+    Address   Type  Name           
+                                   
+  1-00000000        TELESCOPE_CHECK
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name          
+                                                                     
+      **      I*4   CHECK_TELE           **      I*4   SSD_ID        
+      **      I*4   ENERGY               **      I*4   STOP_ID       
+      **      I*4   PSTART               **      I*4   TIME_OF_FLIGHT
+
+TELESCOPE_CHECK                                                  1-APR-1997 12:55:22    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    29-JUL-1996 16:15:16    [WIND.SOFTWARE.STICS]TELESCOPE_CHECK.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_CHECK.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]TELESCOPE_CHECK.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.65 seconds
+  Elapsed time:      2.09 seconds
+  Pagefaults:         244
+  I/O Count:           11

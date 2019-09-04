@@ -1,0 +1,12 @@
+                           WIND SMS detail report
+ 
+Level 1 file: SMSDISK2:[WIND.NRT]WI_L1_SMS_19951202_V01.1834;1
+ 
+Below is a list of parameters which exceeded their limits.
+                                                                   Sci
+Parameter name                               Value     Limit Units Rec   Time
+---------------------------------------- --------- --------- ----  --- --------
+STICS MCPPS 28 V Current                     35.00     34.50 Amps   15 19:16:29
+Telemetry Rate                            11130.00   5565.00 b/s    42 20:39:04
+Reset Counter                                 3.00      1.00 Numb   42 20:39:04
+Latchup Counter - Main                        3.00      1.00 Numb   42 20:39:04

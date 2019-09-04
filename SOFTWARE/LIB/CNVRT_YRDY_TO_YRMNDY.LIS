@@ -1,0 +1,212 @@
+CNVRT_YRDY_TO_YRMNDY                                            21-APR-1995 15:26:49    DEC Fortran V6.2-508                Page   1
+                                                                 9-DEC-1994 18:37:13    CNVRT_YRDY_TO_YRMNDY.FOR;1
+
+	      1       SUBROUTINE CNVRT_YRDY_TO_YRMNDY( YEAR, DAY_OF_YEAR, MONTH, DAY )
+	      2 C+
+	      3 C	This version:	5-APR-1994
+	      4 C 
+	      5 C CNVRT_YRDY_TO_YRMNDY - CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, DAY 
+	      6 C 
+	      7 C PURPOSE: UTILITY TO CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, AND DAY 
+	      8 C 
+	      9 C UNIT TYPE: SUBROUTINE
+	     10 C 
+	     11 C USAGE:
+	     12 C    CALL CNVRT_YRDY_TO_YRMNDY( YEAR,
+	     13 C				DAY_OF_YEAR,
+	     14 C				MONTH,
+	     15 C				DAY )
+	     16 C 
+	     17 C ARGUMENT LIST:
+	     18 C 
+	     19 C  NAME	                 TYPE	  USE	 DESCRIPTION
+	     20 C  ----                  ----     ---    -----------
+	     21 C  YEAR                  I*4      I/O    YEAR, e.g., 1992
+	     22 C  DAY_OR_YEAR           I*4      I      DAY OF YEAR, e.g., 256
+	     23 C  MONTH                 I*4      O      MONTH, e.g., 9
+	     24 C  DAY                   I*4      O      DAY, e.g., 12   
+	     25 C 
+	     26 C ABNORMAL TERMINATION CONDITIONS, ERROR MESSAGES: NONE
+	     27 C 
+	     28 C ASSUMPTIONS, CONSTRAINTS, RESTRICTIONS: NONE
+	     29 C 
+	     30 C DEVELOPMENT HISTORY:
+	     31 C 
+	     32 C  Author       Change ID   Release   Date      Description of Change 
+	     33 C  ------       ---------   -------   ----      --------------------- 
+	     34 C  M. WONG      N/A         B2R1      6/3/91    ORIGINAL IMPLEMENTATION
+	     35 C  H. BROER			      5-APR-94	Correct leapyear calculation
+	     36 C	
+	     37 C NOTES: N/A
+	     38 C
+	     39 C-
+	     40 C
+	     41 C PDL:
+	     42 C
+	     43 C SET up month table (MONTAB) representing beginning day of each month of 
+	     44 C  non-leap year
+	     45 C IF YEAR is not leap year and DAY_OF_YEAR is greater than 59 THEN
+	     46 C    INCREMENT DAY_OF_YEAR by 1
+	     47 C ENDIF
+	     48 C SET up month counter to 1
+	     49 C DOWHILE month counter is less than 12 and DAY_OF_YEAR is greater than
+	     50 C  the beginning day of next month
+	     51 C    INCREMENT month counter by 1
+	     52 C ENDDO
+	     53 C SET month counter to MONTH
+	     54 C SET DAY_OF_YEAR decremented by the beginning day of this month to DAY
+	     55 C RETURN
+	     56 C
+
+CNVRT_YRDY_TO_YRMNDY                                            21-APR-1995 15:26:49    DEC Fortran V6.2-508                Page   2
+                                                                 9-DEC-1994 18:37:13    CNVRT_YRDY_TO_YRMNDY.FOR;1
+
+	     58 C
+	     59 CDEC$ IDENT 'VER 1.02'
+	     60 C
+	     61       IMPLICIT NONE
+	     62 C
+	     63 C-- ARGUMENT DECLARATIONS
+	     64 C
+	     65       INTEGER*4		YEAR,
+	     66      +			DAY_OF_YEAR,
+	     67      +			MONTH,
+	     68      +			DAY,
+	     69 C
+	     70 C-- LOCAL VARIABLE DECLARATIONS
+	     71 C
+	     72      +			IDAY,
+	     73      +			J,
+	     74      +			MONTAB(12) /	  0,	 31,	 60,
+	     75      .					 91,	121,	152,
+	     76      .					182,	213,	244,
+	     77      .					274,	305,	335 /
+	     78 
+	     79       LOGICAL*1		LEAPYR
+	     80 C
+	     81 C---------------------------------------BEGIN EXECUTABLE CODE UTL_YRDY_YRMNDY---
+	     82 C
+	     83       IDAY	= DAY_OF_YEAR
+	     84 C
+	     85 C-- CONVERT YEAR, DAY OF YEAR TO YEAR, MONTH, DAY
+	     86 C
+	     87       LEAPYR	= .FALSE.
+	     88 
+	     89       IF( MOD( YEAR, 4 ) .EQ. 0 )   THEN
+	     90           IF( MOD( YEAR, 100 ) .NE. 0 )   THEN
+	     91               LEAPYR	= .TRUE.
+	     92           ELSE
+	     93               IF( MOD( YEAR, 400 ) .EQ. 0 )   LEAPYR	= .TRUE.
+	     94           ENDIF
+	     95       ENDIF
+	     96 
+	     97       IF( (.NOT.LEAPYR) .AND. DAY_OF_YEAR .GT. 59 )   THEN
+	     98           IDAY	= IDAY + 1
+	     99       ENDIF
+	    100 C
+	    101       J = 0
+	    102    10 CONTINUE
+	    103       J = J + 1
+	    104       IF ((J.LT.12) .AND. (IDAY.GT.MONTAB(J+1))) GO TO 10
+	    105 C
+	    106       MONTH  = J
+	    107       DAY    = IDAY - MONTAB(J)
+	    108 C
+	    109 C-- EXIT
+	    110 C
+	    111       RETURN
+	    112       END                      
+
+CNVRT_YRDY_TO_YRMNDY                                            21-APR-1995 15:26:49    DEC Fortran V6.2-508                Page   3
+VER 1.02                        Symbol Table                     9-DEC-1994 18:37:13    CNVRT_YRDY_TO_YRMNDY.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  48 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 268   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  32 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  348
+
+
+ENTRY POINTS
+
+    Address   Type  Name                
+                                        
+  2-00000000        CNVRT_YRDY_TO_YRMNDY
+
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                                                               
+      **      I*4   DAY         REG-00000000  I*4   IDAY        REG-00000001  L*1   LEAPYR            **      I*4   YEAR       
+      **      I*4   DAY_OF_YEAR REG-00000016  I*4   J                 **      I*4   MONTH                                      
+
+
+ARRAYS
+
+     Address  Type  Name          Bytes  Dimensions
+
+  1-00000000  I*4   MONTAB           48  (12)
+
+
+
+LABELS
+
+    Address   Label
+                   
+  2-000000B0   10  
+
+CNVRT_YRDY_TO_YRMNDY                                            21-APR-1995 15:26:49    DEC Fortran V6.2-508                Page   4
+VER 1.02                        Symbol Table                     9-DEC-1994 18:37:13    CNVRT_YRDY_TO_YRMNDY.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRDY_TO_YRMNDY.LIS;7
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRDY_TO_YRMNDY.OBJ;7
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.22 seconds
+  Elapsed time:      1.96 seconds
+  Pagefaults:         145
+  I/O Count:            9

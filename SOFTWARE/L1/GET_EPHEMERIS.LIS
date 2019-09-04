@@ -1,0 +1,390 @@
+GET_EPHEMERIS                                                    2-JUN-1995 20:11:59    DEC Fortran V6.2-508                Page   1
+                                                                 1-JUN-1995 12:37:40    SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.FOR;49
+
+	      1         SUBROUTINE GET_EPHEMERIS(OR_NAME,AT_NAME,STATUS)
+	      2 C
+	      3 C Purpose:
+	      4 C
+	      5 C This routine gets ORbit and ATtitude data from a CDF file, which originally
+	      6 C came from a CDROM.  The data are stored in memory arrays along with their
+	      7 C corresponding Epoch times and are eventually written into the headers of the
+	      8 C L1 file that is being generated.  It utilizes the Common Data Format (CDF)
+	      9 C utility routines to get the data.
+	     10 C
+	     11 C Created:   4/5/95   John Paquette
+	     12 C
+	     13 C This version:   1.2    1-JUN-1995
+	     14 C
+	     15 C Revision History:
+	     16 C   6-APR-1995	L Bleau		added CHECK_STATUS routine, changed comments
+	     17 C  10-APR-1995	J PAQUETTE	get all data from ORbit and ATtitude files
+	     18 C   1-JUN-1995  L Bleau		change to allow only one type of data to be
+	     19 C				accessed by passing blank filename
+	     20 C
+	     21 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+	     22 CDEC$	IDENT '1.2'
+	     23         IMPLICIT NONE
+	     24         INCLUDE 'INC_DIR:L1FMT.INC'
+	    156         INCLUDE 'INC_DIR:L1_HDR_INFO.INC'
+	    190         INCLUDE 'CDF$INC:CDF.INC'
+	   1356         INTEGER*4 STATUS,NUM_DIMS,DIM_SIZES(CDF_MAX_DIMS),ENCODING,MAJORITY
+	   1357 	INTEGER*4 REC_NUM,MAX_REC,NUM_VARS,NUM_ATTRS,OR_ID,AT_ID
+	   1358         INTEGER*4 INDICES(1)/1/,VAR_NUM_EPOCH,VAR_NUM_GCI_POS,VAR_NUM_GCI_VEL,VAR_NUM_GSE_POS,VAR_NUM_GSE_VEL,
+	   1359      &            VAR_NUM_GSM_POS,VAR_NUM_GSM_VEL,VAR_NUM_GCI_R_ASC,VAR_NUM_GCI_DECL,VAR_NUM_GSE_R_ASC,
+	   1360      &            VAR_NUM_GSE_DECL,VAR_NUM_GSM_R_ASC,VAR_NUM_GSM_DECL,VAR_NUM_GCI_SUN_VECTOR,VAR_NUM_SPIN_RATE
+	   1361         CHARACTER OR_NAME*(*),AT_NAME*(*)
+	   1362 	LOGICAL GET_OR,GET_AT
+	   1363 C
+ C	   1364 D	type *,or_name
+ C	   1365 D	type *,at_name
+	   1366 	GET_OR = OR_NAME .NE. ' '
+	   1367 	GET_AT = AT_NAME .NE. ' '
+	   1368 	IF (.NOT. GET_OR .AND. .NOT. GET_AT) RETURN
+	   1369 C
+	   1370 C Open CDF ORbit file
+	   1371 C
+	   1372 	IF (GET_OR) THEN
+	   1373           CALL CDF_OPEN(OR_NAME,OR_ID,STATUS)
+	   1374           IF (STATUS .NE. CDF_OK) RETURN
+	   1375 	ENDIF
+	   1376 C
+	   1377 C Open CDF ATtitude file
+	   1378 C
+	   1379 	IF (GET_AT) THEN
+	   1380           CALL CDF_OPEN(AT_NAME,AT_ID,STATUS)
+	   1381           IF (STATUS .NE. CDF_OK) RETURN
+	   1382 	ENDIF
+	   1383 C
+	   1384 C Find number of record; assume same number in both files
+	   1385 C
+	   1386 	IF (GET_OR) THEN
+
+GET_EPHEMERIS                                                    2-JUN-1995 20:11:59    DEC Fortran V6.2-508                Page   2
+1.2                                                              1-JUN-1995 12:37:40    SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.FOR;49
+
+	   1387           CALL CDF_INQUIRE(OR_ID,NUM_DIMS,DIM_SIZES,ENCODING,MAJORITY,MAX_REC,NUM_VARS,NUM_ATTRS,STATUS)
+	   1388           IF (STATUS .NE. CDF_OK) RETURN
+	   1389 	ELSE
+	   1390           CALL CDF_INQUIRE(AT_ID,NUM_DIMS,DIM_SIZES,ENCODING,MAJORITY,MAX_REC,NUM_VARS,NUM_ATTRS,STATUS)
+	   1391           IF (STATUS .NE. CDF_OK) RETURN
+	   1392 	ENDIF
+	   1393 C
+	   1394 C Get variable number of data we wish to retrieve
+	   1395 C
+	   1396 	IF (GET_OR) THEN
+	   1397           VAR_NUM_EPOCH     = CDF_VAR_NUM(OR_ID,'Epoch')
+	   1398           VAR_NUM_GCI_POS   = CDF_VAR_NUM(OR_ID,'GCI_POS')
+	   1399           VAR_NUM_GCI_VEL   = CDF_VAR_NUM(OR_ID,'GCI_VEL')
+	   1400           VAR_NUM_GSE_POS   = CDF_VAR_NUM(OR_ID,'GSE_POS')
+	   1401           VAR_NUM_GSE_VEL   = CDF_VAR_NUM(OR_ID,'GSE_VEL')
+	   1402           VAR_NUM_GSM_POS   = CDF_VAR_NUM(OR_ID,'GSM_POS')
+	   1403           VAR_NUM_GSM_VEL   = CDF_VAR_NUM(OR_ID,'GSM_VEL')
+	   1404           VAR_NUM_GCI_SUN_VECTOR = CDF_VAR_NUM(OR_ID,'SUN_VECTOR')
+	   1405 	ENDIF
+	   1406 	IF (GET_AT) THEN
+	   1407           VAR_NUM_SPIN_RATE = CDF_VAR_NUM(AT_ID,'BODY_SPIN_RATE')
+	   1408           VAR_NUM_GCI_R_ASC = CDF_VAR_NUM(AT_ID,'GCI_R_ASCENSION')
+	   1409           VAR_NUM_GCI_DECL  = CDF_VAR_NUM(AT_ID,'GCI_DECLINATION')
+	   1410           VAR_NUM_GSE_R_ASC = CDF_VAR_NUM(AT_ID,'GSE_R_ASCENSION')
+	   1411           VAR_NUM_GSE_DECL  = CDF_VAR_NUM(AT_ID,'GSE_DECLINATION')
+	   1412           VAR_NUM_GSM_R_ASC = CDF_VAR_NUM(AT_ID,'GSM_R_ASCENSION')
+	   1413           VAR_NUM_GSM_DECL  = CDF_VAR_NUM(AT_ID,'GSM_DECLINATION')
+	   1414 	ENDIF
+	   1415 C
+	   1416 C Loop through both files, fetching the Epoch time, GCI,GSE,GSM position, velocity, and attitude
+	   1417 C information from each record and storing them in the arrays of structures in common block EPHDATA
+	   1418 C
+	   1419         DO 200 REC_NUM=1,MAX_REC
+	   1420 	  IF (GET_OR) THEN
+	   1421             INDICES(1) = 1
+	   1422             CALL CDF_VAR_GET(OR_ID,VAR_NUM_EPOCH,REC_NUM,INDICES,EPH_EPOCH(REC_NUM),STATUS)
+	   1423             IF (STATUS .NE. CDF_OK) RETURN
+	   1424 C
+	   1425             INDICES(1) = 1
+	   1426             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_POS,REC_NUM,INDICES,GCI_POS(REC_NUM).X,STATUS)
+	   1427             IF (STATUS .NE. CDF_OK) RETURN
+	   1428             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_VEL,REC_NUM,INDICES,GCI_VEL(REC_NUM).X,STATUS)
+	   1429             IF (STATUS .NE. CDF_OK) RETURN
+	   1430             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSE_POS,REC_NUM,INDICES,GSE_POS(REC_NUM).X,STATUS)
+	   1431             IF (STATUS .NE. CDF_OK) RETURN
+	   1432             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSE_VEL,REC_NUM,INDICES,GSE_VEL(REC_NUM).X,STATUS)
+	   1433             IF (STATUS .NE. CDF_OK) RETURN
+	   1434             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSM_POS,REC_NUM,INDICES,GSM_POS(REC_NUM).X,STATUS)
+	   1435             IF (STATUS .NE. CDF_OK) RETURN
+	   1436             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSM_VEL,REC_NUM,INDICES,GSM_VEL(REC_NUM).X,STATUS)
+	   1437             IF (STATUS .NE. CDF_OK) RETURN
+	   1438             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_SUN_VECTOR,REC_NUM,INDICES,GCI_SUN_VECTOR(REC_NUM).X,STATUS)
+	   1439             IF (STATUS .NE. CDF_OK) RETURN
+	   1440 C
+	   1441             INDICES(1) = 2
+	   1442             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_POS,REC_NUM,INDICES,GCI_POS(REC_NUM).Y,STATUS)
+	   1443             IF (STATUS .NE. CDF_OK) RETURN
+
+GET_EPHEMERIS                                                    2-JUN-1995 20:11:59    DEC Fortran V6.2-508                Page   3
+1.2                                                              1-JUN-1995 12:37:40    SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.FOR;49
+
+	   1444             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_VEL,REC_NUM,INDICES,GCI_VEL(REC_NUM).Y,STATUS)
+	   1445             IF (STATUS .NE. CDF_OK) RETURN
+	   1446             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSE_POS,REC_NUM,INDICES,GSE_POS(REC_NUM).Y,STATUS)
+	   1447             IF (STATUS .NE. CDF_OK) RETURN
+	   1448             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSE_VEL,REC_NUM,INDICES,GSE_VEL(REC_NUM).Y,STATUS)
+	   1449             IF (STATUS .NE. CDF_OK) RETURN
+	   1450             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSM_POS,REC_NUM,INDICES,GSM_POS(REC_NUM).Y,STATUS)
+	   1451             IF (STATUS .NE. CDF_OK) RETURN
+	   1452             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSM_VEL,REC_NUM,INDICES,GSM_VEL(REC_NUM).Y,STATUS)
+	   1453             IF (STATUS .NE. CDF_OK) RETURN
+	   1454             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_SUN_VECTOR,REC_NUM,INDICES,GCI_SUN_VECTOR(REC_NUM).Y,STATUS)
+	   1455             IF (STATUS .NE. CDF_OK) RETURN
+	   1456 C
+	   1457             INDICES(1) = 3
+	   1458             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_POS,REC_NUM,INDICES,GCI_POS(REC_NUM).Z,STATUS)
+	   1459             IF (STATUS .NE. CDF_OK) RETURN
+	   1460             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_VEL,REC_NUM,INDICES,GCI_VEL(REC_NUM).Z,STATUS)
+	   1461             IF (STATUS .NE. CDF_OK) RETURN
+	   1462             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSE_POS,REC_NUM,INDICES,GSE_POS(REC_NUM).Z,STATUS)
+	   1463             IF (STATUS .NE. CDF_OK) RETURN
+	   1464             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSE_VEL,REC_NUM,INDICES,GSE_VEL(REC_NUM).Z,STATUS)
+	   1465             IF (STATUS .NE. CDF_OK) RETURN
+	   1466             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSM_POS,REC_NUM,INDICES,GSM_POS(REC_NUM).Z,STATUS)
+	   1467             IF (STATUS .NE. CDF_OK) RETURN
+	   1468             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GSM_VEL,REC_NUM,INDICES,GSM_VEL(REC_NUM).Z,STATUS)
+	   1469             IF (STATUS .NE. CDF_OK) RETURN
+	   1470             CALL CDF_VAR_GET(OR_ID,VAR_NUM_GCI_SUN_VECTOR,REC_NUM,INDICES,GCI_SUN_VECTOR(REC_NUM).Z,STATUS)
+	   1471             IF (STATUS .NE. CDF_OK) RETURN
+	   1472 	  ENDIF
+	   1473 C
+	   1474 	  IF (GET_AT) THEN
+	   1475             INDICES(1) = 1
+	   1476 C
+	   1477             CALL CDF_VAR_GET(AT_ID,VAR_NUM_SPIN_RATE,REC_NUM,INDICES,SPIN_RATE,STATUS)
+	   1478             IF (STATUS .NE. CDF_OK) RETURN
+	   1479 C
+	   1480             CALL CDF_VAR_GET(AT_ID,VAR_NUM_GCI_R_ASC,REC_NUM,INDICES,GCI_ATT(REC_NUM).R_ASC,STATUS)
+	   1481             IF (STATUS .NE. CDF_OK) RETURN
+	   1482             CALL CDF_VAR_GET(AT_ID,VAR_NUM_GSE_R_ASC,REC_NUM,INDICES,GSE_ATT(REC_NUM).R_ASC,STATUS)
+	   1483             IF (STATUS .NE. CDF_OK) RETURN
+	   1484             CALL CDF_VAR_GET(AT_ID,VAR_NUM_GSM_R_ASC,REC_NUM,INDICES,GSM_ATT(REC_NUM).R_ASC,STATUS)
+	   1485             IF (STATUS .NE. CDF_OK) RETURN
+	   1486 C
+	   1487             CALL CDF_VAR_GET(AT_ID,VAR_NUM_GCI_DECL,REC_NUM,INDICES,GCI_ATT(REC_NUM).DECL,STATUS)
+	   1488             IF (STATUS .NE. CDF_OK) RETURN
+	   1489             CALL CDF_VAR_GET(AT_ID,VAR_NUM_GSE_DECL,REC_NUM,INDICES,GSE_ATT(REC_NUM).DECL,STATUS)
+	   1490             IF (STATUS .NE. CDF_OK) RETURN
+	   1491             CALL CDF_VAR_GET(AT_ID,VAR_NUM_GSM_DECL,REC_NUM,INDICES,GSM_ATT(REC_NUM).DECL,STATUS)
+	   1492             IF (STATUS .NE. CDF_OK) RETURN
+	   1493 	  ENDIF
+	   1494 200     CONTINUE
+	   1495 C
+	   1496 C Close both files
+	   1497 C
+	   1498 	IF (GET_OR) THEN
+	   1499           CALL CDF_CLOSE(OR_ID,STATUS)
+	   1500           IF (STATUS .NE. CDF_OK) RETURN
+
+GET_EPHEMERIS                                                    2-JUN-1995 20:11:59    DEC Fortran V6.2-508                Page   4
+1.2                                                              1-JUN-1995 12:37:40    SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.FOR;49
+
+	   1501 	ENDIF
+	   1502 	IF (GET_AT) THEN
+	   1503           CALL CDF_CLOSE(AT_ID,STATUS)
+	   1504           IF (STATUS .NE. CDF_OK) RETURN
+	   1505 	ENDIF
+	   1506 C
+	   1507 	RETURN
+	   1508         END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                  240 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                5116   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 464 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             648 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 EPHDATA                              29376 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                35848
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  3-00000000        GET_EPHEMERIS
+
+
+VARIABLES
+
+    Address   Type  Name                       Address   Type  Name                       Address   Type  Name                  
+                                                                                                                                
+  2-00000024  I*4   AT_ID                    2-00000020  I*4   OR_ID                    2-00000034  I*4   VAR_NUM_GSE_POS       
+      **      CHAR  AT_NAME                      **      CHAR  OR_NAME                  2-0000004C  I*4   VAR_NUM_GSE_R_ASC     
+  2-00000000  I*4   CDF_ATTR_NUM             2-00000010  I*4   REC_NUM                  2-00000038  I*4   VAR_NUM_GSE_VEL       
+  2-00000008  I*4   ENCODING                     **      I*4   STATUS                   2-00000058  I*4   VAR_NUM_GSM_DECL      
+  2-00000068  L*4   GET_AT                   2-00000028  I*4   VAR_NUM_EPOCH            2-0000003C  I*4   VAR_NUM_GSM_POS       
+  2-00000064  L*4   GET_OR                   2-00000048  I*4   VAR_NUM_GCI_DECL         2-00000054  I*4   VAR_NUM_GSM_R_ASC     
+  2-0000000C  I*4   MAJORITY                 2-0000002C  I*4   VAR_NUM_GCI_POS          2-00000040  I*4   VAR_NUM_GSM_VEL       
+  2-00000014  I*4   MAX_REC                  2-00000044  I*4   VAR_NUM_GCI_R_ASC        2-00000060  I*4   VAR_NUM_SPIN_RATE     
+  2-0000001C  I*4   NUM_ATTRS                2-0000005C  I*4   VAR_NUM_GCI_SUN_VECTOR                                           
+  2-00000004  I*4   NUM_DIMS                 2-00000030  I*4   VAR_NUM_GCI_VEL                                                  
+  2-00000018  I*4   NUM_VARS                 2-00000050  I*4   VAR_NUM_GSE_DECL                                                 
+
+
+
+GET_EPHEMERIS                                                    2-JUN-1995 20:11:59    DEC Fortran V6.2-508                Page   5
+1.2                             Symbol Table                     1-JUN-1995 12:37:40    SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.FOR;49
+
+RECORDS
+
+    Address   Name            Structure                Bytes
+                                                            
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400
+  5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            248
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  2-0000006C  I*4   DIM_SIZES           40  (10)
+  6-00000000  R*8   EPH_EPOCH         1152  (144)
+  1-00000000  I*4   INDICES              4  (1)
+  6-00007080  R*4   SPIN_RATE          576  (144)
+
+
+
+RECORD ARRAYS
+
+    Address   Name            Structure         Bytes  Dimensions
+
+  6-00006300  GCI_ATT         ATTITUDE          1152  (144)
+  6-00000480  GCI_POS         EPHEMERIS         3456  (144)
+  6-00005580  GCI_SUN_VECTOR  EPHEMERIS         3456  (144)
+  6-00001200  GCI_VEL         EPHEMERIS         3456  (144)
+  6-00006780  GSE_ATT         ATTITUDE          1152  (144)
+  6-00001F80  GSE_POS         EPHEMERIS         3456  (144)
+  6-00002D00  GSE_VEL         EPHEMERIS         3456  (144)
+  6-00006C00  GSM_ATT         ATTITUDE          1152  (144)
+  6-00003A80  GSM_POS         EPHEMERIS         3456  (144)
+  6-00004800  GSM_VEL         EPHEMERIS         3456  (144)
+
+
+
+LABELS
+
+    Address   Label
+                   
+  3-000010F8   200 
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                Type  Name                Type  Name             
+                                                                             
+        CDF_CLOSE                 CDF_OPEN            I*4   CDF_VAR_NUM      
+        CDF_INQUIRE               CDF_VAR_GET                                
+
+GET_EPHEMERIS                                                    2-JUN-1995 20:11:59    DEC Fortran V6.2-508                Page   6
+1.2                             Symbol Table                     1-JUN-1995 12:37:40    SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.FOR;49
+
+	   1509 
+	   1510 	SUBROUTINE CHECK_STATUS(STATUS)
+	   1511         IMPLICIT NONE
+	   1512 	INTEGER STATUS
+	   1513         INCLUDE 'CDF$INC:CDF.INC'
+	   2679         CHARACTER MESSAGE*(CDF_STATUSTEXT_LEN)
+	   2680 C
+	   2681         IF (STATUS .NE. CDF_OK) THEN
+	   2682           TYPE *,STATUS
+	   2683           CALL CDF_ERROR(STATUS,MESSAGE)
+	   2684           TYPE *,MESSAGE
+	   2685         ENDIF
+	   2686 	RETURN
+	   2687 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                  240 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                5116   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 464 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             648 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 EPHDATA                              29376 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                35848
+
+
+ENTRY POINTS
+
+    Address   Type  Name        
+                                
+  3-00001310        CHECK_STATUS
+
+
+VARIABLES
+
+    Address   Type  Name             Address   Type  Name        
+                                                                 
+  2-00000098  I*4   CDF_ATTR_NUM   2-000000A0  CHAR  MESSAGE     
+  2-00000094  I*4   CDF_VAR_NUM        **      I*4   STATUS      
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name           
+                       
+        CDF_ERROR      
+
+CHECK_STATUS                                                     2-JUN-1995 20:11:59    DEC Fortran V6.2-508                Page   7
+1.2                             Symbol Table                     1-JUN-1995 12:37:40    SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.FOR;49
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(SYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]GET_EPHEMERIS.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]GET_EPHEMERIS.OBJ;37
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          2.08 seconds
+  Elapsed time:      3.81 seconds
+  Pagefaults:         309
+  I/O Count:           44

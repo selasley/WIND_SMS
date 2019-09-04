@@ -1,0 +1,77 @@
+The program STICS_MMQ_TABLE prints the PHA information to a text file 
+in column format. The header of the output file has the name of the 
+L1 file used and some Housekeeping status. The columns of data consists
+of the TIME, VOLTAGE STEP, ENERGY/CHARGE, SSD ID, STOP MCP, SECTOR, 
+MASS/CHARGE, MASS...etc. The name of the output file is as follows
+	STICS_PHA_(date of L1 file)_A.TBL      for All data
+				   _S.TBL      for Selected data
+The file is writen to "TABLE_DIR:" directory. The record length of
+the file is 168 so you may not be able to view all the columns on
+your screen. So if you print the first page out using the print command
+"WP4" you would see all the columns.
+The program is located in the directory "SMS1:[WIND.SOFTWARE.STICS]".
+To run the program enter
+	RUN SMS1:[WIND.SOFTWARE.STICS]STICS_MMQ_TABLE
+and the following prompt would appear:
+	FILENAME = /DATA_DIR:WI*L1*.DAT/
+					<RETURN>
+	  1  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941116_V02.DAT;1
+	  2  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941117_V01.DAT;1
+	  3  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941118_V01.DAT;1
+	  4  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941119_V01.DAT;1
+	  5  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941120_V01.DAT;1
+	  6  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941121_V01.DAT;1
+	  7  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941122_V01.DAT;1
+	  8  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941123_V01.DAT;1
+	  9  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941124_V01.DAT;1
+	 10  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941125_V01.DAT;1
+	 11  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941126_V01.DAT;1
+	 12  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941127_V01.DAT;1
+	 13  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941128_V01.DAT;1
+	 14  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941129_V01.DAT;1
+	 15  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941130_V01.DAT;1
+	 16  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941201_V01.DAT;1
+ 	 17  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941202_V01.DAT;1
+	 18  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941203_V01.DAT;1
+         19  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941204_V01.DAT;1
+ 	 20  SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941205_V01.DAT;1
+	Enter selection # (or q=quit, r=redisplay, <return>=show more): 19
+	EXPLICIT FILENAME = SMSDISK3:[WIND.L1DATA]WI_L1_SMS_19941204_V01.DAT;1
+	IS THIS OKAY ?/Yes/
+	Enter desired table format:
+	(1 = standard sms format,
+	 2 = standard geotail format)
+	     1
+	Is data filtering by DATA TYPE desired?
+	(i.e.:  M,M/Q conditions,  E/Q,  PHA Range)
+	[Y/N] y
+	Enter desired data filtering by coincidence conditions:
+	  0 = no filtering (no M or M/Q restrictions)
+	  1 = M/Q-only     (i.e., M/Q > 0, Mass = 0)
+	  2 = M & M/Q      (i.e., M/Q > 0, Mass > 0)
+	      2
+	Enter desired data filtering by voltage step range:
+	  -1 = no voltage step filtering (all e/q values)
+	   0 = voltage step filtering desired
+	       0
+	Enter minimum and maximum voltage steps (inclusive)
+	    21,30
+	Enter range selection:
+	   0 = 2 1 0  (i.e., all ranges)
+	   1 =     0
+	   2 =   1
+	   3 = 2
+	   4 = 2   0
+	   5 = 2 1
+	   6 =   1 0
+	0
+	User selected the following ranges : 2 1 0
+	Do you want to limit the output to range checks? [y/n] n
+	Is data filtering by DIRECTION desired?
+	(i.e.:  Start anode, Stop MCP, SSD)
+	[Y/N] n
+	Enter name for output file or <RETURN> for default name
+	Enter Start time( -1/ = whole file) -
+	Year,Month,Day,Hour,Min,Sec: 94,12,04,11,21,56
+	Enter End time -
+	Year,Month,Day,Hour,Min,Sec: 94,12,04,23,23,30

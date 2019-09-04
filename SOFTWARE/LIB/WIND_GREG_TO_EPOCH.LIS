@@ -1,0 +1,171 @@
+WIND_GREG_TO_EPOCH                                              21-APR-1995 15:27:30    DEC Fortran V6.2-508                Page   1
+                                                                20-APR-1995 16:43:17    [WIND.SOFTWARE.LIB]WIND_GREG_TO_EPOCH.FOR;4
+
+	      1       SUBROUTINE WIND_GREG_TO_EPOCH( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+	      2 C
+	      3 C	This version:   20-APR-1995
+	      4 C
+	      5 C	This subroutine converts integer numbers representing Year, DayOfYear,
+	      6 C	Milliseconds, and Microseconds into a REAL*8 EPOCH number.
+	      7 C
+	      8 C   USAGE:
+	      9 C	CALL WIND_GREG_TO_EPOCH( YEAR, DOY, MSEC, MICRO, EPOCH, STATUS )
+	     10 C
+	     11 C   PARAMETERS:
+	     12 C	NAME	TYPE	USE	Description
+	     13 C	----	----	---	-----------
+	     14 C	YEAR	I*4	 I	year, e.g.:1994, neg. = B.C.
+	     15 C	DOY	I*4	 I	day-of-year
+	     16 C	MSEC	I*4	 I	millisecond of day
+	     17 C	MICRO	I*4	 I	microsecond of millisecond
+	     18 C	EPOCH	R*8	 O	CDF Epoch format, milliseconds since 1-Jan-0001 B.C.
+	     19 C				to be compatible with GEOTAIL
+	     20 C	STATUS	I*4	 O	Status of conversion, 1 = good
+	     21 C
+	     22 C   FUNCTION OR SUBROUTINE CALLS:
+	     23 C
+	     24 C   CREATION:
+	     25 C	 5-APR-1994	H.BROER	University of Maryland, SPACE PHYSICS GROUP
+	     26 C
+	     27 C Modification history:
+	     28 C	19-APR-1995	L. Bleau	change code to use the CDF routine
+	     29 C					compute_EPOCH, removed calls to
+	     30 C					CNVRT_YRMONDAY_TO_JULIAN,
+	     31 C					CNVRT_TO_FLOAT_JULIAN, and
+	     32 C					WIND_JULIAN_TO_EPOCH
+	     33 C	20-APR-1995     J.PAQUETTE      added call to CNVRT_MILLIS_TO_HRMNSMS
+	     34 C                                       neccesary since msec input to CDF 
+	     35 C                                       routine must be 0 < msec < 999
+	     36 C
+	     37 C NOTE:
+	     38 C
+	     39 C This is a change from the earlier version of WIND_GREG_TO_EPOCH in that
+	     40 C previously all the work was done in the above-listed home-grown routines. 
+	     41 C Now it is done mainly by the CDF routine compute_EPOCH.  This eliminates the
+	     42 C 12 hour discrepancy between the CDF Epoch times and the Epoch times
+	     43 C previously calculated by this routine.
+	     44 C
+	     45 C In addition, the routine CNVRT_TO_FLOAT_JULIAN subtracted 12 hours from the
+	     46 C computed (floating point) Julian Day.  This was to reflect the fact that
+	     47 C a Julian Day, by definition, starts at noon.  The "Truncated Julian Day" used
+	     48 C in the WIND Level Zero file starts at midnight, however.  This had resulted 
+	     49 C in the Epoch times produced by WIND_GREG_TO_EPOCH being 1/2 day less than the 
+	     50 C correct value.  This, too, has been fixed.  WIND_GREG_TO_EPOCH now produces a 
+	     51 C value which matches the CDF Epoch time value for the same day.
+	     52 C 
+	     53 C
+	     54       IMPLICIT NONE
+	     55 
+	     56       REAL*8	EPOCH		! TIME IN MILLISECONDS SINCE 1-JAN-0001 B.C.
+	     57 
+
+WIND_GREG_TO_EPOCH                                              21-APR-1995 15:27:30    DEC Fortran V6.2-508                Page   2
+                                                                20-APR-1995 16:43:17    [WIND.SOFTWARE.LIB]WIND_GREG_TO_EPOCH.FOR;4
+
+	     58       INTEGER*4	YEAR,DOY,HOUR,MINUTE,SECOND,MILLISECOND,MSEC,MICRO,STATUS
+	     59 C
+	     60       STATUS	= 1				! GOOD STATUS
+	     61 C
+	     62 C In the call below, MSEC is milliseconds of day, and MILLISECOND is milliseconds 
+	     63 C of second.
+	     64 C
+	     65       CALL CNVRT_MILLIS_TO_HRMNSMS( MSEC, HOUR, MINUTE, SECOND, MILLISECOND )
+	     66       CALL compute_EPOCH( YEAR, 0, DOY, HOUR, MINUTE, SECOND, MSEC, EPOCH )
+	     67 
+	     68       IF (EPOCH .EQ. -1) THEN
+	     69 	STATUS = 0
+	     70 	RETURN
+	     71       ENDIF
+	     72 
+	     73       EPOCH	= EPOCH + DFLOAT(MICRO) / 1D3
+	     74 
+	     75       RETURN
+	     76 
+	     77       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   16 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 272   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  96 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  384
+
+
+ENTRY POINTS
+
+    Address   Type  Name              
+                                      
+  2-00000000        WIND_GREG_TO_EPOCH
+
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                                                               
+      **      I*4   DOY               **      I*4   MICRO             **      I*4   MSEC              **      I*4   YEAR       
+      **      R*8   EPOCH         1-0000000C  I*4   MILLISECOND   1-00000008  I*4   SECOND                                     
+  1-00000000  I*4   HOUR          1-00000004  I*4   MINUTE            **      I*4   STATUS                                     
+
+
+
+WIND_GREG_TO_EPOCH                                              21-APR-1995 15:27:30    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    20-APR-1995 16:43:17    [WIND.SOFTWARE.LIB]WIND_GREG_TO_EPOCH.FOR;4
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                            Type  Name                         
+                                                                           
+        CNVRT_MILLIS_TO_HRMNSMS               COMPUTE_EPOCH                
+
+WIND_GREG_TO_EPOCH                                              21-APR-1995 15:27:30    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    20-APR-1995 16:43:17    [WIND.SOFTWARE.LIB]WIND_GREG_TO_EPOCH.FOR;4
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]WIND_GREG_TO_EPOCH.LIS;6
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]WIND_GREG_TO_EPOCH.OBJ;6
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.20 seconds
+  Elapsed time:      1.55 seconds
+  Pagefaults:         223
+  I/O Count:            7

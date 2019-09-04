@@ -1,0 +1,25 @@
+
+
+
+
+STICS HOUSEKEEPING PARAMETERS WHICH NEED TO BE MONITORED
+==================================================================
+
+1.  MCP0-6   		=> Levels, On/Off
+2.  DPPS+/-  		=> On/Off
+3.  SSD Potential
+4.  Temperatures	=> Therm1 (AE Housing), Therm3 (SSD Temp)
+5.  28V Primary Current
+6.  +5V Voltage
+7.  -5V Voltage
+8.  +6V Voltage
+9.  -6V Voltage
+10. +12V Voltage
+11. -12V Voltage
+12. MCPPS 28V Current
+13. FIFO		=> On/Off
+14. TGS			=> On/Off
+15. Configuration/Snapshot from DPU HK
+16. SSD Bias		=> Main and Individuals On/Off
+17. Threshold Levels
+18. Trigger Mode

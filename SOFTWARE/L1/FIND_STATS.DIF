@@ -1,0 +1,84 @@
+DEC/CMS File Comparison Utility
+Files Compared By BLEAU On 17-NOV-1995 22:16:47
+   (1)  Element FIND_STATS.FOR Generation 3
+   (2)  SMS1:[WIND.SOFTWARE.L1]FIND_STATS.FOR;13
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element FIND_STATS.FOR(3) Line 40   
+      1)C This version:    13-NOV-1995
+File SMS1:[WIND.SOFTWARE.L1]FIND_STATS.FOR;13 Line 40   
+      2)C This version:   17-NOV-1995
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element FIND_STATS.FOR(3) Line 55   
+      1)C 
+File SMS1:[WIND.SOFTWARE.L1]FIND_STATS.FOR;13 Line 55   
+      2)C 17-NOV-1995	  |  LRB  | added routine FIND_STATS_INT to do same but for
+      2)C			    integer argument and to take zeros into account
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]FIND_STATS.FOR;13 Line 68   
+      2)	LOGICAL IGNORE_ZEROS
+      2)C
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]FIND_STATS.FOR;13 Line 77   
+      2)	IGNORE_ZEROS = .TRUE.
+      2)C
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element FIND_STATS.FOR(3) Line 80   
+      1)C copare to upper and lower limits if reporting is enabled for this parameter.
+File SMS1:[WIND.SOFTWARE.L1]FIND_STATS.FOR;13 Line 85   
+      2)C compare to upper and lower limits if reporting is enabled for this parameter.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]FIND_STATS.FOR;13 Line 129  
+      2)C
+      2)C Alternate entry point.
+      2)C Call this entry if the raw value passed in INPUT *is* the value to be
+      2)C tested and saved.  Use this entry for parameters like flags, counters, or
+      2)C encoded parameters.
+      2)C
+      2)	ENTRY FIND_STATS_INT(INPUT,STATS)
+      2)C
+      2)C Keep a count of the number of times we are called.  This is the number of
+      2)C values in the sum, which we'll need to compute the average.
+      2)C
+      2)	STATS.COUNT = STATS.COUNT + 1
+      2)C
+      2)C Compare to previously established min and max, and add to accumulator.  Also
+      2)C compare to upper and lower limits if reporting is enabled for this parameter.
+      2)C
+      2)	IF (INPUT .LT. STATS.MIN_VALUE) THEN
+      2)	  STATS.MIN_VALUE = INPUT
+      2)	  STATS.MIN_TIME = EPOCH
+      2)	  STATS.MIN_W_TIME = W_TIME
+      2)	ENDIF
+      2)	IF (INPUT .GT. STATS.MAX_VALUE) THEN
+      2)	  STATS.MAX_VALUE = INPUT
+      2)	  STATS.MAX_TIME = EPOCH
+      2)	  STATS.MAX_W_TIME = W_TIME
+      2)	ENDIF
+      2)	STATS.AVERAGE = STATS.AVERAGE + INPUT
+      2)C
+      2)C Save engineering value as the last good value
+      2)C
+      2)	STATS.LAST_VALUE = INPUT
+      2)C
+      2)C If reporting is enabled check against upper and lower limits.  Take proper
+      2)C action is value exceeds either of these.
+      2)C
+      2)	IF (STATS.REPORT) THEN
+      2)	  IF (INPUT .GT. STATS.HI_LIMIT) THEN
+      2)	    STATS.HI_COUNT = STATS.HI_COUNT + 1
+      2)	    CALL LIMIT_REPORT(STATS,FLOAT(INPUT))
+      2)	  ENDIF
+      2)	  IF (INPUT .LT. STATS.LO_LIMIT) THEN
+      2)	    STATS.LO_COUNT = STATS.LO_COUNT + 1
+      2)	    CALL LIMIT_REPORT(STATS,FLOAT(INPUT))
+      2)	  ENDIF
+      2)	ENDIF
+      2)C
+      2)	RETURN
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+**** End of Differences ****

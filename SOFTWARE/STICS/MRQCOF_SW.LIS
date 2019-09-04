@@ -1,0 +1,151 @@
+MRQCOF                                                           1-APR-1997 12:55:34    DEC Fortran V6.2-508                Page   1
+                                                                11-NOV-1996 15:46:36    SMS1:[WIND.SOFTWARE.STICS]MRQCOF_SW.FOR;3
+
+	      1       SUBROUTINE MRQCOF(X,Y,SIG,NDATA,A,MA,LISTA,MFIT,ALPHA,BETA,NALP,
+	      2      *CHISQ,FUNCS,max_cnt,max_loc,fwhm,he_max_cnt)
+	      3       PARAMETER (MMAX=20)
+	      4       DIMENSION X(NDATA),Y(NDATA),SIG(NDATA),ALPHA(NALP,NALP),BETA(MA),
+	      5      *    DYDA(MMAX),LISTA(MFIT),A(MA)
+	      6       DO 12 J=1,MFIT
+	      7         DO 11 K=1,J
+	      8           ALPHA(J,K)=0.
+	      9 11      CONTINUE
+	     10         BETA(J)=0.
+	     11 12    CONTINUE
+	     12       CHISQ=0.
+	     13       DO 15 I=1,NDATA
+	     14         CALL FUNCS(X(I),A,YMOD,DYDA,MA,max_cnt,max_loc,fwhm,he_max_cnt)
+	     15         SIG2I=1./(SIG(I)*SIG(I))
+	     16         DY=Y(I)-YMOD
+	     17         DO 14 J=1,MFIT
+	     18           WT=DYDA(LISTA(J))*SIG2I
+	     19           DO 13 K=1,J
+	     20             ALPHA(J,K)=ALPHA(J,K)+WT*DYDA(LISTA(K))
+	     21 13        CONTINUE
+	     22           BETA(J)=BETA(J)+DY*WT
+	     23 14      CONTINUE
+	     24         CHISQ=CHISQ+DY*DY*SIG2I
+	     25 15    CONTINUE
+	     26       DO 17 J=2,MFIT
+	     27         DO 16 K=1,J-1
+	     28           ALPHA(K,J)=ALPHA(J,K)
+	     29 16      CONTINUE
+	     30 17    CONTINUE
+	     31       RETURN
+	     32       END
+
+MRQCOF                                                           1-APR-1997 12:55:34    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                    11-NOV-1996 15:46:36    SMS1:[WIND.SOFTWARE.STICS]MRQCOF_SW.FOR;3
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   84 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                2320   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  44 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 2448
+
+
+ENTRY POINTS
+
+    Address   Type  Name  
+                          
+  2-00000000        MRQCOF
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                                                           
+      **      R*4   CHISQ      REG-########  I*4   J                **      I*4   MFIT         1-00000000  R*4   YMOD      
+REG-00000021  R*4   DY         REG-########  I*4   K                **      I*4   NALP                                     
+      **      R*4   FWHM             **      I*4   MA               **      I*4   NDATA                                    
+      **      R*4   HE_MAX_CNT       **      I*4   MAX_CNT    REG-00000020  R*4   SIG2I                                    
+REG-0000000D  I*4   I                **      I*4   MAX_LOC    REG-0000002B  R*4   WT                                       
+
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+      **      R*4   A               **  (*)
+      **      R*4   ALPHA           **  (*, *)
+      **      R*4   BETA            **  (*)
+  1-00000004  R*4   DYDA            80  (20)
+      **      I*4   LISTA           **  (*)
+      **      R*4   SIG             **  (*)
+      **      R*4   X               **  (*)
+      **      R*4   Y               **  (*)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  2-00000000   11     2-00000000   13     2-00000000   15     2-00000718   17  
+  2-00000000   12     2-00000000   14     2-00000000   16                      
+
+
+
+MRQCOF                                                           1-APR-1997 12:55:34    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    11-NOV-1996 15:46:36    SMS1:[WIND.SOFTWARE.STICS]MRQCOF_SW.FOR;3
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name       
+                   
+@       FUNCS      
+
+MRQCOF                                                           1-APR-1997 12:55:34    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    11-NOV-1996 15:46:36    SMS1:[WIND.SOFTWARE.STICS]MRQCOF_SW.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,BOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]MRQCOF_SW.LIS;4
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]MRQCOF_SW.OBJ;4
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.85 seconds
+  Elapsed time:      2.41 seconds
+  Pagefaults:         299
+  I/O Count:            9

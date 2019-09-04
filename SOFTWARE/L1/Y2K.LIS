@@ -1,0 +1,403 @@
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]CHECK_MASS.FOR;17
+
+            WRITE(50,140)OLDTIME_T.YEAR,OLDTIME_T.DOY,OLDTIME_T.HR,
+            WRITE(50,150)SCI.EDB(J).W_TIME.YEAR,SCI.EDB(J).W_TIME.DOY,SCI.EDB(J).W_TIME.HR,
+            WRITE(50,200)SCI.EDB(J).W_TIME.YEAR,SCI.EDB(J).W_TIME.DOY,SCI.EDB(J).W_TIME.HR,
+            WRITE(50,200)SCI.EDB(J).W_TIME.YEAR,SCI.EDB(J).W_TIME.DOY,SCI.EDB(J).W_TIME.HR,
+            WRITE(50,200)SCI.EDB(J).W_TIME.YEAR,SCI.EDB(J).W_TIME.DOY,SCI.EDB(J).W_TIME.HR,
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]CHECK_STICS.FOR;25
+
+            WRITE(50,140)OLDTIME_T.YEAR,OLDTIME_T.DOY,OLDTIME_T.HR,
+            WRITE(50,150)SCI.EDB(J).W_TIME.YEAR,SCI.EDB(J).W_TIME.DOY,SCI.EDB(J).W_TIME.HR,
+              WRITE(50,600)SCI.EDB(J).W_TIME.YEAR,SCI.EDB(J).W_TIME.DOY,SCI.EDB(J).W_TIME.HR,
+            WRITE(50,600)SCI.EDB(J).W_TIME.YEAR,SCI.EDB(J).W_TIME.DOY,SCI.EDB(J).W_TIME.HR,
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]CNVRT_T_YRMONDAY_TO_YEARDAY.FOR;2
+
+      SUBROUTINE CNVRT_T_YRMONDAY_TO_YEARDAY( Time, imo, iday )
+C Subroutine to convert from year, month, day to year day of year using a
+C Uses CNVRT_YRMONDAY_TO_YEARDAY to do the dirty work.
+      RECORD /T/ Time		!	  structure of type T containing year
+      INTEGER*4	IYR,		! INPUT:  year
+     :		IDAY_YR 	! OUTPUT: day of year
+      iyr = Time.YEAR
+      call CNVRT_YRMONDAY_TO_YEARDAY( iyr, imo, iday, iday_yr )
+      Time.DOY = iday_yr
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]COMPARE_TIME.FOR;8
+
+        if (t1.year .lt. t2.year) then
+        else if (t1.year .gt. t2.year) then
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]DISPLAY_ORBIT_INFO.FOR;44
+
+C			 6	if 1 display date using day-of-year in yyyy nnn
+	INTEGER year,month,day,hour,minute,second,msec,ndays
+C Allow for either day-month-year or year-dayofyear format.
+C format.  If user wants day-of-year format use fewer columns.  Leave 2 blanks
+		    lines(2)(pos:pos+18-1) = 'Year / DOY / Time'
+		    call epoch_breakdown(epoch_time(ii), year, month, day, hour,
+		    call compute_epoch(year, 0, 1, 0, 0, 0, 0, epoch_temp)
+		    write(prefix(pos:pos+18-1),1005) year,ndays,hour,minute,second
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+	write(temp,1001) timestrc.year,timestrc.doy,timestrc.hr,timestrc.min,
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]DUMP_HEADER.FOR;13
+
+     1  FILE_HEADER.CREDATE_YEAR,
+     1  '  CREDATE_YEAR = ',A4/
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DATA.FOR;7
+
+	INTEGER*4 year, month, day, hour, minute, second, msec, store_here, i
+	call epoch_breakdown(which_date, year, month, day, hour, minute,
+	write(or_pattern,1001) year,month,day
+	    write(or_pattern,1002) year,month,day
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_DAYS.FOR;14
+
+	INTEGER*4 year, month, day, hour, minute, second, msec, store_here, i
+	    call epoch_breakdown(this_date, year, month, day, hour, minute,
+	    write(or_pattern,1001) year,month,day
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]GET_ORBIT_REQUEST.FOR;13
+
+C			    for filename, prompt user to use day-of-year or
+	INTEGER i, nch, nch2, year1, month1, day1, year2, month2, day2
+	read(*,*,end=900,err=100) year1,month1,day1
+	call compute_epoch(year1, month1, day1, 0, 0, 0, 0, beg_date)
+	read(*,*,end=900,err=110) year2,month2,day2
+	call compute_epoch(year2, month2, day2, 23, 59, 59, 0, end_date)
+	write(default_name,1008) year1,month1,day1,year2,month2,day2
+	1 ' Do you want to display using day of year (Y/N, Return = No) ? ',$)
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]MASS_PHA_TABLE.FOR;19
+
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$) 
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$) 
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year and DOY from it.
+        WRITE(50,20) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(50,20) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  20  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q',
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]MASS_RATE_TABLE.FOR;24
+
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$) 
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$) 
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year, and DOY from it.
+        WRITE(50,20) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(50,20) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  20  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS    E/Q     ',
+        WRITE(60,40) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(60,40) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  40  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q    ',
+        WRITE(70,60) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(70,60) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  60  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q   ',
+        WRITE(80,70) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(80,70) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  70  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q   ',
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]MIKE.FOR;1
+
+C                   the date (and possibly year) portion of the filename.  If
+C                   possibly year) portion of the filename.  If the file does
+C     then close the unit.  Decode the year, month, and day from the filename.
+        INTEGER i,i2,pos,max_tries,count,year,month,day,file_format,nch,leap
+C start of year portion of date.
+     1        year,month,day
+     1        year,month,day
+C When constructing new filename replace the year, month, and day of month. 
+        IF (MOD(year,4) .eq. 0 .and. MOD(year,100) .ne. 0) leap = 2
+                    year = year + 1
+                    IF (MOD(year,4) .eq. 0 .and. MOD(year,100) .ne. 0) leap = 2
+                WRITE (pattern(pos:pos+7), 1001) year,month,day
+                WRITE (pattern(pos:pos+5), 1002) MOD(year,100),month,day
+	write(ymd,101) year,month,day
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]STICS_PHA_TABLE.FOR;34
+
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$) 
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$) 
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year and DOY from it.
+        WRITE(50,20) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(50,20) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  20  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q',
+C YEAR field of the time; if its 0 then the bit rate is unknown. If the year is not 0
+          ELSEIF(TIME_TO_USE.YEAR.NE.0)THEN
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]STICS_RATE_EPQ.FOR;9
+
+      INTEGER I,J,K,L,M,N,NN,CNTR,ITEMP,ITEMP2,NAMELEN,YR2DIGIT,INCREMENT,SUMBR(0:2),SUMHMR,SUMSMR
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$) 
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$) 
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year and DOY from it.
+     &                YR2DIGIT,TIME_TO_USE.DOY,
+C Get year in 2-digit form for output
+          IF(TIME_TO_USE.YEAR.GE.2000)THEN
+            YR2DIGIT=TIME_TO_USE.YEAR-2000
+          ELSEIF(TIME_TO_USE.YEAR.GE.1900)THEN
+            YR2DIGIT=TIME_TO_USE.YEAR-1900
+            YR2DIGIT=TIME_TO_USE.YEAR
+          ELSEIF(TIME_TO_USE.YEAR.NE.0)THEN
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]STICS_RATE_TABLE.FOR;139
+
+      INTEGER I,J,K,L,M,N,NN,CNTR,ITEMP,ITEMP2,NAMELEN,YR2DIGIT,INCREMENT,SUMBR(0:2),SUMHMR,SUMSMR
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$) 
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$) 
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year and DOY from it.
+C Get year in 2-digit form for output
+          IF(TIME_TO_USE.YEAR.GE.2000)THEN
+            YR2DIGIT=TIME_TO_USE.YEAR-2000
+          ELSEIF(TIME_TO_USE.YEAR.GE.1900)THEN
+            YR2DIGIT=TIME_TO_USE.YEAR-1900
+            YR2DIGIT=TIME_TO_USE.YEAR
+          ELSEIF(TIME_TO_USE.YEAR.NE.0)THEN
+     &                      YR2DIGIT,TIME_TO_USE.DOY,
+     &                        YR2DIGIT,TIME_TO_USE.DOY,
+     &                        YR2DIGIT,TIME_TO_USE.DOY,
+     &                    YR2DIGIT,TIME_TO_USE.DOY,
+     &                      YR2DIGIT,TIME_TO_USE.DOY,
+     &                    YR2DIGIT,TIME_TO_USE.DOY,
+     &                    YR2DIGIT,TIME_TO_USE.DOY,
+     &                    YR2DIGIT,TIME_TO_USE.DOY,
+     &                    YR2DIGIT,TIME_TO_USE.DOY,
+     &                    YR2DIGIT,TIME_TO_USE.DOY,
+     &                    YR2DIGIT,TIME_TO_USE.DOY,
+     &                 YR2DIGIT,TIME_TO_USE.DOY,
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]SWICS_PHA_TABLE.FOR;31
+
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$) 
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$) 
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year and DOY from it.
+        WRITE(50,20) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(50,20) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  20  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q',
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]SWICS_RATE_TABLE.FOR;33
+
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$) 
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$) 
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year, and DOY from it.
+          WRITE(50+J,20) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+          WRITE(50+J,20) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  20    FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS    E/Q     ',
+          WRITE(51+J,40) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+          WRITE(51+J,40) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  40    FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q    ',
+        WRITE(70,60) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(70,60) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  60  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q   ',
+        WRITE(71,70) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(71,70) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  70  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q   ',
+        WRITE(80,80) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(80,80) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  80  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q    ',
+        WRITE(90,90) SCI.EDB(N).SC_TIME.YEAR,SCI.EDB(N).SC_TIME.DOY
+        WRITE(90,90) SCI.EDB(N).W_TIME.YEAR,SCI.EDB(N).W_TIME.DOY
+  90  FORMAT(' YEAR: ',I4,' DAY: ',I3,/,' Sci Rec#   Time   VS     E/Q     ',
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]TEST1.FOR;4
+
+	integer year,month,day,nsize,nfilled
+	type *,'enter starting date (year,month,day)'
+	accept *,year,month,day
+	call compute_epoch(year,month,day,0,0,0,0,beg_date)
+	type *,'enter ending date (year,month,day)'
+	accept *,year,month,day
+	call compute_epoch(year,month,day,23,59,59,0,end_date)
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]TESTHDB.FOR;33
+
+	write(temp,1001) timestrc.year,timestrc.doy,timestrc.hr,timestrc.min,
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]TESTHK.FOR;33
+
+	  WRITE(11,1001) L1_SCI(L1_LUNN).EDB(0).W_TIME.YEAR,L1_SCI(L1_LUNN).EDB(0).W_TIME.DOY,
+            WRITE(11,*)HKeepN.HKSET(J).W_TIME.YEAR,HKeepN.HKSET(J).W_TIME.DOY,
+            WRITE(11,*)HKeepN.HKSET(J).SC_TIME.YEAR,HKeepN.HKSET(J).SC_TIME.DOY,
+	  WRITE(11,1001) L1_SCI(L1_LUNO).EDB(0).W_TIME.YEAR,L1_SCI(L1_LUNO).EDB(0).W_TIME.DOY,
+            WRITE(11,*)HKeepO.HKSET(J).W_TIME.YEAR,HKeepO.HKSET(J).W_TIME.DOY,
+            WRITE(11,*)HKeepO.HKSET(J).SC_TIME.YEAR,HKeepO.HKSET(J).SC_TIME.DOY,
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH.FOR;220
+
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$)
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$)
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year, and DOY from it.
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]WIND_HEALTH_WORKING.FOR;1
+
+  10  FORMAT(' Enter Start time( 0/ means whole file) - Year,Month,Day,Hour,Min,Sec: '$)
+      ACCEPT*, START.YEAR,MONTH,DAYOFMONTH,START.HR,START.MIN,START.SEC
+      IF(START.YEAR.NE.0)THEN
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( START, MONTH, DAYOFMONTH)
+        IF(START.YEAR.LT.100)START.YEAR=START.YEAR+1900        ! Allow for 2-digit years
+        IF(START.YEAR.LT.1980)START.YEAR=START.YEAR+100        ! Allow for years beyond 1999
+  12    FORMAT(' Enter End time - Year,Month,Day,Hour,Min,Sec: '$)
+        ACCEPT*, END.YEAR,MONTH,DAYOFMONTH,END.HR,END.MIN,END.SEC
+C Convert month and day to day of year.
+        CALL CNVRT_T_YRMONDAY_TO_YEARDAY( END, MONTH, DAYOFMONTH)
+        IF(END.YEAR.LT.100)END.YEAR=END.YEAR+1900        ! Allow for 2-digit years
+        IF(END.YEAR.LT.1980)END.YEAR=END.YEAR+100        ! Allow for years beyond 1999
+        END.YEAR=3000
+C Find first good spin, get year, and DOY from it.
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN_DATE.FOR;3
+
+	SUBROUTINE WIND_L1_OPEN_DATE(unit, year, month, day, data_version,
+C    argument `unit'.  The filename is determined by parameters `year',
+C     year:
+C	  An INTEGER*4 variable giving the year of the data set to be opened.
+C	  year of the data set.
+C     day of year.
+	INTEGER*4 unit,year,month,day,data_version,status
+C If month is zero assume day is the day of year.  Compute month and day from it
+C and the current year.
+	    WRITE (pattern, 1001) directory,year,actual_month,actual_day
+	    WRITE (filename, 1002) directory,year,actual_month,actual_day,
+
+******************************
+SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN_NEXT.FOR;18
+
+C                   the date (and possibly year) portion of the filename.  If
+C                   possibly year) portion of the filename.  If the file does
+C     then close the unit.  Decode the year, month, and day from the filename.
+        INTEGER i,i2,pos,max_tries,count,year,month,day,file_format,nch,leap
+C start of year portion of date.
+     1        year,month,day
+     1        year,month,day
+C When constructing new filename replace the year, month, and day of month. 
+        IF (MOD(year,4) .eq. 0 .and. MOD(year,100) .ne. 0) leap = 2
+                    year = year + 1
+                    IF (MOD(year,4) .eq. 0 .and. MOD(year,100) .ne. 0) leap = 2
+                WRITE (pattern(pos:pos+7), 1001) year,month,day
+                WRITE (pattern(pos:pos+5), 1002) MOD(year,100),month,day

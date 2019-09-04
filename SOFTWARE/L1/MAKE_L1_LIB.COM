@@ -1,0 +1,57 @@
+$!
+$! Procedure to create new L1LIB library from source code
+$!
+$ fflags := /EXTEND/CHECK=ALL/LIST/SHOW=ALL/WARN=(DECL,GEN)'MMS_FORTRAN_QUALS'
+$
+$ olddir = f$environment("DEFAULT")
+$ on control_y then goto done
+$ on error then goto done
+$
+$ SET DEFAULT WIND_DIR:
+$ SET DEFAULT [WIND.SOFTWARE.L1]
+$
+$ write sys$output "Creating new L1LIB.OLB"
+$ LIBRARIAN/CREATE L1LIB.OLB
+$ write sys$output "Building library..."
+$ CALL COMPILE COMPARE_TIME
+$ CALL COMPILE DISSECT_PHA
+$ CALL COMPILE WIND_DISSECT_MASS_PHA
+$ CALL COMPILE WIND_DISSECT_STICS_PHA
+$ CALL COMPILE WIND_DISSECT_SWICS_PHA
+$ CALL COMPILE WIND_L1_CLOSE
+$ CALL COMPILE WIND_L1_GET_BASIC
+$ CALL COMPILE WIND_L1_GET_HDB
+$ CALL COMPILE WIND_L1_GET_HK
+$ CALL COMPILE WIND_L1_GET_MASS
+$ CALL COMPILE WIND_L1_GET_STICS
+$ CALL COMPILE WIND_L1_GET_SWICS
+$ CALL COMPILE WIND_L1_OPEN
+$ CALL COMPILE WIND_L1_OPEN_NEXT
+$ CALL COMPILE WIND_L1_READ_SR
+$ CALL COMPILE WIND_L1_SKIP_SR
+$ CALL COMPILE [WIND.SOFTWARE.LIB]WIND_COMPRESS /OBJECT=WIND_COMPRESS.OBJ
+$ CALL COMPILE WINDMSG.MSG
+$ @MAKE_PARAM WINDMSG.LIS WINDMSG.INC
+$done:
+$ SET DEFAULT 'olddir'
+$ exit 1
+$
+$COMPILE: SUBROUTINE
+$ write sys$output "Compiling ",p1
+$ on control_y then exit 2
+$ on error then exit 1
+$ if f$locate(".MSG",p1) .ne. f$length(p1)
+$ then
+$ p1 = p1 - ".MSG"
+$ MESSAGE /LIST 'p1'.MSG
+$ else
+$ FORTRAN 'p1'.FOR 'p2''fflags'
+$ endif
+$ if f$locate("]",p1) .eq. f$length(p1)
+$ then
+$ LIBR /INSERT L1LIB.OLB 'p1'.OBJ
+$ else
+$ LIBR /INSERT L1LIB.OLB 'f$element(1,"]",p1)'.OBJ
+$ endif
+$ exit 1
+$ENDSUBROUTINE

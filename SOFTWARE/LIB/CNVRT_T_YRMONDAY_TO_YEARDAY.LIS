@@ -1,0 +1,127 @@
+CNVRT_T_YRMONDAY_TO_YEARDAY                                     21-APR-1995 15:26:57    DEC Fortran V6.2-508                Page   1
+                                                                 9-DEC-1994 18:37:12    CNVRT_T_YRMONDAY_TO_YEARDAY.FOR;2
+
+	      1       SUBROUTINE CNVRT_T_YRMONDAY_TO_YEARDAY( Time, imo, iday )
+	      2 C
+	      3 C Subroutine to convert from year, month, day to year day of year using a
+	      4 C structure of type T, which has no month or day field, as its input.
+	      5 C
+	      6 C Uses CNVRT_YRMONDAY_TO_YEARDAY to do the dirty work.
+	      7 C
+	      8 C     9-DEC-1994	L. Bleau	created to make life easier for those
+	      9 C					using structures
+	     10 C
+	     11       IMPLICIT NONE
+	     12 
+	     13       INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+CNVRT_T_YRMONDAY_TO_YEARDAY                                     21-APR-1995 15:26:57    DEC Fortran V6.2-508                Page   2
+                                                                 9-DEC-1994 18:37:12    CNVRT_T_YRMONDAY_TO_YEARDAY.FOR;2
+
+	    551 
+	    552       INTEGER*4	IMO,		! INPUT:  month
+	    553      :		IDAY		!	  day of month
+	    554       RECORD /T/ Time		!	  structure of type T containing year
+	    555 
+	    556       INTEGER*4	IYR,		! INPUT:  year
+	    557      :		IDAY_YR 	! OUTPUT: day of year
+	    558 
+	    559       iyr = Time.YEAR
+	    560       call CNVRT_YRMONDAY_TO_YEARDAY( iyr, imo, iday, iday_yr )
+	    561       Time.DOY = iday_yr
+	    562 
+	    563       RETURN
+	    564       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                    4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 192   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  56 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  252
+
+
+ENTRY POINTS
+
+    Address   Type  Name                       
+                                               
+  2-00000000        CNVRT_T_YRMONDAY_TO_YEARDAY
+
+
+VARIABLES
+
+    Address   Type  Name        Address   Type  Name   
+                                                       
+      **      I*4   IDAY          **      I*4   IMO    
+  1-00000000  I*4   IDAY_YR   0-00000008  I*4   IYR    
+
+
+RECORDS
+
+    Address   Name  Structure        Bytes
+                                          
+      **      TIME  T                    8
+
+
+
+CNVRT_T_YRMONDAY_TO_YEARDAY                                     21-APR-1995 15:26:57    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     9-DEC-1994 18:37:12    CNVRT_T_YRMONDAY_TO_YEARDAY.FOR;2
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                           
+                                       
+        CNVRT_YRMONDAY_TO_YEARDAY      
+
+CNVRT_T_YRMONDAY_TO_YEARDAY                                     21-APR-1995 15:26:57    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                     9-DEC-1994 18:37:12    CNVRT_T_YRMONDAY_TO_YEARDAY.FOR;2
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]CNVRT_T_YRMONDAY_TO_YEARDAY.LIS;6
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]CNVRT_T_YRMONDAY_TO_YEARDAY.OBJ;6
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.39 seconds
+  Elapsed time:      2.01 seconds
+  Pagefaults:         150
+  I/O Count:           17

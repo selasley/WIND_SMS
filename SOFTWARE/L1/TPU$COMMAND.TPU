@@ -1,0 +1,91 @@
+procedure eve_quit_now			! EVE quit now
+    (; answer)
+local   modified_buffers,		! Modified buffers exist
+	saved_success,			! Save current SUCCESS setting
+	the_prompt,			! Prompt string
+	the_answer,			! Optional reply in lieu of prompting
+	the_buffer;			! Buffer to be checked if modified
+eve$clear_message;
+saved_success := get_info (SYSTEM, "success");
+set (SUCCESS, OFF);
+quit (OFF, 1);
+endprocedure;	! eve$quit
+
+procedure eve_new_version
+local new_vers;
+  update_version(new_vers);
+  if (new_vers <> '') then
+    message('New version is ' + new_vers);
+  endif;
+  eve_this_version;
+  move_horizontal(-11);
+  if (new_vers <> '') then
+    copy_text(new_vers + '   ');
+  endif;
+endprocedure;
+
+procedure eve_this_version
+local date, found_range;
+  on_error
+    if ( error = TPU$_STRNOTFOUND) then
+      message("Cannot locate keyword 'This version: ', you must update file manually.");
+    else
+      message(message_text(error));
+    endif;
+  endon_error;
+  date := fao("!%D",0);
+  date := substr(date,1,11);
+  position(BUFFER_BEGIN);
+  found_range := search('This version:', FORWARD, EXACT);
+  if (found_range <> 0) then
+    position(end_of(found_range));
+    move_horizontal(1);
+    eve_erase_line;
+    split_line;
+    move_vertical(-1);
+    position(LINE_END);
+    copy_text('   '+date);
+  endif;
+endprocedure;
+
+procedure eve_update_version
+local new_vers;
+  update_version(new_vers);
+  message('New version is ' + new_vers);
+endprocedure;
+procedure update_version(new_vers)
+local pattern, range, i, i2, j, line, curr_vers, minor_vers;
+  ON_ERROR
+    if error = tpu$_strnotfound then
+      range := 0;
+    endif;
+  ENDON_ERROR;
+  position(BUFFER_BEGIN);
+  pattern := LINE_BEGIN + 'CDEC$' + span(' 	') + 'IDENT' + span(' 	') + "'";
+  range := search(pattern,forward);
+  if (range = 0) then
+    message('Could not find     CDEC$   IDENT   line.');
+    new_vers := '';
+    return;
+  endif;
+  position(end_of(range));
+  move_horizontal(1);
+  line := current_line;
+  i := index(line, "'");
+  j := index(substr(line,i+1,99),"'");
+  if (j = 0) then;
+    message("Don't have trailing   '  on IDENT line.");
+    return;
+  endif;
+  curr_vers := substr(line,i+1,j-1);
+  i2 := index(curr_vers, '.');
+  if (i2 = 0) then			! no minor version, bump major version
+    new_vers := str(int(curr_vers)+1);
+  else;
+    minor_vers := int(substr(curr_vers,i2+1,99))+1;
+    new_vers := substr(curr_vers,1,i2) + str(minor_vers);
+  endif;
+!  message('Previous version was ' + curr_vers + '; new version is ' + new_vers);
+  erase_character(j-1);
+  copy_text(new_vers);
+endprocedure;

@@ -1,0 +1,1946 @@
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   1
+                                                                12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+	      1       SUBROUTINE WIND_CD_OPEN_FILES(LZ_NAME,L1_NAME,NCF)
+	      2 C+
+	      3 C 
+	      4 C FUNCTIONAL DESCRIPTION:	
+	      5 C 
+	      6 C    This routine calls the appropriate subroutines to open the LZ (Level Zero)
+	      7 C    file for reading and to create and open the L1 (Level 1) file for writing.
+	      8 C    Its major chore is constructing the proper filenames and search patterns.
+	      9 C
+	     10 C 
+	     11 C FORMAL PARAMETERS:
+	     12 C  
+	     13 C     LZ_NAME:
+	     14 C	  A CHARACTER variable of sufficient size to hold a complete filename,
+	     15 C         including device and directory spec.  Upon return this parameter
+	     16 C         will contain the full filename of the input LZ file.
+	     17 C      
+	     18 C     L1_NAME:
+	     19 C	  A CHARACTER variable of sufficient size to hold a complete filename,
+	     20 C         including device and directory spec.  Upon return this parameter
+	     21 C         will contain the full filename of the output L1 file.
+	     22 C      
+	     23 C     NCF:
+	     24 C	  An INTEGER*4 variable which will, upon return, contain the number of
+	     25 C         non-blank characters in L1_NAME.
+	     26 C  
+	     27 C COMMON BLOCKS:
+	     28 C  
+	     29 C     DIAG
+	     30 C  
+	     31 C DESIGN:
+	     32 C  
+	     33 C     Use WIND_GET_FILENAME to prompt user for the proper LZ filename.
+	     34 C     Convert LZ filename into L1 filename in another device/directory.
+	     35 C     Use WIND_GET_FILENAME to prompt user for the proper L1 filename, using
+	     36 C     the constructed filename as the default.
+	     37 C  
+	     38 C 
+	     39 C This version:   1.7   12-JUN-1995
+	     40 C 
+	     41 C Created: 
+	     42 C 
+	     43 C	 17-FEB-1995    Larry Bleau
+	     44 C 
+	     45 C Revised:
+	     46 C 1.1	21-FEB-1995	L. Bleau	fixed bug in LZ to L1 filename change
+	     47 C	23-FEB-1995	L. Bleau	remove common DIAG, added INCLUDE
+	     48 C					DIAG.INC
+	     49 C 1.2	23-FEB-1995	L. Bleau	add code to open to dump file, not L1
+	     50 C					file, if in PRINTLZ mode
+	     51 C 1.3	 7-APR-1995	L. Bleau	corrected code constructing L1 filename
+	     52 C					so it'd work on short names as on CDROM
+	     53 C 1.4   12-APR-1995     L.Bleau         Ensure L1 file name will be the same 
+	     54 C                                       regardless of whether LZ file comes from
+	     55 C                                       CD or disk
+	     56 C 1.5   12-APR-1995     J.PAQUETTE      added calls to GET_EPHEMERIS, added
+	     57 C					include L1FMT.INC 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   2
+                                                                12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+	     58 C 1.6	26-APR-1995	L. Bleau	modified CDF file access, use wildcard
+	     59 C					to search for first orbit/attitude file;
+	     60 C					conditionally continue if not found;
+	     61 C					create L1 file at end of subroutine
+	     62 C 1.7	12-JUN-1995	L. Bleau	added IPOS=1; changed substring
+	     63 C					reference of L1_NAME to (1:NCF)
+	     64 C-
+	     65 CDEC$ IDENT '1.7'
+	     66       IMPLICIT NONE
+	     67 
+	     68       CHARACTER*(*) LZ_NAME,L1_NAME
+	     69       INTEGER NCF
+	     70 C
+	     71       INCLUDE   'INC_DIR:WIND_Lun.INC/NOLIST'
+	    101       INCLUDE   'INC_DIR:L1FMT.INC'
+    1	    102 C+
+    1	    103 C 
+    1	    104 C FUNCTIONAL DESCRIPTION:       
+    1	    105 C 
+    1	    106 C    This include file contains definitions for the Level 1 file format.
+    1	    107 C    Specifiically, it contains the definitions for the file and Science Record
+    1	    108 C    headers.
+    1	    109 C
+    1	    110 C COMMON BLOCKS:
+    1	    111 C  
+    1	    112 C     L1_HEADERS      contains one copy each of the file header and the Science
+    1	    113 C                     Record header
+    1	    114 C  
+    1	    115 C 
+    1	    116 C AUTHOR(S): 
+    1	    117 C 
+    1	    118 C        L. Bleau
+    1	    119 C 
+    1	    120 C Created: 
+    1	    121 C 
+    1	    122 C        12-OCT-1994    L. Bleau
+    1	    123 C 
+    1	    124 C This version:    6-APR-1995
+    1	    125 C 
+    1	    126 C Revised:
+    1	    127 C 
+    1	    128 C        Date     | Name  | Description
+    1	    129 C ----------------+-------+-----------------------------------------------------
+    1	    130 C 13-OCT-1994     |  LRB  | added fields to file header
+    1	    131 C 20-OCT-1994     |  LRB  | changed name of sci rec header structure from
+    1	    132 C                           L1_SR_HEADER to ST_L1_SR_HEADER
+    1	    133 C  2-NOV-1994     |  LRB  | added sr_count to ST_L1_SR_HEADER structure def
+    1	    134 C 15-DEC-1994     |  LRB  | added L1_records, EDB_count, EDB_lost, and EDB_skip
+    1	    135 C                           fields to L1 file header 
+    1	    136 C  8-MAR-1995     |  LRB  | added program_vers field to file header
+    1	    137 C  6-APR-1995     |  LRB  | added gsm, gse, and attitude fields to science
+    1	    138 C                           record header; added structure EPHEMERIS
+    1	    139 C
+    1	    140 C-
+    1	    141       STRUCTURE /ST_L1_FILE_HEADER/
+    1	    142           UNION
+    1	    143           MAP
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   3
+1.7                                                             12-APR-1995 19:08:44    SMS1:[WIND.SOFTWARE.INC]L1FMT.INC;29
+
+    1	    144               CHARACTER*4     ident/'HDRF'/
+    1	    145               CHARACTER*2     header_vers       ! header version
+    1	    146               CHARACTER*72    input_file        ! name of input file
+    1	    147               CHARACTER*2     medium            ! input medium code:
+    1	    148                                                 ! 'DK' = disk
+    1	    149                                                 ! 'CD' = cd-rom
+    1	    150               CHARACTER*3     credate_doy       ! input file creation date, day
+    1	    151                                                 ! of year 
+    1	    152               CHARACTER*4     credate_year      ! input file creation date, year
+    1	    153               CHARACTER*11    credate           ! input file creation date
+    1	    154                                                 ! 'DD-MMM-YYYY'
+    1	    155               CHARACTER*23    date_of_EXE       ! version of program which wrote
+    1	    156                                                 ! the L1 file
+    1	    157               CHARACTER*1     hw_type           ! system hardware type which ran
+    1	    158                                                 ! program: 'V' = VAX, 'A' = AXP
+    1	    159               CHARACTER*11    run_date          ! program run date 'DD-MMM-YYYY'
+    1	    160               CHARACTER*20    start_time        ! user-specified start time
+    1	    161                                                 ! 'DD-MMM-YYYY HH:MM:SS'
+    1	    162               CHARACTER*20    stop_time         ! user-specified stop time
+    1	    163                                                 ! 'DD-MMM-YYYY HH:MM:SS'
+    1	    164               CHARACTER*3     comment_len       ! length of user comment
+    1	    165               CHARACTER*80    comment           ! user-supplied comment
+    1	    166               CHARACTER*4     L1_records        ! number of L1 records in file
+    1	    167               CHARACTER*6     EDB_count         ! number of good EDBs (spins) stored
+    1	    168               CHARACTER*6     EDB_lost          ! number of EDBs (spins) lost
+    1	    169               CHARACTER*6     EDB_skip          ! number of EDBs (spins) skipped
+    1	    170               CHARACTER*5     program_vers      ! version of WIND_CD_READ program
+    1	    171               CHARACTER*1     eph_avail		! 'T' = orbit and attitude info
+    1	    172 						! in sci rec hdr; 'F' = not there
+    1	    173               CHARACTER*116   spare             ! makes total size 400 bytes
+    1	    174           END MAP
+    1	    175           MAP
+    1	    176               CHARACTER*400   c_all             ! references entire structure
+    1	    177           END MAP
+    1	    178           END UNION
+    1	    179       END STRUCTURE    !ST_L1_FILE_HDR
+    1	    180 
+    1	    181 
+    1	    182       STRUCTURE /EPHEMERIS/		! structure to describe spacecraft 
+    1	    183 					! position in some coordinate system
+    1	    184           REAL*8           x
+    1	    185           REAL*8           y
+    1	    186           REAL*8           z
+    1	    187       END STRUCTURE    !EPHEMERIS
+    1	    188 
+    1	    189       STRUCTURE /ATTITUDE/		! structure to describe spacecraft 
+    1	    190 					! attitude (orientation)
+    1	    191 	  REAL*4	   r_asc
+    1	    192 	  REAL*4	   decl
+    1	    193       END STRUCTURE    !ATTITUDE
+    1	    194 
+    1	    195       STRUCTURE /ST_L1_SR_HEADER/
+    1	    196           UNION
+    1	    197           MAP
+    1	    198               CHARACTER*4     ident/'HDRR'/
+    1	    199               INTEGER*4       nvalid            ! number of valid spins
+    1	    200               INTEGER*4       present(2)        ! spin presence flags (bit coded)
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   4
+1.7                                                             12-APR-1995 19:08:44    SMS1:[WIND.SOFTWARE.INC]L1FMT.INC;29
+
+    1	    201               INTEGER*4       bitrate_code      ! bit rate code:
+    1	    202                                                 ! 0 = no valid spins
+    1	    203                                                 ! 1 = all valid spins low bit rate
+    1	    204                                                 ! 2 = all valid spins high bit rate
+    1	    205                                                 ! 3 = mixed low and high bit rate
+    1	    206               INTEGER*4       sr_count          ! Sci Rec counter extracted from
+    1	    207                                                 ! HDB (24 bits)
+    1	    208               INTEGER*4       zero_swics_pha(2) ! zero SWICS PHA word flags (bit coded)
+    1	    209               INTEGER*4       zero_mass_pha(2)  ! zero MASS PHA word flags (bit coded)
+    1	    210               INTEGER*4       zero_stics_pha(2) ! zero STICS PHA word flags (bit coded)
+    1	    211               RECORD /EPHEMERIS/ gci_pos	! GCI position coordinates
+    1	    212               RECORD /EPHEMERIS/ gci_vel	! velocity in GCI coords
+    1	    213               RECORD /EPHEMERIS/ gse_pos	! GSE position coordinates
+    1	    214               RECORD /EPHEMERIS/ gse_vel	! velocity in GSE coords
+    1	    215               RECORD /EPHEMERIS/ gsm_pos	! GSM position coordinates
+    1	    216               RECORD /EPHEMERIS/ gsm_vel	! velocity in GSM coords
+    1	    217               RECORD /EPHEMERIS/ gci_sun_vector	! sunvector in GCI coords
+    1	    218               RECORD /ATTITUDE/ gci_att		! GCI attitude of spacecraft in RA, DECL
+    1	    219               RECORD /ATTITUDE/ gse_att		! GSE attitude of spacecraft in RA, DECL
+    1	    220               RECORD /ATTITUDE/ gsm_att		! GSM attitude of spacecraft in RA, DECL
+    1	    221 	      REAL*4          spin_rate		! body spin rate
+    1	    222           END MAP
+    1	    223           MAP
+    1	    224               CHARACTER*244   c_all             ! references entire structure
+    1	    225           END MAP
+    1	    226           END UNION
+    1	    227       END STRUCTURE    !ST_L1_SR_HEADER
+    1	    228 
+    1	    229       COMMON /L1_HEADERS/ l1_file_header, l1_sr_header
+    1	    230 
+    1	    231       RECORD /ST_L1_FILE_HEADER/ l1_file_header
+    1	    232       RECORD /ST_L1_SR_HEADER/ l1_sr_header
+	    233       INCLUDE   'INC_DIR:L1_HDR_INFO.INC'
+    1	    234 C
+    1	    235 C Hold common block and record declarations for various information which will
+    1	    236 C eventually be stored in the file or science record header.
+    1	    237 C
+    1	    238       COMMON /EPHDATA/
+    1	    239      +		EPH_EPOCH,		! Epoch times from orbit file
+    1	    240      +		GCI_POS,		! GCI position
+    1	    241      +		GCI_VEL,		! GCI velocity
+    1	    242      +		GSE_POS,		! GSE position
+    1	    243      +		GSE_VEL,		! GSE velocity
+    1	    244      +		GSM_POS,		! GSM position
+    1	    245      +		GSM_VEL,		! GSM velocity
+    1	    246      +		GCI_SUN_VECTOR,		! sun vector
+    1	    247      +		GCI_ATT,		! attitude info
+    1	    248      +		GSE_ATT,		! attitude info
+    1	    249      +		GSM_ATT,		! attitude info
+    1	    250      +		SPIN_RATE		! body spin rate
+    1	    251 
+    1	    252       REAL*8	EPH_EPOCH(144)		! Epoch times from orbit file
+    1	    253 
+    1	    254       REAL*4	SPIN_RATE(144)		! body spin rate
+    1	    255 
+    1	    256       RECORD /EPHEMERIS/ GCI_POS(144)	! GCI position
+    1	    257       RECORD /EPHEMERIS/ GCI_VEL(144)	! GCI velocity
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   5
+1.7                                                             12-APR-1995 19:01:17    SMS1:[WIND.SOFTWARE.INC]L1_HDR_INFO.INC;9
+
+    1	    258       RECORD /EPHEMERIS/ GSE_POS(144)	! GSE position
+    1	    259       RECORD /EPHEMERIS/ GSE_VEL(144)	! GSE velocity
+    1	    260       RECORD /EPHEMERIS/ GSM_POS(144)	! GSM position
+    1	    261       RECORD /EPHEMERIS/ GSM_VEL(144)	! GSM velocity
+    1	    262       RECORD /EPHEMERIS/ GCI_SUN_VECTOR(144) ! sun vector
+    1	    263 
+    1	    264       RECORD /ATTITUDE/ GCI_ATT(144)	! attitude info
+    1	    265       RECORD /ATTITUDE/ GSE_ATT(144)	! attitude info
+    1	    266       RECORD /ATTITUDE/ GSM_ATT(144)	! attitude info
+	    267       INCLUDE   'INC_DIR:L1INFO.INC'
+    1	    268       INTEGER*4	Sci_rec_cntr,		! Counter of sci recs before shifting
+    1	    269      +          L1_recs_written,        ! Output L1 science record counter
+    1	    270      +          EDB_Lost,               ! EDBs lost during run
+    1	    271      +          EDB_Skip,               ! EDBs skipped due to command
+    1	    272      +          EDB_Sum,                ! Total number of EDBs handled
+    1	    273      +          Curr_Sci_Rec_Number,    ! Current science record number
+    1	    274      +          Curr_Spin               ! Current spin being processed
+    1	    275 
+    1	    276       LOGICAL*4 New_Sci_Rec,            ! Set if just finished sci rec, starting
+    1	    277 					! new one; clear otherwise
+    1	    278      +          eph_avail,              ! Set true if orbit and attitude data
+    1	    279 					! is available; false otherwise
+    1	    280      +		from_cd			! Set if LZ file is on CDROM
+    1	    281 
+    1	    282       COMMON /L1INFO/
+    1	    283      +		Sci_rec_cntr,		! Counter of sci recs before shifting
+    1	    284      +          L1_recs_written,        ! Output L1 science record counter
+    1	    285      +          EDB_Lost,               ! EDBs lost during run
+    1	    286      +          EDB_Skip,               ! EDBs skipped due to command
+    1	    287      +          EDB_Sum,                ! Total number of EDBs handled
+    1	    288      +          Curr_Sci_Rec_Number,    ! Current science record number
+    1	    289      +          Curr_Spin,              ! Current spin being processed
+    1	    290      +		New_Sci_Rec,            ! Set if just finished sci rec, starting
+    1	    291 					! new one; clear otherwise
+    1	    292      +          eph_avail,              ! Set true if orbit and attitude data
+    1	    293 					! is available; false otherwise
+    1	    294      +		from_cd			! Set if LZ file is on CDROM
+	    295       INCLUDE   'INC_DIR:DIAG.INC/NOLIST'
+	    304       INCLUDE   'CDF$INC:CDF.INC'
+    1	    305 C-----------------------------------------------------------------------
+    1	    306 C
+    1	    307 C  NSSDC/CDF                       Include file for FORTRAN interface.
+    1	    308 C
+    1	    309 C  Version 3.3, 20-Dec-94, Hughes STX.
+    1	    310 C
+    1	    311 C  Modification history:
+    1	    312 C
+    1	    313 C   V1.0  22-Jan-91, J Love     Original version (for CDF V2.0).
+    1	    314 C   V2.0  28-May-91, J Love     Modified for CDF V2.1 enhancements.
+    1	    315 C   V2.1   2-Aug-91, J Love     Increment for CDF V2.1.2.  Added
+    1	    316 C				declarations for library functions.
+    1	    317 C				Renamed a few items.
+    1	    318 C   V3.0  19-May-92, J Love     IBM PC & HP port.  CDF V2.2.
+    1	    319 C   V3.1  23-Sep-92, J Love     CDF V2.3 (shareable/NeXT/zVar).
+    1	    320 C   V3.1a  5-Oct-92, J Love     CDF V2.3.0a (NeXT/encoding).
+    1	    321 C   V3.1b  6-Oct-92, J Love     CDF V2.3.0b (CDFcompare).
+    1	    322 C   V3.1c 27-Oct-92, J Love     CDF V2.3.0c (pad values).
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   6
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    323 C   V3.2  12-Jan-94, J Love     CDF V2.4.
+    1	    324 C   V3.2a  4-Feb-94, J Love	DEC Alpha/OpenVMS port.
+    1	    325 C   V3.2b 22-Feb-94, J Love	Spelling lesson.  Shortened all lines
+    1	    326 C				to 72 columns or less.
+    1	    327 C   V3.3  20-Dec-94, J Love	CDF V2.5.
+    1	    328 C
+    1	    329 C-----------------------------------------------------------------------
+    1	    330 
+    1	    331 C-----------------------------------------------------------------------
+    1	    332 C Limits.
+    1	    333 C-----------------------------------------------------------------------
+    1	    334 
+    1	    335 	INTEGER*4 CDF_MIN_DIMS
+    1	    336 	PARAMETER (CDF_MIN_DIMS = 0)
+    1	    337 
+    1	    338 	INTEGER*4 CDF_MAX_DIMS
+    1	    339 	PARAMETER (CDF_MAX_DIMS = 10)
+    1	    340 
+    1	    341 C-----------------------------------------------------------------------
+    1	    342 C Lengths.
+    1	    343 C-----------------------------------------------------------------------
+    1	    344 
+    1	    345 	INTEGER*4 CDF_VAR_NAME_LEN
+    1	    346 	PARAMETER (CDF_VAR_NAME_LEN = 64)
+    1	    347 
+    1	    348 	INTEGER*4 CDF_ATTR_NAME_LEN
+    1	    349 	PARAMETER (CDF_ATTR_NAME_LEN = 64)
+    1	    350 
+    1	    351 	INTEGER*4 CDF_COPYRIGHT_LEN
+    1	    352 	PARAMETER (CDF_COPYRIGHT_LEN = 256)
+    1	    353 
+    1	    354 	INTEGER*4 CDF_STATUSTEXT_LEN
+    1	    355 	PARAMETER (CDF_STATUSTEXT_LEN = 80)
+    1	    356 
+    1	    357 	INTEGER*4 CDF_PATHNAME_LEN
+    1	    358 	PARAMETER (CDF_PATHNAME_LEN = 128)
+    1	    359 
+    1	    360 	INTEGER*4 EPOCH_STRING_LEN
+    1	    361 	PARAMETER (EPOCH_STRING_LEN = 24)
+    1	    362 
+    1	    363 	INTEGER*4 EPOCH1_STRING_LEN
+    1	    364 	PARAMETER (EPOCH1_STRING_LEN = 16)
+    1	    365 
+    1	    366 	INTEGER*4 EPOCH2_STRING_LEN
+    1	    367 	PARAMETER (EPOCH2_STRING_LEN = 14)
+    1	    368 
+    1	    369 	INTEGER*4 EPOCH3_STRING_LEN
+    1	    370 	PARAMETER (EPOCH3_STRING_LEN = 24)
+    1	    371 
+    1	    372 C-----------------------------------------------------------------------
+    1	    373 C Data types.
+    1	    374 C-----------------------------------------------------------------------
+    1	    375 
+    1	    376 	INTEGER*4 CDF_INT1
+    1	    377 	PARAMETER (CDF_INT1 = 1)
+    1	    378 
+    1	    379 	INTEGER*4 CDF_INT2
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   7
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    380 	PARAMETER (CDF_INT2 = 2)
+    1	    381 
+    1	    382 	INTEGER*4 CDF_INT4
+    1	    383 	PARAMETER (CDF_INT4 = 4)
+    1	    384 
+    1	    385 	INTEGER*4 CDF_UINT1
+    1	    386 	PARAMETER (CDF_UINT1 = 11)
+    1	    387 
+    1	    388 	INTEGER*4 CDF_UINT2
+    1	    389 	PARAMETER (CDF_UINT2 = 12)
+    1	    390 
+    1	    391 	INTEGER*4 CDF_UINT4
+    1	    392 	PARAMETER (CDF_UINT4 = 14)
+    1	    393 
+    1	    394 	INTEGER*4 CDF_REAL4
+    1	    395 	PARAMETER (CDF_REAL4 = 21)
+    1	    396 
+    1	    397 	INTEGER*4 CDF_REAL8
+    1	    398 	PARAMETER (CDF_REAL8 = 22)
+    1	    399 
+    1	    400 	INTEGER*4 CDF_EPOCH
+    1	    401 	PARAMETER (CDF_EPOCH = 31)
+    1	    402 
+    1	    403 	INTEGER*4 CDF_BYTE
+    1	    404 	PARAMETER (CDF_BYTE = 41)
+    1	    405 
+    1	    406 	INTEGER*4 CDF_FLOAT
+    1	    407 	PARAMETER (CDF_FLOAT = 44)
+    1	    408 
+    1	    409 	INTEGER*4 CDF_DOUBLE
+    1	    410 	PARAMETER (CDF_DOUBLE = 45)
+    1	    411 
+    1	    412 	INTEGER*4 CDF_CHAR
+    1	    413 	PARAMETER (CDF_CHAR = 51)
+    1	    414 
+    1	    415 	INTEGER*4 CDF_UCHAR
+    1	    416 	PARAMETER (CDF_UCHAR = 52)
+    1	    417 
+    1	    418 C-----------------------------------------------------------------------
+    1	    419 C Encodings.
+    1	    420 C-----------------------------------------------------------------------
+    1	    421 
+    1	    422 	INTEGER*4 NETWORK_ENCODING
+    1	    423 	PARAMETER (NETWORK_ENCODING = 1)
+    1	    424 
+    1	    425 	INTEGER*4 SUN_ENCODING
+    1	    426 	PARAMETER (SUN_ENCODING = 2)
+    1	    427 
+    1	    428 	INTEGER*4 VAX_ENCODING
+    1	    429 	PARAMETER (VAX_ENCODING = 3)
+    1	    430 
+    1	    431 	INTEGER*4 DECSTATION_ENCODING
+    1	    432 	PARAMETER (DECSTATION_ENCODING = 4)
+    1	    433 
+    1	    434 	INTEGER*4 SGi_ENCODING
+    1	    435 	PARAMETER (SGi_ENCODING = 5)
+    1	    436 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   8
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    437 	INTEGER*4 IBMPC_ENCODING
+    1	    438 	PARAMETER (IBMPC_ENCODING = 6)
+    1	    439 
+    1	    440 	INTEGER*4 IBMRS_ENCODING
+    1	    441 	PARAMETER (IBMRS_ENCODING = 7)
+    1	    442 
+    1	    443 	INTEGER*4 HOST_ENCODING
+    1	    444 	PARAMETER (HOST_ENCODING = 8)
+    1	    445 
+    1	    446 	INTEGER*4 MAC_ENCODING
+    1	    447 	PARAMETER (MAC_ENCODING = 9)
+    1	    448 
+    1	    449 	INTEGER*4 HP_ENCODING
+    1	    450 	PARAMETER (HP_ENCODING = 11)
+    1	    451 
+    1	    452 	INTEGER*4 NeXT_ENCODING
+    1	    453 	PARAMETER (NeXT_ENCODING = 12)
+    1	    454 
+    1	    455 	INTEGER*4 ALPHAOSF1_ENCODING
+    1	    456 	PARAMETER (ALPHAOSF1_ENCODING = 13)
+    1	    457 
+    1	    458 	INTEGER*4 ALPHAVMSd_ENCODING
+    1	    459 	PARAMETER (ALPHAVMSd_ENCODING = 14)
+    1	    460 
+    1	    461 	INTEGER*4 ALPHAVMSg_ENCODING
+    1	    462 	PARAMETER (ALPHAVMSg_ENCODING = 15)
+    1	    463 
+    1	    464 C-----------------------------------------------------------------------
+    1	    465 C Decodings.
+    1	    466 C-----------------------------------------------------------------------
+    1	    467 
+    1	    468 	INTEGER*4 NETWORK_DECODING
+    1	    469 	PARAMETER (NETWORK_DECODING = NETWORK_ENCODING)
+    1	    470 
+    1	    471 	INTEGER*4 SUN_DECODING
+    1	    472 	PARAMETER (SUN_DECODING = SUN_ENCODING)
+    1	    473 
+    1	    474 	INTEGER*4 VAX_DECODING
+    1	    475 	PARAMETER (VAX_DECODING = VAX_ENCODING)
+    1	    476 
+    1	    477 	INTEGER*4 DECSTATION_DECODING
+    1	    478 	PARAMETER (DECSTATION_DECODING = DECSTATION_ENCODING)
+    1	    479 
+    1	    480 	INTEGER*4 SGi_DECODING
+    1	    481 	PARAMETER (SGi_DECODING = SGi_ENCODING)
+    1	    482 
+    1	    483 	INTEGER*4 IBMPC_DECODING
+    1	    484 	PARAMETER (IBMPC_DECODING = IBMPC_ENCODING)
+    1	    485 
+    1	    486 	INTEGER*4 IBMRS_DECODING
+    1	    487 	PARAMETER (IBMRS_DECODING = IBMRS_ENCODING)
+    1	    488 
+    1	    489 	INTEGER*4 HOST_DECODING
+    1	    490 	PARAMETER (HOST_DECODING = HOST_ENCODING)
+    1	    491 
+    1	    492 	INTEGER*4 MAC_DECODING
+    1	    493 	PARAMETER (MAC_DECODING = MAC_ENCODING)
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page   9
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    494 
+    1	    495 	INTEGER*4 HP_DECODING
+    1	    496 	PARAMETER (HP_DECODING = HP_ENCODING)
+    1	    497 
+    1	    498 	INTEGER*4 NeXT_DECODING
+    1	    499 	PARAMETER (NeXT_DECODING = NeXT_ENCODING)
+    1	    500 
+    1	    501 	INTEGER*4 ALPHAOSF1_DECODING
+    1	    502 	PARAMETER (ALPHAOSF1_DECODING = ALPHAOSF1_ENCODING)
+    1	    503 
+    1	    504 	INTEGER*4 ALPHAVMSd_DECODING
+    1	    505 	PARAMETER (ALPHAVMSd_DECODING = ALPHAVMSd_ENCODING)
+    1	    506 
+    1	    507 	INTEGER*4 ALPHAVMSg_DECODING
+    1	    508 	PARAMETER (ALPHAVMSg_DECODING = ALPHAVMSg_ENCODING)
+    1	    509 
+    1	    510 C-----------------------------------------------------------------------
+    1	    511 C Variances (record and dimension).
+    1	    512 C-----------------------------------------------------------------------
+    1	    513 
+    1	    514 	INTEGER*4 VARY
+    1	    515 	PARAMETER (VARY = -1)
+    1	    516 
+    1	    517 	INTEGER*4 NOVARY
+    1	    518 	PARAMETER (NOVARY = 0)
+    1	    519 
+    1	    520 C-----------------------------------------------------------------------
+    1	    521 C Majorities.
+    1	    522 C-----------------------------------------------------------------------
+    1	    523 
+    1	    524 	INTEGER*4 ROW_MAJOR
+    1	    525 	PARAMETER (ROW_MAJOR = 1)
+    1	    526 
+    1	    527 	INTEGER*4 COL_MAJOR
+    1	    528 	PARAMETER (COL_MAJOR = 2)
+    1	    529 
+    1	    530 C-----------------------------------------------------------------------
+    1	    531 C Formats.
+    1	    532 C-----------------------------------------------------------------------
+    1	    533 
+    1	    534 	INTEGER*4 SINGLE_FILE
+    1	    535 	PARAMETER (SINGLE_FILE = 1)
+    1	    536 
+    1	    537 	INTEGER*4 MULTI_FILE
+    1	    538 	PARAMETER (MULTI_FILE = 2)
+    1	    539 
+    1	    540 C-----------------------------------------------------------------------
+    1	    541 C Scopes.
+    1	    542 C-----------------------------------------------------------------------
+    1	    543 
+    1	    544 	INTEGER*4 GLOBAL_SCOPE
+    1	    545 	PARAMETER (GLOBAL_SCOPE = 1)
+    1	    546 
+    1	    547 	INTEGER*4 VARIABLE_SCOPE
+    1	    548 	PARAMETER (VARIABLE_SCOPE = 2)
+    1	    549 
+    1	    550 C-----------------------------------------------------------------------
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  10
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    551 C Readonly modes.
+    1	    552 C-----------------------------------------------------------------------
+    1	    553 
+    1	    554 	INTEGER*4 READONLYon
+    1	    555 	PARAMETER (READONLYon = -1)
+    1	    556 
+    1	    557 	INTEGER*4 READONLYoff
+    1	    558 	PARAMETER (READONLYoff = 0)
+    1	    559 
+    1	    560 C-----------------------------------------------------------------------
+    1	    561 C zModes.
+    1	    562 C-----------------------------------------------------------------------
+    1	    563 
+    1	    564 	INTEGER*4 zMODEoff
+    1	    565 	PARAMETER (zMODEoff = 0)
+    1	    566 
+    1	    567 	INTEGER*4 zMODEon1
+    1	    568 	PARAMETER (zMODEon1 = 1)
+    1	    569 
+    1	    570 	INTEGER*4 zMODEon2
+    1	    571 	PARAMETER (zMODEon2 = 2)
+    1	    572 
+    1	    573 C-----------------------------------------------------------------------
+    1	    574 C Negative to positive floating point zero modes.
+    1	    575 C-----------------------------------------------------------------------
+    1	    576 
+    1	    577 	INTEGER*4 NEGtoPOSfp0on
+    1	    578 	PARAMETER (NEGtoPOSfp0on = -1)
+    1	    579 
+    1	    580 	INTEGER*4 NEGtoPOSfp0off
+    1	    581 	PARAMETER (NEGtoPOSfp0off = 0)
+    1	    582 
+    1	    583 C-----------------------------------------------------------------------
+    1	    584 C Invalid/reserved constants.
+    1	    585 C-----------------------------------------------------------------------
+    1	    586 
+    1	    587 	INTEGER*4 CDF_INVALID_ID
+    1	    588 	PARAMETER (CDF_INVALID_ID = 0)
+    1	    589 
+    1	    590 	INTEGER*4 CDF_INVALID_DATATYPE
+    1	    591 	PARAMETER (CDF_INVALID_DATATYPE = -1)
+    1	    592 
+    1	    593 C-----------------------------------------------------------------------
+    1	    594 C Status codes.
+    1	    595 C-----------------------------------------------------------------------
+    1	    596 
+    1	    597 C       !---------------------------------------------------------------
+    1	    598 C       ! INFO codes.
+    1	    599 C       !---------------------------------------------------------------
+    1	    600 
+    1	    601 	INTEGER*4 VIRTUAL_RECORD_DATA
+    1	    602 	PARAMETER (VIRTUAL_RECORD_DATA = 1001)
+    1	    603 
+    1	    604 C	1002 unused.
+    1	    605 
+    1	    606 	INTEGER*4 VAR_ALREADY_CLOSED
+    1	    607 	PARAMETER (VAR_ALREADY_CLOSED = 1003)
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  11
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    608 
+    1	    609 	INTEGER*4 SINGLE_FILE_FORMAT
+    1	    610 	PARAMETER (SINGLE_FILE_FORMAT = 1004)
+    1	    611 
+    1	    612 	INTEGER*4 NO_PADVALUE_SPECIFIED
+    1	    613 	PARAMETER (NO_PADVALUE_SPECIFIED = 1005)
+    1	    614 
+    1	    615 	INTEGER*4 NO_VARS_IN_CDF
+    1	    616 	PARAMETER (NO_VARS_IN_CDF = 1006)
+    1	    617 
+    1	    618 	INTEGER*4 MULTI_FILE_FORMAT
+    1	    619 	PARAMETER (MULTI_FILE_FORMAT = 1007)
+    1	    620 
+    1	    621 C       !---------------------------------------------------------------
+    1	    622 C       ! OK code.
+    1	    623 C       !---------------------------------------------------------------
+    1	    624 
+    1	    625 	INTEGER*4 CDF_OK
+    1	    626 	PARAMETER (CDF_OK = 0)
+    1	    627 
+    1	    628 C       !---------------------------------------------------------------
+    1	    629 C       ! WARNING codes.
+    1	    630 C       !---------------------------------------------------------------
+    1	    631 
+    1	    632 	INTEGER*4 ATTR_NAME_TRUNC
+    1	    633 	PARAMETER (ATTR_NAME_TRUNC = -1001)
+    1	    634 
+    1	    635 	INTEGER*4 CDF_NAME_TRUNC
+    1	    636 	PARAMETER (CDF_NAME_TRUNC = -1002)
+    1	    637 
+    1	    638 	INTEGER*4 VAR_NAME_TRUNC
+    1	    639 	PARAMETER (VAR_NAME_TRUNC = -1003)
+    1	    640 
+    1	    641 	INTEGER*4 NEGATIVE_FP_ZERO
+    1	    642 	PARAMETER (NEGATIVE_FP_ZERO = -1004)
+    1	    643 
+    1	    644 	INTEGER*4 FUTURE_CDF
+    1	    645 	PARAMETER (FUTURE_CDF = -1005)
+    1	    646 
+    1	    647 C       !---------------------------------------------------------------
+    1	    648 C       ! Warning threshold, not actually a status code.
+    1	    649 C       !---------------------------------------------------------------
+    1	    650 
+    1	    651 	INTEGER*4 CDF_WARN
+    1	    652 	PARAMETER (CDF_WARN = -2000)
+    1	    653 
+    1	    654 C       !---------------------------------------------------------------
+    1	    655 C       ! ERROR codes.
+    1	    656 C       !---------------------------------------------------------------
+    1	    657 
+    1	    658 	INTEGER*4 ATTR_EXISTS
+    1	    659 	PARAMETER (ATTR_EXISTS = -2001)
+    1	    660 
+    1	    661 	INTEGER*4 BAD_CDF_ID
+    1	    662 	PARAMETER (BAD_CDF_ID = -2002)
+    1	    663 
+    1	    664 	INTEGER*4 BAD_DATA_TYPE
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  12
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    665 	PARAMETER (BAD_DATA_TYPE = -2003)
+    1	    666 
+    1	    667 	INTEGER*4 BAD_DIM_SIZE
+    1	    668 	PARAMETER (BAD_DIM_SIZE = -2004)
+    1	    669 
+    1	    670 	INTEGER*4 BAD_DIM_INDEX
+    1	    671 	PARAMETER (BAD_DIM_INDEX = -2005)
+    1	    672 
+    1	    673 	INTEGER*4 BAD_ENCODING
+    1	    674 	PARAMETER (BAD_ENCODING = -2006)
+    1	    675 
+    1	    676 	INTEGER*4 BAD_MAJORITY
+    1	    677 	PARAMETER (BAD_MAJORITY = -2007)
+    1	    678 
+    1	    679 	INTEGER*4 BAD_NUM_DIMS
+    1	    680 	PARAMETER (BAD_NUM_DIMS = -2008)
+    1	    681 
+    1	    682 	INTEGER*4 BAD_REC_NUM
+    1	    683 	PARAMETER (BAD_REC_NUM = -2009)
+    1	    684 
+    1	    685 	INTEGER*4 BAD_SCOPE
+    1	    686 	PARAMETER (BAD_SCOPE = -2010)
+    1	    687 
+    1	    688 	INTEGER*4 BAD_NUM_ELEMS
+    1	    689 	PARAMETER (BAD_NUM_ELEMS = -2011)
+    1	    690 
+    1	    691 	INTEGER*4 CDF_OPEN_ERROR
+    1	    692 	PARAMETER (CDF_OPEN_ERROR = -2012)
+    1	    693 
+    1	    694 	INTEGER*4 CDF_EXISTS
+    1	    695 	PARAMETER (CDF_EXISTS = -2013)
+    1	    696 
+    1	    697 	INTEGER*4 BAD_FORMAT
+    1	    698 	PARAMETER (BAD_FORMAT = -2014)
+    1	    699 
+    1	    700 	INTEGER*4 BAD_ALLOCATE_RECS
+    1	    701 	PARAMETER (BAD_ALLOCATE_RECS = -2015)
+    1	    702 
+    1	    703 	INTEGER*4 BAD_CDF_EXTENSION
+    1	    704 	PARAMETER (BAD_CDF_EXTENSION = -2016)
+    1	    705 
+    1	    706 	INTEGER*4 NO_SUCH_ATTR
+    1	    707 	PARAMETER (NO_SUCH_ATTR = -2017)
+    1	    708 
+    1	    709 	INTEGER*4 NO_SUCH_ENTRY
+    1	    710 	PARAMETER (NO_SUCH_ENTRY = -2018)
+    1	    711 
+    1	    712 	INTEGER*4 NO_SUCH_VAR
+    1	    713 	PARAMETER (NO_SUCH_VAR = -2019)
+    1	    714 
+    1	    715 	INTEGER*4 VAR_READ_ERROR
+    1	    716 	PARAMETER (VAR_READ_ERROR = -2020)
+    1	    717 
+    1	    718 	INTEGER*4 VAR_WRITE_ERROR
+    1	    719 	PARAMETER (VAR_WRITE_ERROR = -2021)
+    1	    720 
+    1	    721 	INTEGER*4 BAD_ARGUMENT
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  13
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    722 	PARAMETER (BAD_ARGUMENT = -2022)
+    1	    723 
+    1	    724 	INTEGER*4 IBM_PC_OVERFLOW
+    1	    725 	PARAMETER (IBM_PC_OVERFLOW = -2023)
+    1	    726 
+    1	    727 	INTEGER*4 TOO_MANY_VARS
+    1	    728 	PARAMETER (TOO_MANY_VARS = -2024)
+    1	    729 
+    1	    730 	INTEGER*4 VAR_EXISTS
+    1	    731 	PARAMETER (VAR_EXISTS = -2025)
+    1	    732 
+    1	    733 	INTEGER*4 BAD_MALLOC
+    1	    734 	PARAMETER (BAD_MALLOC = -2026)
+    1	    735 
+    1	    736 	INTEGER*4 NOT_A_CDF
+    1	    737 	PARAMETER (NOT_A_CDF = -2027)
+    1	    738 
+    1	    739 	INTEGER*4 CORRUPTED_V2_CDF
+    1	    740 	PARAMETER (CORRUPTED_V2_CDF = -2028)
+    1	    741 
+    1	    742 	INTEGER*4 VAR_OPEN_ERROR
+    1	    743 	PARAMETER (VAR_OPEN_ERROR = -2029)
+    1	    744 
+    1	    745 	INTEGER*4 BAD_INITIAL_RECS
+    1	    746 	PARAMETER (BAD_INITIAL_RECS = -2030)
+    1	    747 
+    1	    748 	INTEGER*4 BAD_EXTEND_RECS
+    1	    749 	PARAMETER (BAD_EXTEND_RECS = -2031)
+    1	    750 
+    1	    751 	INTEGER*4 END_OF_VAR
+    1	    752 	PARAMETER (END_OF_VAR = -2032)
+    1	    753 
+    1	    754 C	-2033 unused.
+    1	    755 
+    1	    756 	INTEGER*4 BAD_CDFSTATUS
+    1	    757 	PARAMETER (BAD_CDFSTATUS = -2034)
+    1	    758 
+    1	    759 	INTEGER*4 CDF_INTERNAL_ERROR
+    1	    760 	PARAMETER (CDF_INTERNAL_ERROR = -2035)
+    1	    761 
+    1	    762 	INTEGER*4 BAD_NUM_VARS
+    1	    763 	PARAMETER (BAD_NUM_VARS = -2036)
+    1	    764 
+    1	    765 	INTEGER*4 BAD_REC_COUNT
+    1	    766 	PARAMETER (BAD_REC_COUNT = -2037)
+    1	    767 
+    1	    768 	INTEGER*4 BAD_REC_INTERVAL
+    1	    769 	PARAMETER (BAD_REC_INTERVAL = -2038)
+    1	    770 
+    1	    771 	INTEGER*4 BAD_DIM_COUNT
+    1	    772 	PARAMETER (BAD_DIM_COUNT = -2039)
+    1	    773 
+    1	    774 	INTEGER*4 BAD_DIM_INTERVAL
+    1	    775 	PARAMETER (BAD_DIM_INTERVAL = -2040)
+    1	    776 
+    1	    777 	INTEGER*4 BAD_VAR_NUM
+    1	    778 	PARAMETER (BAD_VAR_NUM = -2041)
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  14
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    779 
+    1	    780 	INTEGER*4 BAD_ATTR_NUM
+    1	    781 	PARAMETER (BAD_ATTR_NUM = -2042)
+    1	    782 
+    1	    783 	INTEGER*4 BAD_ENTRY_NUM
+    1	    784 	PARAMETER (BAD_ENTRY_NUM = -2043)
+    1	    785 
+    1	    786 	INTEGER*4 BAD_ATTR_NAME
+    1	    787 	PARAMETER (BAD_ATTR_NAME = -2044)
+    1	    788 
+    1	    789 	INTEGER*4 BAD_VAR_NAME
+    1	    790 	PARAMETER (BAD_VAR_NAME = -2045)
+    1	    791 
+    1	    792 	INTEGER*4 NO_ATTR_SELECTED
+    1	    793 	PARAMETER (NO_ATTR_SELECTED = -2046)
+    1	    794 
+    1	    795 	INTEGER*4 NO_ENTRY_SELECTED
+    1	    796 	PARAMETER (NO_ENTRY_SELECTED = -2047)
+    1	    797 
+    1	    798 	INTEGER*4 NO_VAR_SELECTED
+    1	    799 	PARAMETER (NO_VAR_SELECTED = -2048)
+    1	    800 
+    1	    801 	INTEGER*4 BAD_CDF_NAME
+    1	    802 	PARAMETER (BAD_CDF_NAME = -2049)
+    1	    803 
+    1	    804 C	-2050 unused.
+    1	    805 
+    1	    806 	INTEGER*4 CANNOT_CHANGE
+    1	    807 	PARAMETER (CANNOT_CHANGE = -2051)
+    1	    808 
+    1	    809 	INTEGER*4 NO_STATUS_SELECTED
+    1	    810 	PARAMETER (NO_STATUS_SELECTED = -2052)
+    1	    811 
+    1	    812 	INTEGER*4 NO_CDF_SELECTED
+    1	    813 	PARAMETER (NO_CDF_SELECTED = -2053)
+    1	    814 
+    1	    815 	INTEGER*4 READ_ONLY_DISTRIBUTION
+    1	    816 	PARAMETER (READ_ONLY_DISTRIBUTION = -2054)
+    1	    817 
+    1	    818 	INTEGER*4 CDF_CLOSE_ERROR
+    1	    819 	PARAMETER (CDF_CLOSE_ERROR = -2055)
+    1	    820 
+    1	    821 	INTEGER*4 VAR_CLOSE_ERROR
+    1	    822 	PARAMETER (VAR_CLOSE_ERROR = -2056)
+    1	    823 
+    1	    824 C	-2057 unused.
+    1	    825 
+    1	    826 	INTEGER*4 BAD_FNC_OR_ITEM
+    1	    827 	PARAMETER (BAD_FNC_OR_ITEM = -2058)
+    1	    828 
+    1	    829 C	-2059 unused.
+    1	    830 
+    1	    831 	INTEGER*4 ILLEGAL_ON_V1_CDF
+    1	    832 	PARAMETER (ILLEGAL_ON_V1_CDF = -2060)
+    1	    833 
+    1	    834 	INTEGER*4 CDH_OPEN_ERROR
+    1	    835 	PARAMETER (CDH_OPEN_ERROR = -2061)
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  15
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    836 
+    1	    837 	INTEGER*4 CDH_CLOSE_ERROR
+    1	    838 	PARAMETER (CDH_CLOSE_ERROR = -2062)
+    1	    839 
+    1	    840 	INTEGER*4 BAD_CACHE_SIZE
+    1	    841 	PARAMETER (BAD_CACHE_SIZE = -2063)
+    1	    842 
+    1	    843 C	-2064 unused.
+    1	    844 C	-2065 unused.
+    1	    845 
+    1	    846 	INTEGER*4 CDF_CREATE_ERROR
+    1	    847 	PARAMETER (CDF_CREATE_ERROR = -2066)
+    1	    848 
+    1	    849 	INTEGER*4 NO_SUCH_CDF
+    1	    850 	PARAMETER (NO_SUCH_CDF = -2067)
+    1	    851 
+    1	    852 	INTEGER*4 VAR_CREATE_ERROR
+    1	    853 	PARAMETER (VAR_CREATE_ERROR = -2068)
+    1	    854 
+    1	    855 C	-2069 unused.
+    1	    856 
+    1	    857 	INTEGER*4 READ_ONLY_MODE
+    1	    858 	PARAMETER (READ_ONLY_MODE = -2070)
+    1	    859 
+    1	    860 	INTEGER*4 ILLEGAL_IN_zMODE
+    1	    861 	PARAMETER (ILLEGAL_IN_zMODE = -2071)
+    1	    862 
+    1	    863 	INTEGER*4 BAD_zMODE
+    1	    864 	PARAMETER (BAD_zMODE = -2072)
+    1	    865 
+    1	    866 	INTEGER*4 BAD_READONLY_MODE
+    1	    867 	PARAMETER (BAD_READONLY_MODE = -2073)
+    1	    868 
+    1	    869 	INTEGER*4 CDF_READ_ERROR
+    1	    870 	PARAMETER (CDF_READ_ERROR = -2074)
+    1	    871 
+    1	    872 	INTEGER*4 CDF_WRITE_ERROR
+    1	    873 	PARAMETER (CDF_WRITE_ERROR = -2075)
+    1	    874 
+    1	    875 	INTEGER*4 ILLEGAL_FOR_SCOPE
+    1	    876 	PARAMETER (ILLEGAL_FOR_SCOPE = -2076)
+    1	    877 
+    1	    878 	INTEGER*4 NO_MORE_ACCESS
+    1	    879 	PARAMETER (NO_MORE_ACCESS = -2077)
+    1	    880 
+    1	    881 C	-2078 unused.
+    1	    882 
+    1	    883 	INTEGER*4 BAD_DECODING
+    1	    884 	PARAMETER (BAD_DECODING = -2079)
+    1	    885 
+    1	    886 C	-2080 unused.
+    1	    887 
+    1	    888 	INTEGER*4 BAD_NEGtoPOSfp0_MODE
+    1	    889 	PARAMETER (BAD_NEGtoPOSfp0_MODE = -2081)
+    1	    890 
+    1	    891 	INTEGER*4 UNSUPPORTED_OPERATION
+    1	    892 	PARAMETER (UNSUPPORTED_OPERATION = -2082)
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  16
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    893 
+    1	    894 C	-2083 unused.
+    1	    895 C	-2084 unused.
+    1	    896 C	-2085 unused.
+    1	    897 
+    1	    898 	INTEGER*4 NO_WRITE_ACCESS
+    1	    899 	PARAMETER (NO_WRITE_ACCESS = -2086)
+    1	    900 
+    1	    901 	INTEGER*4 NO_DELETE_ACCESS
+    1	    902 	PARAMETER (NO_DELETE_ACCESS = -2087)
+    1	    903 
+    1	    904 C-----------------------------------------------------------------------
+    1	    905 C Functions (for INTERNAL interface).
+    1	    906 C NOTE: These values must be different from those of the items.
+    1	    907 C-----------------------------------------------------------------------
+    1	    908 
+    1	    909 	INTEGER*4 CREATE_
+    1	    910 	PARAMETER (CREATE_ = 1001)
+    1	    911 
+    1	    912 	INTEGER*4 OPEN_
+    1	    913 	PARAMETER (OPEN_ = 1002)
+    1	    914 
+    1	    915 	INTEGER*4 DELETE_
+    1	    916 	PARAMETER (DELETE_ = 1003)
+    1	    917 
+    1	    918 	INTEGER*4 CLOSE_
+    1	    919 	PARAMETER (CLOSE_ = 1004)
+    1	    920 
+    1	    921 	INTEGER*4 SELECT_
+    1	    922 	PARAMETER (SELECT_ = 1005)
+    1	    923 
+    1	    924 	INTEGER*4 CONFIRM_
+    1	    925 	PARAMETER (CONFIRM_ = 1006)
+    1	    926 
+    1	    927 	INTEGER*4 GET_
+    1	    928 	PARAMETER (GET_ = 1007)
+    1	    929 
+    1	    930 	INTEGER*4 PUT_
+    1	    931 	PARAMETER (PUT_ = 1008)
+    1	    932 
+    1	    933 	INTEGER*4 NULL_
+    1	    934 	PARAMETER (NULL_ = 1000)
+    1	    935 
+    1	    936 C-----------------------------------------------------------------------
+    1	    937 C Items on which functions are performed (for INTERNAL interface).
+    1	    938 C NOTE: These values must be different from those of the functions.
+    1	    939 C-----------------------------------------------------------------------
+    1	    940 
+    1	    941 	INTEGER*4 CDF_
+    1	    942 	PARAMETER (CDF_ = 1)
+    1	    943 
+    1	    944 	INTEGER CDF_NAME_
+    1	    945 	PARAMETER (CDF_NAME_ = 2)
+    1	    946 
+    1	    947 	INTEGER*4 CDF_ENCODING_
+    1	    948 	PARAMETER (CDF_ENCODING_ = 3)
+    1	    949 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  17
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	    950 	INTEGER*4 CDF_DECODING_
+    1	    951 	PARAMETER (CDF_DECODING_ = 4)
+    1	    952 
+    1	    953 	INTEGER*4 CDF_MAJORITY_
+    1	    954 	PARAMETER (CDF_MAJORITY_ = 5)
+    1	    955 
+    1	    956 	INTEGER*4 CDF_FORMAT_
+    1	    957 	PARAMETER (CDF_FORMAT_ = 6)
+    1	    958 
+    1	    959 	INTEGER*4 CDF_COPYRIGHT_
+    1	    960 	PARAMETER (CDF_COPYRIGHT_ = 7)
+    1	    961 
+    1	    962 	INTEGER*4 CDF_NUMrVARS_
+    1	    963 	PARAMETER (CDF_NUMrVARS_ = 8)
+    1	    964 
+    1	    965 	INTEGER*4 CDF_NUMzVARS_
+    1	    966 	PARAMETER (CDF_NUMzVARS_ = 9)
+    1	    967 
+    1	    968 	INTEGER*4 CDF_NUMATTRS_
+    1	    969 	PARAMETER (CDF_NUMATTRS_ = 10)
+    1	    970 
+    1	    971 	INTEGER*4 CDF_NUMgATTRS_
+    1	    972 	PARAMETER (CDF_NUMgATTRS_ = 11)
+    1	    973 
+    1	    974 	INTEGER*4 CDF_NUMvATTRS_
+    1	    975 	PARAMETER (CDF_NUMvATTRS_ = 12)
+    1	    976 
+    1	    977 	INTEGER*4 CDF_VERSION_
+    1	    978 	PARAMETER (CDF_VERSION_ = 13)
+    1	    979 
+    1	    980 	INTEGER*4 CDF_RELEASE_
+    1	    981 	PARAMETER (CDF_RELEASE_ = 14)
+    1	    982 
+    1	    983 	INTEGER*4 CDF_INCREMENT_
+    1	    984 	PARAMETER (CDF_INCREMENT_ = 15)
+    1	    985 
+    1	    986 	INTEGER*4 CDF_STATUS_
+    1	    987 	PARAMETER (CDF_STATUS_ = 16)
+    1	    988 
+    1	    989 	INTEGER*4 CDF_READONLY_MODE_
+    1	    990 	PARAMETER (CDF_READONLY_MODE_ = 17)
+    1	    991 
+    1	    992 	INTEGER*4 CDF_zMODE_
+    1	    993 	PARAMETER (CDF_zMODE_ = 18)
+    1	    994 
+    1	    995 	INTEGER*4 CDF_NEGtoPOSfp0_MODE_
+    1	    996 	PARAMETER (CDF_NEGtoPOSfp0_MODE_ = 19)
+    1	    997 
+    1	    998 	INTEGER*4 LIB_COPYRIGHT_
+    1	    999 	PARAMETER (LIB_COPYRIGHT_ = 20)
+    1	   1000 
+    1	   1001 	INTEGER*4 LIB_VERSION_
+    1	   1002 	PARAMETER (LIB_VERSION_ = 21)
+    1	   1003 
+    1	   1004 	INTEGER*4 LIB_RELEASE_
+    1	   1005 	PARAMETER (LIB_RELEASE_ = 22)
+    1	   1006 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  18
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1007 	INTEGER*4 LIB_INCREMENT_
+    1	   1008 	PARAMETER (LIB_INCREMENT_ = 23)
+    1	   1009 
+    1	   1010 	INTEGER*4 LIB_subINCREMENT_
+    1	   1011 	PARAMETER (LIB_subINCREMENT_ = 24)
+    1	   1012 
+    1	   1013 	INTEGER*4 rVARs_NUMDIMS_
+    1	   1014 	PARAMETER (rVARs_NUMDIMS_ = 25)
+    1	   1015 
+    1	   1016 	INTEGER*4 rVARs_DIMSIZES_
+    1	   1017 	PARAMETER (rVARs_DIMSIZES_ = 26)
+    1	   1018 
+    1	   1019 	INTEGER*4 rVARs_MAXREC_
+    1	   1020 	PARAMETER (rVARs_MAXREC_ = 27)
+    1	   1021 
+    1	   1022 	INTEGER*4 rVARs_RECDATA_
+    1	   1023 	PARAMETER (rVARs_RECDATA_ = 28)
+    1	   1024 
+    1	   1025 	INTEGER*4 rVARs_RECNUMBER_
+    1	   1026 	PARAMETER (rVARs_RECNUMBER_ = 29)
+    1	   1027 
+    1	   1028 	INTEGER*4 rVARs_RECCOUNT_
+    1	   1029 	PARAMETER (rVARs_RECCOUNT_ = 30)
+    1	   1030 
+    1	   1031 	INTEGER*4 rVARs_RECINTERVAL_
+    1	   1032 	PARAMETER (rVARs_RECINTERVAL_ = 31)
+    1	   1033 
+    1	   1034 	INTEGER*4 rVARs_DIMINDICES_
+    1	   1035 	PARAMETER (rVARs_DIMINDICES_ = 32)
+    1	   1036 
+    1	   1037 	INTEGER*4 rVARs_DIMCOUNTS_
+    1	   1038 	PARAMETER (rVARs_DIMCOUNTS_ = 33)
+    1	   1039 
+    1	   1040 	INTEGER*4 rVARs_DIMINTERVALS_
+    1	   1041 	PARAMETER (rVARs_DIMINTERVALS_ = 34)
+    1	   1042 
+    1	   1043 	INTEGER*4 rVAR_
+    1	   1044 	PARAMETER (rVAR_ = 35)
+    1	   1045 
+    1	   1046 	INTEGER*4 rVAR_NAME_
+    1	   1047 	PARAMETER (rVAR_NAME_ = 36)
+    1	   1048 
+    1	   1049 	INTEGER*4 rVAR_DATATYPE_
+    1	   1050 	PARAMETER (rVAR_DATATYPE_ = 37)
+    1	   1051 
+    1	   1052 	INTEGER*4 rVAR_NUMELEMS_
+    1	   1053 	PARAMETER (rVAR_NUMELEMS_ = 38)
+    1	   1054 
+    1	   1055 	INTEGER*4 rVAR_RECVARY_
+    1	   1056 	PARAMETER (rVAR_RECVARY_ = 39)
+    1	   1057 
+    1	   1058 	INTEGER*4 rVAR_DIMVARYS_
+    1	   1059 	PARAMETER (rVAR_DIMVARYS_ = 40)
+    1	   1060 
+    1	   1061 	INTEGER*4 rVAR_NUMBER_
+    1	   1062 	PARAMETER (rVAR_NUMBER_ = 41)
+    1	   1063 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  19
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1064 	INTEGER*4 rVAR_DATA_
+    1	   1065 	PARAMETER (rVAR_DATA_ = 42)
+    1	   1066 
+    1	   1067 	INTEGER*4 rVAR_HYPERDATA_
+    1	   1068 	PARAMETER (rVAR_HYPERDATA_ = 43)
+    1	   1069 
+    1	   1070 	INTEGER*4 rVAR_SEQDATA_
+    1	   1071 	PARAMETER (rVAR_SEQDATA_ = 44)
+    1	   1072 
+    1	   1073 	INTEGER*4 rVAR_SEQPOS_
+    1	   1074 	PARAMETER (rVAR_SEQPOS_ = 45)
+    1	   1075 
+    1	   1076 	INTEGER*4 rVAR_MAXREC_
+    1	   1077 	PARAMETER (rVAR_MAXREC_ = 46)
+    1	   1078 
+    1	   1079 	INTEGER*4 rVAR_MAXallocREC_
+    1	   1080 	PARAMETER (rVAR_MAXallocREC_ = 47)
+    1	   1081 
+    1	   1082 	INTEGER*4 rVAR_DATASPEC_
+    1	   1083 	PARAMETER (rVAR_DATASPEC_ = 48)
+    1	   1084 
+    1	   1085 	INTEGER*4 rVAR_PADVALUE_
+    1	   1086 	PARAMETER (rVAR_PADVALUE_ = 49)
+    1	   1087 
+    1	   1088 	INTEGER*4 rVAR_INITIALRECS_
+    1	   1089 	PARAMETER (rVAR_INITIALRECS_ = 50)
+    1	   1090 
+    1	   1091 	INTEGER*4 rVAR_EXTENDRECS_
+    1	   1092 	PARAMETER (rVAR_EXTENDRECS_ = 51)
+    1	   1093 
+    1	   1094 	INTEGER*4 rVAR_nINDEXRECORDS_
+    1	   1095 	PARAMETER (rVAR_nINDEXRECORDS_ = 52)
+    1	   1096 
+    1	   1097 	INTEGER*4 rVAR_nINDEXENTRIES_
+    1	   1098 	PARAMETER (rVAR_nINDEXENTRIES_ = 53)
+    1	   1099 
+    1	   1100 	INTEGER*4 rVAR_EXISTENCE_
+    1	   1101 	PARAMETER (rVAR_EXISTENCE_ = 54)
+    1	   1102 
+    1	   1103 	INTEGER*4 zVARs_MAXREC_
+    1	   1104 	PARAMETER (zVARs_MAXREC_ = 55)
+    1	   1105 
+    1	   1106 	INTEGER*4 zVARs_RECDATA_
+    1	   1107 	PARAMETER (zVARs_RECDATA_ = 56)
+    1	   1108 
+    1	   1109 	INTEGER*4 zVAR_
+    1	   1110 	PARAMETER (zVAR_  = 57)
+    1	   1111 
+    1	   1112 	INTEGER*4 zVAR_NAME_
+    1	   1113 	PARAMETER (zVAR_NAME_ = 58)
+    1	   1114 
+    1	   1115 	INTEGER*4 zVAR_DATATYPE_
+    1	   1116 	PARAMETER (zVAR_DATATYPE_ = 59)
+    1	   1117 
+    1	   1118 	INTEGER*4 zVAR_NUMELEMS_
+    1	   1119 	PARAMETER (zVAR_NUMELEMS_ = 60)
+    1	   1120 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  20
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1121 	INTEGER*4 zVAR_NUMDIMS_
+    1	   1122 	PARAMETER (zVAR_NUMDIMS_ = 61)
+    1	   1123 
+    1	   1124 	INTEGER*4 zVAR_DIMSIZES_
+    1	   1125 	PARAMETER (zVAR_DIMSIZES_ = 62)
+    1	   1126 
+    1	   1127 	INTEGER*4 zVAR_RECVARY_
+    1	   1128 	PARAMETER (zVAR_RECVARY_ = 63)
+    1	   1129 
+    1	   1130 	INTEGER*4 zVAR_DIMVARYS_
+    1	   1131 	PARAMETER (zVAR_DIMVARYS_ = 64)
+    1	   1132 
+    1	   1133 	INTEGER*4 zVAR_NUMBER_
+    1	   1134 	PARAMETER (zVAR_NUMBER_ = 65)
+    1	   1135 
+    1	   1136 	INTEGER*4 zVAR_DATA_
+    1	   1137 	PARAMETER (zVAR_DATA_ = 66)
+    1	   1138 
+    1	   1139 	INTEGER*4 zVAR_HYPERDATA_
+    1	   1140 	PARAMETER (zVAR_HYPERDATA_ = 67)
+    1	   1141 
+    1	   1142 	INTEGER*4 zVAR_SEQDATA_
+    1	   1143 	PARAMETER (zVAR_SEQDATA_ = 68)
+    1	   1144 
+    1	   1145 	INTEGER*4 zVAR_SEQPOS_
+    1	   1146 	PARAMETER (zVAR_SEQPOS_ = 69)
+    1	   1147 
+    1	   1148 	INTEGER*4 zVAR_MAXREC_
+    1	   1149 	PARAMETER (zVAR_MAXREC_ = 70)
+    1	   1150 
+    1	   1151 	INTEGER*4 zVAR_MAXallocREC_
+    1	   1152 	PARAMETER (zVAR_MAXallocREC_ = 71)
+    1	   1153 
+    1	   1154 	INTEGER*4 zVAR_DATASPEC_
+    1	   1155 	PARAMETER (zVAR_DATASPEC_ = 72)
+    1	   1156 
+    1	   1157 	INTEGER*4 zVAR_PADVALUE_
+    1	   1158 	PARAMETER (zVAR_PADVALUE_ = 73)
+    1	   1159 
+    1	   1160 	INTEGER*4 zVAR_INITIALRECS_
+    1	   1161 	PARAMETER (zVAR_INITIALRECS_ = 74)
+    1	   1162 
+    1	   1163 	INTEGER*4 zVAR_EXTENDRECS_
+    1	   1164 	PARAMETER (zVAR_EXTENDRECS_ = 75)
+    1	   1165 
+    1	   1166 	INTEGER*4 zVAR_nINDEXRECORDS_
+    1	   1167 	PARAMETER (zVAR_nINDEXRECORDS_ = 76)
+    1	   1168 
+    1	   1169 	INTEGER*4 zVAR_nINDEXENTRIES_
+    1	   1170 	PARAMETER (zVAR_nINDEXENTRIES_ = 77)
+    1	   1171 
+    1	   1172 	INTEGER*4 zVAR_EXISTENCE_
+    1	   1173 	PARAMETER (zVAR_EXISTENCE_ = 78)
+    1	   1174 
+    1	   1175 	INTEGER*4 zVAR_RECNUMBER_
+    1	   1176 	PARAMETER (zVAR_RECNUMBER_ = 79)
+    1	   1177 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  21
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1178 	INTEGER*4 zVAR_RECCOUNT_
+    1	   1179 	PARAMETER (zVAR_RECCOUNT_ = 80)
+    1	   1180 
+    1	   1181 	INTEGER*4 zVAR_RECINTERVAL_
+    1	   1182 	PARAMETER (zVAR_RECINTERVAL_ = 81)
+    1	   1183 
+    1	   1184 	INTEGER*4 zVAR_DIMINDICES_
+    1	   1185 	PARAMETER (zVAR_DIMINDICES_ = 82)
+    1	   1186 
+    1	   1187 	INTEGER*4 zVAR_DIMCOUNTS_
+    1	   1188 	PARAMETER (zVAR_DIMCOUNTS_ = 83)
+    1	   1189 
+    1	   1190 	INTEGER*4 zVAR_DIMINTERVALS_
+    1	   1191 	PARAMETER (zVAR_DIMINTERVALS_ = 84)
+    1	   1192 
+    1	   1193 	INTEGER*4 ATTR_
+    1	   1194 	PARAMETER (ATTR_ = 85)
+    1	   1195 
+    1	   1196 	INTEGER*4 ATTR_SCOPE_
+    1	   1197 	PARAMETER (ATTR_SCOPE_ = 86)
+    1	   1198 
+    1	   1199 	INTEGER*4 ATTR_NAME_
+    1	   1200 	PARAMETER (ATTR_NAME_ = 87)
+    1	   1201 
+    1	   1202 	INTEGER*4 ATTR_NUMBER_
+    1	   1203 	PARAMETER (ATTR_NUMBER_ = 88)
+    1	   1204 
+    1	   1205 	INTEGER*4 ATTR_MAXgENTRY_
+    1	   1206 	PARAMETER (ATTR_MAXgENTRY_ = 89)
+    1	   1207 
+    1	   1208 	INTEGER*4 ATTR_NUMgENTRIES_
+    1	   1209 	PARAMETER (ATTR_NUMgENTRIES_ = 90)
+    1	   1210 
+    1	   1211 	INTEGER*4 ATTR_MAXrENTRY_
+    1	   1212 	PARAMETER (ATTR_MAXrENTRY_ = 91)
+    1	   1213 
+    1	   1214 	INTEGER*4 ATTR_NUMrENTRIES_
+    1	   1215 	PARAMETER (ATTR_NUMrENTRIES_ = 92)
+    1	   1216 
+    1	   1217 	INTEGER*4 ATTR_MAXzENTRY_
+    1	   1218 	PARAMETER (ATTR_MAXzENTRY_ = 93)
+    1	   1219 
+    1	   1220 	INTEGER*4 ATTR_NUMzENTRIES_
+    1	   1221 	PARAMETER (ATTR_NUMzENTRIES_ = 94)
+    1	   1222 
+    1	   1223 	INTEGER*4 ATTR_EXISTENCE_
+    1	   1224 	PARAMETER (ATTR_EXISTENCE_ = 95)
+    1	   1225 
+    1	   1226 	INTEGER*4 gENTRY_
+    1	   1227 	PARAMETER (gENTRY_ = 96)
+    1	   1228 
+    1	   1229 	INTEGER*4 gENTRY_EXISTENCE_
+    1	   1230 	PARAMETER (gENTRY_EXISTENCE_ = 97)
+    1	   1231 
+    1	   1232 	INTEGER*4 gENTRY_DATATYPE_
+    1	   1233 	PARAMETER (gENTRY_DATATYPE_ = 98)
+    1	   1234 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  22
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1235 	INTEGER*4 gENTRY_NUMELEMS_
+    1	   1236 	PARAMETER (gENTRY_NUMELEMS_ = 99)
+    1	   1237 
+    1	   1238 	INTEGER*4 gENTRY_DATASPEC_
+    1	   1239 	PARAMETER (gENTRY_DATASPEC_ = 100)
+    1	   1240 
+    1	   1241 	INTEGER*4 gENTRY_DATA_
+    1	   1242 	PARAMETER (gENTRY_DATA_ = 101)
+    1	   1243 
+    1	   1244 	INTEGER*4 rENTRY_
+    1	   1245 	PARAMETER (rENTRY_ = 102)
+    1	   1246 
+    1	   1247 	INTEGER*4 rENTRY_NAME_
+    1	   1248 	PARAMETER (rENTRY_NAME_ = 103)
+    1	   1249 
+    1	   1250 	INTEGER*4 rENTRY_EXISTENCE_
+    1	   1251 	PARAMETER (rENTRY_EXISTENCE_ = 104)
+    1	   1252 
+    1	   1253 	INTEGER*4 rENTRY_DATATYPE_
+    1	   1254 	PARAMETER (rENTRY_DATATYPE_ = 105)
+    1	   1255 
+    1	   1256 	INTEGER*4 rENTRY_NUMELEMS_
+    1	   1257 	PARAMETER (rENTRY_NUMELEMS_ = 106)
+    1	   1258 
+    1	   1259 	INTEGER*4 rENTRY_DATASPEC_
+    1	   1260 	PARAMETER (rENTRY_DATASPEC_ = 107)
+    1	   1261 
+    1	   1262 	INTEGER*4 rENTRY_DATA_
+    1	   1263 	PARAMETER (rENTRY_DATA_ = 108)
+    1	   1264 
+    1	   1265 	INTEGER*4 zENTRY_
+    1	   1266 	PARAMETER (zENTRY_ = 109)
+    1	   1267 
+    1	   1268 	INTEGER*4 zENTRY_NAME_
+    1	   1269 	PARAMETER (zENTRY_NAME_ = 110)
+    1	   1270 
+    1	   1271 	INTEGER*4 zENTRY_EXISTENCE_
+    1	   1272 	PARAMETER (zENTRY_EXISTENCE_ = 111)
+    1	   1273 
+    1	   1274 	INTEGER*4 zENTRY_DATATYPE_
+    1	   1275 	PARAMETER (zENTRY_DATATYPE_ = 112)
+    1	   1276 
+    1	   1277 	INTEGER*4 zENTRY_NUMELEMS_
+    1	   1278 	PARAMETER (zENTRY_NUMELEMS_ = 113)
+    1	   1279 
+    1	   1280 	INTEGER*4 zENTRY_DATASPEC_
+    1	   1281 	PARAMETER (zENTRY_DATASPEC_ = 114)
+    1	   1282 
+    1	   1283 	INTEGER*4 zENTRY_DATA_
+    1	   1284 	PARAMETER (zENTRY_DATA_ = 115)
+    1	   1285 
+    1	   1286 	INTEGER*4 STATUS_TEXT_
+    1	   1287 	PARAMETER (STATUS_TEXT_ = 116)
+    1	   1288 
+    1	   1289 	INTEGER*4 CDF_CACHESIZE_
+    1	   1290 	PARAMETER (CDF_CACHESIZE_ = 117)
+    1	   1291 
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  23
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1292 	INTEGER*4 rVARs_CACHESIZE_
+    1	   1293 	PARAMETER (rVARs_CACHESIZE_ = 118)
+    1	   1294 
+    1	   1295 	INTEGER*4 zVARs_CACHESIZE_
+    1	   1296 	PARAMETER (zVARs_CACHESIZE_ = 119)
+    1	   1297 
+    1	   1298 	INTEGER*4 rVAR_CACHESIZE_
+    1	   1299 	PARAMETER (rVAR_CACHESIZE_ = 120)
+    1	   1300 
+    1	   1301 	INTEGER*4 zVAR_CACHESIZE_
+    1	   1302 	PARAMETER (zVAR_CACHESIZE_ = 121)
+    1	   1303 
+    1	   1304 	INTEGER*4 zVARs_RECNUMBER_
+    1	   1305 	PARAMETER (zVARs_RECNUMBER_ = 122)
+    1	   1306 
+    1	   1307 	INTEGER*4 rVAR_ALLOCATERECS_
+    1	   1308 	PARAMETER (rVAR_ALLOCATERECS_ = 123)
+    1	   1309 
+    1	   1310 	INTEGER*4 zVAR_ALLOCATERECS_
+    1	   1311 	PARAMETER (zVAR_ALLOCATERECS_ = 124)
+    1	   1312 
+    1	   1313 	INTEGER*4 DATATYPE_SIZE_
+    1	   1314 	PARAMETER (DATATYPE_SIZE_ = 125)
+    1	   1315 
+    1	   1316 	INTEGER*4 CURgENTRY_EXISTENCE_
+    1	   1317 	PARAMETER (CURgENTRY_EXISTENCE_ = 126)
+    1	   1318 
+    1	   1319 	INTEGER*4 CURrENTRY_EXISTENCE_
+    1	   1320 	PARAMETER (CURrENTRY_EXISTENCE_ = 127)
+    1	   1321 
+    1	   1322 	INTEGER*4 CURzENTRY_EXISTENCE_
+    1	   1323 	PARAMETER (CURzENTRY_EXISTENCE_ = 128)
+    1	   1324 
+    1	   1325 C-----------------------------------------------------------------------
+    1	   1326 C Declarations for functions.  These may cause compiler warnings on some
+    1	   1327 C machines if the functions are not used.  If that is a problem, remove
+    1	   1328 C them from here and declare the functions only in the routines that use
+    1	   1329 C them.
+    1	   1330 C-----------------------------------------------------------------------
+    1	   1331 
+    1	   1332 	INTEGER*4 CDF_var_num
+    1	   1333 	INTEGER*4 CDF_attr_num
+    1	   1334 
+    1	   1335 C-----------------------------------------------------------------------
+    1	   1336 C Synonyms for compatibility with older releases.
+    1	   1337 C-----------------------------------------------------------------------
+    1	   1338 
+    1	   1339 	INTEGER*4 CDF_DOCUMENT_LEN
+    1	   1340 	PARAMETER (CDF_DOCUMENT_LEN = CDF_COPYRIGHT_LEN)
+    1	   1341 
+    1	   1342 	INTEGER*4 CDF_ERRTEXT_LEN
+    1	   1343 	PARAMETER (CDF_ERRTEXT_LEN = CDF_STATUSTEXT_LEN)
+    1	   1344 
+    1	   1345 	INTEGER*4 CDF_NUMDIMS_
+    1	   1346 	PARAMETER (CDF_NUMDIMS_ = rVARs_NUMDIMS_)
+    1	   1347 
+    1	   1348 	INTEGER*4 CDF_DIMSIZES_
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  24
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1349 	PARAMETER (CDF_DIMSIZES_ = rVARs_DIMSIZES_)
+    1	   1350 
+    1	   1351 	INTEGER*4 CDF_MAXREC_
+    1	   1352 	PARAMETER (CDF_MAXREC_ = rVARs_MAXREC_)
+    1	   1353 
+    1	   1354 	INTEGER*4 CDF_RECNUMBER_
+    1	   1355 	PARAMETER (CDF_RECNUMBER_ = rVARs_RECNUMBER_)
+    1	   1356 
+    1	   1357 	INTEGER*4 CDF_RECCOUNT_
+    1	   1358 	PARAMETER (CDF_RECCOUNT_ = rVARs_RECCOUNT_)
+    1	   1359 
+    1	   1360 	INTEGER*4 CDF_RECINTERVAL_
+    1	   1361 	PARAMETER (CDF_RECINTERVAL_ = rVARs_RECINTERVAL_)
+    1	   1362 
+    1	   1363 	INTEGER*4 CDF_DIMINDICES_
+    1	   1364 	PARAMETER (CDF_DIMINDICES_ = rVARs_DIMINDICES_)
+    1	   1365 
+    1	   1366 	INTEGER*4 CDF_DIMCOUNTS_
+    1	   1367 	PARAMETER (CDF_DIMCOUNTS_ = rVARs_DIMCOUNTS_)
+    1	   1368 
+    1	   1369 	INTEGER*4 CDF_DIMINTERVALS_
+    1	   1370 	PARAMETER (CDF_DIMINTERVALS_ = rVARs_DIMINTERVALS_)
+    1	   1371 
+    1	   1372 	INTEGER*4 CDF_NUMVARS_
+    1	   1373 	PARAMETER (CDF_NUMVARS_ = CDF_NUMrVARS_)
+    1	   1374 
+    1	   1375 	INTEGER*4 VAR_
+    1	   1376 	PARAMETER (VAR_ = rVAR_)
+    1	   1377 
+    1	   1378 	INTEGER*4 VAR_NAME_
+    1	   1379 	PARAMETER (VAR_NAME_ = rVAR_NAME_)
+    1	   1380 
+    1	   1381 	INTEGER*4 VAR_DATATYPE_
+    1	   1382 	PARAMETER (VAR_DATATYPE_ = rVAR_DATATYPE_)
+    1	   1383 
+    1	   1384 	INTEGER*4 VAR_NUMELEMS_
+    1	   1385 	PARAMETER (VAR_NUMELEMS_ = rVAR_NUMELEMS_)
+    1	   1386 
+    1	   1387 	INTEGER*4 VAR_RECVARY_
+    1	   1388 	PARAMETER (VAR_RECVARY_ = rVAR_RECVARY_)
+    1	   1389 
+    1	   1390 	INTEGER*4 VAR_DIMVARYS_
+    1	   1391 	PARAMETER (VAR_DIMVARYS_ = rVAR_DIMVARYS_)
+    1	   1392 
+    1	   1393 	INTEGER*4 VAR_NUMBER_
+    1	   1394 	PARAMETER (VAR_NUMBER_ = rVAR_NUMBER_)
+    1	   1395 
+    1	   1396 	INTEGER*4 VAR_DATA_
+    1	   1397 	PARAMETER (VAR_DATA_ = rVAR_DATA_)
+    1	   1398 
+    1	   1399 	INTEGER*4 VAR_HYPERDATA_
+    1	   1400 	PARAMETER (VAR_HYPERDATA_ = rVAR_HYPERDATA_)
+    1	   1401 
+    1	   1402 	INTEGER*4 VAR_SEQDATA_
+    1	   1403 	PARAMETER (VAR_SEQDATA_ = rVAR_SEQDATA_)
+    1	   1404 
+    1	   1405 	INTEGER*4 VAR_SEQPOS_
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  25
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1406 	PARAMETER (VAR_SEQPOS_ = rVAR_SEQPOS_)
+    1	   1407 
+    1	   1408 	INTEGER*4 VAR_MAXREC_
+    1	   1409 	PARAMETER (VAR_MAXREC_ = rVAR_MAXREC_)
+    1	   1410 
+    1	   1411 	INTEGER*4 VAR_DATASPEC_
+    1	   1412 	PARAMETER (VAR_DATASPEC_ = rVAR_DATASPEC_)
+    1	   1413 
+    1	   1414 	INTEGER*4 VAR_FILLVALUE_
+    1	   1415 	PARAMETER (VAR_FILLVALUE_ = rVAR_PADVALUE_)
+    1	   1416 
+    1	   1417 	INTEGER*4 VAR_INITIALRECS_
+    1	   1418 	PARAMETER (VAR_INITIALRECS_ = rVAR_INITIALRECS_)
+    1	   1419 
+    1	   1420 	INTEGER*4 VAR_EXTENDRECS_
+    1	   1421 	PARAMETER (VAR_EXTENDRECS_ = rVAR_EXTENDRECS_)
+    1	   1422 
+    1	   1423 	INTEGER*4 ATTR_MAXENTRY_
+    1	   1424 	PARAMETER (ATTR_MAXENTRY_ = ATTR_MAXrENTRY_)
+    1	   1425 
+    1	   1426 	INTEGER*4 ATTR_NUMENTRIES_
+    1	   1427 	PARAMETER (ATTR_NUMENTRIES_ = ATTR_NUMrENTRIES_)
+    1	   1428 
+    1	   1429 	INTEGER*4 ENTRY_
+    1	   1430 	PARAMETER (ENTRY_ = rENTRY_)
+    1	   1431 
+    1	   1432 	INTEGER*4 ENTRY_DATATYPE_
+    1	   1433 	PARAMETER (ENTRY_DATATYPE_ = rENTRY_DATATYPE_)
+    1	   1434 
+    1	   1435 	INTEGER*4 ENTRY_NUMELEMS_
+    1	   1436 	PARAMETER (ENTRY_NUMELEMS_ = rENTRY_NUMELEMS_)
+    1	   1437 
+    1	   1438 	INTEGER*4 ENTRY_DATA_
+    1	   1439 	PARAMETER (ENTRY_DATA_ = rENTRY_DATA_)
+    1	   1440 
+    1	   1441 	INTEGER*4 MIPSEL_ENCODING
+    1	   1442 	PARAMETER (MIPSEL_ENCODING = DECSTATION_ENCODING)
+    1	   1443 
+    1	   1444 	INTEGER*4 MIPSEB_ENCODING
+    1	   1445 	PARAMETER (MIPSEB_ENCODING = SGi_ENCODING)
+    1	   1446 
+    1	   1447 	INTEGER*4 rVAR_EXISTANCE_
+    1	   1448 	PARAMETER (rVAR_EXISTANCE_ = rVAR_EXISTENCE_)
+    1	   1449 
+    1	   1450 	INTEGER*4 zVAR_EXISTANCE_
+    1	   1451 	PARAMETER (zVAR_EXISTANCE_ = zVAR_EXISTENCE_)
+    1	   1452 
+    1	   1453 	INTEGER*4 ATTR_EXISTANCE_
+    1	   1454 	PARAMETER (ATTR_EXISTANCE_ = ATTR_EXISTENCE_)
+    1	   1455 
+    1	   1456 	INTEGER*4 gENTRY_EXISTANCE_
+    1	   1457 	PARAMETER (gENTRY_EXISTANCE_ = gENTRY_EXISTENCE_)
+    1	   1458 
+    1	   1459 	INTEGER*4 rENTRY_EXISTANCE_
+    1	   1460 	PARAMETER (rENTRY_EXISTANCE_ = rENTRY_EXISTENCE_)
+    1	   1461 
+    1	   1462 	INTEGER*4 zENTRY_EXISTANCE_
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  26
+1.7                                                             28-MAR-1995 15:10:49    _UMSMS$DVA1:[CDF.][INCLUDE]CDF.INC;1
+
+    1	   1463 	PARAMETER (zENTRY_EXISTANCE_ = zENTRY_EXISTENCE_)
+    1	   1464 
+    1	   1465 	INTEGER*4 GLOBAL_SCOPE_ASSUMED
+    1	   1466 	PARAMETER (GLOBAL_SCOPE_ASSUMED = GLOBAL_SCOPE)
+    1	   1467 
+    1	   1468 	INTEGER*4 VARIABLE_SCOPE_ASSUMED
+    1	   1469 	PARAMETER (VARIABLE_SCOPE_ASSUMED = VARIABLE_SCOPE)
+	   1470       INCLUDE   '($SSDEF)/NOLIST'
+	   2895       INCLUDE   '($RMSDEF)/NOLIST'
+	   3606       INCLUDE   '($SYIDEF)/NOLIST'
+	   4112       INCLUDE   '($DVIDEF)/NOLIST'
+	   4370 C
+	   4371       INTEGER IM,ID,IY,IPOS,IPOS2,MM,CHLAST,ISTAT,VERS,NCH,NCOR,NCAT
+	   4372       INTEGER*4 LIB$FIND_FILE,LIB$FIND_FILE_END,CONTEXT,STATUS
+	   4373       CHARACTER MEDIA_NAME*10
+	   4374       CHARACTER OR_NAME*80, AT_NAME*80, OR_PATTERN*80, AT_PATTERN*80
+	   4375 C
+	   4376 C Determine if logical name WIND_LZ_DATA points to a CDROM device or not.
+	   4377 C
+	   4378       FROM_CD = .FALSE.
+	   4379       CALL LIB$GETDVI (
+	   4380      1	   DVI$_MEDIA_NAME,, 
+	   4381      1	   'WIND_LZ_DATA',, 
+	   4382      1	   MEDIA_NAME, 
+	   4383      1	   NCH)                        
+	   4384       IF (MEDIA_NAME(1:3) .EQ. 'RRD') FROM_CD = .TRUE.
+	   4385 C
+	   4386 C Set proper pattern to use to search for input LZ file.
+	   4387 C If we are running in NRT mode point to a different directory. If we 
+	   4388 C are reading from CD, then alter our name pattern appropriately.
+	   4389 C
+	   4390       LZ_NAME = 'WIND_LZ_DATA:WI_LZ_SMS*.DAT'
+	   4391       IF (NRT_MODE) LZ_NAME = 'NRT_DIR:WI_LZ_SMS*.*'
+	   4392       IF (FROM_CD) LZ_NAME = 'WIND_LZ_DATA:*.DAT'
+	   4393 C
+	   4394 C Prompt user for filename
+	   4395 C
+	   4396       WRITE( TTOUT, 100 )   'LZ-FILENAME = '
+	   4397 100   FORMAT(1H , A, $)
+	   4398       CALL WIND_GET_FILENAME( LZ_NAME, ISTAT )
+	   4399       IF (ISTAT .NE. SS$_NORMAL)   STOP 0001
+	   4400 C
+	   4401 C Open the LZ file
+	   4402 C
+	   4403       CALL WIND_OPEN_LZ_DATA( LZ_NAME, 'OLD', ISTAT )
+	   4404 C
+	   4405 C Get actual filename and save it
+	   4406 C
+	   4407       INQUIRE( L0_Lun, NAME=LZ_NAME )
+	   4408       NCF    = CHLAST( LZ_NAME )
+	   4409       IF(DIAG .LE. 5) WRITE( TTOUT, 110 )   LZ_NAME(1:NCF), ISTAT
+	   4410 110   FORMAT( 1H , 'OPENED FILE: ', A, ',  STATUS IS', I3 )
+	   4411       IF (ISTAT .NE. SS$_NORMAL) STOP 0002
+	   4412 C
+	   4413 C Determine if logical name WIND_LZ_DATA points to a CDROM device or not.
+	   4414 C Update value of FROM_CD accordingly, just in case user entered a different
+	   4415 C device than we'd prompted him with.
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  27
+1.7                                                             12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+	   4416 C
+	   4417       FROM_CD = .FALSE.
+	   4418       IPOS = INDEX( LZ_NAME, ':')
+	   4419       CALL LIB$GETDVI (
+	   4420      1	   DVI$_MEDIA_NAME,, 
+	   4421      1	   LZ_NAME(1:IPOS),, 
+	   4422      1	   MEDIA_NAME, 
+	   4423      1	   NCH)                        
+	   4424       IF (MEDIA_NAME(1:3) .EQ. 'RRD') THEN
+	   4425         FROM_CD = .TRUE.
+	   4426         NRT_MODE = .FALSE.
+	   4427       ENDIF
+	   4428 C
+	   4429 C Using LZ filename, construct L1 filename by replacing 'LZ' with 'L1'. If
+	   4430 C 'LZ' isn't present, file probably comes from CD-ROM and has shorter name,
+	   4431 C so construct the longer format filename.  If filename isn't either format
+	   4432 C construct longer L1 filename using the LZ filename with a suffix of 'L1'
+	   4433 C on the filename proper.
+	   4434 C Be sure to start search for 'LZ' after the device/directory name.  
+	   4435 C
+	   4436       IPOS = INDEX( LZ_NAME(1:NCF), ']' )
+	   4437       IF (IPOS .EQ. 0) IPOS = INDEX( LZ_NAME(1:NCF), ':' )
+	   4438 C If neither ] nor : found IPOS is a 0
+	   4439       IPOS = IPOS + 1
+	   4440       IPOS2 = INDEX( LZ_NAME(IPOS:NCF), 'LZ' )
+	   4441       IF (IPOS2 .NE. 0) THEN
+	   4442         L1_NAME = LZ_NAME(IPOS:NCF)
+	   4443         L1_NAME(4:5) = 'L1'
+	   4444 C
+	   4445 C No 'LZ' in filename, probably has 8-digit filename format.
+	   4446 C Check if it is 8-digit format by trying to decode the first 8 characters of
+	   4447 C the filename.  If this works it's a short filename format; if it fails we
+	   4448 C have no idea.
+	   4449 C
+	   4450       ELSE
+	   4451 	READ(LZ_NAME(IPOS:IPOS+7), 111, ERR=115) IY,IM,ID,VERS
+	   4452 111	FORMAT(4I2)
+	   4453 C
+	   4454 C Adjust the year to be in the correct century, then encode the date into L1
+	   4455 C filename.  Use 1990 as an arbitrary deciding criterion for the century.  This
+	   4456 C won't work in year 2090 or later.
+	   4457 C
+	   4458 	IF (IY .GT. 90) THEN
+	   4459 	  IY = IY + 1900
+	   4460 	ELSE
+	   4461 	  IY = IY + 2000
+	   4462 	ENDIF
+	   4463 C
+	   4464         WRITE( L1_NAME, 112 ) IY,IM,ID,VERS
+	   4465 112     FORMAT( 'WI_L1_SMS_',I4.4,2I2.2,'_V',I2.2,'.DAT' )
+	   4466 	IPOS = 1
+	   4467 	GOTO 120
+	   4468 C
+	   4469 C The internal read failed, so we've no idea what the filename format is.  Use
+	   4470 C the LZ filename but add a L1 on its end.
+	   4471 C
+	   4472 115	CONTINUE
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  28
+1.7                                                             12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+	   4473         IPOS2 = INDEX( LZ_NAME(IPOS:NCF), '.' )
+	   4474         L1_NAME = LZ_NAME(IPOS:IPOS+IPOS2-1) // '_L1' // LZ_NAME(IPOS+IPOS2:NCF)
+	   4475 120	CONTINUE
+	   4476       ENDIF ! (IPOS .EQ. 0)
+	   4477       NCF = CHLAST(L1_NAME)
+	   4478 C
+	   4479 C If we are in PRINTLZ mode construct dump filename instead.
+	   4480 C Use name in L1_NAME, but change 'L1' to 'LZ' and give it a file type of .DMP
+	   4481 C
+	   4482       IF (PRINTLZ_MODE) THEN
+	   4483         IPOS = INDEX( L1_NAME(1:NCF), 'L1' )
+	   4484         L1_NAME(IPOS:IPOS+1) = 'LZ'
+	   4485         IPOS = INDEX( L1_NAME, '.' )
+	   4486         IF (IPOS .EQ. 0) IPOS = INDEX( L1_NAME, ' ' )
+	   4487         L1_NAME(IPOS:) = '.DMP'
+	   4488         NCF = IPOS + 3
+	   4489       ENDIF
+	   4490 C
+	   4491 C Remove explicit version number from filename (starting at ';')
+	   4492 C
+	   4493       IPOS = INDEX( L1_NAME(1:NCF), ';' )
+	   4494       IF (IPOS .NE. 0) THEN
+	   4495         L1_NAME(IPOS:)  = ' '
+	   4496         NCF = IPOS - 1
+	   4497       ENDIF
+	   4498 C
+	   4499 C Locate end of directory name (a ']').  If not present, locate end of device
+	   4500 C name (a ':').  If neither is present, set pointer to start of string.
+	   4501 C Remove complete device/directory name and substitute in its place the logical
+	   4502 C string 'WIND_L1_DATA:'.  This is the logical name of the directory which is
+	   4503 C to contain the created L1 file, which may be different from the LZ file's
+	   4504 C device/directory.
+	   4505 C
+	   4506 C If we are in NRT mode don't change output device/directory, generate the NRT
+	   4507 C L1 file in the same place as the LZ NRT file.
+	   4508 C
+	   4509 C If we are in PRINTLZ mode leave the contents of L1_NAME alone as it already
+	   4510 C contains the dump file name
+	   4511 C
+	   4512       IPOS = INDEX( L1_NAME(1:NCF), ']' )
+	   4513       IF (IPOS .EQ. 0) IPOS = INDEX( L1_NAME(1:NCF), ':' )
+	   4514 C If neither found IPOS is a 0
+	   4515       IPOS = IPOS + 1
+	   4516       IF (.NOT. NRT_MODE) L1_NAME = 'WIND_L1_DATA:' // L1_NAME(IPOS:NCF)
+	   4517       NCF = CHLAST( L1_NAME )
+	   4518 C
+	   4519 C Determine the name of the first ORbit data file.
+	   4520 C This assumes there is only one version of the orbit file present for this
+	   4521 C date.  If there is more than one this code will use the first file, which may
+	   4522 C not be the one desired.
+	   4523 C
+	   4524       EPH_AVAIL = .TRUE.
+	   4525 C
+	   4526       CALL CONSTRUCT_CDF_NAME(LZ_NAME, 'OR', ' ', OR_PATTERN, NCOR)
+	   4527       OR_PATTERN(NCOR-1:NCOR) = '%%'
+	   4528       OR_PATTERN(NCOR+1:NCOR+4) = '.CDF'
+	   4529       CONTEXT = 0
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  29
+1.7                                                             12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+	   4530       STATUS = LIB$FIND_FILE (OR_PATTERN(1:NCOR+4), OR_NAME, CONTEXT, , , ,)
+	   4531       IF (STATUS .EQ. RMS$_NORMAL) THEN	    ! we found a file
+	   4532         NCOR = INDEX( OR_NAME, '.CDF;' ) - 1
+	   4533       ELSE
+	   4534         EPH_AVAIL = .FALSE.
+	   4535       ENDIF
+	   4536       STATUS = LIB$FIND_FILE_END(CONTEXT)
+	   4537 C
+	   4538 C Determine the name of the first ATtitude data file
+	   4539 C This assumes there is only one version of the attitude file present for this
+	   4540 C date.  If there is more than one this code will use the first file, which may
+	   4541 C not be the one desired.
+	   4542 C
+	   4543       CALL CONSTRUCT_CDF_NAME(LZ_NAME, 'AT', ' ', AT_PATTERN, NCAT)
+	   4544       AT_PATTERN(NCAT-1:NCAT) = '%%'
+	   4545       AT_PATTERN(NCAT+1:NCAT+4) = '.CDF'
+	   4546       CONTEXT = 0
+	   4547       STATUS = LIB$FIND_FILE (AT_PATTERN(1:NCAT+4), AT_NAME, CONTEXT, , , ,)
+	   4548       IF (STATUS .EQ. RMS$_NORMAL) THEN	    ! we found a file
+	   4549         NCAT = INDEX( AT_NAME, '.CDF;' ) - 1
+	   4550       ELSE
+	   4551         EPH_AVAIL = .FALSE.
+	   4552       ENDIF
+	   4553       STATUS = LIB$FIND_FILE_END(CONTEXT)
+	   4554 C
+	   4555 C If both ORbit and ATtitude data files exist get the ephemeris data from them
+	   4556 C
+	   4557       IF (EPH_AVAIL) THEN
+	   4558         CALL GET_EPHEMERIS(OR_NAME(1:NCOR),AT_NAME(1:NCAT),ISTAT)
+	   4559         IF (ISTAT .NE. CDF_OK) EPH_AVAIL = .FALSE.
+	   4560       ENDIF
+	   4561       IF (.NOT. EPH_AVAIL) THEN
+	   4562 	IF (HALT_IF_NO_EPH) THEN
+	   4563           TYPE *,'Ephemeris data unavailable.  The program will abort.'
+	   4564 	  CALL LIB$STOP(%VAL(SS$_NOSUCHFILE))
+	   4565 	ELSE
+	   4566           TYPE *,'Ephemeris data unavailable.  The program will continue unless interrupted'
+	   4567 	ENDIF
+	   4568       ENDIF
+	   4569 C
+	   4570 C Display and verify name of L1 file
+	   4571 C
+	   4572       WRITE( TTOUT, 101 )   'L1-FILENAME = ',L1_NAME(1:NCF)
+	   4573 101   FORMAT(1X,A,A)
+	   4574 
+	   4575       CALL WIND_GET_FILENAME( L1_NAME, ISTAT )
+	   4576       IF (ISTAT .NE. SS$_NORMAL .AND. ISTAT .NE. 0) CALL LIB$STOP(%VAL(ISTAT))
+	   4577 C
+	   4578 C Remove explicit version number from filename (starting at ';') before opening
+	   4579 C If we don't Fortran OPEN gives error 43 when file already exists
+	   4580 C
+	   4581       IPOS = INDEX( L1_NAME, ';' )
+	   4582       IF (IPOS .NE. 0) L1_NAME(IPOS:)=' '
+	   4583 C
+	   4584 C Open the L1 file, creating it
+	   4585 C
+	   4586 C If we are in PRINTLZ mode open the dump file to unit 28
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  30
+1.7                                                             12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+	   4587 C
+	   4588 C In both cases get complete name of output file and display it
+	   4589 C
+	   4590       IF (.NOT. PRINTLZ_MODE) THEN
+	   4591         IF (ISTAT .EQ. SS$_NORMAL) WRITE( TTOUT, * ) 'NEW VERSION OF L1 FILE BEING CREATED'
+	   4592         CALL WIND_OPEN_L1( L1_NAME, 'NEW', ISTAT )
+	   4593         IF (ISTAT .NE. SS$_NORMAL) CALL LIB$STOP(%VAL(ISTAT))
+	   4594         INQUIRE( L1_Lun, NAME=L1_NAME )
+	   4595       ELSE
+	   4596         IF (ISTAT .EQ. SS$_NORMAL) WRITE( TTOUT, * ) 'NEW VERSION OF DUMP FILE BEING CREATED'
+	   4597         OPEN(  UNIT    = 28,
+	   4598      &         NAME    = L1_NAME,
+	   4599      &         STATUS  = 'NEW',
+	   4600      &         RECL    = 132 )
+	   4601 
+	   4602         INQUIRE( 28, NAME=L1_NAME )
+	   4603       ENDIF
+	   4604 
+	   4605       NCF = CHLAST( L1_NAME )
+	   4606       IF (DIAG .LE. 5) WRITE( TTOUT, 110 ) L1_NAME(1:NCF), ISTAT
+	   4607 C
+	   4608       RETURN
+	   4609       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                  384 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                               168 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                5392   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                1088 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 EPHDATA                              29376 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO                                  40 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 DIAG                                    48 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                37140
+
+
+ENTRY POINTS
+
+    Address   Type  Name              
+                                      
+  3-00000000        WIND_CD_OPEN_FILES
+
+
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  31
+1.7                             Symbol Table                    12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+VARIABLES
+
+    Address   Type  Name                    Address   Type  Name                    Address   Type  Name               
+                                                                                                                       
+  1-00000090  CHAR  AT_NAME               1-0000000C  I*4   ID                        **      I*4   NCF                
+  1-00000130  CHAR  AT_PATTERN            1-00000008  I*4   IM                    1-00000020  I*4   NCH                
+  1-00000004  I*4   CDF_ATTR_NUM          8-00000004  L*4   INTER                 1-00000024  I*4   NCOR               
+  1-00000000  I*4   CDF_VAR_NUM         REG-########  I*4   IPOS                  7-0000001C  L*4   NEW_SCI_REC        
+  0-00000050  I*4   CONTEXT             REG-########  I*4   IPOS2                 8-00000008  L*4   NRT_MODE           
+  7-00000014  I*4   CURR_SCI_REC_NUMBER   1-00000018  I*4   ISTAT                 1-00000040  CHAR  OR_NAME            
+  7-00000018  I*4   CURR_SPIN             1-00000010  I*4   IY                    1-000000E0  CHAR  OR_PATTERN         
+  8-00000000  I*4   DIAG                      **      CHAR  L1_NAME               8-0000000C  L*4   PRINTLZ_MODE       
+  7-00000008  I*4   EDB_LOST              7-00000004  I*4   L1_RECS_WRITTEN       8-00000027  CHAR  PROG_VERSION       
+  7-0000000C  I*4   EDB_SKIP              8-00000010  CHAR  LINK_DATE_TIME        7-00000000  I*4   SCI_REC_CNTR       
+  7-00000010  I*4   EDB_SUM                   **      CHAR  LZ_NAME             REG-########  I*4   STATUS             
+  7-00000020  L*4   EPH_AVAIL             1-00000030  CHAR  MEDIA_NAME            1-0000001C  I*4   VERS               
+  7-00000024  L*4   FROM_CD               1-00000014  I*4   MM                                                         
+  8-0000002C  L*4   HALT_IF_NO_EPH        1-00000028# I*4   NCAT                                                       
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes
+                                                            
+  5-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400
+  5-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  6-00000000  R*8   EPH_EPOCH         1152  (144)
+  6-00007080  R*4   SPIN_RATE          576  (144)
+
+
+
+RECORD ARRAYS
+
+    Address   Name            Structure         Bytes  Dimensions
+
+  6-00006300  GCI_ATT         ATTITUDE          1152  (144)
+  6-00000480  GCI_POS         EPHEMERIS         3456  (144)
+  6-00005580  GCI_SUN_VECTOR  EPHEMERIS         3456  (144)
+  6-00001200  GCI_VEL         EPHEMERIS         3456  (144)
+  6-00006780  GSE_ATT         ATTITUDE          1152  (144)
+  6-00001F80  GSE_POS         EPHEMERIS         3456  (144)
+  6-00002D00  GSE_VEL         EPHEMERIS         3456  (144)
+  6-00006C00  GSM_ATT         ATTITUDE          1152  (144)
+  6-00003A80  GSM_POS         EPHEMERIS         3456  (144)
+  6-00004800  GSM_VEL         EPHEMERIS         3456  (144)
+
+
+
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  32
+1.7                             Symbol Table                    12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+      **       100        **       110        **       112    3-00000800   120 
+      **       101        **       111        **       115                     
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                       Type  Name                       Type  Name                       Type  Name                    
+                                                                                                                                   
+  I*4   CHLAST                     I*4   LIB$FIND_FILE                    LIB$STOP                         WIND_OPEN_LZ_DATA       
+        CONSTRUCT_CDF_NAME         I*4   LIB$FIND_FILE_END                WIND_GET_FILENAME                                        
+        GET_EPHEMERIS                    LIB$GETDVI                       WIND_OPEN_L1                                             
+
+WIND_CD_OPEN_FILES                                              12-JUN-1995 18:09:49    DEC Fortran V6.2-508                Page  33
+1.7                             Symbol Table                    12-JUN-1995 18:09:42    [WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.FOR;26
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.LIS;31
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_CD_OPEN_FILES.OBJ;6
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          3.33 seconds
+  Elapsed time:      5.67 seconds
+  Pagefaults:         383
+  I/O Count:           88

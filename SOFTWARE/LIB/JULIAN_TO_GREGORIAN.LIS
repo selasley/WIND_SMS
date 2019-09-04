@@ -1,0 +1,200 @@
+JULIAN_TO_GREGORIAN                                             21-APR-1995 15:27:01    DEC Fortran V6.2-508                Page   1
+                                                                20-APR-1995 16:51:17    [WIND.SOFTWARE.LIB]JULIAN_TO_GREGORIAN.FOR;3
+
+	      1       SUBROUTINE JULIAN_TO_GREGORIAN( JUL, IYY, IMM, IDY, IHR, IMIN, ISEC, IMILLI, IMICRO )
+	      2 
+	      3 C	In this routine JULIAN_TO_GREGORIAN the input Julian Day Number causes
+	      4 C	the return of the calender date expressed in year IYY, month IMM, and
+	      5 C	day IDY, on which the Julian Day started at noon with all variables in
+	      6 C	INTEGER*4.  The fractional part converts to hours, minutes to micros.
+	      7 C
+	      8 C	Note that this routine will not run on systems with 2-byte integers.
+	      9 C
+	     10 C	Programmed after the sample in "NUMERICAL RECIPES IN PASCAL" by
+	     11 C	William H. Press and others.
+	     12 C
+	     13 C	USAGE:
+	     14 C	CALL JULIAN_TO_GREGORIAN( JUL, IYY, IMM, IDY,
+	     15 C				  IHR, IMIN, ISEC, IMILLI, IMICRO )
+	     16 C
+	     17 C	REAL*8		JUL	! INPUT: JULIAN DAY	range 0. -> 1075.E+6
+	     18 C
+	     19 C	INTEGER*4	IYY	! OUT:	YEAR		e.g.: 1994, neg = BC
+	     20 C			IMM	!	MONTH		range 1 -> 12
+	     21 C			IDY	!	DAY		range 1 -> 31
+	     22 C			IHR	!	HOUR		range 0 -> 23
+	     23 C			IMIN	!	MINUTE		range 0 -> 59
+	     24 C			ISEC	!	SECONDS		range 0 -> 59
+	     25 C			IMILLI	!	MILLISECONDS	range 0 -> 999
+	     26 C			IMICRO	!	MICROSECONDS	range 0 -> 999
+	     27 C		
+	     28 C	Creation:
+	     29 C	21-Mar-1994	H.Broer	UMD, Space Physics Group	
+	     30 C
+	     31 C	Revision:
+	     32 C	22-Mar-1994	H.Broer 	include calculation of hour,min,s,ms,us
+	     33 C	25-Mar-1994	H.Broer		change all Floating numbers to REAL*8
+	     34 C	19-APR-1995	L.Bleau		remove addition of 12 hours; see notes
+	     35 C
+	     36 C NOTE:
+	     37 C
+	     38 C This routine originally added 12 hours to the (floating point) Julian Day
+	     39 C before decomposing it into its calendrical parts.  This was to reflect the
+	     40 C fact that a Julian Day, by definition, starts at noon.  It also corrected for
+	     41 C the 12 hours subtracted by the routine CNVRT_TO_FLOAT_JULIAN (see comments in
+	     42 C WIND_GREG_TO_EPOCH.FOR).  The "Truncated Julian Day" used in the WIND Level 
+	     43 C Zero file starts at midnight, however.  Since CNVRT_TO_FLOAT_JULIAN has been 
+	     44 C changed to not add 12 hours the corresponding change must be made here also.  
+	     45 C This, too, has been fixed.  JULIAN_TO_GREGORIAN now produces a value which 
+	     46 C correctly reflects the date and time of the given Epoch value.
+	     47 C
+	     48       IMPLICIT NONE
+	     49 
+	     50       REAL*8	JUL,		! Input:	Julian Day
+	     51      :		F		! Fraction of Julian Day
+	     52 
+	     53       INTEGER*4	IGREG/2299161/,	! INTERNAL CROSSOVER FOR CORRECTION
+	     54      :		IDY,		! Output:	DAY OF MONTH
+	     55      :		IMM,		!		MONTH OF YEAR
+	     56      :		IYY,		!		YEAR
+	     57      :		IHR,		!		HOURS
+
+JULIAN_TO_GREGORIAN                                             21-APR-1995 15:27:01    DEC Fortran V6.2-508                Page   2
+                                                                20-APR-1995 16:51:17    [WIND.SOFTWARE.LIB]JULIAN_TO_GREGORIAN.FOR;3
+
+	     58      :		IMIN,		!		MINUTES
+	     59      :		ISEC,		!		SECONDS
+	     60      :		IMILLI,		!		MILLISECONDS
+	     61      :		IMICRO,		!		MICROSECONDS
+	     62      :		JA,		!
+	     63      :		JB,		!
+	     64      :		JC,		!
+	     65      :		JD,		!
+	     66      :		JE,		!
+	     67      :		JALPHA,		!
+	     68      :		JM,		!
+	     69      :		JY,		!
+	     70      :		Z		!
+	     71 
+	     72       F		= JUL
+	     73       Z		= INT( F )		! GET INTEGER PART OF JULIAN DAY NUMBER
+	     74       F		= F - Z			! GET FRACTIONAL PART OF JULIAN DAY
+	     75 
+	     76       IF( Z .GE. IGREG )	THEN
+	     77           JALPHA	= INT( ( Z - 1867216.25D0 ) / 36524.25D0 )
+	     78           JA		= Z + 1 + JALPHA - INT( 0.25D0 * JALPHA )
+	     79       ELSE
+	     80           JA		= Z
+	     81       END IF
+	     82 
+	     83       JB	= JA + 1524
+	     84       JC	= INT( ( JB - 122.1D0 ) / 365.25D0 )
+	     85       JD	= INT( 365.25D0 * JC )
+	     86       JE	= INT( ( JB - JD ) / 30.6001D0 )
+	     87 
+	     88       IDY	= JB - JD - INT( 30.6001D0 * JE )
+	     89       IMM	= JE - 1
+	     90       IF( IMM .GT. 12 )		IMM = IMM - 12
+	     91       IYY	= JC - 4715
+	     92       IF( IMM .GT. 2 )		IYY = IYY - 1
+	     93       IF( IYY .LE. 0 )		IYY = IYY - 1	! NO YEAR ZERO neither AD nor BC
+	     94 
+	     95 !  Convert fraction to TIMES
+	     96 
+	     97       IHR	= INT( 24.D0 * F )		!	HOURS
+	     98       F		= 24.D0 * F - IHR
+	     99       IMIN	= INT( 6.D1 * F )		!	MINUTES
+	    100       F		= 6.D1 * F - IMIN
+	    101       ISEC	= INT( 6.D1 * F )		!	SECONDS
+	    102       F		= 6.D1 * F - ISEC
+	    103       IMILLI	= INT( 1.D3 * F )		!	MILLISECONDS
+	    104       F		= 1.D3 * F - IMILLI
+	    105       IMICRO	= INT( 1.D3 * F )		!	MICROSECONDS
+	    106 
+	    107       RETURN
+	    108 
+	    109       END
+
+JULIAN_TO_GREGORIAN                                             21-APR-1995 15:27:01    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    20-APR-1995 16:51:17    [WIND.SOFTWARE.LIB]JULIAN_TO_GREGORIAN.FOR;3
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                 544   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                  96 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  652
+
+
+ENTRY POINTS
+
+    Address   Type  Name               
+                                       
+  3-00000000        JULIAN_TO_GREGORIAN
+
+
+VARIABLES
+
+    Address   Type  Name       Address   Type  Name       Address   Type  Name       Address   Type  Name  
+                                                                                                           
+REG-########  R*8   F            **      I*4   IMIN   REG-00000016  I*4   JB       2-00000004  I*4   JY    
+      **      I*4   IDY          **      I*4   IMM    REG-00000001  I*4   JC     REG-00000000  I*4   Z     
+  1-00000000  I*4   IGREG        **      I*4   ISEC   REG-00000010  I*4   JD                               
+      **      I*4   IHR          **      I*4   IYY    REG-00000000  I*4   JE                               
+      **      I*4   IMICRO REG-00000016  I*4   JA       2-00000000  I*4   JM                               
+      **      I*4   IMILLI REG-00000010  I*4   JALPHA       **      R*8   JUL                              
+
+JULIAN_TO_GREGORIAN                                             21-APR-1995 15:27:01    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    20-APR-1995 16:51:17    [WIND.SOFTWARE.LIB]JULIAN_TO_GREGORIAN.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]JULIAN_TO_GREGORIAN.LIS;6
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]JULIAN_TO_GREGORIAN.OBJ;6
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.30 seconds
+  Elapsed time:      1.81 seconds
+  Pagefaults:         116
+  I/O Count:            9

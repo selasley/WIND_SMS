@@ -1,0 +1,138 @@
+CNVRT_TO_FLOAT_JULIAN                                           21-APR-1995 15:26:46    DEC Fortran V6.2-508                Page   1
+                                                                20-APR-1995 16:46:23    CNVRT_TO_FLOAT_JULIAN.FOR;3
+
+	      1       REAL*8 FUNCTION CNVRT_TO_FLOAT_JULIAN( JUL, JHR, JMIN, JSEC, MILLI, MICRO )
+	      2 C
+	      3 C     This function extents the integer Julian day number to include
+	      4 C     hours, minutes, seconds, milliseconds, and microseconds as the
+	      5 C     fraction of the Julian day.
+	      6 C
+	      7 C     Version:	19-APR-1995
+	      8 C
+	      9 C     USAGE:
+	     10 C     XX	= CNVRT_TO_FLOAT_JULIAN( JUL, JHR, JMIN, JSEC, MILLI, MICRO )
+	     11 C
+	     12 C     PARAMETERS:
+	     13 C     REAL*8		XX		! OUTPUT: Floating point JULIAN day
+	     14 C
+	     15 C     INTEGER*4		JUL		! INPUT:Julian day
+	     16 C			JHR		!	Hours
+	     17 C			JMIN		!	Minutes
+	     18 C			JSEC		!	Seconds
+	     19 C			MILLI		!	Milliseconds
+	     20 C			MICRO		!	Microseconds
+	     21 C
+	     22 C     Creation:
+	     23 C     24-Mar_1994	H.Broer	University of Maryland
+	     24 C
+	     25 C Modification history:
+	     26 C     19-APR-1995	L. Bleau	remove 12 hour subtraction
+	     27 C
+	     28 C NOTE:
+	     29 C
+	     30 C This routine originally subtracted 12 hours from the computed (floating
+	     31 C point) Julian Day.  This was to reflect the fact that a Julian Day, by
+	     32 C definition, starts at noon.  The "Truncated Julian Day" used in the WIND 
+	     33 C Level Zero file starts at midnight, however.  This had resulted in the 
+	     34 C fractional Julian Day being 1/2 day less than the correct value.  This 
+	     35 C has been fixed. CNVRT_TO_FLOAT_JULIAN now produces a value which, when 
+	     36 C converted to an Epoch time, matches the CDF Epoch time value for the same 
+	     37 C day.
+	     38 C
+	     39       IMPLICIT NONE
+	     40 
+	     41       REAL*8		FJUL		! internal
+	     42 
+	     43       INTEGER*4		JUL,		! INPUT:Julian day
+	     44      :			JHR,		!	Hours
+	     45      :			JMIN,		!	Minutes
+	     46      :			JSEC,		!	Seconds
+	     47      :			MILLI,		!	Milliseconds
+	     48      :			MICRO		!	Microseconds
+	     49 
+	     50       FJUL	= ( ( ( MICRO * 1.D-3 + MILLI ) * 1.D-3 ) + JSEC ) / 6.D1
+	     51       FJUL	= ( ( FJUL + JMIN ) / 6.D1 + JHR ) / 24.D0 + JUL
+	     52 
+	     53       CNVRT_TO_FLOAT_JULIAN = FJUL
+	     54 
+	     55       RETURN
+	     56 
+	     57       END
+
+CNVRT_TO_FLOAT_JULIAN                                           21-APR-1995 15:26:46    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                    20-APR-1995 16:46:23    CNVRT_TO_FLOAT_JULIAN.FOR;3
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                 128   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  40 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  168
+
+
+ENTRY POINTS
+
+    Address   Type  Name                 
+                                         
+  1-00000000  R*8   CNVRT_TO_FLOAT_JULIAN
+
+
+VARIABLES
+
+    Address   Type  Name      Address   Type  Name      Address   Type  Name      Address   Type  Name 
+                                                                                                       
+REG-00000020  R*8   FJUL        **      I*4   JMIN        **      I*4   JUL         **      I*4   MILLI
+      **      I*4   JHR         **      I*4   JSEC        **      I*4   MICRO                          
+
+CNVRT_TO_FLOAT_JULIAN                                           21-APR-1995 15:26:46    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    20-APR-1995 16:46:23    CNVRT_TO_FLOAT_JULIAN.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]CNVRT_TO_FLOAT_JULIAN.LIS;7
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]CNVRT_TO_FLOAT_JULIAN.OBJ;7
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.10 seconds
+  Elapsed time:      1.69 seconds
+  Pagefaults:         157
+  I/O Count:            9

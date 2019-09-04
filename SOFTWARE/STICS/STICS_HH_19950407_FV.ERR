@@ -1,0 +1,12 @@
+  Errors found while generating the file :  STICS_HH_19950407_FV.SWF 
+   Run time  06:54:23    2-OCT-97
+  DOY:HR:MN:SEC                  COMMENTS
+  097:08:37:20   Bad HDB found
+  097:16:09:07   Invalid speed encountered =>      -2000.0
+  097:16:27:22   Sectors 8+ 9  Basic Rate =     32.   Basic PHA =   33.
+  097:18:33:26   Sectors 8+ 9  Basic Rate =     18.   Basic PHA =   19.
+  097:18:49:12   Sectors 8+ 9  Basic Rate =      2.   Basic PHA =    3.
+ Total Bad HDBs =  1
+ Total Invalid DVS =   0
+ Total Bad Speeds =   1
+ Total Bad Basic Rates =    3     Total Good Basic Rates =       2818

@@ -1,0 +1,23 @@
+.TITLE		WINDMSG
+.FACILITY	WIND,23 /PREFIX=WIND$_
+.SEVERITY	SUCCESS
+.BASE	0
+SUCCESS		<normal successful completion>
+.SEVERITY	INFORMATIONAL
+.BASE	10
+HDRFMT		<header version mismatch, not all header info available>
+.SEVERITY	WARNING
+.BASE	30
+FILEFMT		<L1 file format mismatch, some data can be lost>
+BADRECLEN	<record length incorrect, possible bad file>
+EMPTY		<could not read header, L1 file is empty>
+.SEVERITY	ERROR
+.BASE	50
+TOOMANY		<too many L1 files open>
+INUSE		<this unit/data structure already in use>
+OUTRANGE	<L1 unit is out of range>
+INVHDRVER	<invalid header version>
+FILNOTOPN	<L1 file not open>
+FILNAMFMT	<L1 file name syntax error, cannot open next file>
+BADFILEHDR	<unknown file header level, cannot interpret file>
+NONEXTFILE	<cannot find next day's data set>

@@ -1,0 +1,2444 @@
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   1
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	      1 #include "makecdf.h"
+	   2672 
+	   2673 /*********************************************************************/
+	   2674 /*               STRIP 3CHARACTER SUFFIX FROM FILENAME               */
+	   2675 /*********************************************************************/
+	   2676 void StripName (oldname,newname)
+	   2677 char *oldname, *newname;
+	   2678 {
+	   2679   long length,i,j;
+	   2680   char suffix[5] = "";
+	   2681   length=(long)strlen(oldname);
+	   2682   if (length > 4) {
+	   2683     for (i=0,j=length-4;i<4;i++,j++) suffix[i]=toupper(oldname[j]);
+	   2684     suffix[4]='\0';
+	   2685     if ((strcmp(suffix,".CDF")==0)||(strcmp(suffix,".SKT")==0)) {
+	   2686       for (i=0;i<(length-4);i++) newname[i] = oldname[i];
+	   2687       newname[i]='\0'; }
+	   2688     else strcpy(newname,oldname);
+	   2689   }
+	   2690   else strcpy(newname,oldname);
+	   2691 }
+	   2692 
+	   2693 /*********************************************************************/
+	   2694 /*                           Message Output                          */
+	   2695 /*********************************************************************/
+	   2696 void MSG_control(mtype,instring,status)
+	   2697 long mtype;
+	   2698 char *instring;
+	   2699 CDFstatus status;
+	   2700 {
+	   2701   long nofeed=FALSE;
+	   2702   long printit=FALSE;
+	   2703   char cdfmessage[CDF_ERRTEXT_LEN+1];
+	   2704 
+	   2705   if ((mtype >= 0)&&(RPARMS.debug == TRUE)) printit=TRUE;
+	   2706   else if ((mtype >= 1)&&(RPARMS.progress == TRUE)) printit=TRUE;
+	   2707   else if ( mtype >= 2) printit=TRUE;
+	   2708 
+	   2709   if (printit == TRUE) { /* message passes output level test */
+	   2710     if (status != 0) CDFerror (status,instring);
+	   2711     if (instring[strlen(instring)-1] != 10) nofeed=TRUE;
+	   2712 
+	   2713     if (RPARMS.sendtoterm == TRUE) {
+	   2714       if (nofeed==TRUE) printf("%s\n",instring);
+	   2715       else printf("%s",instring);
+	   2716     }
+	   2717 
+	   2718     if ((RPARMS.sendtolog == TRUE)&&(LOGFILE.fptr == NULL)) {
+	   2719       strcpy(LOGFILE.fname,RPARMS.outcdfname);
+	   2720       StripName (LOGFILE.fname,LOGFILE.fname);
+	   2721       strcat(LOGFILE.fname,".log");
+	   2722       LOGFILE.fptr = fopen(LOGFILE.fname,"w");
+	   2723       if (LOGFILE.fptr == NULL) {
+	   2724           RPARMS.sendtolog = FALSE;
+	   2725           printf("ERROR: Unable to open log file for output. \n");
+	   2726           printf("       makeCDF execution continuing... \n");
+	   2727       }
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   2
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   2728       else LOGFILE.nrecs = 0;
+	   2729     }
+	   2730 
+	   2731     if ((RPARMS.sendtolog == TRUE)&&(LOGFILE.fptr != NULL)) {
+	   2732       if (nofeed==TRUE) fprintf(LOGFILE.fptr,"%s\n",instring);
+	   2733       else fprintf(LOGFILE.fptr,"%s",instring);
+	   2734       LOGFILE.nrecs++;
+	   2735       if (LOGFILE.nrecs > LOGFILE.maxrecs) {
+	   2736         RPARMS.sendtolog = FALSE;
+	   2737         fclose(LOGFILE.fptr);
+	   2738   } } }
+	   2739 }
+	   2740 
+	   2741 
+	   2742 /**********************************************************************/
+	   2743 /*                  VALIDATE INPUT STRING AS ON OR OFF                */
+	   2744 /**********************************************************************/
+	   2745 long Validate_BOOLEAN(instring)
+	   2746 char *instring;
+	   2747 {
+	   2748   long i;
+	   2749   long ival = -1;
+	   2750   for (i=0;i<(long)strlen(instring);i++) instring[i]=toupper(instring[i]);
+	   2751   if (strcmp(instring,"ON")==0) ival=1;
+	   2752   else if (strcmp(instring,"TRUE")==0) ival=1;
+	   2753   else if (strcmp(instring,"YES")==0) ival=1;
+	   2754   else if (strcmp(instring,"T")==0) ival=1;
+	   2755   else if (strcmp(instring,"Y")==0) ival=1;
+	   2756   else if (strcmp(instring,"1")==0) ival=1;
+	   2757   else if (strcmp(instring,"OFF")==0) ival=0;
+	   2758   else if (strcmp(instring,"FALSE")==0) ival=0;
+	   2759   else if (strcmp(instring,"NO")==0) ival=0;
+	   2760   else if (strcmp(instring,"F")==0) ival=0;
+	   2761   else if (strcmp(instring,"N")==0) ival=0;
+	   2762   else if (strcmp(instring,"0")==0) ival=0;
+	   2763   return(ival);
+	   2764 }
+	   2765 
+	   2766 /**********************************************************************/
+	   2767 /*             VALIDATE INPUT STRING AS POSITIVE INTEGER              */
+	   2768 /**********************************************************************/
+	   2769 long Validate_POSINT(instring)
+	   2770 char *instring;
+	   2771 {
+	   2772   long i,ival;
+	   2773   long ierr = -1;
+	   2774   if (sscanf(instring,"%ld",&ival) == 0) return(ierr);
+	   2775   else if (ival < 0) return(ierr);
+	   2776   return(ival);
+	   2777 }
+	   2778 
+	   2779 /**********************************************************************/
+	   2780 /*             VALIDATE THAT FILLVAL MATCHES CDF TYPE                 */
+	   2781 /**********************************************************************/
+	   2782 double Validate_FILLVAL(instring, cdfvartype)
+	   2783 char *instring;
+	   2784 long cdfvartype;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   3
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   2785 {
+	   2786   double dval;
+	   2787   long ierr = -1;
+	   2788   if (sscanf(instring,"%lf",&dval) == 0) return(ierr);
+	   2789   return(dval);
+	   2790 }
+	   2791 
+	   2792 /**********************************************************************/
+	   2793 /*             VALIDATE INPUT VARIABLE FORMAT STRING                  */
+	   2794 /**********************************************************************/
+	   2795 long Validate_FORMAT(instring, outstring, length, cdfvartype)
+	   2796 char *instring;
+	   2797 char *outstring;
+	   2798 long *length;
+	   2799 long *cdfvartype;
+	   2800 {
+	   2801   char ctype;
+	   2802   char cwidth[10] = "";
+	   2803   long i,icount,iwidth,ival;
+	   2804   long ierr = -1;
+	   2805 
+	   2806   ctype = *instring++;
+	   2807   icount = sscanf(instring,"%ld",&iwidth);
+	   2808   if (icount == 1) sprintf(cwidth,"%d",iwidth);
+	   2809   if      ((ctype=='i')||(ctype=='I')) {
+	   2810     ctype='d'; *cdfvartype=CDF_INT4;   }
+	   2811   else if ((ctype=='r')||(ctype=='R')) {
+	   2812     ctype='f'; *cdfvartype=CDF_REAL4;  }
+	   2813   else if ((ctype=='f')||(ctype=='F')) {
+	   2814     ctype='f'; *cdfvartype=CDF_REAL4;  }
+	   2815   else if ((ctype=='c')||(ctype=='C')) {
+	   2816     ctype='c'; *cdfvartype=CDF_CHAR;   }
+	   2817   else if ((ctype=='s')||(ctype=='S')) {
+	   2818     ctype='s'; *cdfvartype=CDF_CHAR;   }
+	   2819   else if (ctype =='0')                {
+	   2820     ctype='0'; *cdfvartype=CDF_CHAR;   }
+	   2821   if (INFILE.format == 0) { /* freeform */
+	   2822     *outstring++ = ' ';
+	   2823     *outstring++ = '%';
+	   2824     if (ctype=='c') {
+	   2825       for (i=0;i<strlen(cwidth);i++) *outstring++ = cwidth[i];
+	   2826       *length = iwidth;
+	   2827     }
+	   2828     else {
+	   2829       if (ctype=='s') *length = 40;
+	   2830       else if (ctype=='0') *length = 0;
+	   2831       else *length = 20;
+	   2832     }
+	   2833     *outstring++ = ctype;
+	   2834   }
+	   2835   else {
+	   2836     *outstring++ = '%';
+	   2837     for (i=0;i<strlen(cwidth);i++) *outstring++ = cwidth[i];
+	   2838     *outstring++ = ctype;
+	   2839     *length = iwidth;
+	   2840   }
+	   2841   *outstring++ = '\0';
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   4
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   2842   ival = 1;
+	   2843   return(ival);
+	   2844 }
+	   2845 
+	   2846 /**********************************************************************/
+	   2847 /*             SEPARATE VARIABLE NAME(S) FROM ELEMENT NUMBER          */
+	   2848 /**********************************************************************/
+	   2849 long Separate_Varnames(instring,vname1,vname2,velem1,velem2)
+	   2850 char *instring;
+	   2851 char *vname1;
+	   2852 char *vname2;
+	   2853 long *velem1;
+	   2854 long *velem2;
+	   2855 {
+	   2856   char *cptr;
+	   2857   long ierr =  0;
+	   2858   long elem1 = -1;
+	   2859   long elem2 = -1;
+	   2860 
+	   2861   *vname2 = '\0';                                 /* initialize          */
+	   2862   cptr = memchr(instring,',',strlen(instring));   /* search for comma    */
+	   2863   if (cptr != NULL) {                             /* comma found         */
+	   2864     *cptr = '\0'; cptr++;                         /* terminate instring  */
+	   2865     ierr=sscanf(cptr,"%ld",&elem2);               /* extract element #   */
+	   2866     if (ierr != 1) {                              /* error reading elem# */
+	   2867       strcpy(LOGFILE.message,"ERROR: Reading element2# for the variable:");
+	   2868       strcat(LOGFILE.message,instring);   MSG_control(2,LOGFILE.message,0);
+	   2869       ierr = 1; }                                 /* set error flag      */
+	   2870     else { ierr=0; elem2 = elem2 - 1; }           /* base 0 not base1    */
+	   2871   }
+	   2872   cptr = memchr(instring,'(',strlen(instring));   /* search for L paren  */
+	   2873   if (cptr != NULL) {                             /* L parenthesis found */
+	   2874     *cptr = '\0'; cptr++;                         /* terminate instring  */
+	   2875     ierr=sscanf(cptr,"%ld",&elem1);               /* extract element #   */
+	   2876     if (ierr != 1) {                              /* error reading elem# */
+	   2877       strcpy(LOGFILE.message,"ERROR: Reading element1# for the variable:");
+	   2878       strcat(LOGFILE.message,instring);   MSG_control(2,LOGFILE.message,0);
+	   2879       ierr = 1; }                                 /* set error flag      */
+	   2880     else { ierr=0; elem1 = elem1 - 1; }           /* base 0 not base1    */
+	   2881   }
+	   2882   cptr = memchr(instring,'=',strlen(instring));   /* search for equals   */
+	   2883   if (cptr != NULL) {                             /* varname equivalence */
+	   2884     *cptr = '\0';                                 /* terminate instring  */
+	   2885     cptr++; strcpy(vname2,cptr);                  /* copy CDF varname    */
+	   2886   }
+	   2887   strcpy(vname1,instring);                        /* copy input varname  */
+	   2888   *velem1 = elem1;                                /* pass elem1# out     */
+	   2889   *velem2 = elem2;                                /* pass elem2# out     */
+	   2890   return(ierr);
+	   2891 }
+	   2892 
+	   2893 /**********************************************************************/
+	   2894 /*                     IMPORT THE RUNTIME PARAMETERS                  */
+	   2895 /**********************************************************************/
+	   2896 long Import_RPARMS(file_ptr)
+	   2897 FILE *file_ptr;
+	   2898 {
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   5
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   2899   char buffer[81];
+	   2900   char operand[81];
+	   2901   char sval[20];
+	   2902   long i,done,found,count,ival;
+	   2903   long ierr=0;
+	   2904 
+	   2905   MSG_control(1,"Reading runtime parameters.",0);
+	   2906 
+	   2907   /* Locate runtime parameters portion of ffd file */
+	   2908   found = FALSE; done = FALSE; /* initialize loop flags   */
+	   2909   do {
+	   2910     if (fgets(buffer,80,file_ptr) != NULL) {
+	   2911       if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   2912       if (memcmp(buffer,";",1) != 0) {
+	   2913         count = sscanf(buffer,"%s",operand);
+	   2914         if (count == 1) {
+	   2915           for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+	   2916           if (strcmp(operand,"RUNTIME_PARAMETERS") == 0) found = TRUE;
+	   2917     } } }
+	   2918     else done=TRUE;
+	   2919   } while ((found==FALSE)&&(done==FALSE));
+	   2920   if (found==FALSE) {
+	   2921     MSG_control(1,"WARNING: RUNTIME_PARAMETERS not found...Using defaults.",0);
+	   2922     return(ierr); }
+	   2923   else done=FALSE;
+	   2924 
+	   2925   /* Read the run time parameters from the ffd file */
+	   2926   do {
+	   2927   if (fgets(buffer,80,file_ptr) != NULL) {
+	   2928     if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   2929     if (memcmp(buffer,";",1) != 0) {
+	   2930       count = sscanf(buffer,"%s",operand);
+	   2931       if (count==1) {
+	   2932 
+	   2933         for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+	   2934         if (strcmp(operand,"PROGRESS_OUTPUT")==0) {
+	   2935           count=sscanf(buffer,"%s %s",operand,sval);
+	   2936           if (count==2) {
+	   2937             ival=Validate_BOOLEAN(sval);
+	   2938             if (ival != -1) RPARMS.progress=ival;
+	   2939             else MSG_control(1,"WARNING: Unknown value for progress_output",0);}
+	   2940           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   2941         }
+	   2942         else if (strcmp(operand,"DEBUG_OUTPUT")==0) {
+	   2943           count=sscanf(buffer,"%s %s",operand,sval);
+	   2944           if (count==2) {
+	   2945             ival=Validate_BOOLEAN(sval);
+	   2946             if (ival != -1) RPARMS.debug=ival;
+	   2947             else MSG_control(1,"WARNING: Unknown value for debug_output.",0);}
+	   2948           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   2949         }
+	   2950         else if (strcmp(operand,"LOG_TO_SCREEN")==0) {
+	   2951           count=sscanf(buffer,"%s %s",operand,sval);
+	   2952           if (count==2) {
+	   2953             ival=Validate_BOOLEAN(sval);
+	   2954             if (ival != -1) RPARMS.sendtoterm=ival;
+	   2955             else MSG_control(1,"WARNING: Unknown value for log_to_term.",0);}
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   6
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   2956           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   2957         }
+	   2958         else if (strcmp(operand,"LOG_TO_FILE")==0) {
+	   2959           count=sscanf(buffer,"%s %s",operand,sval);
+	   2960           if (count==2) {
+	   2961             ival=Validate_BOOLEAN(sval);
+	   2962             if (ival != -1) RPARMS.sendtolog=ival;
+	   2963             else MSG_control(1,"WARNING: Unknown value for log_to_file.",0);}
+	   2964           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   2965         }
+	   2966         else if (strcmp(operand,"LOGFILE_MAXRECS")==0) {
+	   2967           count=sscanf(buffer,"%s %s",operand,sval);
+	   2968           if (count==2) {
+	   2969             ival=Validate_POSINT(sval);
+	   2970             if (ival != -1) {RPARMS.maxlogrecs=ival; LOGFILE.maxrecs=ival;}
+	   2971             else MSG_control(1,"WARNING:logfile_maxrecs must be +Integer.",0);}
+	   2972           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   2973         }
+	   2974         else if (strcmp(operand,"LOWERCASE_AUTONAMING")==0) {
+	   2975           count=sscanf(buffer,"%s %s",operand,sval);
+	   2976           if (count==2) {
+	   2977             ival=Validate_BOOLEAN(sval);
+	   2978             if (ival != -1) RPARMS.autocase=ival;
+	   2979             else MSG_control(1,"WARNING:autonaming case must be +Integer.",0);}
+	   2980           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   2981         }
+	   2982         else if (strcmp(operand,"END_RUNTIME_PARAMETERS")==0) done=TRUE;
+	   2983         else MSG_control(1,"WARNING: Unknown runtime parameter encountered.",0);
+	   2984   } } }
+	   2985   else done=TRUE;
+	   2986   } while (done == FALSE);
+	   2987   return (ierr);
+	   2988 }
+	   2989 
+	   2990 /**********************************************************************/
+	   2991 /*                  IMPORT THE INPUT FILE DESCRIPTION                 */
+	   2992 /**********************************************************************/
+	   2993 long Import_INFILE(file_ptr)
+	   2994 FILE *file_ptr;
+	   2995 {
+	   2996   char buffer[81];
+	   2997   char operand[81];
+	   2998   char sval[20];
+	   2999   long i,done,found,count,ival;
+	   3000   long ierr=0;
+	   3001 
+	   3002   MSG_control(1,"Reading infile description...",0);
+	   3003 
+	   3004   /* Locate input file description portion of ffd file */
+	   3005   found = FALSE; done = FALSE; /* initialize loop flags   */
+	   3006   do {
+	   3007     if (fgets(buffer,80,file_ptr) != NULL) {
+	   3008       if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   3009       if (memcmp(buffer,";",1) != 0) {
+	   3010         count = sscanf(buffer,"%s",operand);
+	   3011         if (count==1) {
+	   3012           for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   7
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3013           if (strcmp(operand,"INFILE_DESCRIPTION") == 0) found = TRUE;
+	   3014     } } }
+	   3015     else done=TRUE;
+	   3016   } while ((found==FALSE)&&(done==FALSE));
+	   3017   if (found==FALSE) {
+	   3018     MSG_control(1,"WARNING: INFILE_DESCRIPTION  not found...Using defaults.",0);
+	   3019     return(ierr); }
+	   3020   else done=FALSE;
+	   3021 
+	   3022   /* Read the input file description from the ffd file */
+	   3023   do {
+	   3024   if (fgets(buffer,80,file_ptr) != NULL) {
+	   3025     if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   3026     if (memcmp(buffer,";",1) != 0) {
+	   3027       count = sscanf(buffer,"%s",operand);
+	   3028       if (count==1) {
+	   3029         for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+	   3030         if (strcmp(operand,"FORMAT")==0) {
+	   3031           count=sscanf(buffer,"%s %s",operand,sval);
+	   3032           if (count==2) {
+	   3033             for (i=0;i<strlen(sval);i++) sval[i]=toupper(sval[i]);
+	   3034             if (strcmp(sval,"FREEFORM")==0) INFILE.format=0;
+	   3035             else if (strcmp(sval,"FORMATTED")==0) INFILE.format=1;
+	   3036             else MSG_control(1,"WARNING: Unknown value for format operand",0);}
+	   3037           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   3038         }
+	   3039         else if (strcmp(operand,"DATA_TYPE")==0) {
+	   3040           count=sscanf(buffer,"%s %s",operand,sval);
+	   3041           if (count==2) {
+	   3042             for (i=0;i<strlen(sval);i++) sval[i]=toupper(sval[i]);
+	   3043             if (strcmp(sval,"TEXT")==0) INFILE.dtype=0;
+	   3044             else if (strcmp(sval,"BINARY")==0) {
+	   3045               if (INFILE.format==0) 
+	   3046                 MSG_control(2,"ERROR: Freeform datasets MUST be TEXT",0);
+	   3047             else INFILE.dtype=1; }
+	   3048             else MSG_control(1,"WARNING: Unknown value for data_type.",0);}
+	   3049           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   3050         }
+	   3051         else if (strcmp(operand,"TEXT_TYPE")==0) {
+	   3052           count=sscanf(buffer,"%s %s",operand,sval);
+	   3053           if (count==2) {
+	   3054             for (i=0;i<strlen(sval);i++) sval[i]=toupper(sval[i]);
+	   3055             if (strcmp(sval,"ASCII")==0) INFILE.ttype=0;
+	   3056             else if (strcmp(sval,"EBCDIC")==0) INFILE.ttype=1;
+	   3057             else MSG_control(1,"WARNING: Unknown value for text_type.",0);}
+	   3058           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   3059         }
+	   3060         else if (strcmp(operand,"BINARY_TYPE")==0) {
+	   3061           count=sscanf(buffer,"%s %s",operand,sval);
+	   3062           if (count==2) {
+	   3063           for (i=0;i<strlen(sval);i++) sval[i]=toupper(sval[i]);
+	   3064           if (strcmp(sval,"VAX")==0) INFILE.btype=VAX_ENCODING;
+	   3065           else if (strcmp(sval,"ALPHAVMSD")==0) INFILE.btype=ALPHAVMSd_ENCODING;
+	   3066           else if (strcmp(sval,"ALPHAVMSG")==0) INFILE.btype=ALPHAVMSg_ENCODING;
+	   3067           else if (strcmp(sval,"SUN")==0) INFILE.btype=SUN_ENCODING;
+	   3068           else if (strcmp(sval,"SGI")==0) INFILE.btype=SGi_ENCODING;
+	   3069           else if (strcmp(sval,"DECSTATION")==0) 
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   8
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3070                                 INFILE.btype=DECSTATION_ENCODING;
+	   3071           else if (strcmp(sval,"ALPHAOSF1")==0) INFILE.btype=ALPHAOSF1_ENCODING;
+	   3072           else if (strcmp(sval,"IBMRS")==0) INFILE.btype=IBMRS_ENCODING;
+	   3073           else if (strcmp(sval,"IBMPC")==0) INFILE.btype=IBMPC_ENCODING;
+	   3074           else if (strcmp(sval,"HP")==0) INFILE.btype=HP_ENCODING;
+	   3075           else if (strcmp(sval,"NEXT")==0) INFILE.btype=NeXT_ENCODING;
+	   3076           else if (strcmp(sval,"MAC")==0) INFILE.btype=MAC_ENCODING;
+	   3077           else MSG_control(1,"WARNING: Unknown value for binary_type.",0);}
+	   3078           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   3079         }
+	   3080         else if (strcmp(operand,"DELIMITER")==0) {
+	   3081           count=sscanf(buffer,"%s %s",operand,sval);
+	   3082           if (count==2) {
+	   3083             if (strcmp(sval,"blank")==0) INFILE.delimiter=' ';
+	   3084             else if (strcmp(sval,"BLANK")==0) INFILE.delimiter=' ';
+	   3085             else INFILE.delimiter=sval[0]; }
+	   3086           else MSG_control(1,"WARNING: Missing value for operand.",0);
+	   3087         }
+	   3088         else if (strcmp(operand,"END_INFILE_DESCRIPTION")==0) done=TRUE;
+	   3089         else MSG_control(1,"WARNING: Unknown infile parameter encountered.",0);
+	   3090   } } }
+	   3091   else done=TRUE;
+	   3092   } while (done == FALSE);
+	   3093   return (ierr);
+	   3094 }
+	   3095 
+	   3096 /**********************************************************************/
+	   3097 /*                     IMPORT THE EPOCH PARAMETERS                    */
+	   3098 /**********************************************************************/
+	   3099 long Import_EpALG(file_ptr)
+	   3100 FILE *file_ptr;
+	   3101 {
+	   3102   char buffer[81];
+	   3103   char operand[81];
+	   3104   char sval[9][20];
+	   3105   long i,done,found,count,ival;
+	   3106   long ierr=0;
+	   3107 
+	   3108   MSG_control(1,"Reading Epoch description...",0);
+	   3109 
+	   3110   /* Locate epoch parameters portion of ffd file */
+	   3111   found = FALSE; done = FALSE; /* initialize loop flags   */
+	   3112   do {
+	   3113     if (fgets(buffer,80,file_ptr) != NULL) {
+	   3114       if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   3115       if (memcmp(buffer,";",1) != 0) {
+	   3116         count = sscanf(buffer,"%s",operand);
+	   3117         if (count==1) {
+	   3118           for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+	   3119           if (strcmp(operand,"EPOCH_DESCRIPTION") == 0) found = TRUE;
+	   3120     } } }
+	   3121     else done=TRUE;
+	   3122   } while ((found==FALSE)&&(done==FALSE));
+	   3123   if (found==FALSE) {
+	   3124     MSG_control(2,"ERROR: EPOCH_DESCRIPTION not found...NO defaults.",0);
+	   3125     ierr = -1; return(ierr); }
+	   3126   else done=FALSE;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page   9
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3127 
+	   3128   /* Read the epoch description parameters from the ffd file */
+	   3129   do {
+	   3130   if (fgets(buffer,80,file_ptr) != NULL) {
+	   3131     if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   3132     if (memcmp(buffer,";",1) != 0) {
+	   3133       count = sscanf(buffer,"%s",operand);
+	   3134       if (count==1) {
+	   3135         for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+	   3136         if (strcmp(operand,"ALGORITHM")==0) {
+	   3137           count=sscanf(buffer,"%s %s",operand,sval[0]);
+	   3138           if (count==2) {
+	   3139             ival=Validate_POSINT(sval[0]);
+	   3140             if (ival != -1) EpALG.algorithm=ival;
+	   3141             else {
+	   3142               MSG_control(2,"ERROR: Unknown value for Epoch algorithm.",0);
+	   3143               done=TRUE; ierr = -1;
+	   3144           } }
+	   3145           else MSG_control(2,"ERROR: Missing value for Epoch algorithm.",0);
+	   3146         }
+	   3147         else if (strcmp(operand,"OPERANDS")==0) {
+	   3148           count=sscanf(buffer,"%s %s %s %s %s %s %s %s %s %s %s",operand,
+	   3149                        sval[0],sval[1],sval[2],sval[3],sval[4],
+	   3150                        sval[5],sval[6],sval[7],sval[8],sval[9]);
+	   3151           if (count==11) {
+	   3152             for (i=0;i<10;i++) {
+	   3153               ival=Validate_POSINT(sval[i]);
+	   3154               if (ival != -1) EpALG.operand[i]=ival;
+	   3155               else {
+	   3156                 MSG_control(2,"ERROR: Invalid value found in Epoch operands",0);
+	   3157                 done=TRUE; ierr = -1;
+	   3158           } } }
+	   3159           else MSG_control(2,"ERROR: Incorrect number of Epoch operands.",0);
+	   3160         }
+	   3161         else if (strcmp(operand,"END_EPOCH_DESCRIPTION")==0) done=TRUE;
+	   3162         else MSG_control(2,"ERROR: Unknown EPOCH parameter encountered.",0);
+	   3163   } } }
+	   3164   else done=TRUE;
+	   3165   } while (done == FALSE);
+	   3166 
+	   3167   /* Because variable numbers in the ffd file file base 1 but C is */
+	   3168   /* base 0, subtract one from any operand which represends a var# */
+	   3169   switch (EpALG.algorithm) {
+	   3170   case 0 : for(i=0;i<10;i++) EpALG.operand[i]=EpALG.operand[i]-1; break;
+	   3171   case 1 : EpALG.operand[0] = EpALG.operand[0] - 1; break;
+	   3172   case 2 : EpALG.operand[0] = EpALG.operand[0] - 1; break;
+	   3173   case 3 : EpALG.operand[0] = EpALG.operand[0] - 1; break;
+	   3174   case 4 : EpALG.operand[0] = EpALG.operand[0] - 1; break;
+	   3175   case 5 : EpALG.operand[7] = EpALG.operand[7] - 1; break;
+	   3176   case 6 : for(i=0;i<8;i++) EpALG.operand[i]=EpALG.operand[i]-1; break;
+	   3177   case 7 : EpALG.operand[7] = EpALG.operand[7]-1;
+	   3178   }
+	   3179   return (ierr);
+	   3180 }
+	   3181 
+	   3182 /**********************************************************************/
+	   3183 /*                     IMPORT THE VARIABLES                           */
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  10
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3184 /**********************************************************************/
+	   3185 long Import_Variables(file_ptr)
+	   3186 FILE *file_ptr;
+	   3187 {
+	   3188   char buffer[133];
+	   3189   char operand[81];
+	   3190   char sval[16][20];
+	   3191   char instring[80];
+	   3192   char vname1[40];
+	   3193   char vname2[40];
+	   3194   char cform[10];
+	   3195   double dfill;
+	   3196   long i,done,found,count,ielem1,ielem2,ival,ilength,icdftype;
+	   3197   long isize,ieperr,imaj,icon,ieol,ihead,ifill,ibsub,iesub,inrep,idelta;
+	   3198   long iavx,iasx,iafx,iafil;
+	   3199   long ierr=0;
+	   3200 
+	   3201   MSG_control(1,"Reading Variable descriptions...",0);
+	   3202 
+	   3203   /* Locate epoch parameters portion of ffd file */
+	   3204   found = FALSE; done = FALSE; /* initialize loop flags   */
+	   3205   do {
+	   3206     if (fgets(buffer,132,file_ptr) != NULL) {
+	   3207       if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   3208       if (memcmp(buffer,";",1) != 0) {
+	   3209         count = sscanf(buffer,"%s",operand);
+	   3210         if (count==1) {
+	   3211           for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+	   3212           if (strcmp(operand,"VARIABLE_DESCRIPTIONS") == 0) found = TRUE;
+	   3213     } } }
+	   3214     else done=TRUE;
+	   3215   } while ((found==FALSE)&&(done==FALSE));
+	   3216   if (found==FALSE) {
+	   3217     MSG_control(2,"ERROR: VARIABLE_DESCRIPTIONS not found...NO defaults.",0);
+	   3218     ierr = -1; return(ierr); }
+	   3219   else done=FALSE;
+	   3220 
+	   3221   /* Read the epoch description parameters from the ffd file */
+	   3222   do {
+	   3223   if (fgets(buffer,132,file_ptr) != NULL) {
+	   3224     if (RPARMS.debug==TRUE) MSG_control(0,buffer,0);
+	   3225     if (memcmp(buffer,";",1) != 0) {
+	   3226       count = sscanf(buffer,"%s",operand);
+	   3227       if (count==1) {
+	   3228        for (i=0;i<strlen(operand);i++) operand[i]=toupper(operand[i]);
+	   3229        if (strcmp(operand,"END_VARIABLE_DESCRIPTIONS")==0) done=TRUE;
+	   3230        else {
+	   3231        count=sscanf(buffer,"%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
+	   3232                     instring,sval[0],sval[1],sval[2],sval[3],sval[4],sval[5],
+	   3233                     sval[6],sval[7],sval[8],sval[9],sval[10],sval[11],sval[12],
+	   3234                     sval[13],sval[14],sval[15]);
+	   3235           if (count==17) {
+	   3236             isize =Validate_POSINT(sval[0]); if (isize==0)  isize=1;
+	   3237             ival  =Validate_FORMAT(sval[1],cform,&ilength,&icdftype);
+	   3238             ihead =Validate_BOOLEAN(sval[2]);
+	   3239             ieol  =Validate_BOOLEAN(sval[3]);
+	   3240             ibsub =Validate_POSINT(sval[4]);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  11
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3241             iesub =Validate_POSINT(sval[5]);
+	   3242             inrep =Validate_POSINT(sval[6]);
+	   3243             idelta=Validate_POSINT(sval[7]);
+	   3244             ieperr=Validate_POSINT(sval[8]);
+	   3245             if (ieperr == 0)  ieperr = 1;     /* correct to default of 1 */
+	   3246             if (ieperr == -1) ieperr = isize; /* illegal same as flat */
+	   3247             imaj  =Validate_POSINT(sval[9]);
+	   3248             icon  =Validate_BOOLEAN(sval[10]);
+	   3249             iavx  =Validate_BOOLEAN(sval[11]);
+	   3250             iasx  =Validate_BOOLEAN(sval[12]);
+	   3251             iafx  =Validate_BOOLEAN(sval[13]);
+	   3252             iafil =Validate_BOOLEAN(sval[14]);
+	   3253             dfill =Validate_FILLVAL(sval[15],icdftype);
+	   3254             ierr  =Separate_Varnames(instring,vname1,vname2,&ielem1,&ielem2);
+	   3255             if (ierr != 0) done=TRUE;
+	   3256             /* allocate another VLIST element */
+	   3257             VLISTne++;
+	   3258             VLIST=realloc(VLIST,(sizeof(VLISTz)*VLISTne));
+	   3259 /* make vname and cdfvname fixed length and try again
+	   3260             VLIST[VLISTne-1].vname = malloc(sizeof(strlen(vname1)+1));
+	   3261             VLIST[VLISTne-1].cdfvname = malloc(sizeof(strlen(vname2)+1));
+	   3262 */
+	   3263             strcpy(VLIST[VLISTne-1].vname,vname1);
+	   3264             strcpy(VLIST[VLISTne-1].cdfvname,vname2);
+	   3265             strcpy(VLIST[VLISTne-1].format,cform);
+	   3266             if (isize <= 1) {
+	   3267                    VLIST[VLISTne-1].ndims=0;
+	   3268                    VLIST[VLISTne-1].nelems=1;
+	   3269             }
+	   3270             else { VLIST[VLISTne-1].ndims=1;
+	   3271                    VLIST[VLISTne-1].dims[0]= isize;
+	   3272                    VLIST[VLISTne-1].nelems = isize;
+	   3273             }
+	   3274             VLIST[VLISTne-1].Elem[0]    = ielem1;
+	   3275             VLIST[VLISTne-1].Elem[1]    = ielem2;
+	   3276             VLIST[VLISTne-1].length     = ilength;
+	   3277             VLIST[VLISTne-1].cdfvartype = icdftype;
+	   3278             VLIST[VLISTne-1].eperr      = ieperr;
+	   3279             VLIST[VLISTne-1].majority   = imaj;
+	   3280             VLIST[VLISTne-1].constant   = icon;
+	   3281             VLIST[VLISTne-1].header     = ihead;
+	   3282             VLIST[VLISTne-1].eol        = ieol;
+	   3283             VLIST[VLISTne-1].bsubr      = ibsub;
+	   3284             VLIST[VLISTne-1].esubr      = iesub;
+	   3285             VLIST[VLISTne-1].autovalids = iavx;
+	   3286             VLIST[VLISTne-1].autoscales = iasx;
+	   3287             VLIST[VLISTne-1].autoformat = iafx;
+	   3288             VLIST[VLISTne-1].autofill   = iafil;
+	   3289             VLIST[VLISTne-1].fillval    = dfill;
+	   3290             /* add new subrecord if needed */
+	   3291             if ((long)ibsub >= SRECSne+1) {
+	   3292               MSG_control(0,"Adding new subrecord",0);
+	   3293               SRECSne++;
+	   3294               SRECS=realloc(SRECS,(sizeof(SRECSz)*SRECSne));
+	   3295               SRECS[SRECSne-1].nreps  = inrep;
+	   3296               SRECS[SRECSne-1].delta  = (double)idelta;
+	   3297               SRECS[SRECSne-1].countr = 0;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  12
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3298   } } } } } }
+	   3299   else done=TRUE;
+	   3300   } while (done == FALSE);
+	   3301   VLIST[VLISTne-1].eol=1; /* last variable always has EOL flag */
+	   3302   return (ierr);
+	   3303 }
+	   3304 
+	   3305 /**********************************************************************/
+	   3306 /*                      IMPORT THE DESCRIPTION FILE                   */
+	   3307 /**********************************************************************/
+	   3308 long Import_FFD()
+	   3309 {
+	   3310   FILE *file_ptr;
+	   3311   long ierr=0;
+	   3312 
+	   3313   /* open file which contains the description of input data file */
+	   3314   file_ptr = fopen(RPARMS.ffdfname,"r");
+	   3315   if (file_ptr == NULL) {
+	   3316     MSG_control(2,"ERROR: Unable to open input description file",0);
+	   3317     MSG_control(2,"       Translation Aborted.",0);
+	   3318     ierr=1; return(ierr);
+	   3319   }
+	   3320 
+	   3321   ierr = Import_RPARMS(file_ptr);
+	   3322   if (ierr == 0) {
+	   3323     ierr = Import_INFILE(file_ptr);
+	   3324     if (ierr == 0) {
+	   3325       ierr = Import_EpALG(file_ptr);
+	   3326       if (ierr == 0) {
+	   3327         ierr = Import_Variables(file_ptr);
+	   3328   } } }
+	   3329 
+	   3330   MSG_control(1,"Translation file input completed.",0); MSG_control(1," ",0);
+	   3331   fclose(file_ptr);
+	   3332   return (ierr);
+	   3333 }
+	   3334 
+	   3335 /**********************************************************************/
+	   3336 /*                  DETERMINE SUBRECORD BOUNDARIES                    */
+	   3337 /**********************************************************************/
+	   3338 long SREC_Bounds(subrecno, firstvar, lastvar)
+	   3339 long subrecno;
+	   3340 long *firstvar;
+	   3341 long *lastvar;
+	   3342 {
+	   3343   long i,j;
+	   3344   long ierr=0;
+	   3345 
+	   3346   j= subrecno + 1;
+	   3347   for (i=0;i<VLISTne;i++) if (VLIST[i].bsubr == j) *firstvar = i;
+	   3348   for (i=0;i<VLISTne;i++) if (VLIST[i].esubr == j) *lastvar  = i;
+	   3349 
+	   3350 /*
+	   3351   if (subrecno == 0) {
+	   3352     *firstvar = 0;
+	   3353     *lastvar = VLISTne-1; }
+	   3354   else {
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  13
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3355     for (i=0;i<VLISTne;i++) if (VLIST[i].bsubr == subrecno) *firstvar = i;
+	   3356     for (i=0;i<VLISTne;i++) if (VLIST[i].esubr == subrecno) *lastvar  = i;
+	   3357   }
+	   3358 */
+	   3359 
+	   3360   return(ierr);
+	   3361 }
+	   3362 
+	   3363 /**********************************************************************/
+	   3364 /*             BUILD THE ORDERED LIST OF VARIABLES TO READ            */
+	   3365 /**********************************************************************/
+	   3366 long Build_OLIST()
+	   3367 {
+	   3368   long g,h,i,j,k,l,m,n,iflag,rflag,pflag,past_headers,done,addeol;
+	   3369   long ierr=0;
+	   3370   long *ecount, *rcount;
+	   3371 
+	   3372   MSG_control(1,"Contructing the Ordered List for data stream input...",0);
+	   3373   past_headers = FALSE;
+	   3374   for (i=0;i<SRECSne;i++) {
+	   3375     for (j=0;j<SRECS[i].nreps;j++) {
+	   3376       iflag=SREC_Bounds(i,&n,&m); /* find first and last var in subrec i */
+	   3377       ecount = calloc((size_t)m+1,sizeof(long));
+	   3378       rcount = calloc((size_t)m+1,sizeof(long));
+	   3379       for (h=n;h<=m;h++) {
+	   3380         ecount[h]=VLIST[h].nelems;
+	   3381         rcount[h]=ecount[h];
+	   3382       }
+	   3383 
+	   3384       done = FALSE;
+	   3385       while (done == FALSE) {
+	   3386         done = TRUE;
+	   3387         for (k=n;k<=m;k++) { /* process each variable in subrecord */
+	   3388           for (l=0;l<VLIST[k].eperr;l++) { /* process each element */
+	   3389             rflag = TRUE;                  /* initialize read flag */
+	   3390             if (VLIST[k].header == FALSE) past_headers = TRUE;
+	   3391             if ((VLIST[k].header == TRUE)&&(past_headers == TRUE)) rflag=FALSE;
+	   3392             if (ecount[k] > 0) {           /* elements still to be processed */
+	   3393               pflag = TRUE;                /* process the element */
+	   3394               ecount[k] = ecount[k]-1;     /* adjust the element counter */
+	   3395             }
+	   3396             else {                         /* element count reached */
+	   3397               pflag = FALSE;               /* no new element to process */
+	   3398               if (VLIST[k].eol == TRUE) rflag=FALSE; /* no element to read */
+	   3399             }
+	   3400             if (VLIST[k].length == 0) rflag=FALSE;   /* no element to read */
+	   3401 
+	   3402             /* add new element to the ordered list */
+	   3403             OLISTne++;
+	   3404             OLIST=realloc(OLIST,(sizeof(OLISTz)*OLISTne));
+	   3405             OLIST[OLISTne-1].vnum  = k;
+	   3406             OLIST[OLISTne-1].velem = rcount[k]-ecount[k]-1;
+	   3407             OLIST[OLISTne-1].rflag = rflag;
+	   3408             OLIST[OLISTne-1].pflag = pflag;
+	   3409           }
+	   3410           /* determine if eol should be added to olist */
+	   3411           addeol = FALSE;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  14
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3412           if (VLIST[k].eol == TRUE) addeol = TRUE; /* check rflag? */
+	   3413           if ((k == (VLISTne-1))&&(ecount[k] == 0)) addeol = TRUE;
+	   3414           if (addeol == TRUE) { /* add eol read to olist */
+	   3415             OLISTne++;
+	   3416             OLIST=realloc(OLIST,(sizeof(OLISTz)*OLISTne));
+	   3417             OLIST[OLISTne-1].vnum  = -1;
+	   3418             OLIST[OLISTne-1].velem = 0;
+	   3419             OLIST[OLISTne-1].rflag = TRUE;
+	   3420             OLIST[OLISTne-1].pflag = FALSE;
+	   3421           }
+	   3422           if (ecount[k] > 0) done = FALSE;
+	   3423         }
+	   3424       }
+	   3425       free(ecount); free(rcount);
+	   3426     }
+	   3427   }
+	   3428   /* ordered list construction is complete.*/
+	   3429   if (RPARMS.progress == TRUE) {
+	   3430     MSG_control(1,"Ordered List construction completed.",0);
+	   3431   }
+	   3432   if (RPARMS.debug == TRUE) {
+	   3433     MSG_control(0,"------ ORDERED LIST -----",0);
+	   3434     MSG_control(0,"   v#    e# r p ",0);
+	   3435     g=OLISTne-1;
+	   3436     if (g > 200) { 
+	   3437       MSG_control(0,"WARNING: Only showing first 200 OLIST elements",0);
+	   3438       g = 200;
+	   3439     }
+	   3440     for (i=0;i<=g;i++) {
+	   3441       sprintf(LOGFILE.message,"%5d %5d %d %d \n",
+	   3442               OLIST[i].vnum,OLIST[i].velem,OLIST[i].rflag,OLIST[i].pflag);
+	   3443       MSG_control(0,LOGFILE.message,0);
+	   3444     }
+	   3445   }
+	   3446   return(ierr);
+	   3447 }
+	   3448 
+	   3449 /**********************************************************************/
+	   3450 /*      DETERMINE IF INPUT CDF IS IN FORM OF CDF OR SKELETON TABLE    */
+	   3451 /**********************************************************************/
+	   3452 long inCDFform (filename)
+	   3453 char *filename;
+	   3454 {
+	   3455   char suffix[5] = "";
+	   3456   long length,i,j;
+	   3457   long iform = 0;
+	   3458 
+	   3459   length=(long)strlen(filename);
+	   3460   if (length >= 4) {
+	   3461     for (i=0,j=length-4;i<4;i++,j++) suffix[i]=toupper(filename[j]);
+	   3462     suffix[4]='\0';
+	   3463     if (strcmp(suffix,".CDF")==0) iform=1;
+	   3464     else if (strcmp(suffix,".SKT")==0) iform=2;
+	   3465   }
+	   3466   if (iform==0) {
+	   3467     MSG_control(2,"ERROR: Cannot determine if the input CDF is in the form",0);
+	   3468     MSG_control(2,"       of a CDF or a skeleton table because of a missing",0);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  15
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3469     MSG_control(2,"       or unrecognized file extension.  Recognized file ",0);
+	   3470     MSG_control(2,"       extensions are .cdf and .skt.",0);
+	   3471   }
+	   3472   return(iform);
+	   3473 }
+	   3474 
+	   3475 /**********************************************************************/
+	   3476 /*      GENERATE CDF SKELETON TO BE POPULATED WITH INPUT DATA         */
+	   3477 /**********************************************************************/
+	   3478 long Generate_CDFskeleton()
+	   3479 {
+	   3480    long iform,eNum,numrecs,allswell;
+	   3481    long ierr=0;
+	   3482    char tempname[80];
+	   3483    char command[80];
+	   3484    CDFid id;
+	   3485    CDFstatus status;
+	   3486 
+	   3487    iform = inCDFform(RPARMS.incdfname);
+	   3488    if (iform == 2) { /* input cdf description is a skeleton table */
+	   3489      StripName(RPARMS.incdfname,tempname);
+	   3490      StripName(RPARMS.outcdfname,RPARMS.outcdfname);
+	   3491      strcpy(command,"skeletoncdf /CDF=");
+	   3492 #if defined UNIX_OS
+       X   3493      strcpy(command,"$CDF_BIN/skt2cdf -cdf ");
+       X   3494 #endif
+	   3495      strcat(command,RPARMS.outcdfname); strcat(command," ");
+	   3496      strcat(command,tempname); strcat(command,"");
+	   3497      MSG_control(1,"Creating empty CDF from skeleton table...",0);
+	   3498      MSG_control(0,command,0);
+	   3499      allswell=system(command);
+	   3500      if (allswell != SYS_OK) {
+	   3501        MSG_control(2,"ERROR: During creation of cdf from skeleton table",0);
+	   3502        ierr=1;
+	   3503    } }
+	   3504    else if (iform == 1) { /* input cdf description is a CDF */
+	   3505      /* Determine the number of records in the CDF */
+	   3506      MSG_control(1,"Opening input CDF to determine empty or full...",0);
+	   3507      allswell=FALSE;
+	   3508      StripName(RPARMS.incdfname,tempname);
+	   3509      StripName(RPARMS.outcdfname,RPARMS.outcdfname);
+	   3510      status = CDFlib(OPEN_,CDF_,tempname,&id,NULL_);
+	   3511      if (status <= CDF_WARN) MSG_control(2,"CDFERROR:",status);
+	   3512      else {
+	   3513        MSG_control(0,"Getting the variable number of Epoch...",0);
+	   3514        status = CDFlib(SELECT_, CDF_, id,
+	   3515                        GET_,zVAR_NUMBER_,"Epoch",&eNum,NULL_);
+	   3516        if (status != CDF_OK) MSG_control(2,"CDFERROR:",status);
+	   3517        else {
+	   3518          MSG_control(0,"Getting the number of records for Epoch...",0);
+	   3519          status = CDFlib(SELECT_, CDF_, id,
+	   3520                                   zVAR_, eNum,
+	   3521                          GET_, zVARs_MAXREC_, &numrecs, NULL_);
+	   3522          if (status != CDF_OK) MSG_control(2,"CDFERROR:",status);
+	   3523          else { 
+	   3524            MSG_control(0,"Closing the input CDF...",0);
+	   3525            status = CDFlib(CLOSE_, CDF_, NULL_);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  16
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3526            if (status != CDF_OK) MSG_control(2,"CDFERROR:",status);
+	   3527            else allswell=TRUE;
+	   3528      } } }
+	   3529 
+	   3530      if (allswell==TRUE) {
+	   3531        if (numrecs == -1) { /* cdf is empty */
+	   3532          strcpy(command,"copy ");
+	   3533 #if defined UNIX_OS
+       X   3534          strcpy(command,"cp ");
+       X   3535 #endif
+	   3536          strcat(command,tempname) ; strcat(command," ");
+	   3537          strcat(command,RPARMS.outcdfname); strcat(command,"");
+	   3538          MSG_control(1,"Creating copy of empty cdf...",0);
+	   3539          MSG_control(0,command,0);
+	   3540          allswell=system(command);
+	   3541          if (allswell != SYS_OK) {
+	   3542            MSG_control(2,"ERROR: During creation of copy of empty cdf.",0);
+	   3543            ierr=1;
+	   3544        } }
+	   3545        else { /* cdf is not empty */
+	   3546          strcpy(command,"skeletontable ");
+	   3547 #if defined UNIX_OS
+       X   3548          strcpy(command,"$CDF_BIN/cdf2skt ");
+       X   3549 #endif
+	   3550          strcat(command,tempname); strcat(command," ");
+	   3551          MSG_control(1,"Creating skeleton table from non-empty CDF...",0);
+	   3552          MSG_control(0,command,0);
+	   3553          allswell=system(command);
+	   3554          if (allswell != SYS_OK) {
+	   3555            MSG_control(2,"ERROR: During creation of skeleton table.",0);
+	   3556            ierr=1; }
+	   3557          else {
+	   3558            strcpy(command,"skeletoncdf /CDF=");
+	   3559 #if defined UNIX_OS
+       X   3560            strcpy(command,"$CDF_BIN/skt2cdf ");
+       X   3561 #endif
+	   3562            strcat(command,RPARMS.outcdfname); strcat(command," ");
+	   3563            strcat(command,tempname);  strcat(command,"");
+	   3564            MSG_control(1,"Creating cdf from skeleton table",0);
+	   3565            MSG_control(0,command,0);
+	   3566            allswell=system(command);
+	   3567            if (allswell != SYS_OK) {
+	   3568              MSG_control(2,"ERROR: During creation of cdf.",0);
+	   3569              ierr=1;
+	   3570      } } } }
+	   3571      else ierr=1;
+	   3572    }
+	   3573    else {
+	   3574      MSG_control(2,RPARMS.incdfname,0);
+	   3575      MSG_control(2,"ERROR: Missing or Unknown file extension.",0);
+	   3576      MSG_control(2,"       Cannot determine form of input cdf description.",0);
+	   3577      ierr=1;
+	   3578    }
+	   3579    return(ierr);
+	   3580 }
+	   3581 
+	   3582 /**********************************************************************/
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  17
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3583 /*            Determine CDF var#'s for input variables                */
+	   3584 /**********************************************************************/
+	   3585 long Match_Variables()
+	   3586 {
+	   3587   CDFstatus status;
+	   3588   char vname[40];
+	   3589   long i,itype,isize;
+	   3590   long ierr=0;
+	   3591 
+	   3592   MSG_control(1,"Matching input variables to output CDF vars...",0);
+	   3593   status = CDFlib(OPEN_,CDF_,RPARMS.outcdfname,&OUTCDF.outCDFid,
+	   3594                   SELECT_, CDF_zMODE_, zMODEon2, NULL_);
+	   3595   if (status <= CDF_WARN) {
+	   3596     MSG_control(2,"CDFERROR:",status);
+	   3597     ierr=1; return(ierr);
+	   3598   }
+	   3599 
+	   3600   for (i=0;i<VLISTne;i++) {
+	   3601     strcpy(vname,VLIST[i].vname);
+	   3602     if (strlen(VLIST[i].cdfvname) != 0) strcpy(vname,VLIST[i].cdfvname);
+	   3603     status = CDFlib(GET_,zVAR_NUMBER_,vname,&VLIST[i].cdfvarnum,NULL_);
+	   3604     if (status != CDF_OK) {
+	   3605       VLIST[i].cdfvarnum  = -1;
+	   3606       strcpy(LOGFILE.message,"WARNING: the input variable '");
+	   3607       strcat(LOGFILE.message,VLIST[i].vname);
+	   3608       strcat(LOGFILE.message,"' does not exist in input CDF.");
+	   3609       MSG_control(1,LOGFILE.message,0); }
+	   3610     else { /* variable is found, get varnum and vartype */
+	   3611       status = CDFlib(SELECT_,zVAR_,VLIST[i].cdfvarnum,
+	   3612                       GET_,zVAR_DATATYPE_,&VLIST[i].cdfvartype,NULL_);
+	   3613       if (status != CDF_OK) MSG_control(1,"CDFERROR:",status);
+	   3614       else {
+	   3615         /* determine type & byte-size of the data space to be allocated */
+	   3616         itype = VLIST[i].cdfvartype;
+	   3617         if ((itype==CDF_INT1)||(itype==CDF_UINT1)||(itype==CDF_BYTE)) isize=1;
+	   3618         else if ((itype==CDF_CHAR) ||(itype==CDF_UCHAR))  isize=1;
+	   3619         else if ((itype==CDF_INT2) ||(itype==CDF_UINT2))  isize=2;
+	   3620         else if ((itype==CDF_INT4) ||(itype==CDF_UINT4))  isize=4;
+	   3621         else if ((itype==CDF_REAL4)||(itype==CDF_FLOAT))  isize=4;
+	   3622         else if ((itype==CDF_REAL8)||(itype==CDF_DOUBLE)) isize=8;
+	   3623         else if (itype==CDF_EPOCH) isize=8;
+	   3624         else { 
+	   3625           MSG_control(2,"ERROR: Unknown CDF datatype encountered during ",0);
+	   3626           MSG_control(2,"       Buffer and space allocation ... ",0);
+	   3627           ierr=1; return(ierr);
+	   3628         }
+	   3629         /* allocate another CLIST element */
+	   3630         CLISTne++;
+	   3631         CLIST=realloc(CLIST,(sizeof(CLISTz)*CLISTne));
+	   3632         CLIST[CLISTne-1].flagone = 0L;             /* initialize flag   */
+	   3633         CLIST[CLISTne-1].ccount  = 0L;             /* initialize countr */
+	   3634         CLIST[CLISTne-1].vmin = calloc(1L,isize);  /* space for min     */
+	   3635         CLIST[CLISTne-1].vmax = calloc(1L,isize);  /* space for max     */
+	   3636         VLIST[i].clistnum = CLISTne-1;             /* link to VLIST     */
+	   3637       }
+	   3638     }
+	   3639   }
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  18
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3640 
+	   3641   status = CDFlib(GET_,zVAR_NUMBER_,"Epoch",&EpALG.Epvarnum,NULL_);
+	   3642   if (status != CDF_OK) {
+	   3643     MSG_control(2,"ERROR: CDF does not contain variable named:Epoch",status);
+	   3644     ierr=1;
+	   3645   }
+	   3646 
+	   3647   status = CDFlib(CLOSE_,CDF_);
+	   3648   return(ierr);
+	   3649 }
+	   3650 
+	   3651 /**********************************************************************/
+	   3652 /*               Insert 'l' into format because var is DOUBLE         */
+	   3653 /**********************************************************************/
+	   3654 long Fix_Format(format, newform)
+	   3655 char *format;
+	   3656 char *newform;
+	   3657 {
+	   3658   long ierr=0;
+	   3659   while (*format != 'f') *newform++ = *format++;
+	   3660   *newform++ = 'l';
+	   3661   while (*format != '\0') *newform++ = *format++;
+	   3662   *newform = '\0';
+	   3663   return (ierr);
+	   3664 }
+	   3665 
+	   3666 /**********************************************************************/
+	   3667 /*               Allocate Buffer Space for Variables                  */
+	   3668 /**********************************************************************/
+	   3669 long Allocate_Buffers()
+	   3670 {
+	   3671   long i,j,ecount,itype,isize,Last_True_Var;
+	   3672   char newform[15]="";
+	   3673   long ierr=0;
+	   3674 
+	   3675   for (i=0;i<VLISTne;i++) {
+	   3676     /* allocate character buffer space */
+	   3677     VLIST[i].buffer = malloc(VLIST[i].length+1);
+	   3678     if (VLIST[i].buffer == NULL) {
+	   3679       strcpy(LOGFILE.message,"ERROR: Unable to allocate data space for '");
+	   3680       strcat(LOGFILE.message,VLIST[i].vname);
+	   3681       strcat(LOGFILE.message,"' variable.  Unable to continue.");
+	   3682       MSG_control(2,LOGFILE.message,0);
+	   3683       ierr=1; return(ierr);
+	   3684     }
+	   3685 
+	   3686     /* allocate data buffer space */
+	   3687     ecount=VLIST[i].nelems;
+	   3688     itype = VLIST[i].cdfvartype;
+	   3689     if ((itype==CDF_INT1)||(itype==CDF_UINT1)||(itype==CDF_BYTE)) isize=1;
+	   3690     else if ((itype==CDF_CHAR) ||(itype==CDF_UCHAR))  isize=1;
+	   3691     else if ((itype==CDF_INT2) ||(itype==CDF_UINT2))  isize=2;
+	   3692     else if ((itype==CDF_INT4) ||(itype==CDF_UINT4))  isize=4;
+	   3693     else if ((itype==CDF_REAL4)||(itype==CDF_FLOAT))  isize=4;
+	   3694     else if ((itype==CDF_REAL8)||(itype==CDF_DOUBLE)) isize=8;
+	   3695     else if (itype==CDF_EPOCH) isize=8;
+	   3696     else { 
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  19
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3697       MSG_control(2,"ERROR: Unknown CDF datatype encountered during ",0);
+	   3698       MSG_control(2,"       Buffer and space allocation ... ",0);
+	   3699       ierr=1; return(ierr);
+	   3700     }
+	   3701     /* allocate the data space */
+	   3702     if (VLIST[i].length != 0) { /* normal allocation */
+	   3703       VLIST[i].dataptr = calloc((ecount+1), isize);
+	   3704       Last_True_Var = i;
+	   3705     }
+	   3706     else { /* special case: input variable is in > 1 cdf variable */
+	   3707       VLIST[i].dataptr = VLIST[Last_True_Var].dataptr;
+	   3708     }
+	   3709     /* test allocation results */
+	   3710     if (VLIST[i].dataptr == NULL) {
+	   3711       strcpy(LOGFILE.message,"ERROR: Unable to allocate data space for '");
+	   3712       strcat(LOGFILE.message,VLIST[i].vname);
+	   3713       strcat(LOGFILE.message,"' variable.  Unable to continue.");
+	   3714       MSG_control(2,LOGFILE.message,0);
+	   3715       ierr=1; return(ierr);
+	   3716     }
+	   3717     if (isize == 8) {
+	   3718       ierr=Fix_Format(VLIST[i].format,newform);
+	   3719       strcpy(VLIST[i].format,newform);
+	   3720     }
+	   3721   }
+	   3722   return(ierr);
+	   3723 }
+	   3724 
+	   3725 /**********************************************************************/
+	   3726 /*        Determine Size of Largest Input record in bytes             */
+	   3727 /**********************************************************************/
+	   3728 long Determine_Bufsize()
+	   3729 {
+	   3730   long ibufsize=0;
+	   3731   long imaxsize=0;
+	   3732   long i,ilength,ipad;
+	   3733 
+	   3734   /* Determine the size of the input buffer by summing the lengths of */
+	   3735   /* all elements of the OLIST, which are bounded by EOL markers.     */
+	   3736   for (i=0;i<OLISTne-1;i++) {
+	   3737     if (OLIST[i].vnum == -1) { /* EOL marker found */
+	   3738       if (ibufsize > imaxsize) {imaxsize = ibufsize; ibufsize = 0;}
+	   3739     }
+	   3740     else {
+	   3741       if (OLIST[i].rflag == TRUE) { /* only count bytes for readable data */
+	   3742         ilength = VLIST[(OLIST[i].vnum)].length;
+	   3743         ipad=0; if (INFILE.format == 0) ipad=1; /* pad if freeform */
+	   3744         ibufsize= ibufsize + ilength + ipad;
+	   3745       }
+	   3746     }
+	   3747   }
+	   3748   if (INFILE.dtype == 0) ibufsize=ibufsize+2; /* bump up for text EOL */
+	   3749   if (ibufsize > imaxsize) imaxsize = ibufsize;
+	   3750   return(imaxsize);
+	   3751 }
+	   3752 
+	   3753 /**********************************************************************/
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  20
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3754 /*        Read the next record from the input data file               */
+	   3755 /**********************************************************************/
+	   3756 void Read_Infile()
+	   3757 {
+	   3758   if (INFILE.dtype == 0) { /* input data file is text */
+	   3759     INFILE.bptr = INFILE.buffer;
+	   3760     fgets(INFILE.buffer,INFILE.buflen,INFILE.fptr);
+	   3761     INFILE.recnum = INFILE.recnum + 1;
+	   3762     MSG_control(0,INFILE.buffer,0);
+	   3763   }
+	   3764   else {
+	   3765     INFILE.buflen = Determine_Bufsize();
+	   3766     INFILE.bptr = INFILE.buffer;
+	   3767     fread(INFILE.buffer,INFILE.buflen,1,INFILE.fptr);
+	   3768     INFILE.recnum = INFILE.recnum + 1;
+	   3769   }
+	   3770 }
+	   3771 
+	   3772 /**********************************************************************/
+	   3773 /*        Open the input file and allocate input buffer space         */
+	   3774 /**********************************************************************/
+	   3775 long Open_Infile(ifile)
+	   3776 long ifile;
+	   3777 {
+	   3778   long ierr=0;
+	   3779   long ilength=0;
+	   3780   long i;
+	   3781 
+	   3782   INFILE.buflen = Determine_Bufsize();
+	   3783   INFILE.buffer = malloc(INFILE.buflen);
+	   3784   INFILE.bptr   = INFILE.buffer;
+	   3785   if (INFILE.buffer == NULL) {
+	   3786     MSG_control(2,"ERROR: Unable to allocate input buffer for reading file!",0);
+	   3787     MSG_control(2,"       Unable to proceed with translation...",0);
+	   3788     ierr=1; return(ierr);
+	   3789   }
+	   3790 
+	   3791   /* construct name of next input data file from FLIST */
+	   3792   strcpy(RPARMS.infname,FLIST[ifile].Pathname);
+	   3793   strcat(RPARMS.infname,FLIST[ifile].Filename);
+	   3794 
+	   3795   /* output a progress message */
+	   3796   strcpy(LOGFILE.message,"Opening Input File: "); 
+	   3797   strcat(LOGFILE.message,RPARMS.infname);
+	   3798   MSG_control(1,LOGFILE.message,0);
+	   3799 
+	   3800   /* open the file */
+	   3801   if (INFILE.dtype == 0) INFILE.fptr = fopen(RPARMS.infname,"r");
+	   3802   else INFILE.fptr = fopen(RPARMS.infname,"rb");
+	   3803   if (INFILE.fptr == NULL) {
+	   3804     MSG_control(2,"ERROR: Unable to open input data file.",0);
+	   3805     MSG_control(2,"       Unable to proceed with translation...",0);
+	   3806     ierr=1; return(ierr);
+	   3807   }
+	   3808   else INFILE.recnum = 0;
+	   3809 
+	   3810   MSG_control(1,"Reading the input file...",0);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  21
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3811   Read_Infile();
+	   3812   if ( (long)*INFILE.buffer == 10) {
+	   3813     MSG_control(1,"WARNING: Line Feed encountered at beginning of first",0);
+	   3814     MSG_control(1,"         record of input file...Reading next record...",0);
+	   3815     Read_Infile();
+	   3816   }
+	   3817 
+	   3818   return(ierr);
+	   3819 }
+	   3820 
+	   3821 /**********************************************************************/
+	   3822 /*     Freeform Scan the given variable from the input buffer         */
+	   3823 /**********************************************************************/
+	   3824 long Parser1(vnum,velem)
+	   3825 long vnum;
+	   3826 long velem;
+	   3827 {
+	   3828   int  icnt,ccnt,dcnt,icountr;
+	   3829   short int *sptr;
+	   3830   long *lptr;
+	   3831   float *fptr;
+	   3832   double *dptr;
+	   3833   char *cptr,*bptr;
+	   3834   char form[20],sval[20];
+	   3835   long idone=0;
+	   3836   long icount=0;
+	   3837 
+	   3838   /* Count the number of delimiting characters at current point of inbuffer */
+	   3839   for (bptr=INFILE.bptr,dcnt=0;*bptr==INFILE.delimiter;dcnt++,bptr++);
+	   3840   INFILE.bptr = bptr; /* point to first character past delimiters */
+	   3841 
+	   3842   /* set the format argument for the sscanf function */
+	   3843   strcpy(form,VLIST[vnum].format); strcat(form,"%n");
+	   3844 
+	   3845   /* execute the sscanf function based on data type and update buffer ptr */
+	   3846   switch (VLIST[vnum].cdfvartype) {
+	   3847     case CDF_REAL4 : fptr=(float *)VLIST[vnum].dataptr;
+	   3848                      fptr=fptr+velem;
+	   3849                      icnt=sscanf(INFILE.bptr,form,fptr,&ccnt);
+	   3850                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3851                      break;
+	   3852     case CDF_FLOAT : fptr=(float *)VLIST[vnum].dataptr;
+	   3853                      fptr=fptr+velem;
+	   3854                      icnt=sscanf(INFILE.bptr,form,fptr,&ccnt);
+	   3855                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3856                      break;
+	   3857     case CDF_REAL8 : dptr=(double *)VLIST[vnum].dataptr;
+	   3858                      dptr=dptr+velem;
+	   3859                      icnt=sscanf(INFILE.bptr,form,dptr,&ccnt);
+	   3860                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3861                      break;
+	   3862     case CDF_DOUBLE: dptr=(double *)VLIST[vnum].dataptr;
+	   3863                      dptr=dptr+velem;
+	   3864                      icnt=sscanf(INFILE.bptr,form,dptr,&ccnt);
+	   3865                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3866                      break;
+	   3867     case CDF_EPOCH : dptr=(double *)VLIST[vnum].dataptr;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  22
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3868                      dptr=dptr+velem;
+	   3869                      icnt=sscanf(INFILE.bptr,form,dptr,&ccnt);
+	   3870                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3871                      break;
+	   3872     case CDF_INT4  : lptr=(long *)VLIST[vnum].dataptr;
+	   3873                      lptr=lptr+velem;
+	   3874                      icnt=sscanf(INFILE.bptr,form,lptr,&ccnt);
+	   3875                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3876                      break;
+	   3877     case CDF_UINT4 : lptr=(long *)VLIST[vnum].dataptr;
+	   3878                      lptr=lptr+velem;
+	   3879                      icnt=sscanf(INFILE.bptr,form,lptr,&ccnt);
+	   3880                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3881                      break;
+	   3882     case CDF_INT2  : sptr=(short int *)VLIST[vnum].dataptr;
+	   3883                      sptr=sptr+velem;
+	   3884                      icnt=sscanf(INFILE.bptr,form,sptr,&ccnt);
+	   3885                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3886                      break;
+	   3887     case CDF_UINT2 : sptr=(short int *)VLIST[vnum].dataptr;
+	   3888                      sptr=sptr+velem;
+	   3889                      icnt=sscanf(INFILE.bptr,form,sptr,&ccnt);
+	   3890                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3891                      break;
+	   3892     case CDF_CHAR  : if (VLIST[vnum].eol == FALSE) {
+	   3893                        icnt=sscanf(INFILE.bptr,form,VLIST[vnum].buffer,&ccnt);
+	   3894                        INFILE.bptr=INFILE.bptr+ccnt; }
+	   3895                      else { /* cannot just read using sscanf */
+	   3896                        while (*INFILE.bptr == INFILE.delimiter) INFILE.bptr++;
+	   3897                        cptr=(char *)VLIST[vnum].buffer;
+	   3898                        while (idone == 0) {
+	   3899                          *cptr++ = *INFILE.bptr++;
+	   3900                          icount++; if (icount == VLIST[vnum].length) idone=1;
+	   3901                          if (*INFILE.bptr == '\n') idone=1;
+	   3902                        }
+	   3903                        strcat(VLIST[vnum].buffer,"\n"); icnt=1; /* success */
+	   3904                      }
+	   3905                      break;
+	   3906     case CDF_UCHAR : if (VLIST[vnum].eol == FALSE) {
+	   3907                        icnt=sscanf(INFILE.bptr,form,VLIST[vnum].buffer,&ccnt);
+	   3908                        INFILE.bptr=INFILE.bptr+ccnt; }
+	   3909                      else { /* cannot just read using sscanf */
+	   3910                        while (*INFILE.bptr == INFILE.delimiter) INFILE.bptr++;
+	   3911                        cptr=(char *)VLIST[vnum].buffer;
+	   3912                        while (idone == 0) {
+	   3913                          *cptr++ = *INFILE.bptr++;
+	   3914                          icount++; if (icount == VLIST[vnum].length) idone=1;
+	   3915                          if (*INFILE.bptr == '\n') idone=1;
+	   3916                        }
+	   3917                        strcat(VLIST[vnum].buffer,"\n"); icnt=1; /* succcess */
+	   3918                      }
+	   3919                      break;
+	   3920     default        : cptr=(char *)VLIST[vnum].dataptr;
+	   3921                      cptr=cptr+velem;
+	   3922                      icnt=sscanf(INFILE.bptr,form,cptr,&ccnt);
+	   3923                      INFILE.bptr=INFILE.bptr+ccnt;
+	   3924                      break;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  23
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3925   }
+	   3926   if (icnt != 1) { icountr=0;
+	   3927     strcpy(LOGFILE.message,"WARNING: Read error has occured while processing");
+	   3928     sprintf(sval,"%ld",(INFILE.recnum+1));
+	   3929     strcat(LOGFILE.message," record#"); strcat(LOGFILE.message,sval);
+	   3930     MSG_control(1,LOGFILE.message,0);
+	   3931     strcpy(LOGFILE.message,"         Variable: "); 
+	   3932     strcat(LOGFILE.message,VLIST[vnum].vname);
+	   3933     strcat(LOGFILE.message,"  Element#");
+	   3934     sprintf(sval,"%ld",(velem+1)); strcat(LOGFILE.message,sval);
+	   3935     MSG_control(1,LOGFILE.message,0);
+	   3936   }
+	   3937   else {
+	   3938     icountr = (long)ccnt;
+	   3939     if (VLIST[vnum].ccount < icountr) VLIST[vnum].ccount=icountr;
+	   3940   }
+	   3941   return(icountr);
+	   3942 }
+	   3943 
+	   3944 /**********************************************************************/
+	   3945 /*   Fixedform ASCII Scan the given variable from the input buffer    */
+	   3946 /**********************************************************************/
+	   3947 long Parser2(vnum,velem)
+	   3948 long vnum;
+	   3949 long velem;
+	   3950 {
+	   3951   int   icnt,ccnt;
+	   3952   short int *sptr;
+	   3953   long *lptr;
+	   3954   float *fptr;
+	   3955   double *dptr;
+	   3956   char *cptr;
+	   3957   char form[20];
+	   3958   char sval[20];
+	   3959   char slen[10];
+	   3960   long icountr=0;
+	   3961 
+	   3962   /* construct format statement for move from infile buffer to var buffer */
+	   3963   icnt=sprintf(slen,"%ld",VLIST[vnum].length);
+	   3964   strcpy(form,"%"); strcat(form,slen); strcat(form,"c%n");
+	   3965 
+	   3966   /* move n-characters from input buffer into the variables buffer */
+	   3967   icnt=sscanf(INFILE.bptr,form,VLIST[vnum].buffer,&ccnt);
+	   3968   INFILE.bptr=INFILE.bptr+ccnt;
+	   3969 
+	   3970   /* set the format argument for the sscanf function */
+	   3971   strcpy(form,VLIST[vnum].format);
+	   3972 
+	   3973   /* convert character data in the variable buffer */
+	   3974   switch (VLIST[vnum].cdfvartype) {
+	   3975     case CDF_REAL4 : fptr=(float *)VLIST[vnum].dataptr;
+	   3976                      fptr=fptr+velem;
+	   3977                      icnt=sscanf(VLIST[vnum].buffer,form,fptr);
+	   3978                      break;
+	   3979     case CDF_FLOAT : fptr=(float *)VLIST[vnum].dataptr;
+	   3980                      fptr=fptr+velem;
+	   3981                      icnt=sscanf(VLIST[vnum].buffer,form,fptr);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  24
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   3982                      break;
+	   3983     case CDF_REAL8 : dptr=(double *)VLIST[vnum].dataptr;
+	   3984                      dptr=dptr+velem;
+	   3985                      icnt=sscanf(VLIST[vnum].buffer,form,dptr);
+	   3986                      break;
+	   3987     case CDF_DOUBLE: dptr=(double *)VLIST[vnum].dataptr;
+	   3988                      dptr=dptr+velem;
+	   3989                      icnt=sscanf(VLIST[vnum].buffer,form,dptr);
+	   3990                      break;
+	   3991     case CDF_EPOCH : dptr=(double *)VLIST[vnum].dataptr;
+	   3992                      dptr=dptr+velem;
+	   3993                      icnt=sscanf(VLIST[vnum].buffer,form,dptr);
+	   3994                      break;
+	   3995     case CDF_INT4  : lptr=(long *)VLIST[vnum].dataptr;
+	   3996                      lptr=lptr+velem;
+	   3997                      icnt=sscanf(VLIST[vnum].buffer,form,lptr);
+	   3998                      break;
+	   3999     case CDF_UINT4 : lptr=(long *)VLIST[vnum].dataptr;
+	   4000                      lptr=lptr+velem;
+	   4001                      icnt=sscanf(VLIST[vnum].buffer,form,lptr);
+	   4002                      break;
+	   4003     case CDF_INT2  : sptr=(short int *)VLIST[vnum].dataptr;
+	   4004                      sptr=sptr+velem;
+	   4005                      icnt=sscanf(VLIST[vnum].buffer,form,sptr);
+	   4006                      break;
+	   4007     case CDF_UINT2 : sptr=(short int *)VLIST[vnum].dataptr;
+	   4008                      sptr=sptr+velem;
+	   4009                      icnt=sscanf(VLIST[vnum].buffer,form,sptr);
+	   4010                      break;
+	   4011     case CDF_CHAR  : break; /* already moved */
+	   4012     case CDF_UCHAR : break; /* already moved */
+	   4013     default        : cptr=(char *)VLIST[vnum].dataptr;
+	   4014                      cptr=cptr+velem;
+	   4015                      icnt=sscanf(VLIST[vnum].buffer,form,cptr);
+	   4016                      break;
+	   4017   }
+	   4018   if (icnt != 1) { icountr=0;
+	   4019     strcpy(LOGFILE.message,"WARNING: Read error has occured while processing");
+	   4020     sprintf(sval,"%ld",(INFILE.recnum+1));
+	   4021     strcat(LOGFILE.message," record#"); strcat(LOGFILE.message,sval);
+	   4022     MSG_control(1,LOGFILE.message,0);
+	   4023     strcpy(LOGFILE.message,"         Variable: "); 
+	   4024     strcat(LOGFILE.message,VLIST[vnum].vname);
+	   4025     strcat(LOGFILE.message,"  Element#");
+	   4026     sprintf(sval,"%ld",(velem+1)); strcat(LOGFILE.message,sval);
+	   4027     MSG_control(1,LOGFILE.message,0);
+	   4028   }
+	   4029   else if (VLIST[vnum].ccount < (long)ccnt) VLIST[vnum].ccount = (long) ccnt;
+	   4030   return(icountr);
+	   4031 }
+	   4032 
+	   4033 /**********************************************************************/
+	   4034 /*   Fixedform BINARY Scan the given variable from the input buffer   */
+	   4035 /**********************************************************************/
+	   4036 long Parser3(vnum,velem)
+	   4037 long vnum;
+	   4038 long velem;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  25
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4039 {
+	   4040   CDFstatus status;
+	   4041   long dpointer,offset;
+	   4042   long One=1;
+	   4043   long icnt=0;
+	   4044 
+	   4045   /* determine address for output of data conversion */
+	   4046   dpointer = (long)VLIST[vnum].dataptr;
+	   4047   offset   = VLIST[vnum].length * velem;
+	   4048   dpointer = dpointer + offset;
+	   4049 
+	   4050   /* convert binary value in buffer to host format */
+	   4051   status = ConvertBuffer(INFILE.btype,HOST_ENCODING,NEGtoPOSfp0on,
+		...........1                                                       
+%CC-I-IMPLICITFUNC, (1) In this statement, the identifier "ConvertBuffer" is implicitly declared as a function.
+
+	   4052                          VLIST[vnum].cdfvartype,One,
+	   4053                          (void *)INFILE.bptr,(void *)dpointer);
+	   4054   if (status != CDF_OK) {
+	   4055     MSG_control(2,"ERROR:During binary data conversion to HOST=",status);
+	   4056   } else icnt = VLIST[vnum].length;
+	   4057 
+	   4058   /* advance buffer pointer */
+	   4059   INFILE.bptr = INFILE.bptr + VLIST[vnum].length;
+	   4060 
+	   4061   return(icnt);
+	   4062 }
+	   4063 
+	   4064 /************************************************************************/
+	   4065 /*   Compare data values to existing min and max for the given variable */
+	   4066 /************************************************************************/
+	   4067 long AutoMinMax(vnum)
+	   4068 long vnum;
+	   4069 {
+	   4070   short int *sptr,*sptr2,*sptr3;
+	   4071   long *lptr,*lptr2,*lptr3;
+	   4072   float *fptr,*fptr2,*fptr3;
+	   4073   double *dptr,*dptr2,*dptr3;
+	   4074   char *cptr;
+	   4075   long velem,celem;
+	   4076   long status=0;
+	   4077   long ierr=0;
+	   4078 
+	   4079   /* Keep track of data min and max values */
+	   4080   switch (VLIST[vnum].cdfvartype) {
+	   4081     case CDF_REAL4 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4082                        fptr=(float *)VLIST[vnum].dataptr;
+	   4083                        fptr=fptr+velem; celem=VLIST[vnum].clistnum;
+	   4084                        fptr2=(float *)CLIST[celem].vmin;
+	   4085                        fptr3=(float *)CLIST[celem].vmax;
+	   4086                        if ((CLIST[celem].flagone == 0)||(*fptr < *fptr2)) {
+	   4087                          *fptr2 = *fptr; CLIST[celem].flagone=1L;
+	   4088                        }
+	   4089                        if ((CLIST[celem].flagone == 0)||(*fptr > *fptr3)) {
+	   4090                          *fptr3 = *fptr; CLIST[celem].flagone=1L;
+	   4091                        }
+	   4092                      }
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  26
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4093                      break;
+	   4094     case CDF_FLOAT : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4095                        fptr=(float *)VLIST[vnum].dataptr;
+	   4096                        fptr=fptr+velem; celem=VLIST[vnum].clistnum;
+	   4097                        fptr2=(float *)CLIST[celem].vmin;
+	   4098                        fptr3=(float *)CLIST[celem].vmax;
+	   4099                        if ((CLIST[celem].flagone == 0)||(*fptr < *fptr2)) {
+	   4100                          *fptr2 = *fptr; CLIST[celem].flagone=1L;
+	   4101                        }
+	   4102                        if ((CLIST[celem].flagone == 0)||(*fptr > *fptr3)) {
+	   4103                          *fptr3 = *fptr; CLIST[celem].flagone=1L;
+	   4104                        }
+	   4105                      }
+	   4106                      break;
+	   4107     case CDF_REAL8 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4108                        dptr=(double *)VLIST[vnum].dataptr;
+	   4109                        dptr=dptr+velem; celem=VLIST[vnum].clistnum;
+	   4110                        dptr2=(double *)CLIST[celem].vmin;
+	   4111                        dptr3=(double *)CLIST[celem].vmax;
+	   4112                        if ((CLIST[celem].flagone == 0)||(*dptr < *dptr2)) {
+	   4113                          *dptr2 = *dptr; CLIST[celem].flagone=1L;
+	   4114                        }
+	   4115                        if ((CLIST[celem].flagone == 0)||(*dptr > *dptr3)) {
+	   4116                          *dptr3 = *dptr; CLIST[celem].flagone=1L;
+	   4117                        }
+	   4118                      }
+	   4119                      break;
+	   4120     case CDF_DOUBLE: for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4121                        dptr=(double *)VLIST[vnum].dataptr;
+	   4122                        dptr=dptr+velem; celem=VLIST[vnum].clistnum;
+	   4123                        dptr2=(double *)CLIST[celem].vmin;
+	   4124                        dptr3=(double *)CLIST[celem].vmax;
+	   4125                        if ((CLIST[celem].flagone == 0)||(*dptr < *dptr2)) {
+	   4126                          *dptr2 = *dptr; CLIST[celem].flagone=1L;
+	   4127                        }
+	   4128                        if ((CLIST[celem].flagone == 0)||(*dptr > *dptr3)) {
+	   4129                          *dptr3 = *dptr; CLIST[celem].flagone=1L;
+	   4130                        }
+	   4131                      }
+	   4132                      break;
+	   4133     case CDF_EPOCH : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4134                        dptr=(double *)VLIST[vnum].dataptr;
+	   4135                        dptr=dptr+velem; celem=VLIST[vnum].clistnum;
+	   4136                        dptr2=(double *)CLIST[celem].vmin;
+	   4137                        dptr3=(double *)CLIST[celem].vmax;
+	   4138                        if ((CLIST[celem].flagone == 0)||(*dptr < *dptr2)) {
+	   4139                          *dptr2 = *dptr; CLIST[celem].flagone=1L;
+	   4140                        }
+	   4141                        if ((CLIST[celem].flagone == 0)||(*dptr > *dptr3)) {
+	   4142                          *dptr3 = *dptr; CLIST[celem].flagone=1L;
+	   4143                        }
+	   4144                      }
+	   4145                      break;
+	   4146     case CDF_INT4  : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4147                        lptr=(long *)VLIST[vnum].dataptr;
+	   4148                        lptr=lptr+velem; celem=VLIST[vnum].clistnum;
+	   4149                        lptr2=(long *)CLIST[celem].vmin;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  27
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4150                        lptr3=(long *)CLIST[celem].vmax;
+	   4151                        if ((CLIST[celem].flagone == 0)||(*lptr < *lptr2)) {
+	   4152                          *lptr2 = *lptr; CLIST[celem].flagone=1L;
+	   4153                        }
+	   4154                        if ((CLIST[celem].flagone == 0)||(*lptr > *lptr3)) {
+	   4155                          *lptr3 = *lptr; CLIST[celem].flagone=1L;
+	   4156                        }
+	   4157                      }
+	   4158                      break;
+	   4159     case CDF_UINT4 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4160                        lptr=(long *)VLIST[vnum].dataptr;
+	   4161                        lptr=lptr+velem; celem=VLIST[vnum].clistnum;
+	   4162                        lptr2=(long *)CLIST[celem].vmin;
+	   4163                        lptr3=(long *)CLIST[celem].vmax;
+	   4164                        if ((CLIST[celem].flagone == 0)||(*lptr < *lptr2)) {
+	   4165                          *lptr2 = *lptr; CLIST[celem].flagone=1L;
+	   4166                        }
+	   4167                        if ((CLIST[celem].flagone == 0)||(*lptr > *lptr3)) {
+	   4168                          *lptr3 = *lptr; CLIST[celem].flagone=1L;
+	   4169                        }
+	   4170                      }
+	   4171                      break;
+	   4172     case CDF_INT2  : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4173                        sptr=(short int *)VLIST[vnum].dataptr;
+	   4174                        sptr=sptr+velem; celem=VLIST[vnum].clistnum;
+	   4175                        sptr2=(short int *)CLIST[celem].vmin;
+	   4176                        sptr3=(short int *)CLIST[celem].vmax;
+	   4177                        if ((CLIST[celem].flagone == 0)||(*sptr < *sptr2)) {
+	   4178                          *sptr2 = *sptr; CLIST[celem].flagone=1L;
+	   4179                        }
+	   4180                        if ((CLIST[celem].flagone == 0)||(*sptr > *sptr3)) {
+	   4181                          *sptr3 = *sptr; CLIST[celem].flagone=1L;
+	   4182                        }
+	   4183                      }
+	   4184                      break;
+	   4185     case CDF_UINT2 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4186                        sptr=(short int *)VLIST[vnum].dataptr;
+	   4187                        sptr=sptr+velem; celem=VLIST[vnum].clistnum;
+	   4188                        sptr2=(short int *)CLIST[celem].vmin;
+	   4189                        sptr3=(short int *)CLIST[celem].vmax;
+	   4190                        if ((CLIST[celem].flagone == 0)||(*sptr < *sptr2)) {
+	   4191                          *sptr2 = *sptr; CLIST[celem].flagone=1L;
+	   4192                        }
+	   4193                        if ((CLIST[celem].flagone == 0)||(*sptr > *sptr3)) {
+	   4194                          *sptr3 = *sptr; CLIST[celem].flagone=1L;
+	   4195                        }
+	   4196                      }
+	   4197                      break;
+	   4198     case CDF_CHAR  : MSG_control(1,"WARNING: char minmax checking TBD",status);
+	   4199                      break;
+	   4200     case CDF_UCHAR : MSG_control(1,"WARNING: char minmax checking TBD",status);
+	   4201                      break;
+	   4202     default        : MSG_control(1,"WARNING: unknown minmax vartype",status);
+	   4203   }
+	   4204 
+	   4205   /* Keep track of the #characters in the longest valid string from INFILE */
+	   4206   celem = VLIST[vnum].clistnum;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  28
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4207   if (VLIST[vnum].ccount > CLIST[celem].ccount) {
+	   4208     CLIST[celem].ccount=VLIST[vnum].ccount;
+	   4209   }
+	   4210   VLIST[vnum].ccount = 0; /* reset */
+	   4211 
+	   4212   return(ierr);
+	   4213 }
+	   4214 
+	   4215 /************************************************************************/
+	   4216 /*   Replace all fill values identified by user with ISTP standard fill */
+	   4217 /************************************************************************/
+	   4218 long AutoFiller(vnum)
+	   4219 long vnum;
+	   4220 {
+	   4221   short int *sptr;
+	   4222   long *lptr;
+	   4223   float *fptr;
+	   4224   double *dptr;
+	   4225   char *cptr;
+	   4226   long velem;
+	   4227   long status=0;
+	   4228   long iflag=0;
+	   4229 
+	   4230   switch (VLIST[vnum].cdfvartype) {
+	   4231     case CDF_REAL4 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4232                        fptr=(float *)VLIST[vnum].dataptr;
+	   4233                        fptr=fptr+velem;
+	   4234                        if (*fptr==(float)VLIST[vnum].fillval) {
+	   4235                          *fptr = -1.0e31; iflag=1L;
+	   4236                        }
+	   4237                      }
+	   4238                      break;
+	   4239     case CDF_FLOAT : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4240                        fptr=(float *)VLIST[vnum].dataptr;
+	   4241                        fptr=fptr+velem;
+	   4242                        if (*fptr==(float)VLIST[vnum].fillval) {
+	   4243                          *fptr = -1.0e31; iflag=1L;
+	   4244                        }
+	   4245                      }
+	   4246                      break;
+	   4247     case CDF_REAL8 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4248                        dptr=(double *)VLIST[vnum].dataptr;
+	   4249                        dptr=dptr+velem;
+	   4250                        if (*dptr==VLIST[vnum].fillval) {
+	   4251                          *dptr = -1.0e31; iflag=1L;
+	   4252                        }
+	   4253                      }
+	   4254                      break;
+	   4255     case CDF_DOUBLE: for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4256                        dptr=(double *)VLIST[vnum].dataptr;
+	   4257                        dptr=dptr+velem;
+	   4258                        if (*dptr==VLIST[vnum].fillval) {
+	   4259                          *dptr = -1.0e31; iflag=1L;
+	   4260                        }
+	   4261                      }
+	   4262                      break;
+	   4263     case CDF_EPOCH : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  29
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4264                        dptr=(double *)VLIST[vnum].dataptr;
+	   4265                        dptr=dptr+velem;
+	   4266                        if (*dptr==VLIST[vnum].fillval) {
+	   4267                          *dptr = -1.0e31; iflag=1L;
+	   4268                        }
+	   4269                      }
+	   4270                      break;
+	   4271     case CDF_INT4  : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4272                        lptr=(long *)VLIST[vnum].dataptr;
+	   4273                        lptr=lptr+velem;
+	   4274                        if (*lptr==(long)VLIST[vnum].fillval) {
+	   4275                          *lptr = -2147483648; iflag=1L;
+	   4276                        }
+	   4277                      }
+	   4278                      break;
+	   4279     case CDF_UINT4 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4280                        lptr=(long *)VLIST[vnum].dataptr;
+	   4281                        lptr=lptr+velem;
+	   4282                        if (*lptr==(long)VLIST[vnum].fillval) {
+	   4283                          *lptr = -2147483648; iflag=1L;
+	   4284                        }
+	   4285                      }
+	   4286                      break;
+	   4287     case CDF_INT2  : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4288                        sptr=(short int *)VLIST[vnum].dataptr;
+	   4289                        sptr=sptr+velem;
+	   4290                        if (*sptr==(short int)VLIST[vnum].fillval) {
+	   4291                          *sptr = -32768; iflag=1L;
+	   4292                        }
+	   4293                      }
+	   4294                      break;
+	   4295     case CDF_UINT2 : for (velem=0;velem < VLIST[vnum].nelems;velem++) {
+	   4296                        sptr=(short int *)VLIST[vnum].dataptr;
+	   4297                        sptr=sptr+velem;
+	   4298                        if (*sptr==(short int)VLIST[vnum].fillval) {
+	   4299                          *sptr = -32768; iflag=1L;
+	   4300                        }
+	   4301                      }
+	   4302                      break;
+	   4303     case CDF_CHAR  : MSG_control(1,"WARNING: char fillval checking TBD",status);
+	   4304                      break;
+	   4305     case CDF_UCHAR : MSG_control(1,"WARNING: char fillval checking TBD",status);
+	   4306                      break;
+	   4307     default        : MSG_control(1,"WARNING: unknown fillval vartype",status);
+	   4308   }
+	   4309 
+	   4310   /* If any data is filler, then reset the character counter, so that */
+	   4311   /* the max field size is not set by any fill data, only non-fill.   */
+	   4312   if (iflag == 1L) VLIST[vnum].ccount = 0L;
+	   4313   return(iflag);
+	   4314 }
+	   4315 
+	   4316 /************************************************************************/
+	   4317 /*            Determine the FORMAT of the identified variable           */
+	   4318 /************************************************************************/
+	   4319 long AutoFormat(vnum,form)
+	   4320 long vnum;
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  30
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4321 char *form;
+	   4322 {
+	   4323   double dnum1,dnum2;
+	   4324   double *dptr1,*dptr2;
+	   4325   float fnum1,fnum2;
+	   4326   float *fptr1,*fptr2;
+	   4327   long cnum,d,s;
+	   4328   long ierr=0;
+	   4329   char slen[10]="";
+	   4330   char flen[10]="";
+	   4331 
+	   4332   cnum = VLIST[vnum].clistnum;
+	   4333   switch (VLIST[vnum].cdfvartype) {
+	   4334     case CDF_REAL4 : fptr1 = (float *)CLIST[cnum].vmax; fnum1 = *fptr1;
+	   4335                      fptr2 = (float *)CLIST[cnum].vmin; fnum2 = *fptr2;
+	   4336                      dnum1 = fabs((double)fnum1); dnum2 = fabs((double)fnum2);
+	   4337                      if (dnum2 > dnum1) {
+	   4338                        if (fnum2 < 0.0) s=1L; else s=0L; dnum1 = dnum2;
+	   4339                      } else if (fnum1 < 0.0) s=1L; else s=0L;
+	   4340                      for (d=0;dnum1 >= 1.0;d++) dnum1 = dnum1 / 10.0;
+	   4341                      sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4342                      sprintf(flen,"%ld",CLIST[cnum].ccount - 1 - d - s);
+	   4343                      strcpy(form,"F"); strcat(form,slen); 
+	   4344                      strcat(form,"."); strcat(form,flen);
+	   4345                      break;
+	   4346     case CDF_FLOAT : fptr1 = (float *)CLIST[cnum].vmax; fnum1 = *fptr1;
+	   4347                      fptr2 = (float *)CLIST[cnum].vmin; fnum2 = *fptr2;
+	   4348                      dnum1 = fabs((double)fnum1); dnum2 = fabs((double)fnum2);
+	   4349                      if (dnum2 > dnum1) {
+	   4350                        if (fnum2 < 0.0) s=1L; else s=0L; dnum1 = dnum2;
+	   4351                      } else if (fnum1 < 0.0) s=1L; else s=0L;
+	   4352                      for (d=0;dnum1 >= 1.0;d++) dnum1 = dnum1 / 10.0;
+	   4353                      sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4354                      sprintf(flen,"%ld",CLIST[cnum].ccount - 1 - d);
+	   4355                      strcpy(form,"F"); strcat(form,slen); 
+	   4356                      strcat(form,"."); strcat(form,flen);
+	   4357                      break;
+	   4358     case CDF_REAL8 : dptr1 = (double *)CLIST[cnum].vmax; dnum1 = *dptr1;
+	   4359                      dptr2 = (double *)CLIST[cnum].vmin; dnum2 = *dptr2;
+	   4360                      dnum1 = fabs(dnum1); dnum2 = fabs(dnum2);
+	   4361                      if (dnum2 > dnum1) {
+	   4362                        if (fnum2 < 0.0) s=1L; else s=0L; dnum1 = dnum2;
+	   4363                      } else if (fnum1 < 0.0) s=1L; else s=0L;
+	   4364                      for (d=0;dnum1 >= 1.0;d++) dnum1 = dnum1 / 10.0;
+	   4365                      sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4366                      sprintf(flen,"%ld",CLIST[cnum].ccount - 1 - d);
+	   4367                      strcpy(form,"F"); strcat(form,slen); 
+	   4368                      strcat(form,"."); strcat(form,flen);
+	   4369                      break;
+	   4370     case CDF_DOUBLE: dptr1 = (double *)CLIST[cnum].vmax; dnum1 = *dptr1;
+	   4371                      dptr2 = (double *)CLIST[cnum].vmin; dnum2 = *dptr2;
+	   4372                      dnum1 = fabs(dnum1); dnum2 = fabs(dnum2);
+	   4373                      if (dnum2 > dnum1) {
+	   4374                        if (fnum2 < 0.0) s=1L; else s=0L; dnum1 = dnum2;
+	   4375                      } else if (fnum1 < 0.0) s=1L; else s=0L;
+	   4376                      for (d=0;dnum1 >= 1.0;d++) dnum1 = dnum1 / 10.0;
+	   4377                      sprintf(slen,"%ld",CLIST[cnum].ccount);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  31
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4378                      sprintf(flen,"%ld",CLIST[cnum].ccount - 1 - d);
+	   4379                      strcpy(form,"F"); strcat(form,slen); 
+	   4380                      strcat(form,"."); strcat(form,flen);
+	   4381                      break;
+	   4382     case CDF_EPOCH : dptr1 = (double *)CLIST[cnum].vmax; dnum1 = *dptr1;
+	   4383                      dptr2 = (double *)CLIST[cnum].vmin; dnum2 = *dptr2;
+	   4384                      dnum1 = fabs(dnum1); dnum2 = fabs(dnum2);
+	   4385                      if (dnum2 > dnum1) {
+	   4386                        if (fnum2 < 0.0) s=1L; else s=0L; dnum1 = dnum2;
+	   4387                      } else if (fnum1 < 0.0) s=1L; else s=0L;
+	   4388                      for (d=0;dnum1 >= 1.0;d++) dnum1 = dnum1 / 10.0;
+	   4389                      sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4390                      sprintf(flen,"%ld",CLIST[cnum].ccount - 1 - d);
+	   4391                      strcpy(form,"F"); strcat(form,slen); 
+	   4392                      strcat(form,"."); strcat(form,flen);
+	   4393                      break;
+	   4394     case CDF_INT4 :  sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4395                      strcpy(form,"I"); strcat(form,slen); 
+	   4396                      break;
+	   4397     case CDF_UINT4 : sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4398                      strcpy(form,"I"); strcat(form,slen); 
+	   4399                      break;
+	   4400     case CDF_INT2 :  sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4401                      strcpy(form,"I"); strcat(form,slen); 
+	   4402                      break;
+	   4403     case CDF_UINT2 : sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4404                      strcpy(form,"I"); strcat(form,slen); 
+	   4405                      break;
+	   4406     case CDF_BYTE  : sprintf(slen,"%ld",CLIST[cnum].ccount);
+	   4407                      strcpy(form,"I"); strcat(form,slen); 
+	   4408                      break;
+	   4409     case CDF_CHAR  : printf("WARNING: No auto formatting of CHAR data\n");
+	   4410                      break;
+	   4411     case CDF_UCHAR : printf("WARNING: No auto formatting of CHAR data\n");
+	   4412                      break;
+	   4413     default        : printf("WARNING: Unknown data type in autoformatter\n");
+	   4414   }
+	   4415   return(ierr);
+	   4416 }
+	   4417 
+	   4418 /**********************************************************************/
+	   4419 /*      Close all open files and free all allocated buffer space      */
+	   4420 /**********************************************************************/
+	   4421 long Cleanup_makeCDF(ifile)
+	   4422 long ifile;
+	   4423 {
+	   4424   CDFid id;
+	   4425   CDFstatus status;
+	   4426   char scnt[20]="";
+	   4427   long i;
+	   4428   long ierr=0;
+	   4429 
+	   4430   /* free data space used for the ordered variable list */
+	   4431   free(OLIST); OLISTne=0L; OLIST=NULL;
+	   4432 
+	   4433   /* close output cdf file */
+	   4434   if (OUTCDF.outCDFid != 0) {
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  32
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4435     sprintf(scnt,"%ld",(OUTCDF.CDFrec+1));
+	   4436     strcpy(LOGFILE.message,"Number of records written to CDF=");
+	   4437     strcat(LOGFILE.message,scnt); strcat(LOGFILE.message,"");
+	   4438     MSG_control(1,LOGFILE.message,0);
+	   4439     MSG_control(1,"Closing output CDF...",0);
+	   4440     status=CDFlib(CLOSE_,CDF_,OUTCDF.outCDFid,NULL_);
+	   4441     OUTCDF.outCDFid=0L;
+	   4442   }
+	   4443 
+	   4444   /* reset first epoch flag and Base time flag*/
+	   4445   EpALG.FirstEp = 0.0; EpALG.BaseEp = 0.0;
+	   4446 
+	   4447   if (ifile == FLISTne-1) { /* total termination */
+	   4448 
+	   4449     /* close input file and free allocated buffer space */
+	   4450     free(INFILE.buffer);
+	   4451     if (INFILE.fptr != NULL) fclose(INFILE.fptr);
+	   4452 
+	   4453     /* free data space allocated for variables */
+	   4454     for (i=0;i<VLISTne;i++) {
+	   4455       if (VLIST[i].buffer  != NULL) free(VLIST[i].buffer);
+	   4456       if (VLIST[i].dataptr != NULL) free(VLIST[i].dataptr);
+	   4457       free(VLIST[i].vname); free(VLIST[i].cdfvname);
+	   4458     }
+	   4459 
+	   4460     /* free data space allocated for min/max tracking */
+	   4461     for (i=0;i<CLISTne;i++) {
+	   4462       if (CLIST[i].vmin !=NULL) free(CLIST[i].vmin);
+	   4463       if (CLIST[i].vmax !=NULL) free(CLIST[i].vmax);
+	   4464     }
+	   4465 
+	   4466     free(VLIST); VLISTne=0L;
+	   4467     free(CLIST); CLISTne=0L;
+	   4468     free(SRECS); SRECSne=0L;
+	   4469   }
+	   4470   return(ierr);
+	   4471 }
+	   4472 
+	   4473 /**********************************************************************/
+	   4474 /*                        Open the output CDF                         */
+	   4475 /**********************************************************************/
+	   4476 long Open_OutCDF()
+	   4477 {
+	   4478   CDFstatus status;
+	   4479   CDFid     id;
+	   4480   long ierr=0;
+	   4481 
+	   4482   strcpy(LOGFILE.message,"Opening the output CDF named: ");
+	   4483   strcat(LOGFILE.message,RPARMS.outcdfname);
+	   4484   MSG_control(1,LOGFILE.message,0);
+	   4485   status = CDFlib(OPEN_,CDF_,RPARMS.outcdfname,&id,
+	   4486                   SELECT_, CDF_zMODE_, zMODEon2, NULL_);
+	   4487   if (status >= CDF_WARN) {
+	   4488     OUTCDF.outCDFid = id;
+	   4489     OUTCDF.CDFrec   = -1L; }
+	   4490   else {
+	   4491     MSG_control(2,"CDFERROR:",status);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  33
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4492     ierr = 1;
+	   4493   }
+	   4494 
+	   4495   status = CDFlib(GET_,CDF_ENCODING_,&OUTCDF.encoding,NULL_);
+	   4496   if (status != CDF_OK) {
+	   4497     MSG_control(2,"ERROR: Unable to determine CDF encoding",status);
+	   4498     ierr=1;
+	   4499   }
+	   4500   else { /* confirm NETWORK encoding format as ISTP guideline */
+	   4501     if (OUTCDF.encoding != NETWORK_ENCODING) {
+	   4502       MSG_control(1,"WARNING:Output CDF encoding is not NETWORK      ",0);
+	   4503       MSG_control(1,"        ISTP guidelines require NETWORK encoding",0);
+	   4504       MSG_control(1,"        Processing continuing ...",0);
+	   4505   } }
+	   4506 
+	   4507   return(ierr);
+	   4508 }
+	   4509 
+	   4510 /**********************************************************************/
+	   4511 /*                Write Epoch value to output CDF                     */
+	   4512 /**********************************************************************/
+	   4513 long WriteEpochToCDF (depoch, CDFrec)
+	   4514 double depoch;
+	   4515 long CDFrec;
+	   4516 {
+	   4517   CDFstatus status;
+	   4518   long ierr=0;
+	   4519   status = CDFlib(SELECT_,zVAR_,EpALG.Epvarnum,
+	   4520                   SELECT_,zVAR_RECNUMBER_,CDFrec,
+	   4521                   PUT_,zVAR_DATA_,&depoch,NULL_);
+	   4522   if (status != CDF_OK) {
+	   4523     MSG_control(2,"ERROR: while writing epoch value to cdf.",status);
+	   4524     ierr=1;
+	   4525   }
+	   4526   return(ierr);
+	   4527 }
+	   4528 
+	   4529 /**********************************************************************/
+	   4530 /*                     Write data to output CDF                       */
+	   4531 /**********************************************************************/
+	   4532 long WriteToCDF (vnum, CDFrec)
+	   4533 long vnum;
+	   4534 long CDFrec;
+	   4535 {
+	   4536   CDFstatus status;
+	   4537   char vstring[20];
+	   4538   long ierr=0;
+	   4539   if (VLIST[vnum].cdfvartype != CDF_CHAR) {
+	   4540     if (VLIST[vnum].Elem[0] == -1L) {
+	   4541       status = CDFlib(SELECT_,zVARs_RECNUMBER_,CDFrec,
+	   4542                       PUT_,zVARs_RECDATA_,1,&VLIST[vnum].cdfvarnum,
+	   4543                                             VLIST[vnum].dataptr,NULL_);
+	   4544     }
+	   4545     else {
+	   4546       if (VLIST[vnum].Elem[1] == -1L) { /* only one index */
+	   4547         status = CDFlib(SELECT_,zVARs_RECNUMBER_,CDFrec,
+	   4548                                 zVAR_,VLIST[vnum].cdfvarnum,
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  34
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4549                                 zVAR_DIMINDICES_,&VLIST[vnum].Elem[0],
+	   4550                         PUT_,   zVAR_DATA_,VLIST[vnum].dataptr,NULL_); }
+	   4551       else { /* both element indices being used */
+	   4552         status = CDFlib(SELECT_,zVARs_RECNUMBER_,CDFrec,
+	   4553                                 zVAR_,VLIST[vnum].cdfvarnum,
+	   4554                                 zVAR_DIMINDICES_,&VLIST[vnum].Elem,
+	   4555                         PUT_,   zVAR_DATA_,VLIST[vnum].dataptr,NULL_);
+	   4556       }
+	   4557     }
+	   4558   }
+	   4559   else { /* character data */
+	   4560     if (VLIST[vnum].Elem[0] == -1L) {
+	   4561       status = CDFlib(SELECT_,zVARs_RECNUMBER_,CDFrec,
+	   4562                       PUT_,zVARs_RECDATA_,1,&VLIST[vnum].cdfvarnum,
+	   4563                                              VLIST[vnum].buffer,NULL_);
+	   4564     }
+	   4565     else {
+	   4566       status = CDFlib(SELECT_,zVARs_RECNUMBER_,CDFrec,
+	   4567                               zVAR_,VLIST[vnum].cdfvarnum,
+	   4568                               zVAR_DIMINDICES_,&VLIST[vnum].Elem,
+	   4569                       PUT_,   zVAR_DATA_,VLIST[vnum].buffer,NULL_);
+	   4570     }
+	   4571   }
+	   4572   if (status != CDF_OK) {
+	   4573     strcpy(LOGFILE.message,"ERROR: while writing variable #");
+	   4574     sprintf(vstring,"%d",vnum); strcat(vstring," to the cdf");
+	   4575     strcat(LOGFILE.message,vstring);
+	   4576     MSG_control(2,LOGFILE.message,status);
+	   4577     ierr=1;
+	   4578   }
+	   4579   return(ierr);
+	   4580 }
+	   4581 
+	   4582 /***********************************************************************
+	   4583 *                     GENERATE THE LFILEID VALUE                       *
+	   4584 ***********************************************************************/
+	   4585 long Generate_LFILEID(lfileid)
+	   4586 char *lfileid;
+	   4587 {
+	   4588   long i,scope,ne,lyear,lmon,lday,lhour,lmin,lsec,lmsec;
+	   4589   CDFstatus status;
+	   4590   time_t current_time; struct tm *ptrtime;
+	   4591   double depoch;
+	   4592   char source[80]=""; char sabbr[10]=""; char type[80]="";
+	   4593   char desc[80]=""; char version[10]=""; char datestr[10]="";
+	   4594   long ierr=0;
+	   4595 
+	   4596   /* Get values of Source_name, Data_type Descriptor and Version gattrs */
+	   4597   status=CDFlib(SELECT_,ATTR_NAME_,"Source_name", SELECT_,gENTRY_,0,
+	   4598                 GET_,ATTR_SCOPE_,&scope, GET_,gENTRY_NUMELEMS_,&ne, 
+	   4599                 GET_,gENTRY_DATA_,source,NULL_);
+	   4600   if ((status != CDF_OK)||(scope != GLOBAL_SCOPE)) {
+	   4601     MSG_control(1,"WARNING: gATTR 'Source_name' not found.",status); ierr=1;}
+	   4602   else {
+	   4603     source[ne] = '\0'; /* insert string terminator */
+	   4604     ierr=AbbrSCname(source,sabbr); /* abbreviate source name */
+	   4605     status=CDFlib(SELECT_,ATTR_NAME_,"Data_type", SELECT_,gENTRY_,0,
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  35
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4606                   GET_,ATTR_SCOPE_,&scope, GET_,gENTRY_NUMELEMS_,&ne,
+	   4607                   GET_,gENTRY_DATA_,type,NULL_);
+	   4608     if ((status != CDF_OK)||(scope != GLOBAL_SCOPE)) {
+	   4609       MSG_control(1,"WARNING: gATTR 'Data_type' not found.",status); ierr=1;}
+	   4610     else {
+	   4611       type[ne] = '\0'; /* insert string terminator */
+	   4612       status=CDFlib(SELECT_,ATTR_NAME_,"Descriptor", SELECT_,gENTRY_,0,
+	   4613                     GET_,ATTR_SCOPE_,&scope, GET_,gENTRY_NUMELEMS_,&ne,
+	   4614                     GET_,gENTRY_DATA_,desc,NULL_);
+	   4615       if ((status != CDF_OK)||(scope != GLOBAL_SCOPE)) {
+	   4616         MSG_control(1,"WARNING: gATTR 'Descriptor' not found.",status); ierr=1;}
+	   4617       else {
+	   4618         desc[ne] = '\0'; /* insert string terminator */
+	   4619         status=CDFlib(SELECT_,ATTR_NAME_,"Data_version", SELECT_,gENTRY_,0,
+	   4620                       GET_,ATTR_SCOPE_,&scope, GET_,gENTRY_NUMELEMS_,&ne,
+	   4621                       GET_,gENTRY_DATA_,version,NULL_);
+	   4622         if ((status != CDF_OK)||(scope != GLOBAL_SCOPE)) {
+	   4623           MSG_control(1,"WARNING: gATTR 'Version' not found.",status); ierr=1;}
+	   4624         else {
+	   4625           version[ne] = '\0'; /* insert string terminator */
+	   4626           if (EpALG.FirstEp != 0) {
+	   4627             depoch = EpALG.FirstEp;
+	   4628             EPOCHbreakdown(depoch,&lyear,&lmon,&lday,&lhour,&lmin,&lsec,&lmsec);
+	   4629             sprintf(datestr,"%4ld%02ld%02ld",lyear,lmon,lday);
+	   4630             strcat(datestr,"");}
+	   4631           else { /* get time from system */
+	   4632             time(&current_time);
+	   4633             ptrtime = localtime(&current_time);
+	   4634             strftime(datestr,9,"%Y%m%d",ptrtime);
+	   4635           }
+	   4636           /* All information required to make lfileid has been gathered */
+	   4637           for (i=0;i<2;i++) *lfileid++ = sabbr[i]; *lfileid++ = '_';
+	   4638           for (i=0;i<2;i++) *lfileid++ = type[i];  *lfileid++ = '_';
+	   4639           for (i=0;i<3;i++) *lfileid++ = desc[i];  *lfileid++ = '_';
+	   4640           for (i=0;i<strlen(datestr);i++) *lfileid++ = datestr[i];
+	   4641           *lfileid++ = '_'; *lfileid++ = 'V';
+	   4642           if (strlen(version) == 1) *lfileid++ = '0';
+	   4643           for (i=0;i<strlen(version);i++) *lfileid++ = version[i];
+	   4644           *lfileid = '\0';
+	   4645   } } } }
+	   4646   if (ierr != 0) {
+	   4647     MSG_control(1,"       UNABLE TO GENERATE LOGICAL FILE ID.",0);
+	   4648     strcpy(lfileid,"");
+	   4649   }
+	   4650   return(ierr);
+	   4651 }
+	   4652 
+	   4653 /***********************************************************************
+	   4654 *                        SET THE LFILEID VATTR                         *
+	   4655 ***********************************************************************/
+	   4656 long Set_LFILEID(lfileid)
+	   4657 char *lfileid;
+	   4658 {
+	   4659   CDFstatus status;
+	   4660   long ierr=0;
+	   4661 
+	   4662   /* Put the logical file id value into the CDF */
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  36
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4663   status=CDFlib(SELECT_,ATTR_NAME_,"Logical_file_id", SELECT_,gENTRY_,0,
+	   4664                 PUT_,gENTRY_DATA_,CDF_CHAR,strlen(lfileid),lfileid,NULL_);
+	   4665   if (status != CDF_OK) {
+	   4666     MSG_control(1,"WARNING: Unable to write logical file id to CDF.",status);
+	   4667     ierr=1;
+	   4668   }
+	   4669   return(ierr);
+	   4670 }
+	   4671 
+	   4672 /***********************************************************************
+	   4673 *                     SET THE MIN AND MAX VATTRS                       *
+	   4674 ***********************************************************************/
+	   4675 long Set_AutoVattrs()
+	   4676 {
+	   4677   char form[10];
+	   4678   CDFstatus status;
+	   4679   long vnum,cnum;
+	   4680   long ierr=0;
+	   4681 
+	   4682   for (vnum=0;vnum<VLISTne;vnum++) { /* check each variable */
+	   4683     cnum = VLIST[vnum].clistnum;
+	   4684     /* Determine if validmin and validmax vattrs should be set */
+	   4685     if ((VLIST[vnum].autovalids > 0)&&
+	   4686         (VLIST[vnum].cdfvarnum >= 0)&&
+	   4687         (CLIST[cnum].flagone > 0   )) {
+	   4688       /* Put the validmin and validmax values into the vattr */
+	   4689       status=CDFlib(SELECT_,ATTR_NAME_,"VALIDMIN", 
+	   4690                             zENTRY_,VLIST[vnum].cdfvarnum,
+	   4691                     PUT_,   zENTRY_DATA_,VLIST[vnum].cdfvartype,1,
+	   4692                             CLIST[cnum].vmin,NULL_);
+	   4693       if (status != CDF_OK) {
+	   4694         MSG_control(1,"WARNING: Unable to write VALIDMIN to CDF.",status);
+	   4695         ierr=1;
+	   4696       }
+	   4697       status=CDFlib(SELECT_,ATTR_NAME_,"VALIDMAX",
+	   4698                             zENTRY_,VLIST[vnum].cdfvarnum,
+	   4699                     PUT_,   zENTRY_DATA_,VLIST[vnum].cdfvartype,1,
+	   4700                             CLIST[cnum].vmax,NULL_);
+	   4701       if (status != CDF_OK) {
+	   4702         MSG_control(1,"WARNING: Unable to write VALIDMAX to CDF.",status);
+	   4703         ierr=1;
+	   4704       }
+	   4705     }
+	   4706     /* Determine if scalemin and scalemax vattrs should be set */
+	   4707     if ((VLIST[vnum].autoscales > 0)&&
+	   4708         (VLIST[vnum].cdfvarnum >= 0)&&
+	   4709         (CLIST[cnum].flagone > 0   )) {
+	   4710       /* Put the scalemin and scalemax values into the vattr */
+	   4711       status=CDFlib(SELECT_,ATTR_NAME_,"SCALEMIN",
+	   4712                             zENTRY_,VLIST[vnum].cdfvarnum,
+	   4713                     PUT_,   zENTRY_DATA_,VLIST[vnum].cdfvartype,1,
+	   4714                             CLIST[cnum].vmin,NULL_);
+	   4715       if (status != CDF_OK) {
+	   4716         MSG_control(1,"WARNING: Unable to write SCALEMIN to CDF.",status);
+	   4717         ierr=1;
+	   4718       }
+	   4719       status=CDFlib(SELECT_,ATTR_NAME_,"SCALEMAX",
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  37
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4720                             zENTRY_,VLIST[vnum].cdfvarnum,
+	   4721                     PUT_,   zENTRY_DATA_,VLIST[vnum].cdfvartype,1,
+	   4722                             CLIST[cnum].vmax,NULL_);
+	   4723       if (status != CDF_OK) {
+	   4724         MSG_control(1,"WARNING: Unable to write SCALEMAX to CDF.",status);
+	   4725         ierr=1;
+	   4726       }
+	   4727     }
+	   4728     /* Determine if FORMAT vattrs should be set */
+	   4729     if ((VLIST[vnum].autoformat > 0)&&
+	   4730         (VLIST[vnum].cdfvarnum >= 0)&&
+	   4731         (CLIST[cnum].ccount > 0   )) {
+	   4732       strcpy(form,""); /* initialize the format */
+	   4733       ierr = AutoFormat(vnum,form); /* determine format */
+	   4734       if (ierr == 0) {
+	   4735         status=CDFlib(SELECT_,ATTR_NAME_,"FORMAT",
+	   4736                               zENTRY_,VLIST[vnum].cdfvarnum,
+	   4737                       PUT_,   zENTRY_DATA_,CDF_CHAR,strlen(form),form,NULL_);
+	   4738         if (status != CDF_OK) {
+	   4739           MSG_control(1,"WARNING: Unable to write SCALEMIN to CDF.",status);
+	   4740           ierr=1;
+	   4741     } } }
+	   4742 
+	   4743   } /* for each variable */
+	   4744   return(ierr);
+	   4745 }
+	   4746 
+	   4747 /***********************************************************************
+	   4748 *                    ABBREVIATE THE SPACECRAFT NAME                    *
+	   4749 ***********************************************************************/
+	   4750 long AbbrSCname (source, abbr)
+	   4751 char *source, *abbr;
+	   4752 {
+	   4753   long ierr=0;
+	   4754   memcpy(abbr,source,2);
+	   4755   strcat(abbr,"");
+	   4756   if (strcmp(source,"SAMPEX>Solar Anomalous Magnetic Particle Explorer")==0)
+	   4757     strcpy(abbr,"SX>");
+	   4758   if (strcmp(source,"GEOTAIL>Geomagnetic Tail")==0)
+	   4759     strcpy(abbr,"GE>");
+	   4760   if (strcmp(source,"WIND>Wind Interplanetary Plasma Laboratory")==0)
+	   4761     strcpy(abbr,"WI>");
+	   4762   if (strcmp(source,"POLAR>Polar Plasma Laboratory")==0)
+	   4763     strcpy(abbr,"PO>");
+	   4764   if (strcmp(source,"SOHO>Solar Heliospheric Observatory")==0)
+	   4765     strcpy(abbr,"SO>");
+	   4766   if (strcmp(source,"DARN>Dual Auroral Radar Network")==0)
+	   4767     strcpy(abbr,"DN>");
+	   4768   if (strcmp(source,
+	   4769      "SESAME>Satellite Exploration Simultaneous with Antarctic Measurements")
+	   4770      ==0) strcpy(abbr,"SE>");
+	   4771   if (strcmp(source,"SONDRESTROM>Sondrestrom Incoherent-Scatter Radar")==0)
+	   4772     strcpy(abbr,"SN>");
+	   4773   if (strcmp(source,
+	   4774      "CANOPUS>Canadian Auroral Network Open Program Unified Study")==0)
+	   4775     strcpy(abbr,"CN>");
+	   4776   if (strcmp(source,"IMP8>Interplanetary Monitoring Platform")==0)
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  38
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4777     strcpy(abbr,"I8>");
+	   4778   if (strcmp(source,"LANL1989>")==0) strcpy(abbr,"L9>");
+	   4779   if (strcmp(source,"LANL1990>")==0) strcpy(abbr,"L0>");
+	   4780   if (strcmp(source,"LANL1991>")==0) strcpy(abbr,"L1>");
+	   4781   if (strcmp(source,"GOES6>Geostationary Operational Environment Satellite")==0)
+	   4782      strcpy(abbr,"G6>");
+	   4783   if (strcmp(source,"GOES7>Geostationary Operational Environment Satellite")==0)
+	   4784      strcpy(abbr,"G7>");
+	   4785   if (strcmp(source,"GOES8>Geostationary Operational Environment Satellite")==0)
+	   4786      strcpy(abbr,"G8>");
+	   4787   if (strcmp(source,"GOES9>Geostationary Operational Environment Satellite")==0)
+	   4788      strcpy(abbr,"G9>");
+	   4789   if (strcmp(source,
+	   4790      "STELAB>Solar-Terrestrial Environment Laboratory, Nagoya U.")==0)
+	   4791      strcpy(abbr,"SL>");
+	   4792   return(ierr);
+	   4793 }
+	   4794 
+	   4795 /**************************************************************************
+	   4796 *                RENAME THE CDF USING ISTP CONVENTIONS                    *
+	   4797 **************************************************************************/
+	   4798 long AutoNamer (oldname, newname)
+	   4799 char *oldname;
+	   4800 char *newname;
+	   4801 {
+	   4802   int  i,j;
+	   4803   long ierr=0;
+	   4804   long olength;
+	   4805   char c;
+	   4806   char *ptr=oldname;
+	   4807   char direc[80+1]="";
+	   4808   char filen[80+1]="";
+	   4809   char otemp[80+1]="";
+	   4810   char ntemp[80+1]="";
+	   4811 
+	   4812   /* make the newname uppercase or lowercase depending on runtime param */
+	   4813   strcpy(ntemp,newname); olength=(long)strlen(newname);
+	   4814   if (RPARMS.autocase == 1) { /* force to lowercase */
+	   4815     for (i=0;i<olength;i++) ntemp[i]=tolower(ntemp[i]); ntemp[i]='\0';
+	   4816   } else if (RPARMS.autocase == 0) { /* force to uppercase */
+	   4817     for (i=0;i<olength;i++) ntemp[i]=toupper(ntemp[i]); ntemp[i]='\0';
+	   4818   }
+	   4819   strcpy(newname,ntemp);
+	   4820 
+	   4821   strcpy(otemp,oldname);  olength=(long)strlen(otemp);
+	   4822   /* separate the filename from directory information. Find last ]or\.   */
+	   4823   for (i=0,j= -1;i<olength;i++) { c= *ptr++; if((c==']')||(c=='\'')) j=i; }
+	   4824   if (j!= -1) { /* directory mark found, separate directory and filename */
+	   4825     for (i=0;i<=j;i++) direc[i]=otemp[i]; direc[i]='\0'; j++;
+	   4826     for (i=0;j<olength;i++,j++) filen[i]=toupper(otemp[j]); filen[i]='\0';
+	   4827     if (strcmp(filen,"AUTO")==0) { /* only rename if oldname=AUTO */
+	   4828       strcat(direc,newname); strcat(direc,".cdf"); strcat(oldname,".cdf");
+	   4829       /* output progress message */
+	   4830       strcpy(LOGFILE.message,"Renaming the file from ");
+	   4831       strcat(LOGFILE.message,oldname); strcat(LOGFILE.message," to ");
+	   4832       strcat(LOGFILE.message,newname); strcat(LOGFILE.message,"\n");
+	   4833       MSG_control(1,LOGFILE.message,0);
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  39
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4834       if (rename(oldname,direc)!=0) {
+	   4835         MSG_control(2,"ERROR: During attempt to rename the output CDF",0);
+	   4836         ierr=1;
+	   4837   } } }
+	   4838   else { /* no directory mark found. convert to uppercase and compare */
+	   4839     for (i=0;i<olength;i++) otemp[i]=toupper(otemp[i]); strcat(otemp,"");
+	   4840     if (strcmp(otemp,"AUTO")==0) { /* only rename if oldname=AUTO */
+	   4841       strcat(newname,".cdf"); strcat(oldname,".cdf");
+	   4842       /* output progress message */
+	   4843       strcpy(LOGFILE.message,"Renaming the file from ");
+	   4844       strcat(LOGFILE.message,oldname); strcat(LOGFILE.message," to ");
+	   4845       strcat(LOGFILE.message,newname); strcat(LOGFILE.message,"\n");
+	   4846       MSG_control(1,LOGFILE.message,0);
+	   4847       if (rename(oldname,newname)!=0) {
+	   4848         MSG_control(2,"ERROR: During attempt to rename the output CDF",0);
+	   4849         ierr=1;
+	   4850   } } }
+	   4851   return (ierr);
+	   4852 }
+	   4853 
+	   4854 /**************************************************************************
+	   4855 *                RENAME THE CDF USING ISTP CONVENTIONS                    *
+	   4856 **************************************************************************/
+	   4857 long ShortName (Lfileid)
+	   4858 char *Lfileid;
+	   4859 {
+	   4860   int i,j;
+	   4861   char *ptr = Lfileid;
+	   4862   char tempID[80]="";
+	   4863   long ierr=0;
+	   4864   for (i=0;i<12;i++) ptr++; /* skip spacecraft,datatype,descriptor,century */
+	   4865   for (i=0;i<6;i++) tempID[i] = *ptr++; /* copy year,month,and day */
+	   4866   for (j=0;j<2;j++) ptr++; /* skip underscore and 'v' */
+	   4867   for (j=0;j<2;j++,i++) tempID[i] = *ptr++; /* copy verion number */
+	   4868   tempID[i]='\0'; /* add terminator */
+	   4869   strcpy(Lfileid,tempID);
+	   4870   return(ierr);
+	   4871 }
+	   4872 
+	   4873 /**************************************************************************
+	   4874 *                CHECK FOR WILDCARD USAGE IN INPUT FILE                   *
+	   4875 **************************************************************************/
+	   4876 long Build_FLIST()
+	   4877 {
+	   4878   int  icnt;
+	   4879   int  pcount=1;
+	   4880   long i,j;
+	   4881   char *cptr;
+	   4882   char **inDirs;
+	   4883   char **inFiles;
+	   4884   char *inPattern[1];
+	   4885   char inPath[80]="";
+	   4886   char inFile[80]="";
+	   4887   char newname[80]="";
+	   4888   long ierr=0;
+	   4889 
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  40
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+	   4890   ParsePath(RPARMS.infname,inPath,inFile);  /* separate file and path names */
+		..1                                                                            
+%CC-I-IMPLICITFUNC, (1) In this statement, the identifier "ParsePath" is implicitly declared as a function.
+
+	   4891   cptr = memchr(inFile,'*',strlen(inFile)); /* search for wildcard */
+	   4892 
+	   4893   if (cptr == NULL) { /* no wildcard character found */
+	   4894     FLISTne++;
+	   4895     FLIST=realloc(FLIST,(sizeof(FLISTz)*FLISTne));
+	   4896     strcpy(FLIST[FLISTne-1].Pathname,inPath);
+	   4897     strcpy(FLIST[FLISTne-1].Filename,inFile);
+	   4898     return(ierr);
+	   4899   }
+	   4900 
+	   4901   /* wildcard character must have been found - get list of filenames */
+	   4902   inPattern[0] = inFile;
+	   4903   icnt = DirList(inPath,pcount,&inPattern,&inDirs,&inFiles);
+		.........1                                                   
+%CC-I-IMPLICITFUNC, (1) In this statement, the identifier "DirList" is implicitly declared as a function.
+
+	   4904 
+	   4905   /* Validate DirList results */
+	   4906   if (icnt <= 0) {
+	   4907     MSG_control(2,"ERROR: No files matched wildcard pattern...",0);
+	   4908     MSG_control(2,"ERROR: Translation Aborted.",0);
+	   4909     ierr=1; return(ierr); }
+	   4910   else if (icnt > 1) { /* verify auto naming option is on */
+	   4911     strcpy(newname,RPARMS.outcdfname);
+	   4912     for (i=0,j=strlen(newname);i<j;i++) newname[i]=toupper(newname[i]);
+	   4913     newname[i]='\0';
+	   4914     if (strcmp(newname,"AUTO")!=0) {
+	   4915       MSG_control(2,"ERROR: Wildcard pattern requires auto-naming option.",0);
+	   4916       MSG_control(2,"ERROR: Translation Aborted.",0);
+	   4917       ierr=1; return(ierr);
+	   4918   } }
+	   4919 
+	   4920   /* Copy DirList results into FLIST data structure */
+	   4921   for (i=0;i<icnt;i++) {
+	   4922     FLISTne++;
+	   4923     FLIST=realloc(FLIST,(sizeof(FLISTz)*FLISTne));
+	   4924     strcpy(FLIST[FLISTne-1].Pathname,inDirs[i]);
+	   4925     strcpy(FLIST[FLISTne-1].Filename,inFiles[i]);
+	   4926   }
+	   4927   return(ierr);
+	   4928 }
+	   4929 
+
+
+Command Line
+------- ----
+
+CC /ANSI_ALIAS/ASSUME=(ACCURACY_SENSITIVE,ALIGNED_OBJECTS,NOWRITABLE_STRING_LITERALS)
+/DEBUG=(TRACEBACK)/ENDIAN=LITTLE/EXTERN_MODEL=RELAXED_REFDEF/FLOAT=(G_FLOAT
+)/GRANULARITY=QUADWORD/INSTRUCTION_SET=FLOATING_POINT/L_DOUBLE_SIZE=128
+/LIST/NOMACHINE_CODE/MEMBER_ALIGNMENT/NAMES=UPPERCASE/NESTED_INCLUDE_DIRECTORY=INCLUDE_FILE
+/NOOBJECT/OPTIMIZE=(LEVEL=4,UNROLL=0)/PREFIX=(ANSI_C89_ENTRIES)/PSECT_MODEL=NOMULTILANGUAGE
+/ROUNDING_MODE=NEAREST/SHOW=(HEADER,SOURCE)/SIGNED_CHAR/STANDARD=RELAXED_ANSI89
+
+                                Source Listing                  11-SEP-1997 17:19:10    DEC C V4.0-000                      Page  41
+                                                                11-JUN-1996 12:50:10    SMS1:[WIND.SOFTWARE.MAKECDF]MAKECDF2.C;87
+
+/REENTRANCY=TOLERANT/WARNINGS
+/INCLUDE=(CDF$INC:)

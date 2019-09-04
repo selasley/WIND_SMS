@@ -1,0 +1,379 @@
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   1
+                                                                 6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+	      1 	SUBROUTINE WIND_L1_OPEN( unit, filename, header, status )
+	      2 C+
+	      3 C 
+	      4 C FUNCTIONAL DESCRIPTION:
+	      5 C 
+	      6 C    This routine opens a Level 1 format file, specified by the argument
+	      7 C    `filename', onto the unit number given by the argument `unit'.  The file's
+	      8 C    file header record is then read into the argument `header'.  It is also
+	      9 C    retained in memory for future reference.  The fact that this unit is
+	     10 C    opened is recorded internally for future access.  A status code is
+	     11 C    returned in the argument `status'.
+	     12 C
+	     13 C FORMAL PARAMETERS:
+	     14 C  
+	     15 C     unit:
+	     16 C	  An INTEGER*4 variable specifying the Fortran unit number onto which
+	     17 C	  the L1 file will be opened.
+	     18 C      
+	     19 C     filename:
+	     20 C	  A CHARACTER variable specifying the name of the L1 file to be opened.
+	     21 C
+	     22 C     header:
+	     23 C	  A record variable of structure type ST_L1_FILE_HDR which will receive
+	     24 C	  the file header of the Level 1 file.
+	     25 C  
+	     26 C     status:
+	     27 C	  An INTEGER*4 variable which will receive, upon return, the status of
+	     28 C	  the open operation.  A 1 indicates success, all other values indicate
+	     29 C	  failure.
+	     30 C  
+	     31 C COMMON BLOCKS:
+	     32 C  
+	     33 C     The common block L1INFO is updated to reflect information about this file.
+	     34 C  
+	     35 C DESIGN:
+	     36 C  
+	     37 C     After the file is opened successfully it is flagged internally to be open
+	     38 C     and its science record counter is set to zero.  The first record is then
+	     39 C     read.  If it is a valid L1 file header it is returned to the caller; if
+	     40 C     not the file is rewound and all blanks are returned in the header.
+	     41 C
+	     42 C     Declare WIND$_SUCCESS as EXTERNAL to force the message module to be pulled
+	     43 C     in from the L1LIB library at link time.
+	     44 C
+	     45 C
+	     46 C This version:   1.7   10-MAR-1995
+	     47 C
+	     48 C AUTHOR(S): 
+	     49 C 
+	     50 C	 Larry Bleau
+	     51 C 
+	     52 C Created: 
+	     53 C 
+	     54 C	 10-OCT-1994    L. Bleau
+	     55 C 
+	     56 C Revised:
+	     57 C 
+
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   2
+                                                                 6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+	     58 C Ver     Date     | Name  | Description
+	     59 C -----------------+-------+----------------------------------------------------
+	     60 C 1.1  19-OCT-1994 |  LRB  | changed header parameter from CHAR*400 to a RECORD
+	     61 C                          | of type ST_L1_FILE_HDR
+	     62 C 1.2  10-NOV-1994 |  LRB  | changed comments, added diagnostic TYPE statement
+	     63 C 1.3  13-DEC-1994 |  LRB  | added test of L1 file version, do STOP if too
+	     64 C                          | large for us to handle; see WIND_L1_READ_SR for
+	     65 C                          | additional details
+	     66 C 1.4  10-JAN-1995 |  LRB  | add code to zero out null_buffer the first time we
+	     67 C                          | are called; removed DATA statement from L1READ.INC
+	     68 C 1.5   7-FEB-1995 |  LRB  | recode to allow continued operation even if reading
+	     69 C			   | later L1 formats, assumming the only change is to
+	     70 C			   | the headers
+	     71 C 1.6   2-MAR-1995 |  LRB  | test header level for illegal value an give message
+	     72 C 1.7  10-MAR-1995 |  LRB  | make use of WIND condition codes for errors
+	     73 C-
+	     74 CDEC$	IDENT   '1.7'
+	     75 
+	     76 	IMPLICIT NONE
+	     77 
+	     78 	INCLUDE '($SSDEF)/NOLIST'
+	   1503 	INCLUDE '($RMSDEF)/NOLIST'
+	   2214 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   3
+1.7                                                              6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+	   2752 	INCLUDE 'INC_DIR:L1FMT.INC/NOLIST'
+	   2884 	INCLUDE 'INC_DIR:L1READ.INC/NOLIST'
+	   2936 
+	   2937 	CHARACTER*(*) filename
+	   2938 	INTEGER*4 unit,status
+	   2939         RECORD /ST_L1_FILE_HEADER/ header
+	   2940 
+	   2941 	INTEGER*4 record_size,nbytes
+	   2942 	INTEGER i,forterr,rmsstc,rmsstv,lun,vaxerr
+	   2943 	LOGICAL first_time/.TRUE./
+	   2944 	SAVE first_time
+	   2945 
+	   2946 	EXTERNAL WIND$_SUCCESS 
+	   2947 	EXTERNAL WIND$_OUTRANGE,WIND$_INUSE,WIND$_EMPTY
+	   2948 C
+	   2949 	record_size = 32766			! Max.length of WIND data record
+	   2950 C
+	   2951 C If this is the first time we're called zero out the array null_i4_array,
+	   2952 C which is equivalenced to null_buffer.  null_buffer is used to zero out the
+	   2953 C user's argument(s) when calling the various WIND_L1_GET routines.
+	   2954 C
+	   2955 	IF (first_time) THEN
+	   2956 	  DO i=1,16384
+	   2957 	    null_i4_array(i) = 0
+	   2958 	  END DO
+	   2959 	  DO i=1,maxunits
+	   2960 	    L1_units(i) = 0
+	   2961 	  END DO
+	   2962 	  first_time = .FALSE.
+	   2963 	END IF
+	   2964 C
+	   2965 C First check if value of unit is within range
+	   2966 C
+	   2967 	IF (unit .lt. 1 .or. unit .gt. maxunits) THEN
+	   2968 	  status = %LOC(WIND$_OUTRANGE)
+	   2969 	  RETURN
+	   2970 	ENDIF
+	   2971 C
+	   2972 C Next check if this data structure is already in use
+	   2973 C If so, return an error immediately
+	   2974 C If not, proceed with the OPEN
+	   2975 C Don't bother checking if this Fortran unit number is already in use
+	   2976 C elsewhere, since the OPEN statement will check this and give a different
+	   2977 C error  
+	   2978 C
+	   2979 	IF (L1_units(unit) .ne. 0) THEN
+	   2980 	  status = %LOC(WIND$_INUSE)
+	   2981 	  RETURN
+	   2982 	ENDIF
+	   2983 C
+	   2984 C Open the file
+	   2985 C Take care of other housekeeping chores
+	   2986 C
+ C	   2987 D	TYPE *,'OPENING ',filename
+	   2988 	OPEN (	UNIT	= unit,
+	   2989      +		NAME	= filename,
+	   2990      +		CARRIAGECONTROL='NONE',
+
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   4
+1.7                                                              6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+	   2991      +		FORM	= 'FORMATTED',
+	   2992      +		READONLY,
+	   2993      +		STATUS	= 'OLD',
+	   2994      +		RECL	= record_size,
+	   2995      +		ERR	= 2000,			! Return if error
+	   2996      +		IOSTAT	= status)
+	   2997 	IF (status .ne. 0) GOTO 2000
+	   2998 	L1_units(unit) = unit
+ C	   2999 D	TYPE *,'L1_units(unit), unit=',L1_units(unit),unit
+	   3000 	scirecnum(unit) = 0
+	   3001 C
+	   3002 C Now read the file header
+	   3003 C File headers start with the characters 'HDRF' and are currently 400 bytes
+	   3004 C long.  If the first record fails this test we have a pre-header format of the
+	   3005 C file, so rewind the file and leave it positioned at the first science record.
+	   3006 C
+	   3007 	READ(unit, 1001, ERR=2000, IOSTAT=status, END=2010) nbytes,buffer
+	   3008 1001	FORMAT( Q, A )
+ C	   3009 D	TYPE *,'first L1 record length=',nbytes,'; chars 1-4 =',buffer(1:4)
+	   3010 	IF (nbytes .eq. LEN(header.c_all) .and. buffer(1:4) .eq. 'HDRF') THEN
+	   3011 	  header.c_all = buffer(1:LEN(header.c_all))
+	   3012 	  L1_header(unit).c_all = header.c_all
+	   3013 	  IF (L1_header(unit).header_vers .gt. max_version) THEN
+	   3014             TYPE *,' '
+	   3015 	    TYPE *,'*** WARNING:'
+	   3016 	    TYPE *,'*** The L1 header has a higher version than allowed for in the L1 read'
+	   3017 	    TYPE *,'*** routine.  Some header information will not be available.'
+	   3018 	    TYPE *,'*** Recompile and relink your application if you wish to correct this.'
+	   3019             TYPE *,' '
+	   3020 c            TYPE *,'L1 file version is too large for this program to handle:'
+	   3021 c            TYPE *,'  Version of L1 file                      = ',L1_header(unit).header_vers
+	   3022 c            TYPE *,'  Highest version this program can handle = ',max_version
+	   3023 c            TYPE *,' '
+	   3024 c            TYPE *,'Recompile and relink your program'
+	   3025 c            STOP
+	   3026           END IF
+	   3027 	  IF (L1_header(unit).header_vers .lt. '01') THEN
+	   3028             TYPE *,' '
+	   3029 	    TYPE *,'*** WARNING:'
+	   3030 	    TYPE *,'*** The L1 header level has an invalid value'
+	   3031 	    TYPE *,'*** This most likely indicates an incompletely processed L1 file.'
+	   3032 	    TYPE *,'*** Further attempts to read this file may yield unpredictable results'
+	   3033             TYPE *,' '
+	   3034           END IF
+	   3035 C
+	   3036 C If file header version is earlier then 04 fill in missing fields with zeros
+	   3037 C
+	   3038 	  IF (L1_header(unit).header_vers .lt. '04') THEN
+	   3039 	    L1_header(unit).L1_records = '   0'
+	   3040 	    L1_header(unit).EDB_count = '     0'
+	   3041 	    L1_header(unit).EDB_lost = '     0'
+	   3042 	    L1_header(unit).EDB_skip = '     0'
+	   3043           END IF
+	   3044 	ELSE
+	   3045 	  TYPE *,'*** No L1 file header, REWINDing file, blanking header'
+	   3046 	  TYPE *,'Expected ',LEN(header.c_all),' bytes,  actually read ',nbytes,' bytes'
+	   3047 	  REWIND unit
+
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   5
+1.7                                                              6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+	   3048 	  header.c_all = ' '
+	   3049 	  L1_header(unit).c_all = ' '
+	   3050 	END IF
+	   3051 	status = SS$_NORMAL
+	   3052 	RETURN
+	   3053 C
+	   3054 C Come here for errors
+	   3055 C 
+	   3056 C Ordinary error
+	   3057 C
+	   3058 2000	TYPE 2001, status
+	   3059 2001	FORMAT(' *** ERROR in WIND_L1_OPEN, Fortran status =', I6, ' ***')
+	   3060 	CALL ERRSNS(forterr,rmsstc,rmsstv,lun,vaxerr)
+	   3061 	status = rmsstc
+	   3062 	RETURN
+	   3063 C
+	   3064 C End of file error, file is empty
+	   3065 C
+	   3066 2010	TYPE *, ' *** ERROR in WIND_L1_OPEN, end-of-file ***'
+	   3067 	status = %LOC(WIND$_EMPTY)
+	   3068 	RETURN
+	   3069 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                                84 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                2764   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 959 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 L1INFO                             3044160 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 L1INFO2                              13042 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 L1BUF                                65534 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 NULLBUF                              65536 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated              3192751
+
+
+ENTRY POINTS
+
+    Address   Type  Name        
+                                
+  4-00000000        WIND_L1_OPEN
+
+
+
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   6
+1.7                             Symbol Table                     6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+VARIABLES
+
+    Address   Type  Name            Address   Type  Name            Address   Type  Name            Address   Type  Name       
+                                                                                                                               
+  9-00000000  CHAR  BUFFER      REG-########  I*4   I            10-00000000  CHAR  NULL_BUFFER       **      I*4   STATUS     
+      **      CHAR  FILENAME      2-00000010  I*4   LUN               **      I*4   RECORD_SIZE       **      I*4   UNIT       
+  1-00000000  L*4   FIRST_TIME    8-000000A0  CHAR  MAX_VERSION   2-00000008  I*4   RMSSTC        2-00000014  I*4   VAXERR     
+  2-00000004  I*4   FORTERR       2-00000000  I*4   NBYTES        2-0000000C  I*4   RMSSTV                                     
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes     Address   Name            Structure                Bytes
+                                                                                                                         
+      **      HEADER          ST_L1_FILE_HEADER          400   6-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+  6-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400                                                             
+
+
+ARRAYS
+
+     Address  Type  Name                   Bytes  Dimensions
+
+  8-00000000  I*4   L1_UNITS                  80  (20)
+ 10-00000000  I*1   NULL_BYTE_ARRAY        65534  (65534)
+ 10-00000000  I*4   NULL_I4_ARRAY          65536  (16384)
+  8-00000050  I*4   SCIRECNUM                 80  (20)
+
+
+
+RECORD ARRAYS
+
+    Address   Name               Structure                 Bytes  Dimensions
+
+  7-002E0400  L1_HDB             HDBSTR                    6480  (20)
+  8-000000A2  L1_HEADER          ST_L1_FILE_HEADER         8000  (20)
+  7-002E1D50  L1_HKEEP           HKEEP                    22000  (20)
+  7-001FFD60  L1_MASS_PHA        MA_PHA                  919200  (20)
+  7-001F6760  L1_MASS_RATE       MA_RATE                  38400  (20)
+  7-00000000  L1_SCI             CORE                    147680  (20)
+  8-00001FE2  L1_SCI_REC_HEADER  ST_L1_SR_HEADER           4880  (20)
+  7-001432A0  L1_STICS_PHA       ST_PHA                  734400  (20)
+  7-0010D420  L1_STICS_RATE      ST_RATE                 220800  (20)
+  7-00047360  L1_SWICS_PHA       SW_PHA                  811200  (20)
+  7-000240E0  L1_SWICS_RATE      SW_RATE                 144000  (20)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+      **       1001   4-0000090C   2000       **       2001   4-00000988   2010
+
+
+
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   7
+1.7                             Symbol Table                     6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                   Type  Name                
+                                                         
+        WIND$_EMPTY                  WIND$_OUTRANGE      
+        WIND$_INUSE                  WIND$_SUCCESS       
+
+WIND_L1_OPEN                                                    21-APR-1995 16:15:29    DEC Fortran V6.2-508                Page   8
+1.7                             Symbol Table                     6-APR-1995 17:21:43    SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.FOR;10
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.LIS;25
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]WIND_L1_OPEN.OBJ;23
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.84 seconds
+  Elapsed time:      4.02 seconds
+  Pagefaults:         313
+  I/O Count:           30

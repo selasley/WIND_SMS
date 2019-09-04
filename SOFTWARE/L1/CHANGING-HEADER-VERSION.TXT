@@ -1,0 +1,11 @@
+                        CHANGING THE L1 HEADER VERSION
+Edit the file L1READ.INC, located in the directory pointed to by the logical
+name INC_DIR:.
+Find the DATA statement which contains the variable max_version.  Note that
+max_version is a CHARACTER*2 variable and is initialized to the ASCII
+representation of a number, as opposed to being an INTEGER and being
+initialized to the number itself.
+Change the value to which max_version is initialized to the new highest header
+version.  Usually this is the next value in the ASCII collating sequence, with
+the restriction that the two characters must be in the range ['0'..'9'].
+Edit the file WIND_L1_READ_SR.FOR located in the directory [WIND.SOFTWARE.L1].

@@ -1,0 +1,8 @@
+                         Quality Flag Interpretation
+  0   = GOOD                              
+BIT 0 = FRAME SYNC ERROR              
+BIT 1 = FRAME COUNTER ERROR           
+BIT 2 = FILL FRAME                    
+BIT 3 = MISSING EDB                   
+BIT 4 = PARTIAL CYCLE (STICS PHA ONLY)
+BIT 5 = CORRUPTED EDB OR HDB HEADER   

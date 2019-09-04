@@ -1,0 +1,133 @@
+DUMP_HK                                                         27-OCT-1995 11:57:52    DEC Fortran V6.2-508                Page   1
+                                                                26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]DUMP_HK.FOR;8
+
+	      1 	SUBROUTINE DUMP_HK(JOUT,HKSTR)
+	      2         INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+DUMP_HK                                                         27-OCT-1995 11:57:52    DEC Fortran V6.2-508                Page   2
+                                                                26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]DUMP_HK.FOR;8
+
+	    540         INTEGER*4 HKCOUNT,HKNUM,K,JOUT
+	    541 	CHARACTER*30 FORMAT_TIME
+	    542 C
+	    543 	RECORD /HKeep/ HKSTR
+	    544 
+	    545 	HKCOUNT = HKSTR.HKcount
+	    546 	WRITE(JOUT,1003) HKCOUNT
+	    547 1003    FORMAT(/' DUMP OF HK         # OF HKs =',I5)
+	    548 C
+	    549         DO 100 HKNUM=1,MIN(HKCOUNT,MAX_HK)
+	    550           WRITE(JOUT,1001) HKNUM,FORMAT_TIME(HKSTR.HKSET(HKNUM).W_TIME),
+	    551      &                           HKSTR.HKSET(HKNUM).EPOCH,
+	    552      &                           FORMAT_TIME(HKSTR.HKSET(HKNUM).SC_TIME),
+	    553      &                           HKSTR.HKSET(HKNUM).SC_EPOCH
+	    554 1001  FORMAT(/' HK ',I2,T10,'W_TIME:  ',A30,5X,F15.0/
+	    555      &                  T10,'SC_TIME: ',A30,5X,F15.0)
+	    556           WRITE(JOUT,1002) (HKSTR.HKSET(HKNUM).HK(K).BVAL,
+	    557      &                      HKSTR.HKSET(HKNUM).HK(K).QUAL,
+	    558      &                     K=1,75)
+	    559 1002      FORMAT(10(2X,Z2,1X,I1))
+	    560 100     CONTINUE
+	    561 C
+	    562         RETURN
+	    563 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $IODATA$                               176 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 968   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                 188 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 1332
+
+
+ENTRY POINTS
+
+    Address   Type  Name   
+                           
+  2-00000000        DUMP_HK
+
+
+VARIABLES
+
+    Address   Type  Name        Address   Type  Name   
+                                                       
+  0-0000003C# I*4   HKCOUNT       **      I*4   JOUT   
+  0-00000038# I*4   HKNUM   REG-0000000B  I*4   K      
+
+
+
+DUMP_HK                                                         27-OCT-1995 11:57:52    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]DUMP_HK.FOR;8
+
+RECORDS
+
+    Address   Name   Structure        Bytes
+                                           
+      **      HKSTR  HKEEP             1100
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+  2-00000000   100        **       1001       **       1002       **       1003
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name             
+                         
+  CHAR  FORMAT_TIME      
+
+DUMP_HK                                                         27-OCT-1995 11:57:52    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    26-JAN-1995 17:57:15    SMS1:[WIND.SOFTWARE.L1]DUMP_HK.FOR;8
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]DUMP_HK.LIS;12
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]DUMP_HK.OBJ;12
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.56 seconds
+  Elapsed time:      2.27 seconds
+  Pagefaults:         183
+  I/O Count:           16

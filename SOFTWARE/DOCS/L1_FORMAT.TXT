@@ -1,0 +1,1791 @@
+                               WIND Level 1 File Format
+        Level 1 (hereafter, L1) data files contain WIND data that has been grouped
+        by science record, sensor, and spin.  Since various kinds of WIND data are 
+        read out after they  were accumulated (as documented in  "Command and Data 
+        Formats for the  SMS Instrument", Revision 3.0,  Prepared by Bernd Gerlach 
+        and Wolfgang Wiewesiek), the data in the L1  file has been shifted so that 
+        each data  item is associated with  the voltage  step during  which it was 
+        measured. In addition, the data for  the STICS sensor at low bit rate have 
+        been concatenated. This is done because, at low bit rate,  STICS maintains 
+        a voltage step for 2 spins. As a consequence,  half of the STICS rate data 
+        and half of the PHA data associated with the current voltage step is tran-
+        smitted  each spin. In the L1 data files, the  two halves of the data have 
+        been put together in the even-numbered spin of the pair in which they were 
+        originally  read out, and the  STICS fields in the  odd-numbered spin have 
+        been set to 0.
+        L1 data files  have unformatted, variable length records. Each file begins 
+        with a file  header  of 400  bytes in length. The format of this header is
+        specified  in the  variable  length  data structure  ST_L1_FILE_HEADER  in 
+        L1FMT.INC. The field it contains are specified below:
+        Bytes     Format        Description
+         1-4    CHARACTER*4     identifier: always 'HDRF'
+         5-6    CHARACTER*2     header version
+         7-78   CHARACTER*72    name of input file
+        79-80   CHARACTER*2     input medium code: 'DK' = disk, 'CD' = cd-rom
+        81-83   CHARACTER*3     input file creation date, day of year 
+        84-87   CHARACTER*4     input file creation date, year
+        88-98   CHARACTER*11    input file creation date, 'DD-MMM-YYYY'
+        99-121  CHARACTER*23    link date of program which wrote the L1 file
+         122    CHARACTER*1     system hardware type which ran program: 'V' = VAX, 
+                                'A' = AXP
+       123-133  CHARACTER*11    program run date 'DD-MMM-YYYY'
+       134-153  CHARACTER*20    user-specified start time 'DD-MMM-YYYY HH:MM:SS'
+       154-173  CHARACTER*20    user-specified stop time 'DD-MMM-YYYY HH:MM:SS'
+       174-176  CHARACTER*3     length of user comment (see next field)
+       177-256  CHARACTER*80    user-supplied comment
+       257-260  CHARACTER*4     number of L1 records in file
+       261-266  CHARACTER*6     number of good EDBs (spins) stored
+       267-272  CHARACTER*6     number of EDBs (spins) lost
+       273-278  CHARACTER*6     number of EDBs (spins) skipped
+       279-283  CHARACTER*5     version of WIND_CD_READ program
+       284-400  CHARACTER*117   spares for later use; makes total size 400 bytes
+        After the file header is a series of science records.  Each science record 
+        is a logical record consisting of 363 physical records. The first physical
+        record is always a header, consisting of 200 bytes. It is specified by the 
+        variable-length  data  structure  ST_L1_SR_HEADER, also in  L1FMT.INC. The
+        fields are described below:
+        Bytes     Format        Description
+         1-4    CHARACTER*4     identifier 'HDRR'
+         5-8    INTEGER*4       number of valid spins (= number of bits set in the 
+                                field that follows); maximum 60.
+         9-16   INTEGER*4       spin presence flags; if bit N of this integer is 
+                                set, spin N of the science record is set. Bits 
+                                60-63 not used.
+        17-20   INTEGER*4       bit rate code: 0 = no valid spins, 1 = all valid 
+                                spins low bit rate, 2 = all valid spins high bit 
+                                rate, 3 = mixed low and high bit rate
+        21-24   INTEGER*4       science record counter from HDB
+        25-32   INTEGER*4       zero SWICS PHA word flags (bit coded)
+        33-40   INTEGER*4       zero MASS PHA word flags (bit coded)
+        41-48   INTEGER*4       zero STICS PHA word flags (bit coded)
+        49-200  CHARACTER*152   spares for later use; makes total size 200 bytes
+        Next  comes the  Basic Core record, which  contains information  about the 
+        science  data that follows it.  Its format is  specified  by the variable-
+        length data structure CORE in EDBDEF.INC. This structure contains an iden-
+        tifier followed by information for each of the 60 spins, as shown below:
+        Bytes     Format        Description
+         1-4    CHARACTER*4	identifier 'CORE'
+         5-123  See below       information for spin 0
+       124-242  See below       information for spin 1
+          :        :                     :
+          :        :                     :
+          :        :                     :
+      6907-7024 See below       information for spin 58
+      7026-7144 See below       information for spin 59
+        The information  for  each spin is  specifed by the  structure  E, also in 
+        EDBDEF.INC. The format is described below:
+        Bytes     Format        Description
+         1-2    INTEGER*2	Year         \
+         3-4    INTEGER*2	Day of Year   \
+          5     BYTE            Hour           \___ Wall 
+          6     BYTE            Minute         /    Time
+          7     BYTE            Second        /
+          8     BYTE            Centiseconds /
+         9-10   INTEGER*2	Year         \
+        11-12   INTEGER*2	Day of Year   \
+          13    BYTE            Hour           \___ Spacecraft
+          14    BYTE            Minute         /    Time
+          15    BYTE            Second        /
+          16    BYTE            Centiseconds /
+        17-24   REAL*8	        Wall time (in milliseconds since 3-JAN-0001 BC); 
+                                this is the same time as bytes 1-8, but in another 
+                                format.
+     	25-32	REAL*8	        Spacecraft time (in milliseconds since 3-JAN-0001 
+                                BC); this is the same time as bytes 9-16, but in 
+                                another format.
+        33-36   INTEGER*4	Number of bytes per SubFrame ( 33 or 40 )
+        37-40   INTEGER*4       Number of SubFrames per block ( EDB or HDB )
+        41-44   INTEGER*4       Measured spin ( 0 -> 59 )
+        45-48   INTEGER*4       Continuous spincount ( 0 -> 255 )
+        49-52   INTEGER*4       Number of SWICS PHA-words
+        53-56   INTEGER*4       Number of STICS PHA-words
+        57-60   INTEGER*4       Number of MASS PHA-words
+        61-64   INTEGER*4       Number of SWICS RATE-words
+        65-68   INTEGER*4       Number of STICS RATE-words
+        69-72   INTEGER*4       TIME left to handle EDB in 0.256 s.
+        73-76   INTEGER*4       Telemetry mode
+          77    BYTE            SYNC word; hexadecimal 14
+          78    BYTE            SYNC word; hexadecimal 6F
+          79    LOGICAL*1	Bit Rate; .FALSE. = Normal, .TRUE. = High bit rate
+          80    LOGICAL*1       HDB flag; .FALSE. = EDB,.TRUE. = HDB
+          81    LOGICAL*1       RAM Check Status; .FALSE. = Off, .TRUE. = On
+          82    LOGICAL*1       SWICS Power; .FALSE. = Off, .TRUE. = On
+          83    LOGICAL*1       STICS Power; .FALSE. = Off, .TRUE. = On
+          84    LOGICAL*1       MASS Power; .FALSE. = Off, .TRUE. = On
+          85    LOGICAL*1       Valid Command Flag;  .FALSE. = Bad, .TRUE. = Good
+          86    LOGICAL*1       Invalid Command Flag
+          87    LOGICAL*1       Command Error Flag
+          88    LOGICAL*1       SWICS Heater Power; .FALSE. = Off, .TRUE. = On
+          89    LOGICAL*1       SWICS Cover Power;  .FALSE. = Off, .TRUE. = On
+          90    LOGICAL*1       STICS Heater Power; .FALSE. = Off, .TRUE. = On
+          91    LOGICAL*1       STICS Cover Power; .FALSE. = Off, .TRUE. = On
+          92    LOGICAL*1       MASS Cover Power; .FALSE. = Off, .TRUE. = On
+          93    LOGICAL*1       MASS Discharge B indicator
+          94    LOGICAL*1       Runtime error flag 
+          95    LOGICAL*1       SWICS DAPS Discharge flag
+          96    LOGICAL*1       MASS HPS Stepping flag
+          97    LOGICAL*1       MASS Stop MCP Stepping flag
+          98    LOGICAL*1       MASS Start MCP Stepping flag
+          99    LOGICAL*1       SWICS PAPS Stepping flag
+         100    LOGICAL*1       SWICS Stop MCP Stepping flag
+         101    LOGICAL*1       SWICS Start MCP Stepping flag
+         102    LOGICAL*1       STICS MCP (3 or 4 or 5 or 6) Stepping flag
+         103    LOGICAL*1       STICS MCP (0 or 1 or 2) Stepping flag
+         104    LOGICAL*1       Quality flag for this spin; for this flag, and 
+                                those that follow, 0 = Good. If Bit 0 is set, 
+                                Frame sync error; If Bit 1 is set, Frame counter 
+                                error; if Bit 2 is set,  Fill frame; if Bit 3 is 
+                                set, missing EDB.
+         105    LOGICAL*1       Core Quality flag
+         106    LOGICAL*1       SWICS Basic Rates Quality flag
+         107    LOGICAL*1       SWICS Matrix Rates Quality flag	 
+         108    LOGICAL*1       SWICS Matrix Elements 0-121 Quality flag
+         109    LOGICAL*1       SWICS Matrix Elements 122-479 Quality flag
+         110    LOGICAL*1       SWICS Engineering Rates Quality flag	
+         111    LOGICAL*1       STICS High Resolution Matrix Rates Quality flag	
+         112    LOGICAL*1       STICS Sectored Matrix Rates Quality flag	
+         113    LOGICAL*1       STICS Basic Rates Quality flag	
+         114    LOGICAL*1       STICS Omnidirectional Matrix Rates Quality flag	
+         115    LOGICAL*1       STICS Engineering Rates Quality flag	
+         116    LOGICAL*1       MASS Unsectored Engineering Rates Quality flag	
+         117    LOGICAL*1       MASS Sectored Engineering Rates Quality flag	
+         118    LOGICAL*1       MASS Basic Rates Quality flag	
+         119    LOGICAL*1       MASS Matrix Rates Quality flag	
+         120    LOGICAL*1       SWICS PHA Quality flag	
+         121    LOGICAL*1       STICS PHA Quality flag	
+         122    LOGICAL*1       MASS PHA Quality flag	
+         123    LOGICAL*1       Spare to make the structure length a whole number 
+                                of long (4-byte) words.
+        123 bytes for each of 60 spins,  plus an initial  4 byte identifier brings 
+        the core record's length to 7384 bytes.
+        Next comes  the Housekeeping data. First, we have HK data. There are up to
+        6 sets of HK data each in the format  specified by  the structure HKEEP in 
+        the module EDBDEF.INC. They are ordered as follows:
+        Bytes     Format        Description
+         1-4    CHARACTER*4	identifier 'HK  '
+         5-6     INTEGER*2      HKCOUNT, number of valid HK'S
+         7-8     INTEGER*2      Spare, to preserve 4-byte alignment
+         9-190  See below       information for HK 1
+       191-372  See below       information for HK 2
+       373-562  See below       information for HK 3
+       563-736  See below       information for HK 4
+       737-918  See below       information for HK 5
+      919-1100  See below       information for HK 6
+        Then  we have  the HK's  themselves. There will  HKCOUNT valid HK's, where 
+        HKCOUNT is between 1 and 6, BUT there will be space  reserved for  6 HK's,
+        regardless of the actual number of valid HK's.  Each consists of times (in 
+        both integer and real format)  followed by 75 values and 75 quality flags. 
+        The order of these quantities is specified by the structure HKP in EDBDEF,
+        and is shown below:
+        Bytes     Format        Description
+         1-2    INTEGER*2	Year         \
+         3-4    INTEGER*2	Day of Year   \
+          5        BYTE         Hour           \___ Wall 
+          6        BYTE         Minute         /    Time
+          7        BYTE         Second        /
+          8        BYTE         Centiseconds /
+         9-10   INTEGER*2	Year         \
+        11-12   INTEGER*2	Day of Year   \
+          13       BYTE         Hour           \___ Spacecraft
+          14       BYTE         Minute         /    Time
+          15       BYTE         Second        /
+          16       BYTE         Centiseconds /
+        17-24    REAL*8	        Wall time (in milliseconds since 3-JAN-0001 BC); 
+                                this is the same time as bytes 1-8, but in another 
+                                format.
+     	25-32    REAL*8	        Spacecraft time (in milliseconds since 3-JAN-0001 
+                                BC); this is the same time as bytes 9-16, but in 
+                                another format.
+          33       BYTE         DPU Temp (S/C Thermistor)
+          34       BYTE         Quality flag for the above
+          35       BYTE         SWICS Electronic Temp (S/C Thermistor)
+          36       BYTE         Quality flag for the above
+          37       BYTE         MASS AE Temp (S/C Thermistor)
+          38       BYTE         Quality flag for the above
+          39       BYTE         STICS SSD Temp (S/C Thermistor)
+          40       BYTE         Quality flag for the above
+          41       BYTE         STICS AE housing Temp (S/C Thermistor)
+          42       BYTE         Quality flag for the above
+          43       BYTE         DPU 28V primary current
+          44       BYTE         Quality flag for the above
+          45       BYTE         DPU 5.2V (switched) voltage
+          46       BYTE         Quality flag for the above
+          47       BYTE         DPU 5.2V (permanent) voltage
+          48       BYTE         Quality flag for the above
+          49       BYTE         DPU 1OV voltage
+          50       BYTE         Quality flag for the above
+          51       BYTE         DPU temperature
+          52       BYTE         Quality flag for the above
+          53       BYTE         SWICS +28V primary current (GndRef)
+          54       BYTE         Quality flag for the above
+          55       BYTE         SWICS +5V voltage (GndRef)
+          56       BYTE         Quality flag for the above
+          57       BYTE         SWICS +5V current (GndRef)
+          58       BYTE         Quality flag for the above
+          59       BYTE         SWICS -5V voltage (GndRef)
+          60       BYTE         Quality flag for the above
+          61       BYTE         SWICS +8V voltage (GndRef)
+          62       BYTE         Quality flag for the above
+          63       BYTE         SWICS 20V voltage (GndRef)
+          64       BYTE         Quality flag for the above
+          65       BYTE         SWICS 20V current (GndRef)
+          66       BYTE         Quality flag for the above
+          67       BYTE         SWICS LVPS 28V voltage (GndRef)
+          68       BYTE         Quality flag for the above
+          69       BYTE         SWICS DPPS 28V current (GndRef)
+          70       BYTE         Quality flag for the above
+          71       BYTE         SWICS PAPS 28V current (GndRef)
+          72       BYTE         Quality flag for the above
+          73       BYTE         SWICS PAPS output voltage (GndRef)
+          74       BYTE         Quality flag for the above
+          75       BYTE         SWICS +5V voltage (PAPS Ref)
+          76       BYTE         Quality flag for the above
+          77       BYTE         SWICS +5V current (PAPS Ref)
+          78       BYTE         Quality flag for the above
+          79       BYTE         SWICS -5V voltage (PAPS Ref)
+          80       BYTE         Quality flag for the above
+          81       BYTE         SWICS -5V current (PAPS Ref)
+          82       BYTE         Quality flag for the above
+          83       BYTE         SWICS +12V voltage (PAPS Ref)
+          84       BYTE         Quality flag for the above
+          85       BYTE         SWICS +12V current (PAPS Ref)
+          86       BYTE         Quality flag for the above
+          87       BYTE         SWICS -12V voltage (PAPS Ref)
+          88       BYTE         Quality flag for the above
+          89       BYTE         SWICS -12V current (PAPS Ref)
+          90       BYTE         Quality flag for the above
+          91       BYTE         SWICS SSD Temp (PAPS Ref)
+          92       BYTE         Quality flag for the above
+          93       BYTE         MASS +28V primary current (Gnd Ref)
+          94       BYTE         Quality flag for the above
+          95       BYTE         MASS +5V voltage (Gnd Ref)
+          96       BYTE         Quality flag for the above
+          97       BYTE         MASS +5V current (Gnd Ref)
+          98       BYTE         Quality flag for the above
+          99       BYTE         MASS -5V voltage (Gnd Ref)
+         100       BYTE         Quality flag for the above
+         101       BYTE         MASS +8V voltage (Gnd Ref)
+         102       BYTE         Quality flag for the above
+         103       BYTE         MASS LVPS 28V voltage (Gnd Ref)
+         104       BYTE         Quality flag for the above
+         105       BYTE         MASS A/D PS 28V current (Gnd Ref)
+         106       BYTE         Quality flag for the above
+         107       BYTE         MASS A/D PS output voltage (Gnd Ref)
+         108       BYTE         Quality flag for the above
+         109       BYTE         MASS DPPS 28V current (Gnd Ref)
+         110       BYTE         Quality flag for the above
+         111       BYTE         MASS AE temperature (Gnd Ref)
+         112       BYTE         Quality flag for the above
+         113       BYTE         MASS +5V voltage (ADPS Ref)
+         114       BYTE         Quality flag for the above
+         115       BYTE         MASS +5V current (ADPS Re
+         116       BYTE         Quality flag for the above
+         117       BYTE         MASS -5V voltage (ADPS Ref)
+         118       BYTE         Quality flag for the above
+         119       BYTE         MASS -5V current (ADPS Ref)
+         120       BYTE         Quality flag for the above
+         121       BYTE         MASS +6V voltage (ADPS Ref)
+         122       BYTE         Quality flag for the above
+         123       BYTE         MASS +6V current (ADPS Ref)
+         124       BYTE         Quality flag for the above
+         125       BYTE         MASS +12V voltage (ADPS Ref)
+         126       BYTE         Quality flag for the above
+         127       BYTE         MASS -12V voltage (ADPS Ref)
+         128       BYTE         Quality flag for the above
+         129       BYTE         MASS LVPS 28V voltage (ADPS Ref)
+         130       BYTE         Quality flag for the above
+         131       BYTE         MASS HPS & MCPPS 28V current (ADPS Ref)
+         132       BYTE         Quality flag for the above
+         133       BYTE         MASS HPS output voltage (ADPS Ref)
+         134       BYTE         Quality flag for the above
+         135       BYTE         STICS +28V primary current
+         136       BYTE         Quality flag for the above
+         137       BYTE         STICS +5V voltage
+         138       BYTE         Quality flag for the above
+         139       BYTE         STICS -5V voltage
+         140       BYTE         Quality flag for the above
+         141       BYTE         STICS +6V voltage
+         142       BYTE         Quality flag for the above
+         143       BYTE         STICS -6V voltage
+         144       BYTE         Quality flag for the above
+         145       BYTE         STICS +12V voltage
+         146       BYTE         Quality flag for the above
+         147       BYTE         STICS -12V voltage
+         148       BYTE         Quality flag for the above
+         149       BYTE         STICS MCPPS 28V current
+         150       BYTE         Quality flag for the above
+         151       BYTE         STICS DPPS 28V current
+         152       BYTE         Quality flag for the above
+         153       BYTE         STICS T1, AE housing temp
+         154       BYTE         Quality flag for the above
+         155       BYTE         STICS T3, SSD temp
+         156       BYTE         Quality flag for the above
+         157       BYTE         RAM error in last science record, compressed with
+                                compressing scheme "A".
+         158       BYTE         Quality flag for the above
+         159       BYTE         ROM error in last science record, compressed with
+                                compressing scheme "A".
+         160       BYTE         Quality flag for the above
+         161       BYTE         command CODE of last valid command
+         162       BYTE         Quality flag for the above
+         163       BYTE         command CODE of second last valid command
+         164       BYTE         Quality flag for the above
+         165       BYTE         command CODE of third last valid command
+         166       BYTE         Quality flag for the above
+         167       BYTE         command CODE of last invalid command
+         168       BYTE         Quality flag for the above
+         169       BYTE         error CODE of last invalid command
+         170       BYTE         Quality flag for the above
+         171       BYTE         bit 7-2: reset counter
+                                bit 1-0: last reset cause
+                                       "0": power up
+                                       "1": latch-up
+                                       "2": under voltage control (UVC)
+                                       "3": watch dog
+         172       BYTE         Quality flag for the above
+         173       BYTE         bit 7-4: major frame counter
+                                bit 3: time code state
+                                       "0": time code ok
+                                       "1": time code lost
+                                bit 2: sector clock state
+                                       "0": sector clock ok
+                                       "1": sector clock lost
+                                bit 1: engineering mode state
+                                       "0": no engineering mode
+                                       "1": instrument in engineering mode
+                                bit 0: sun pulse state
+                                       "0": sun pulse ok
+                                       "1": sun pulse lost
+         174       BYTE         Quality flag for the above
+         175       BYTE         power interface switch status
+                                bit 7: "0": MASS main power off
+                                       "1": MASS main power on
+                                bit 6: "0": SWICS main power off
+                                       "1": SWICS main power on
+                                bit 5: "0": STICS main power off
+                                       "1": STICS main power on
+                                bit 4: "0": MASS cover power off
+                                       "1": MASS cover power on
+                                bit 3: "0": SWICS heater power off
+                                       "1": SWICS heater power on
+                                bit 2: "0": SWICS cover power off
+                                       "1": SWICS cover power on
+                                bit 1: "0": STICS heater power off
+                                       "1": STICS heater power on
+                                bit 0: "0": STICS cover power off
+                                       "1": STICS cover power on
+         176       BYTE         Quality flag for the above
+         177       BYTE         sensor status byte 0
+                                bit 7: SWICS HV Hardware enabled
+                                bit 6: SWICS PAPS discharge occurred
+                                bit 5: SWICS PAPS on
+                                bit 4: SWICS DPPS on
+                                bit 3: SWICS Start MCPPS on
+                                bit 2: SWICS Stop MCPPS on
+                                bit 1: MASS HV Hardware enabled
+                                bit 0: MASS HPS discharge occurred
+         178       BYTE         Quality flag for the above
+         179       BYTE         sensor status byte 2
+                                bit 7: "0": MASS DPPS off
+                                       "1": MASS DPPS on
+                                bit 6: "0": MASS A/D PS off
+                                       "1": MASS A/D PS on
+                                bit 5: "0": MASS HPS off
+                                       "1": MASS HPS on
+                                bit 4: "0": MASS Start MCPPS off
+                                       "1": MASS Start MCPPS on
+                                bit 3: "0": MASS Stop MCPPS off
+                                       "1": MASS Stop MCPPS on
+                                bit 2: "0": STICS HV hardware safe 
+                                       "1": STICS HV hardware enabled
+                                bit 1: "0": STICS -DPPS off
+                                       "1": STICS -DPPS on
+                                bit 0: "0": STICS +DPPS off
+                                       "1": STICS +DPPS on
+         180       BYTE         Quality flag for the above
+         181       BYTE         sensor status byte 3
+                                bit 7: "Q": STICS MCPPS 6 off
+                                       "1": STICS MCPPS 6 on
+                                bit 6: "0": STICS MCPPS S off
+                                       "1": STICS MCPPS S on
+                                bit 5: "0": STICS MCPPS 4 off
+                                       "1": STICS MCPPS 4 on
+                                bit 4: "0": STICS MCPPS 3 off
+                                       "1": STICS MCPPS 3 on
+                                bit 3: "0": STICS MCPPS 2 off
+                                       "1": STICS MCPPS 2 on
+                                bit 2: "0": STICS MCPPS 1 off
+                                       "1": STICS MCPPS 1 on
+                                bit 1: "0": STICS MCPPS 0 off
+                                       "1": STICS MCPPS 0 on
+                                bit 0: not used
+         182       BYTE         Quality flag for the above
+        Then there is the HDB (Housekeeping Data Block). This format  is described 
+        in the structure HDB2 in EDBDEF.INC. Note that bytes 232-279 will be  0 in
+        maneuver mode.
+        Bytes     Format        Description
+         1-4    CHARACTER       'HDB '
+         5-6    INTEGER*2	Year         \
+         7-8    INTEGER*2	Day of Year   \
+          9        BYTE         Hour           \___ Wall 
+         10        BYTE         Minute         /    Time
+         11        BYTE         Second        /
+         12        BYTE         Centiseconds /
+        13-14    INTEGER*2	Year         \
+        15-16    INTEGER*2	Day of Year   \
+         17        BYTE         Hour           \___ Spacecraft
+         18        BYTE         Minute         /    Time
+         19        BYTE         Second        /
+         20        BYTE         Centiseconds /
+        21-28     REAL*8        Wall time (in milliseconds since 3-JAN-0001 BC); 
+                                this is the same time as bytes 1-8, but in another 
+                                format.
+     	29-36	  REAL*8        Spacecraft time (in milliseconds since 3-JAN-0001 
+                                BC); this is the same time as bytes 9-16, but in 
+                                another format.
+        37-38    INTEGER*4      Quality flag for HDB; for this flag, and 
+                                those that follow, 0 = Good. If Bit 0 is set, 
+                                Frame sync error; If Bit 1 is set, Frame counter 
+                                error; if Bit 2 is set,  Fill frame; if Bit 3 is 
+                                set, missing HDB.
+          37       BYTE         EDB identifier "14h"
+          38       BYTE         EDB identifier "6Fh" mode information
+          39       BYTE                 bits 0-4:number of subframes, always = "7"
+                                        bit   5 :EDB/HDB identifier
+                                              "0": EDB
+                                              "1": HDB
+                                        bit   6 :bytes per subframe identifier
+                                              "0": 33 bytes per subframe
+                                              "1": 40 bytes per subframe
+                                        bit   7 :high bit rate mode
+                                              "0": low bit rate mode
+                                              "1": high bit rate mode
+          40       BYTE         science record counter, bit 16-23
+          41       BYTE         science record counter, bit 8-15
+          42       BYTE         science record counter, bit 0-7
+          43       BYTE         time code, bit 24-32
+          44       BYTE         time code, bit 16-23
+          45       BYTE         time code, bit 8-15
+          46       BYTE         time code, bit 0-7
+          47       BYTE         STICS MCPPS 0 high voltage limit
+          48       BYTE         STICS MCPPS 1 high voltage limit
+          49       BYTE         STICS MCPPS 2 high voltage limit
+          50       BYTE         STICS MCPPS 3 high voltage limit
+          51       BYTE         STICS MCPPS 4 high voltage limit
+          52       BYTE         STICS MCPPS 5 high voltage limit
+          53       BYTE         STICS MCPPS 6 high voltage limit
+          54       BYTE         STICS MCPPS 0 high voltage commanded level
+          55       BYTE         STICS MCPPS 1 high voltage commanded level
+          56       BYTE         STICS MCPPS 2 high voltage commanded level
+          57       BYTE         STICS MCPPS 3 high voltage commanded level
+          58       BYTE         STICS MCPPS 4 high voltage commanded level
+          59       BYTE         STICS MCPPS 5 high voltage commanded level
+          60       BYTE         STICS MCPPS 6 high voltage commanded level
+          61       BYTE         STICS high voltage commanded states
+                                        bit 0:STICS MCPPS 0
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bit 1:STICS MCPPS 1
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bit 2:STICS MCPPS 2
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bit 3:STICS MCPPS 3
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bit 4:STICS MCPPS 4
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bit 5:STICS MCPPS 5
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bit 6:STlCS MCPPS 6
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bit 7:STICS +DPPS
+                                              "0": high voltage off
+                                              "1": high voltage on
+          62       BYTE                 bit 0:STICS -DPSS high voltage commanded state
+                                              "0": high voltage off
+                                              "1": high voltage on
+                                        bits 1-3:commanded valid event trigger mode
+                                              "0": E requires an energy signal
+                                              "1": Tn requires a time-of-flight coincidence. All start
+                                                   and stop signals come from the same telescope. 
+                                              "2": (Tn & E) | (Tn &-En) requires a time-of-flight where
+                                                   start and stop come from the same telescope and if
+                                                   there is an energy signal it must come from the same
+                                                   telescope as well.
+                                              "3": Tn & En requires a triple coincidence where start,
+                                                   stop and energy all come from the same telescope. 
+                                              "4": E | T. The event may either be energy, time-of-flight 
+                                                   or both.
+                                              "5": (E & T) | (Tn & E) I (Tn & En).  The event may
+                                                   either be energy or time-of-flight with start & stop
+                                                   from the same telescope or triple coincidence with
+                                                   all signals from the same telescope. 
+                                              "6": Cal & (E | T) requires an energy or time-of-flight
+                                                   in coincidence-with the internal calibrate strobe. 
+                                              "7": (E & !T) | (Tn & En). The event may be energy only,
+                                                   of triple coincidence with all signals from the same
+                                                   telescope. 
+                                        bit 4:cover status:
+                                              "0": cover open 
+                                              "1": cover closed
+                                        bit 5:high voltage plug indicator
+                                              "0": HV save
+                                              "1": plug removed, HV enabled
+                                        bits 6-7:stepping sequence:
+                                              "0": ROM table 0
+                                              "1": ROM table 1
+                                              "2": ROM table 2
+                                              "3": RAM table 3
+          63       BYTE                 bit 0:commanded calibrator sequence state
+                                              "0": calibrator sequence disabled
+                                              "1": calibrator sequence enabled
+                                        bit 1:commanded calibrator power
+                                              "0": calibrator power off
+                                              "1": calibrator power on
+                                        bit 2:commanded high rate mode status
+                                              "0": high rate mode (100,000 PHA events/second, maximum).
+                                              "1": low rate mode (25,000 PHA events/second, maximum)
+                                        bit 3:commanded main SSD Bias power
+                                              "0": main SSD Bias power on
+                                              "1" main SSD Bias power off
+                                        bit 4:commanded SSD Bias power 1
+                                              "0": SSD Bias power on
+                                              "1": SSD Bias power off
+                                        bit 5:commanded SSD Bias power 2
+                                              "0": SSD Bias power on
+                                              "1": SSD Bias power off
+                                        bit 6:commanded SSD Bias power 3
+                                              "0": SSD Bias power on
+                                              "1": SSD Bias power off
+                                        bit 7:STICS echo check status
+                                              "0": STICS sensor command echo check off
+                                              "1": STICS sensor command echo check on
+          64       BYTE         measured STICS MCPPS 0 high voltage level
+          65       BYTE         measured STICS MCPPS 1 high voltage level
+          66       BYTE         measured STICS MCPPS 2 high voltage level
+          67       BYTE         measured STICS MCPPS 3 high voltage level
+          68       BYTE         measured STICS MCPPS4 high voltage level
+          69       BYTE         measured STICS MCPPS 5 high voltage level
+          70       BYTE         measured STICS MCPPS 6 high voltage level
+          71       BYTE         measured STICS MCPPS & TOFPS input current
+          72       BYTE         measured STICS DPPS current
+         73-75     BYTE         measured STICS DPPS high voltages.  The high voltages are
+                                are commutated over 64 HDBs.  The counter for
+                                decommutation is in the HDB in byte 5 bit 0-5 (science
+                                record counter). The HDB  number n*64+0 contains
+                                measured high voltages of previous science records in
+                                measurement spin 0. The following HDB contains high
+                                voltages of measurement spin 1 and so on.
+                                Note: in HDBs n*64+60 thru n*64+63 the DPPS voltage is not
+                                defined! 
+          76       BYTE         measured +DPPS high voltage bit 4-11
+          77       BYTE                 bits 4-7:measured +DPPS high voltage bit 0-3
+          78       BYTE                 bits 0-3:measured -DPPS high voltage bit 7-11
+          79       BYTE                 bits 0-7:measured -DPPS high voltage bit 0-7
+                                           measured STICS DPPS high voltage.  The high voltage is
+                                               commutated over 64 HDBs.  The counter for decommutation
+                                               is in the HDB in Byte 5, bit 0-5 (science record
+                                               counter).  The HDB number  n*64+0 contains measured high
+                                               voltages of previous science records in measurement spin
+                                               0.  The following HDB contains high voltages of
+                                               measurement spin 1 and so on. 
+          80       BYTE         measured STICS thermistor 1, analog electronic
+          81       BYTE         measured STICS thermistor 2
+          82       BYTE         measured STICS thermistor 3
+          83       BYTE         measured STICS thermistor 4
+          84       BYTE         measured STICS LVPS +6V voltage
+          85       BYTE         measured STICS LVPS -6V voltage
+          86       BYTE         measured STICS LVPS +5V voltage
+          87       BYTE         measured STICS LVPS -5V voltage
+          88       BYTE         measured STICS LVPS +12V voltage
+          89       BYTE         measured STICS LVPS SSD Bias voltage
+          90       BYTE         measured STICS LVPS input current
+          91       BYTE         measured STICS LVPS -12V voltage
+          92       BYTE         commanded energy thresholds
+                                        bits 2-7:energy threshold 1 bit 0-5
+                                        bits 0-1:energy threshold 2 bit 4-5
+          93       BYTE                 bits 4-7:energy threshold 2 bit 0-3
+                                        bits 0-3:energy threshold 3 bit 2-5
+          94       BYTE                 bits 6-7:energy threshold 3 bit 0-1
+                                        bits 2-5:commanded time calibrator level
+                                              "0" = 300 ns                                        
+                                              "1" = 280 ns
+                                              "2" = 260 ns
+                                              "3" = 240ns
+                                              "4" = 220 ns
+                                              "5" = 200 ns
+                                              "6" = 180 ns
+                                              "7" = 160 ns
+                                              "8" = 140 ns
+                                              "9" = 120 ns
+                                              "10" = 100 ns
+                                              "11" =08 ns
+                                              "12" = 060 ns
+                                              "13" =040ns
+                                              "14" = 020 ns
+                                              "15" = invalid
+                                        bit 1:commanded multiple stop state
+                                              "0": = multiple stops disabled
+                                              "1": = multiple StopS enabled
+                                        bit 0:commanded multiple start state
+                                              "0": = multiple starts disabled
+                                              "1": = multiple sms enabled
+          95       BYTE         commanded energy calibrator level
+          96       BYTE                 bit 0:commanded time preamp power stop 2
+                                              "0": power off
+                                              "1": power on
+                                        bit 1:commanded time preamp power start 5&6
+                                              "0": power off
+                                              "1": power on
+                                        bit 2:commanded time preamp power start 1&2
+                                              "0": power off
+                                              "1": power on
+                                        bit 3:commanded time preamp power start 3
+                                              "0": power off
+                                              "1": power on
+                                        bit 4:commanded time preamp power start 4
+                                              "0": power off
+                                              "1": power on
+                                        bit 5:commanded energy preamp power SSD 1
+                                              "0": power off
+                                              "1": power on                                  
+                                        bit 6:commanded energy preamp power SSD 2
+                                              "0": power off
+                                              "1": power on
+                                        bit 7:commanded energy preamp power SSD 3
+                                              "0": power off
+                                              "1": power on
+          97       BYTE                 bit 0:commanded energy channel 1
+                                              "0": energy channel off
+                                              "1": energy channel on
+                                        bit 1:commanded energy channel 2
+                                              "0": energy channel off                          
+                                              "1": energy channel on
+                                        bit 2:commanded energy channel 3
+                                              "0": energy channel off
+                                              "1": energy channel on
+                                        bit 3:commanded energy threshold
+                                              "0": low energy threshold
+                                              "1": high energy threshold
+                                        bits 4-7:commanded TAC slope
+                                              "0": invalid
+                                              "1": TAC slope: nominal
+                                              "2": invalid
+                                              "3": invalid
+                                              "4": invalid
+                                              "5": TAC slope: -10%
+                                              "6": invalid
+                                              "7": TAC slope: +10%
+                                              "8": invalid
+                                              "9": TAC slope: +5%
+                                              "10": invalid
+                                              "11": invalid
+                                              "12": invalid
+                                              "13": TAC slope: -5%
+                                              "14": invalid
+                                              "15": invalid
+          98       BYTE         commanded energy calibrator level             
+          99       BYTE                 bits 0-3:commanded time calibrator level
+                                        bit 4:commanded start MCPPS stale
+                                              "0": power off
+                                              "1": power on
+                                        bit 5:commanded stop MCPPS state
+                                              "0": power off
+                                              "1": power on
+                                        bit 6:commanded SSD Bias state
+                                              "0": power on
+                                              "1": power off
+                                        bit 7:commanded PAPS state
+                                              "0": power off
+                                              "1": power on
+         100       BYTE                 bits 0-2:commanded ADC trigger mode
+                                              "0": E or T
+                                              "1": E
+                                              "2": E and T                                      
+                                              "3": T
+                                              "4": E or T during calibration cycle
+                                              "5": E during calibration cycle
+                                              "6": E and T during calibration cycle
+                                              "7": T during calibration cycle
+                                        bit 3:commanded DPPS state
+                                              "0": power off
+                                              "1": power on
+                                        bit 4:HV safe plug
+                                              "0": HV safe
+                                              "1": HV enabled, plug removed
+                                        bit 5:aperture cover indicator
+                                              "0": cover open
+                                              "1": cover closed
+                                        bit 6:discharge indicator
+                                              "0": no discharge in previous spin
+                                              "1": discharge in previous spin
+                                        bit 7:SWICS sensor command error check
+                                              "0": sensor command error check off
+                                              "1": sensor command error check on
+         101       BYTE         commanded DPPS high voltage.  While the HDB formatting
+                                routine runs, the current DPPS high voltage level will
+                                be measured and formatted.  Normally, the value is taken
+                                during measurement spin 0 or 1.
+         102       BYTE         commanded SWICS PAPS high voltage level.
+         103       BYTE         commanded start MCPPS level
+         104       BYTE         commanded stop MCPPS level
+         105       BYTE         start MCPPS limit
+         106       BYTE         stop MCPPS limit
+         107       BYTE         measured 20V current          (ground referenced HK)
+         108       BYTE         measured 20V voltage          (ground referenced HK)
+         109       BYTE         measured 28V PAPS current     (ground referenced HK)
+         110       BYTE         measured LVPS 28V voltage     (ground referenced HK)
+         111       BYTE         measured PAPS output voltage  (ground referenced HK)
+         112       BYTE         measured DPPS 28V current     (ground referenced HK)
+         113       BYTE         measured SWICS DPPS high voltage.  The high voltage is
+                                commutated over 64 HDBs.  The counter for decommutation
+                                is in the HDB in byte 5 bit 0-5 (science record
+                                counter).  The HDB number n 64+0 contains measured high
+                                voltages of previous science records in measurement spin
+                                0.  The following HDB contains the high voltages of
+                                measurement spin 1, and so on.
+                                Note: in HDBs n*64+60 thru n*64+63 the DPPS voltage is not
+                                defined! 
+         114       BYTE         measured +5V Voltage         (PAPS referenced HK)
+         115       BYTE         measured +5V Current         (PAPS referenced HK)
+         116       BYTE         measured -5V Voltage         (PAPS referenced HK)
+         117       BYTE         measured -5V Current         (PAPS referenced HK)
+         118       BYTE         measured Start MCPPS voltage (PAPS referenced HK)
+         119       BYTE         measured Stop MCPPS voltage  (PAPS referenced HK)
+         120       BYTE         measured thermistor 1, SSD   (PAPS referenced HK)
+         121       BYTE         measured thermistor 2, analog electronic (PAPS referenced HK)
+         122       BYTE         measured SSD bias voltage    (PAPS referenced HK)
+         123       BYTE         measured +12V Voltage        (PAPS referenced HK)
+         124       BYTE         measured +12V Current        (PAPS referenced HK)
+         125       BYTE         measured -12V Voltage        (PAPS referenced HK)
+         126       BYTE         measured -12V Current        (PAPS referenced HK)
+         127       BYTE         SWICS sun gate 
+                                        bit 7:sector 15: "0": non sun "1": sun
+                                        bit 6:sector 14: "0": non sun "1": sun
+                                        bit 5:sector 13: "0": non sun "1": sun
+                                        bit 4:sector 12: "0": non sun "1": sun
+                                        bit 3:sector 11: "0": non sun "1": sun
+                                        bit 2:sector 10 "0": non sun "1": sun
+                                        bit 1:sector 9: "0": non sun "1": sun
+                                        bit 0:sector 8: "0": non sun "1": sun
+         128       BYTE         SWICS sun gate
+                                        bit 7:sector 7: "0": non sun "1": sun
+                                        bit 6:sector 6: "0": non sun "1": sun
+                                        bit 5:sector 5: "0": non sun "1": sun
+                                        bit 4:sector 4: "0": non sun "1": sun
+                                        bit 3:sector 3: "0": non sun "1": sun
+                                        bit 2:sector 2: "0": non sun "1": sun
+                                        bit 1:sector 1: "0": non sun "1": sun
+                                        bit 0:sector 0: "0": non sun "1": sun
+         129       BYTE         compressed SWICS FSR limit.  It defines the change of the
+                                stepping direction of DPPS.  The limit is a 32 bit value
+                                which is compressed with selected compression scheme of
+                                the SWlCS compression group 1.
+         130       BYTE                 bit 0:SWICS DPPS stepping sequence
+                                              "0": stepping sequence 0, ROM table selected
+                                              "1": stepping sequence 1, RAM table selected
+                                        bit 1:DPPS range.  This bit is commutated over 64 HDBs.  The range
+                                              bit will be used to decode the commutated high voltage
+                                              level in HDB byte 72.
+                                        bit 2:SWICS static discharge flag
+                                              "0": no discharge
+                                              "1": discharge occurred
+                                              The DPU sets this flag after a discharge.
+                                              It can be cleared by the telecommand D_DIGCMD 35.
+                                        bit 3:not used
+                                        bit 4:reversal stepping mode.
+                                              "0": rate counting continue after reversal stepping.
+                                              "1": rate counting stopped after reversal stepping.
+                                        bit 5:SWICS calibration.
+                                              "0": SWlCS calibration not active.
+                                              "1": SWICS calibration active.
+                                        bit 6:SWICS PHA fIfo mode.
+                                              "0": PHA fifo mode not active.
+                                              "1": PHA fifo mode active.
+                                        bit 7:SWICS test table state.
+                                              "0": SWlCS test tables not active.
+                                              "1": SWICS test tables active.
+         131       BYTE         measured +28V current     (analog housekeeping)
+         132       BYTE         measured +8V current      (analog housekeeping)
+         133       BYTE         measured +8V voltage      (analog housekeeping)
+         134       BYTE         measured +5V current      (analog housekeeping)
+         135       BYTE         measured +5V voltage      (analog housekeeping)
+         136       BYTE         measured -5V voltage      (analog housekeeping)
+         137       BYTE         measured MASS DPPS high voltage.  The high voltage is
+                                commutate over 64 HDBs.  The counter for decommutation is
+                                in the HDB in byte 5 bit 0-5 (science record counter). 
+                                The HDB number n*64+0 contains a measured high voltage
+                                of the previous science recor in measurement spin 0.  The
+                                following HDB contains measured high voltages of
+                                measurement spin 1 and so on.
+                                Note:in HDBs n 64+60 thru n*64+63 the DPPS voltage is not
+                                defined! 
+         138       BYTE         measured +5V Current          (ground referenced housekeeping)
+         139       BYTE         measured +28V primary current (ground referenced housekeeping)
+         140       BYTE         measured +28V DPPS current    (ground referenced housekeeping)
+         141       BYTE         measured +28V A/D PS current  (ground referenced housekeeping)
+         142       BYTE         measured +28V LVPS voltage    (ground referenced housekeeping)
+         143       BYTE         measured +8V Voltage          (ground referenced housekeeping)
+         144       BYTE         measured +5V Voltage          (ground referenced housekeeping)
+         145       BYTE         measured -5V Voltage          (ground referenced housekeeping)
+         146       BYTE         measured thermistor           (ground referenced housekeeping)
+         147       BYTE         measured MASS ADPS high voltage.  The high voltage is
+                                commutated over 64 HDBs.  The counter for decommutation
+                                is in the HDB ir Byte 5, bit 0-5 (science record
+                                counter).  The HDB number n*64+0 contains a measured high
+                                voltage of the previous science record in measurement
+                                spin 0.  The following HDB contains high voltages of
+                                measurement spin 1 and so on. 
+                                Note: in HDBS n*64+60 thru n*64+63 the ADPS voltage is not
+                                defined! 
+         148       BYTE                 bit 0:commanded MASS HPS state                      
+                                              "0": power off
+                                              "1": power on
+                                        bit 1:commanded stop MCPPS state
+                                              "0": power off
+                                              "1": power on
+                                        bit 2:commanded start MCPPS state
+                                              "0": power off
+                                              "1": power on
+                                        bit 3:commanded ADPS state
+                                              "0": power off
+                                              "1": power on
+                                        bit 4:commanded DPPS state
+                                              "0": power off
+                                              "1": power on
+                                        bit 5:MASS DPPS range.  This bit is commutated over 64 HDBs.  The
+                                              range bit will be used to decode the commutated high
+                                              voltage level in byte 96 of the HDB.
+                                              "0": high resolution for input signal of the ADC
+                                              "1": full range for high DPPS readings
+                                        bit 6:HV safe plug
+                                              "0": HV safe
+                                              "1": HV enabled, plug removed
+                                        bit 7:cover indicator
+                                              "0": cover open
+                                              "1": cover closed
+         149       BYTE         commanded ADPS high voltage level
+                                Note: While the HDB formatting routine runs, the current
+                                ADPS high voltage level will be formatted.  Typically, it
+                                is the value of measurement spin 0 or 1.  A definite
+                                allocation is not possible. 
+         150       BYTE                 bits 0-5:commanded DPPS high voltage level.
+                                                 Note: While the HDB formating routine runs, the current DPPS
+                                                 high voltage step will be formatted.  Typically, it is
+                                                 the value of measurement spin 0 or 1.
+                                        bit 6:automatic ADPS calculation
+                                              "0": automatic ADPS calculation off.
+                                              "1": automatic ADPS calculation on.
+                                        bit 7:calibrator power
+                                              "0": calibrator power off.
+                                              "1": calibrator power on.
+         151       BYTE         commanded HPS high voltage level.
+         152       BYTE         commanded HPS high voltage limit.
+         153       BYTE         commanded start MCPPS high voltage level.
+         154       BYTE         start MCPPS high volta,ge limit.
+         155       BYTE         commanded stop MCPPS high voltage level.
+         156       BYTE         stop MCPPS high voltage limit.
+         157       BYTE                 bits 0-3:commanded time calibrator level:
+                                              "0": 300 ns
+                                              "1": 280 ns
+                                              "2": 260 ns
+                                              "3":  240 ns
+                                              "4": 220 ns
+                                              "5": 200 ns
+                                              "6": 180 ns
+                                              "7": 160 ns
+                                              "8": 140 ns
+                                              "9": 120 ns
+                                              "10": 100 ns
+                                              "11": 80ns
+                                              "12": 60 ns
+                                              "13": 40 ns
+                                              "14": 20 ns
+                                              "15": invalid
+                                        bit 4:commanded TAC range:
+                                              "0": TAC range = 532 ns
+                                              "1": TAC range = 900 ns
+                                        bit 5:commanded stop aperture state:
+                                              "0": power on
+                                              "1": power off
+                                        bit 6:commanded start aperture 1 state:
+                                              "0": power on
+                                              "1": power off
+                                        bit 7:commanded start aperture 2 state
+                                              "0": power on
+                                              "1": power off
+         158       BYTE         measured HPS voltage (ADPS referenced housekeeping)
+         159       BYTE         measured HPS & MCPPS 28V Current
+         160       BYTE         measured start MCPPS voltage
+         161       BYTE         measured stop MCPPS voltage                    
+         162       BYTE         measured +28V LVPS voltage                     
+         163       BYTE         measured +12V voltage
+         164       BYTE         measured +6V voltage
+         165       BYTE         measured +6V current
+         166       BYTE         measured +5V voltage
+         167       BYTE         measured +5V current
+         168       BYTE         measured -5V current
+         169       BYTE         measured -5V voltage
+         170       BYTE         measured -12V voltage
+         171       BYTE                 bit 0:ADPS stepping sequence
+                                              "0": ROM defined ADPS stepping sequence
+                                              "1": RAM defined ADPS stepping sequence
+                                        bit 1:DPPS stepping sequence
+                                              "0": ROM defined DPPS stepping sequence
+                                              "1": RAM defined DPPS stepping sequence
+                                        bit 2:MASS discharge indicator
+                                              "0": no discharge occurred                         
+                                              "1": discharge occurred
+                                        bit 3:PHA fifo mode
+                                              "0": PHA fifo mode disabled
+                                              "1": PHA fifo mode enabled
+                                        bit 4:MASS test tables active
+                                              "0": test tables not active
+                                              "1": test tables active
+                                        bit 5:MASS calibration
+                                              "0": calibration not active
+                                              "1": calibration active
+                                        bit 6:fixed ADPS table
+                                              "0": ADPS table not fixed
+                                              "1": ADPS table fixed
+                                        bit 7:MASS sensor command echo check
+                                              "0": sensor command echo check disabled
+                                              "1": sensor command echo check enabled
+         172       BYTE         MASS sun sector definition
+                                        bit 7:sector 15: "0": non sun, "1": sun
+                                        bit 6:sector 14: "0": non sun, "1": sun
+                                        bit 5:sector 13: "0": non sun, "1": sun
+                                        bit 4:sector 12: "0": non sun, "1": sun
+                                        bit 3:sector 11: "0": non sun, "1": sun
+                                        bit 2:sector 10: "0": non sun, "1": sun
+                                        bit 1:sector 9:  "0"  non sun, "1": sun
+                                        bit 0:sector 8:  "0": non sun, "1": sun
+         173       BYTE         MASS sun sector definition
+                                        bit 7:sector 7:  "0": non sun, "1": sun
+                                        bit 6:sector 6:  "0": non sun, "1": sun
+                                        bit 5:sector 5:  "0": non sun, "1": sun
+                                        bit 4:sector 4:  "0": non sun, "1": sun
+                                        bit 3:sector 3:  "0": non sun, "1": sun
+                                        bit 2:sector 2:  "0": non sun, "1": sun
+                                        bit 1:sector 1:  "0": non sun, "1": sun
+                                        bit 0:sector 0:  "0": non sun, "1": sun
+         174       BYTE         MASS FSR limit.  It defines the change of the stepping
+                                direction of the DPPS.  The uncompressed limit is a 32
+                                bit value which was compressed to a 8-bit value by the
+                                compression scheme for group 1 of the MASS sensor.
+        175-204    BYTE         MASS class borders
+         175       BYTE         matrix rate 0, lower border, bit 4-11
+         176       BYTE                 bits 4-7:matrix rate 0, lower border, bit 0-3
+                                        bits 0-3:matrix rate 0, upper border, bit 8-11
+         177       BYTE         matrix rate 0, upper border, bit 0-7
+         178       BYTE         matrix rate 1, lower border, bit 4-11
+         179       BYTE                 bits 4-7:matrix rate 1, lower border, bit 0-3
+                                        bits 0-3:matrix rate 1, upper border, bit 8-11
+         180       BYTE         matrix rate 1, upper border, bit 0-7
+         181       BYTE         matrix rate 2, lower border, bit 4-11
+                                        bit 4-7:matrix rate 2, lower border, bit 0-3
+                                        bit 0-3:matrix rate 2, upper border, bit 8-11
+         182       BYTE         matrix rate 2, upper border, bit 0-7
+         183       BYTE         matrix rate 3, lower border, bit 4-11
+         184       BYTE                 bits 4-7:matrix rate 3, lower border, bit 0-3
+                                        bits 0-3:matrix rate 3, upper border, bit 8-11
+         185       BYTE         matrix rate 3, upper border, bit 0-7
+         186       BYTE         matrix rate 4, lower border, bit 4-11
+         187       BYTE                 bits 4-7:matrix rate 4, lower border, bit 0-3
+                                        bits 0-3:matrix rate 4, upper border, bit 8-11      
+         188       BYTE         matrix rate 4, upper border, bit 0-7        
+         189       BYTE         matrix rate 5, lower border, bit 4-11      
+         190       BYTE                 bits 4-7:matrix rate 5, lower border, bit 0-3        
+                                        bits 0-3:matrix rate S, upper border, bit 8-11      
+         191       BYTE         matrix rate S,upper border,bit 0-7           
+         192       BYTE                 bits 0-7:matrix rate 6, lower border, bit 4-11         
+         193       BYTE                 bits 4-7:matrix rate 6, lower border, bit 0-3        
+                                        bits 0-3:matrix rate 6, upper border, bit 8-11      
+         194       BYTE         matrix rate 6, upper border, bit 0-7        
+         195       BYTE         matrix rate 7, lower border, bit 4-11
+         196       BYTE                 bits 4-7:matrix rate 7, lower border, bit 0-3        
+                                        bits 0-3:matrix rate 7, upper border, bit 8-11      
+         197       BYTE         matrix rate 7, upper border, bit 0-7        
+         198       BYTE         matrix rate 8, lower border, bit 4-11      
+         199       BYTE                 bits 4-7:matrix rate 8, lower border, bit 0-3        
+                                        bits 0-3:matrix rate 8, upper border, bit 8-11      
+         200       BYTE         matrix rate 8, upper border, bit 0-7        
+         201       BYTE         matrix rate 9, lower border, bit 4-11      
+         202       BYTE                 bits 4-7:matrix rate 9, lower border, bit 0-3         
+                                        bits 0-3:matrix rale 9, upper border, bit 8-11      
+         203       BYTE         matrix rate 9, upper border, bit 0-7                  
+         204       BYTE         border between basic rate 0 and 1, bit 4-11      
+         205       BYTE                 bits 4-7:border between basic rate 0 and 1, bit 0-3  
+                                        Note: This border should be between matrix rate 2 and 3!
+         206       BYTE                 bits 0-3:sun pulse sector
+        207-209    BYTE         These bytes are commutated over 4 HDBs.  The counter for
+                                decommutation is in the HDB in Byte 5, bit 0-1 (science
+                                record counter).
+                                           HDB 4*n+0:
+                                              byte 166: STICS double error counter
+                                              byte 167: SWICS double error counter 
+                                              byte 168: MASS double error counter
+                                           HDB 4*n+1:
+                                              byte 166: STICS parity error counter
+                                              byte 167: SWICS parity error counter
+                                              byte 168: MASS parity error counter
+                                           HDB 4*n+2:
+                                              byte 166: STICS fatal parity error counter
+                                              byte 167: SWICS fatal parity error counter
+                                              byte 168: MASS fatal parity error counter
+                                           HDB 4*n+3:
+                                              byte 166: sun pulse sector offset
+                                              byte 167: configuration counter bit 0-7
+                                              byte 168: configuration counter bit 7-15
+         210       BYTE         RAM error counter
+         211       BYTE         ROM error counter
+         212       BYTE                 bit 0:latch-up detector for micro-processor
+                                              "0": latch-up detector enabled
+                                              "1": latch-up detector disabled
+                                        bit 1:latch-up detector for the memory of the micro-processor
+                                              "0": latch-up detector enabled
+                                              "1": latch-up detector disabled
+                                        bit 2:latch-up detector for the SWICS classification memory
+                                              "0": latch-up detector enabled
+                                              "1": latch-up detector disabled
+                                        bit 3:latch-up detector for the STICS classification memory
+                                              "0": latch-up detector enabled
+                                              "1": latch-up detector disabled
+                                        bits 4-7:delay time before starting the measurement for uP, uPMem,
+                                                 STICS Mem and SWICS Mem latch-up detector
+         213       BYTE                 bit 0:MASS multiple stops state
+                                              "0": MASS multiple stops disabled
+                                              "1": MASS multiple stops enabled
+                                        bit 1:MASS multiple starts state
+                                              "0": MASS multiple starts disabled
+                                              "1": MASS multiple starts enabled
+                                        bit 2:latch-up detector for MASS classification memory
+                                              "0": latch-up detector enabled                     
+                                              "1": latch-up detector disabled
+                                        bit 3:STICS test tables active state
+                                              "0": STICS test tables not active
+                                              "1": STICS test tables active
+                                        bits 4-7:delay time before starting the measurement for MASS Mem
+                                                 latch-up detector
+         214       BYTE         power state of the sensors
+                                        bit 0:STICS cover power
+                                              "0": power off
+                                              "1": power on
+                                        bit 1:STICS heater power
+                                              "0": power off
+                                              "1": power on
+                                        bit 2:SWICS cover power
+                                              "0": power off
+                                              "1": power on
+                                        bit 3:SWICS heater power                               
+                                              "0": power off
+                                              "1": power on
+                                        bit 4:MASS cover power
+                                              "0": power off
+                                              "1": power on
+                                        bit 5:STICS main power
+                                              "0": power off
+                                              "1": power on
+                                        bit 6:SWICS main power
+                                              "0": power off
+                                              "1": power on
+                                        bit 7:MASS main power
+                                              "0": power off
+                                              "1": power on
+         215       BYTE         command register
+                                        bit 0:STICS double error check
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 1:SWICS double error check
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 2:not used
+                                        bits 3-7:memory page of the classification control unit
+         216       BYTE         command register
+                                        bit 0:STICS classification
+                                              "0": disabled
+                                              "1": enabled                              
+                                        bit 1:STICS PHA handling
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 2:SWICS classification
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 3:SWICS PHA handling
+                                              "0": disabled
+                                              "1" enabled
+                                        bit 4:STICS classification halt (priority over bit 0)
+                                              "0": classification run
+                                              "1": classification halt
+                                        bit 5:SWICS classification halt (priority over bit 0)
+                                              "0": classification run
+                                              "1": classification halt
+                                        bit 6:STICS parity error
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 7:SWICS parity error
+                                              "0": disabled
+                                              "1": enabled
+         217       BYTE         valid command counter
+         218       BYTE         code of last valid command
+         219       BYTE         code of second last valid command
+         220       BYTE         code of third last valid command
+         221       BYTE         invalid command counter
+         222       BYTE         code of last invalid command
+         223       BYTE         error code of last invalid command
+         224       BYTE                 bits 0-3:program load address bit 16-19
+                                        bit 4:NV RAM state
+                                        bit 5:memory scrubbing:
+                                              "0": memory scrubbing not active
+                                              "1": memory scrubbing active
+                                        bits 6-7:last reset-cause:                                      
+                                              "0": power on reset                                     
+                                              "1": last reset caused by latch-up
+                                              "2": last reset caused by UVC
+                                              "3": last reset caused by WatchDog
+         225       BYTE         program load address bit 8-11
+         226       BYTE         program load address bit 0-7
+         227       BYTE                 bit 0:power state simulated:
+                                              "0": power state read from register
+                                              "1": power state simulated (for units without power converter)
+                                        bit 1:not used
+                                        bit 2:main latch-up detector:
+                                              "0": main latch-up detector not active
+                                              "1": main latch-up detector active
+                                        bit 3:PROM bank selection read back:
+                                              "0": PROM bank A
+                                              "1": PROM bank B
+                                        bit 4:PROM toggle mode read back:                             
+                                              "0": toggle mode disabled
+                                              "1": toggle mode enabled
+                                        bit 5:model:
+                                              "0": FM, flight-model
+                                              "1": EM, engineering-model
+                                        bit 6:watch dog reset
+                                        bit 7:latch-up reset
+         228       BYTE         configuration errors
+                                        bit 0:STICS current configuration error:
+                                              "0": no error
+                                              "1": STICS configuration error occurred
+                                        bit 1:STICS snapshot configuration error:
+                                              "0": no error
+                                              "1": STICS configuration error occurred
+                                        bit 2:SWICS current configuration error:
+                                              "0": no error
+                                              "1": STICS configuration error occurred
+                                        bit 3:SWICS snapshot configuration error:
+                                              "0": no error
+                                              "1": STICS configuration error occurred
+                                        bit 4:MASS current configuration error:
+                                              "0": no error
+                                              "1": STICS configuration error occurred
+                                        bit 5:MASS snapshot configuration error:
+                                              "0": no error
+                                              "1": STICS configuration error occurred
+                                        bit 6:current configuration load error:
+                                              "0": no error
+                                              "1": current configuration load error
+                                        bit 7:snapshot configuration load error:
+                                              "0": no error
+                                              "1": snapshot configuration load error
+         229       BYTE                 bits 0-5:reset counter
+                                        bits 6-7:not used
+         230       BYTE                 bit 0:STICS compression group 1:
+                                              "0": compression type A
+                                              "1": compression type C
+                                        bit 1:STICS compression group 2:
+                                              "0": compression type A
+                                              "1": compression type C
+                                        bit 2:SWICS compression group 1:
+                                              "0": compression type A
+                                              "1": compression type C
+                                        bit 3:SWICS compression group 2:
+                                              "0": compression type A
+                                              "1": compression type C
+                                        bit 4:MASS compression group 1:
+                                              "0": compression type A
+                                              "1": compression type C
+                                        bit 5:MASS compression group 2:
+                                              "0": compression type A
+                                              "1": compression type C
+                                        bit 6:software WatchDog:
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 7:High voltage reconfiguration:
+                                              "0": reconfiguration without HV
+                                              "1": reconfiguration with HV
+         231       BYTE                 bit 0:internal clock state:
+                                              "0": external clock
+                                              "1": internal (artificial) clock
+                                        bit 1:internal clock fixed:
+                                              "0": internal (artificial) clock not fixed
+                                              "1": internal (artificial) clock fixed
+                                        bit 2:not used
+                                        bit 3:sector clock lost state:
+                                              "0": sector clock OK
+                                              "1": sector clock lost
+                                        bit 4:sun pulse lost state:
+                                              "0": sun pulse OK
+                                              "1": sun pulse lost
+                                        bit 5:telemetry mode flag:
+                                              "0": telemetry driven by DMA
+                                              "1": telemetry driven by interrupt
+                                        bit 6:program patch state:
+                                              "0": patch not active
+                                              "1": patch active
+                                        bit 7:time code flag:
+                                              "0": time code OK
+                                              "1": time code lost
+         232-251   BYTE         configuration image: The configuration image is commutated
+                                over 64 HDBs.  The counter for decommutation is in the
+                                HDB in byte 5 bit 0-5 (science record counter). 
+                                Detailed definition of the configuration image is
+                                described in chapter 2.3.8. 
+         252       BYTE         last single sensor command answer bit 24-31   
+         253       BYTE         last single sensor command answer bit 16-23
+         254       BYTE         last single sensor command answer bit 8- 15
+         255       BYTE         last single sensor command answer bit 0-7
+         256       BYTE         DPU main current                 (analog housekeeping)
+         257       BYTE         +5V switched voltage             (analog housekeeping)
+         258       BYTE         +5V permanent voltage            (analog housekeeping)
+         259       BYTE         +10V voltage                     (analog housekeeping)
+         260       BYTE         DPU thermistor 1 (on PIF board)  (analog housekeeping)
+         261       BYTE         DPU thermistor 2 (on PIF board)  (analog housekeeping)
+         262       BYTE                 bits 0-2:type of MASS reversal stepping check
+                                              "0": sum of MASS matrix rates l and 2
+                                              "1": MASS matrix rate
+                                              "2": MASS unsectored engineering rate
+                                              "3": MASS sectorised engineering rate
+                                              "4": sum of SWICS matrix rates 1 and 2
+                                              "5": SWICS matrix rate
+                                              "6": invalid
+                                              "7": invalid
+                                               Note: Rate selection of the MASS reversal stepping check is
+                                               in HDB byte 223 bit 3-7!
+                                        bit 3:MASS cyclic sensor command repetition:
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 4:SWICS cyclic sensor command repetition:
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 5:STICS cyclic sensor command repetition:
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 6:STICS calibration active flag:
+                                              "0": STICS calibration not active
+                                              "1": STICS calibration active
+                                        bit 7:STICS PHA fifo mode:
+                                              "0": STICS PHA fifo mode not active
+                                              "1": STICS PHA fifo mode active
+         263       BYTE         SWICS PAPS high voltage limit
+         264       BYTE                 bit 0:static MASS discharge flag:
+                                              "0": no discharge
+                                              "1": discharge occurred
+                                           This flag can be cleared by telecommand D_DIGCMD 34.
+                                        bit 1:MASS double error check:
+                                              "0": double error check disabled
+                                              "1": double error check enabled
+                                        bit 2:under voltage control (UVC):
+                                              "0": disabled
+                                              "1": enabled
+                                        bits 3-7:rate of MASS reversal stepping check:
+                                                 The rate depends on the selected type of the reversal
+                                               stepping check (HDB byte 221 bit 0-2).
+                                               Type = "0": rate = "0"
+                                               Type = "1": rate = "0"-"9"
+                                               Type = "2": rate = "0"-"3"
+                                               Type = "3": rate = "0"-"3"
+                                               Type = "4": rate = "0"
+                                               Type = "5": rate = "0"-"20"
+         265       BYTE                 bits 0-1:not used
+                                        bit 2:MASS classification:
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 3:MASS PHA handling:
+                                              "0": disabled
+                                              "1": enabled
+                                        bit 4:MASS/SWICS classification access:
+                                              "0": SWICS
+                                              "1": MASS
+                                        bit 5:MASS classification halt (priority over bit 0):
+                                              "0": classification halt
+                                              "1": classification run
+                                        bit 6:not used
+                                        bit 7:MASS parity error
+                                              "0": enabled
+                                              "1": disabled
+         266       BYTE         Every memory location can be displayed in this byte.  The
+                                cell is addressed by the parameter load command PPARALD 32.
+         267       BYTE         MASS measurement spin~with detected a Helium peak for
+                                MASS ADPS calculation.
+        268-271    BYTE         internal error counters.  The internal error counters are
+                                commutated over 32 HDBs.  The counter for decommutation
+                                is in HDB byte 5 bit 0-4 (science record counter).
+                                Detailed descriptions are given in chapter 2.3.9.
+         272       BYTE         "Fred string": it is a string of ASCII characters.  This
+                                string is commutated over 64 HDBs.  The counter for
+                                decommutation is in the HDB in byte 5 bit 0-5 (science
+                                record counter). 
+         273       BYTE         MASS upper ADPS limit
+         274       BYTE         MASS lower ADPS limit
+         275       BYTE                 bits 0-3:Latch up counter for memory               
+                                        bits 4-7:Latch up counter for uP
+         276       BYTE                 bits 0-3:Latch up counter for SWICS classification
+                                        bits 4-7:Latch up counter for STICS classification
+         277       BYTE                 bits 0-3:main latch up counter
+                                        bits 4-7:Latch up counter for the MASS classification memory.
+         278       BYTE         STICS diagnostic rate: wrong head id
+         279       BYTE         STICS diagnostic rate: D1 background
+         280       BYTE         STICS diagnostic rate: D2 zero
+         281       BYTE         STICS diagnostic rate: D3 H
+         282       BYTE         STICS diagnostic rate: D4 He
+         283       BYTE         STICS diagnostic rate: D5 Mg/Si
+         284       BYTE         STICS diagnostic rate: D6 Fe
+         285       BYTE         STICS diagnostic rate: D7 C/O/Ne
+         286       BYTE         STICS diagnostic rate: D8 O+
+         287       BYTE         STICS diagnostic rate: mass overflow
+         288       BYTE         STICS diagnostic rate: mass underflow
+         289       BYTE         STICS diagnostic rate: energy overflow
+         290       BYTE         STICS diagnostic rate: time underflow
+         291       BYTE         STICS diagnostic rate: time overflow
+         292       BYTE         STICS diagnostic rate: NQ underflow
+         293       BYTE         STICS diagnostic rate: NQ overflow
+         294       BYTE         STICS diagnostic rate: background basic rate
+         295       BYTE         MASS diagnostic rates: time underflow
+         296       BYTE         MASS diagnostic rates: time overflow
+         297       BYTE         MASS diagnostic rates: background
+         298       BYTE         MASS diagnostic rates: invalid direction (should be zero)
+       299-318     BYTE         SWICS bin definitions of the channel table for science
+                                rates.  The SWICS bin definitions are commutated over 128
+                                HDBs.  The counter for decommutation is in the HDB in
+                                byte 5 bit 0-6 (science record counter).  4 definitions
+                                are sent in one HDB.  The whole information needs about
+                                half a day to be transmitted.
+         299       BYTE                 bits 0-5:lower mass class boundary
+         300       BYTE                 bits 0-5:upper mass class boundary
+         301       BYTE                 bits 0-6:lower mass per charge class boundary
+         302       BYTE                 bits 0-6:upper mass per charge class boundary
+                                        bit 7:channel number bit 8
+         303       BYTE         channel number bit 0-7
+                                for channels n*4+0 (n ranges from 0 to 127).
+         304       BYTE                 bits 0-6:lower mass class boundary
+         305       BYTE                 bits 0-6:upper mass class boundary
+         306       BYTE                 bits 0-6:lower mass per charge class boundary
+         307       BYTE                 bits 0-6:upper mass per charge class boundary
+                                        bit 7:channel number bit 8
+         308       BYTE         channel number bit 0-7
+                                for channels n*4+1 (n ranges from 0 to 127).
+         309       BYTE                 bits 0-5:lower mass class boundary
+         310       BYTE                 bits 0-5:upper mass class boundary
+         311       BYTE                 bits 5-6:lower mass per charge class boundary
+         312       BYTE                 bits 0-6:upper mass per charge class boundary
+                                        bit 7:channel number bit 8
+         313       BYTE         channel number bit 0-7
+                                for channels n*4+2 (for n ranges from 0 to 127).
+         314       BYTE                 bits 0-5:lower mass class boundary
+         315       BYTE                 bits 0-5:upper mass class boundary
+         316       BYTE                 bits 0-6:lower mass per charge class boundary
+         317       BYTE                 bits 0-6:upper mass per charge class boundary
+                                        bit 7:channel number bit 8
+         318       BYTE         channel number bit 0-7
+                                for channels n*4+3 (n ranges from 0 to 127).
+         319       BYTE         software version: day of software version, final version:
+                                06.  Read hex number as decimal number. 
+         320       BYTE         software version: month of software version, final version:
+                                12.  Represents software version 931206.  The year is
+                                not encoded.  Read hex number as decimal number.
+        After the housekeeping data comes the Science data, organized by sensor in
+        the following order: SWICS, MASS, STICS. 
+        Then comes the SWICS data. 
+        For  each spin, the  SWICS rate data is contained in the format  specified
+        by the structure W_RATE in  EDBDEF.INC. The data  read out  depends on bit 
+        rate; for low bit rate it is as described below: Bytes 1-4 are an  identi-
+        fier, which, in this case, is always 'SWRA'.
+        Bytes 5-30 are the SWICS  Basic rates.  Depending on the  active PHA range 
+        (see  byte 66, below) the  notations "BR2x", "BR2y", and "BR2z" are  to be
+        interpreted according to the following table:
+                Active PHA |  BR2x  |  BR2y  |  BR2z  |
+                Range ID   | means  | means  | means  |
+                _______________________________________
+                     0     |  BR2a  |  BR2b  |  BR2c  |
+                     1     |  BR2b  |  BR2a  |  BR2c  |
+                     2     |  BR2c  |  BR2a  |  BR2b  |
+        Bytes     Format        Description
+          5       BYTE          BR0/0: direction 0-2, sector 0-1
+          6       BYTE          BR0/1: direction 0-2, sector 2-3
+          7       BYTE          BR0/2: direction 0-2, sector 4-5
+          :       :                     :
+          :       :                     :
+         12       BYTE          BR0/7: direction 0-2, sector 14-15
+         13       BYTE          BR1/0: direction 0-2, sector 0-1
+          :       :                     :
+          :       :                     :
+         20       BYTE          BR1/7: direction 0-2, sector 14-15
+         21       BYTE          BR2x/0: direction 0-2, sector 0-1
+          :       :                     :
+          :       :                     :
+         28       BYTE          BR2x/7: direction 0-2, sector 14-15
+         29       BYTE          BR2y/0: direction 0-2, sector 0-15
+         30       BYTE          BR2z/0: direction 0-2, sector 0-15
+        Next come the Matrix Rates. These are arranged as follows:
+        Bytes     Format        Description
+         31       BYTE          MR0: direction 0-2, sector 0-15
+         32       BYTE          MR1: direction 0-2, sector 0-15
+         33       BYTE          MR2: direction 0-2, sector 0-15
+          :       :                     :
+          :       :                     :
+         51       BYTE          MR20: direction 0-2, sector 0-15
+        Then come the Matrix Elements. The matrix elements  are commutated over 60
+        spins. 8 matrix elements come  out per spin. In spin 0 ME0 through ME7 are
+        read out, in spin 1 ME8 through ME15 are read out, and so on. In short, 
+        the matrix element format can be described as:
+        Bytes     Format        Description
+         52       BYTE          ME(n): direction 0-2, sector 0-15, spin 0-59
+         53       BYTE          ME(n+1): direction 0-2, sector 0-15, spin 0-59
+         54       BYTE          ME(n+2): direction 0-2, sector 0-15, spin 0-59
+          :       :                     :
+          :       :                     :
+         59       BYTE          ME(n+7): direction 0-2, sector 0-15, spin 0-59
+        Where n is (current spin number * 8).
+        Next come the Engineering Rates, as shown below:
+        Bytes     Format        Description
+         60       BYTE          FSR
+         61       BYTE          DCR
+         62       BYTE          TCR
+         63       BYTE          SSD1
+         64       BYTE          SSD2
+         65       BYTE          SSD3
+        
+        Finally, byte 66 contains housekeeping information; bits  0-5 are the DPPS
+        step, bits 6-7 are the active PHA range identifier.
+        For high bit rate, SWICS data has a somewhat  different form, as described 
+        herafter: Bytes 1-4 are an identifier, which, again, is always 'SWRA'.
+        Bytes 5-84 are the SWICS  Basic rates.  
+        Bytes     Format        Description
+          5       BYTE          BR0/0: direction 0-2, sector 0
+          6       BYTE          BR0/1: direction 0-2, sector 1
+          7       BYTE          BR0/2: direction 0-2, sector 2
+          :       :                     :
+          :       :                     :
+         20       BYTE          BR0/15: direction 0-2, sector 15
+         21       BYTE          BR1/0: direction 0-2, sector 0
+          :       :                     :
+          :       :                     :
+         36       BYTE          BR1/15: direction 0-2, sector 15
+         37       BYTE          BR2a/0: direction 0-2, sector 1
+          :       :                     :
+          :       :                     :
+         52       BYTE          BR2a/15: direction 0-2, sector 15
+         53       BYTE          BR2b/0: direction 0-2, sector 0
+          :       :                     :
+          :       :                     :
+         68       BYTE          BR2b/15: direction 0-2, sector 15
+         69       BYTE          BR2c/0: direction 0-2, sector 0
+          :       :                     :
+          :       :                     :
+         84       BYTE          BR2c/15: direction 0-2, sector 15
+        Next come the Matrix Rates. These are arranged as follows:
+        Bytes     Format        Description
+         85       BYTE          MR0: direction 0-2, sector 0-15
+         86       BYTE          MR1: direction 0-2, sector 0-15
+         87       BYTE          MR2: direction 0-2, sector 0-15
+          :       :                     :
+          :       :                     :
+        105       BYTE          MR20: direction 0-2, sector 0-15
+        Then come the Matrix Elements. The matrix elements  are commutated over 60
+        spins. 8 matrix elements come  out per spin. In spin 0 ME0 through ME7 are
+        read out, in spin 1 ME8 through ME15 are read out, and so on. In short, 
+        the matrix element format can be described as:
+        Bytes     Format        Description
+        106       BYTE          ME(n): direction 0-2, sector 0-15, spin 0-59
+        107       BYTE          ME(n+1): direction 0-2, sector 0-15, spin 0-59
+        108       BYTE          ME(n+2): direction 0-2, sector 0-15, spin 0-59
+          :       :                     :
+          :       :                     :
+        113       BYTE          ME(n+7): direction 0-2, sector 0-15, spin 0-59
+        Where n is (current spin number * 8).
+        Next come the Engineering Rates, as shown below:
+        Bytes     Format        Description
+        114       BYTE          FSR
+        115       BYTE          DCR
+        116       BYTE          TCR
+        117       BYTE          SSD1
+        118       BYTE          SSD2
+        119       BYTE          SSD3
+          
+        Finally, byte 120 contains housekeeping information; bits 0-5 are the DPPS
+        step, bits 6-7 are the active PHA range identifier.
+ 
+        Then come the SWICS PHA data.  For each spin, the SWICS PHA data is  cont-
+        ained in the format  specified by the structure W_PHA in EDBDEF.INC. Bytes
+        1-4 are an  identifier, which,  in this case, is always 'SWPH'. After that
+        come the PHA words, if any. Each PHA word is 4 bytes long.
+        The above pattern of SWICS data is repeated for each of the 60 spins.
+        Then we have the MASS rate data. For each spin, the  MASS rates are  cont-
+        ained in the format  specified by the structure M_RATEin EDBDEF.INC. Bytes
+        1-4 are an  identifier, which,  in this case, is always 'MARA'. After that
+        we have the rates for that spin.
+        Bytes 5-8 are the MASS Unsectored Engineering rates, as shown below:
+        Bytes     Format        Description
+          5       BYTE          FSR 1
+          6       BYTE          FSR 2
+          7       BYTE          FSR B
+          8       BYTE          MDCR
+        Then we have the Sectored Engineering rates (bytes 9-15):
+        Bytes     Format        Description
+          9       BYTE          UFSR_S(FSR1 or FSR2) of all sun sectors
+         10       BYTE          UFSR_NS(FSR1 or FSR2) of all non-sun sectors
+         11       BYTE          RSR_S of all sun sectors
+         12       BYTE          RSR_NS of all non-sun sectors
+         13       BYTE          DCR_S of all sun sectors
+         14       BYTE          DCR_NS of all non-sun sectors
+         15       BYTE          MFSR of all sun and non-sun sectors
+        Bytes 16-19 are Basic rates:
+         16       BYTE          BR0_S: Low basic rate (H,He) of all sun sectors
+         17       BYTE          BR0_NS: Low basic rate (H,He) of all non-sun sectors
+         18       BYTE          BR1_S: High basic rate (H,He) of all sun sectors
+         19       BYTE          BR1_NS: High basic rate (H,He) of all non-sun sectors
+        Next come the Matrix Rates. These are arranged as follows:
+        Bytes     Format        Description
+         20       BYTE          Matrix rate 0, H
+         21       BYTE          Matrix rate 1, He3
+         22       BYTE          Matrix rate 2, He4
+         23       BYTE          Matrix rate 3, C
+         24       BYTE          Matrix rate 4, N
+         25       BYTE          Matrix rate 5, O
+         26       BYTE          Matrix rate 6, Ne
+         27       BYTE          Matrix rate 7, Mg
+         28       BYTE          Matrix rate 8, Si
+         29       BYTE          Matrix rate 9, Fe
+        Finally, byte 25 contains housekeeping information; bits  0-5 are the DPPS
+        step, bit 6 is the active PHA range identifier, and bit 7 is the callibra-
+        tion mode status.
+        Next comes the  MASS PHA data. For each spin, the MASS  PHA data is  cont-
+        ained in the format  specified by the structure M_PHA in EDBDEF.INC. Bytes
+        1-4 are an  identifier, which,  in this case, is always 'MAPH'. After that
+        come the PHA words, if any. Each PHA word is 2 bytes long.
+        The above pattern of MASS data is repeated for each of the 60 spins.
+        For  each spin, the  STICS rate data is contained in the format  specified
+        by the structure S_RATE in  EDBDEF.INC. The data  read out  depends on bit 
+        rate; for low bit rate it is only read out every other spin, with the odd-
+        numbered spins containing zeroes. It also depends on the mode. In the dia-
+        gnostic mode (also known as "Toni Galvin Special" mode, or "TGS" mode) the 
+        instrument does not format the omnidirectional matrix rates MR11 thru MR19. 
+        Instead, the  DPU formats the UFSR, URSR, MPF, MPR, MFSR, MRSR and the FSR 
+        rates with higher resolution.  The  identifier bit for the diagnostic mode 
+        is transmitted in byte 179 bit 7 of the STICS core data area.
+           Diagnostic mode: byte 179, bit 7 = "1".
+           Normal mode:     byte 179, bit 7 = "0".
+        
+        In normal  mode, the  format is as  follows. Bytes 1-4 are  an identifier, 
+        which, in this case, is always 'STRA'.
+        Bytes 5-100 are the STICS  High Resolution Matrix rates.
+        Bytes     Format        Description
+          5       BYTE          HMR0/0: direction 0, sector 0
+          6       BYTE          HMR0/1: direction 0, sector 1
+          7       BYTE          HMR0/2: direction 0, sector 2
+          :       :                     :
+          :       :                     :
+         20       BYTE          HMR0/15: direction 0, sector 15
+         21       BYTE          HMR0/16: direction 1, sector 0
+          :       :                     :
+          :       :                     :
+         36       BYTE          HMR0/31: direction 1, sector 15
+         37       BYTE          HMR0/32: direction 2, sector 0
+          :       :                     :
+          :       :                     :
+         52       BYTE          HMR0/47: direction 2, sector 15
+         53       BYTE          HMR0/48: direction 3, sector 0
+          :       :                     :
+          :       :                     :
+         68       BYTE          HMR0/63: direction 3, sector 15
+         69       BYTE          HMR0/63: direction 4, sector 0
+          :       :                     :
+          :       :                     :
+         84       BYTE          HMR0/63: direction 4, sector 15
+         85       BYTE          HMR0/63: direction 5, sector 0
+          :       :                     :
+          :       :                     :
+        100       BYTE          HMR0/95: direction 5, sector 15
+        Next come the Sectored Matrix Rates. These are arranged as follows:
+        Bytes     Format        Description
+        101       BYTE          SMR0/0: direction 0+1, sector 0+1
+        102       BYTE          SMR0/1: direction 0+1, sector 2+3
+        103       BYTE          SMR0/2: direction 0+1, sector 4+5
+          :       :                     :
+          :       :                     :
+        108       BYTE          SMR0/7: direction 0+1, sector 14+15
+        109       BYTE          SMR0/8: direction 2+3, sector 0+1
+          :       :                     :
+          :       :                     :
+        116       BYTE          SMR0/15: direction 2+3, sector 14+15
+        117       BYTE          SMR0/16: direction 4+5, sector 0+1
+          :       :                     :
+          :       :                     :
+        124       BYTE          SMR0/31: direction 4+5, sector 14+15
+        120       BYTE          BR 0/0: direction 0-5, sector 0+1  
+        121       BYTE          BR 0/1: direction 0-5, sector 2+3  
+        122       BYTE          BR 0/2: direction 0-5, sector 4+5  
+             :                                            
+        127       BYTE          BR 0/7: direction 0-5, sector 14+15
+        128       BYTE          BR 1/0: direction 0-5, sector 0+1  
+     :                                            
+        135       BYTE          BR 1/7: direction 0-5, sector 14+15
+        136       BYTE          BR 2/0: direction 0-5, sector 0+1. 
+     :                                            
+        143       BYTE          BR 2/7: direction 0-5, sector 14+15
+    
+OMR: omnidirectional matrix rates
+        144       BYTE          OMR 0:  bin number 32
+        145       BYTE          OMR 1:  bin number 33
+        146       BYTE          OMR 2:  bin number 34
+        147       BYTE          OMR 3:  bin number 35
+        148       BYTE          OMR 4:  bin number 36
+        149       BYTE          OMR 5:  bin number 37
+        150       BYTE          OMR 6:  bin number 38
+        151       BYTE          OMR 7:  bin number 39
+        152       BYTE          OMR 8:  bin number 40
+        153       BYTE          OMR 9:  bin number 41
+        154       BYTE          OMR 10: bin number 42
+        155       BYTE          OMR 11: bin number 43
+        156       BYTE          OMR 12: bin number 44  
+        157       BYTE          OMR 13: bin number 45  
+        158       BYTE          OMR 14: bin number 46
+        159       BYTE          OMR 15: bin number 47  
+        160       BYTE          OMR 16: bin number 48
+        161       BYTE          OMR 17: bin number 49  
+        162       BYTE          OMR 18: bin number 50
+        163       BYTE          OMR 19: bin number 51
+ER:  direct sensor rates
+        164       BYTE          FSR 1
+        165       BYTE          FSR 2
+        166       BYTE          FSR 3
+        167       BYTE          RSR 1
+        168       BYTE          RSR 2
+        169       BYTE          RSR 3
+        170       BYTE          DCR 1
+        i71       BYTE          DCR 2
+        1?2       BYTE          DCR 3
+        173       BYTE          TCR 1
+        174       BYTE          TCR 2
+        175       BYTE          TCR 3
+        176       BYTE          SSD 1
+        177       BYTE          SSD 2
+        178       BYTE          SSD 3
+Housekeeping:
+        179       BYTE          bit 0-4: DPPS step
+                                bit 5:   not used
+                                bit 6:   MASS ADPS out of range
+                                       "0": ADPS level within limits
+                                       "1": ADPS level out of range, level set to limit
+                                bit 7:   diagnostic mode identifier
+                                       "0": normal mode
+                                       "1": diagnostic mode
+
+3.4.2 STICS core data allocation in diagnostic mode
+HMR:  High resolution rate (bin number 16)
+        0:        BYTE          HMR0/0:  direction 0, sector 0 
+        1:        BYTE          HMR0/1:  direction 0, sector 1
+        2:        BYTE          HMR0/2:  direction 0, sector 2
+     :
+        15        BYTE          HMR0/15: direction 0, sector 15
+        16        BYTE          HMR0/16: direction 1, sector 0
+     :
+        31        BYTE          HMR0/31: direction 1, sector 15
+        32        BYTE          HMR0/32: direction 2, sector 0
+     :
+        47        BYTE          HMR0/47: direction 2, sector 15
+        48        BYTE          HMR0/48: direction 3, sector 0
+     :
+        63        BYTE          HMR0/63: direction 3, sector 15
+        64        BYTE          HMR0/64: direction 4, sector 0
+     :
+        79        BYTE          HMR0/79: direction 4, sector 15
+        80        BYTE          HMR0/80: direction 5, sector 0
+     :
+        89        BYTE          HMR0/89: direction 5, sector 10
+        90        BYTE          HMR0/90: direction 5, sector 11
+     :
+        95        BYTE          HMR0/95: direction 5, sector 15
+   
+SMR: sector matrix rate (bin number 17)
+        96:       BYTE          SMR0/0:  direction 0+1, sector 0+1
+        97:       BYTE          SMR0/1:  direction 0+1, sector 2+3
+        98:       BYTE          SMR0/2:  direction 0+1, sector 4+5
+        103       BYTE          SMR0/7:  direction 0+1, sector 14+15
+        104       BYTE          SMR0/8:  direction 2+3, sector 0+1
+     :
+        111       BYTE          SMR0/15: direction 2+3, sector 14+15
+        112       BYTE          SMR0/16: direction 4+5, sector 0+1
+     :
+        119       BYTE          SMR0/31: direction 4+5, sector 14+15
+   
+BR: basic rates (bin numbers 0, 1, 2)
+        120       BYTE          BR 0/0: direction 0-5. sector 0+1
+        121       BYTE          BR 0/1: direction 0-5, sector 2+3
+        122       BYTE          BR 0/2: direction 0-5, sector 4+5
+     :
+        127       BYTE          BR 0/7: direction 0-5, sector 14+15
+        128       BYTE          BR 1/0: direction 0-5, sector 0+1
+     :
+        135       BYTE          BR 1/7: direction 0-5, sector 14+15
+        136       BYTE          BR 2/0: direction 0-5, sector 0+1
+     :
+        143       BYTE          BR 2/7: direction 0-5, sector 14+15
+   
+OMR: omnidirectional matrix rates
+        144       BYTE          OMR 0: bin number 32
+        145       BYTE          OMR 1: bin number 33
+        146       BYTE          OMR 2: bin number 34
+        147       BYTE          OMR 3: bin number 35
+        148       BYTE          OMR 4: bin number 36
+        149       BYTE          OMR 5: bin number 37
+        150       BYTE          OMR 6: bin number 38
+        151       BYTE          OMR 7: bin number 39
+        152       BYTE          OMR 8: bin number 40
+        153       BYTE          OMR 9: bin number 41
+        154       BYTE          OMR 10: bin number 42
+ER: direct sensor rates
+        155       BYTE          FSR 1
+        156       BYTE          FSR 2
+        157       BYTE          FSR 3
+        158       BYTE          FSR 4
+        159       BYTE          FSR 5
+        160       BYTE          FSR 6
+        161       BYTE          UFSR
+        162       BYTE          URSR
+        163       BYTE          MFSR
+        164       BYTE          MRSR
+        165       BYTE          MPF
+        166       BYTE          MPR
+        167       BYTE          RSR 1
+        168       BYTE          RSR 2
+        169       BYTE          RSR 3
+        170       BYTE          DCR 1
+        171       BYTE          DCR 2
+        172       BYTE          DCR 3
+        173       BYTE          TCR 1
+        174       BYTE          TCR 2
+        175       BYTE          TCR 3
+        176       BYTE          SSD 1
+        177       BYTE          SSD 2
+        178       BYTE          SSD 3
+     
+Housekeeping:
+        179       BYTE          bit 0-4: DPPS step
+                                bit 5:   spare
+                                bit 6:   MASS ADPS out of range
+                                        "0" ADPS level in range
+                                        "1" ADPS level out of range, level set to limit.
+                                bit 7:   diagnostic mode identifier
+                                        "1": diagnostic mode
+Note: In the STICS core data is in byte 179 bit 6 the MASS ADPS range detection
+      bit. 
+          "0" ADPS level in range,
+          "1" ADPS level out of range, level set to limit.
+      This bit is available, if the STICS main power is on only!

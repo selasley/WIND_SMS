@@ -1,0 +1,264 @@
+WIND_POST_PROCESS                                               23-FEB-1995 12:31:24    DEC Fortran V6.2-508                Page   1
+                                                                15-FEB-1995 12:28:40    [WIND.SOFTWARE.LZ]WIND_POST_PROCESS.FOR;9
+
+	      1 	SUBROUTINE WIND_POST_PROCESS
+	      2 C
+	      3 C         This routine moves the data from 2nd and 3rd science records and
+	      4 C         and their associated HKs and HDBs into their 1st and 2nd positions,
+	      5 C         respectively; zeroes out all data associated with 3rd science record.
+	      6 C
+	      7 C     This version:   1.1   15-FEB-1995
+	      8 C
+	      9 C     CREATION:
+	     10 C       13-JAN-1995      L. Bleau/J. Paquette
+	     11 C
+	     12 C     REVISIONS:
+	     13 C	 9-FEB-1995	L. Bleau	change include stmt to use EDBDEF.INC
+	     14 C					and EDBVARS.INC instead of EDB.INC only
+	     15 C       15-FEB-1995     J.PAQUETTE      removed references to HDBset since HDB
+	     16 C                       L. Bleau        now indexed by EDBset
+	     17 C
+	     18 C
+	     19 CDEC$ IDENT     '1.1'
+	     20 	IMPLICIT NONE
+	     21 	INCLUDE   'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_POST_PROCESS                                               23-FEB-1995 12:31:24    DEC Fortran V6.2-508                Page   2
+1.1                                                             15-FEB-1995 12:28:40    [WIND.SOFTWARE.LZ]WIND_POST_PROCESS.FOR;9
+
+	    557 	INCLUDE   'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_POST_PROCESS                                               23-FEB-1995 12:31:24    DEC Fortran V6.2-508                Page   3
+1.1                                                             15-FEB-1995 12:28:40    [WIND.SOFTWARE.LZ]WIND_POST_PROCESS.FOR;9
+
+	    756 	INCLUDE   'INC_DIR:L0_DATA_Record.INC/NOLIST'
+
+WIND_POST_PROCESS                                               23-FEB-1995 12:31:24    DEC Fortran V6.2-508                Page   4
+1.1                                                             15-FEB-1995 12:28:40    [WIND.SOFTWARE.LZ]WIND_POST_PROCESS.FOR;9
+
+	    924 	INCLUDE   'INC_DIR:WIND_Lun.INC/NOLIST'
+	    954 C
+	    955 	INTEGER SPIN
+	    956 C
+	    957 C Move the data.  Contents of 2nd science record --> 1st science record.
+	    958 C Contents of 3rd science record --> 2nd science record.  New data will go into
+	    959 C the 3rd science record in the future.  We also have to do the same thing with
+	    960 C the HK's and their pointers.
+	    961 C
+	    962         SCI(1)              = SCI(2)
+	    963         SWICS_RATE(1)       = SWICS_RATE(2)
+	    964         SWICS_PHA(1)        = SWICS_PHA(2)
+	    965         STICS_RATE(1)       = STICS_RATE(2)
+	    966         STICS_PHA(1)        = STICS_PHA(2)
+	    967         MASS_RATE(1)        = MASS_RATE(2)
+	    968         MASS_PHA(1)         = MASS_PHA(2)
+	    969 
+	    970         HKEEP(1)            = HKEEP(2)
+	    971         HKset(1)            = HKset(2)
+	    972         HDBTime2( 1, 1 )    = HDBTime2( 1, 2 )
+	    973         HDBTime2( 2, 1 )    = HDBTime2( 2, 2 )
+	    974         HDB(1)              = HDB(2)
+	    975 
+	    976         SCI(2)              = SCI(3)
+	    977         SWICS_RATE(2)       = SWICS_RATE(3)
+	    978         SWICS_PHA(2)        = SWICS_PHA(3)
+	    979         STICS_RATE(2)       = STICS_RATE(3)
+	    980         STICS_PHA(2)        = STICS_PHA(3)
+	    981         MASS_RATE(2)        = MASS_RATE(3)
+	    982         MASS_PHA(2)         = MASS_PHA(3)
+	    983 
+	    984         HKEEP(2)            = HKEEP(3)
+	    985         HKset(2)            = HKset(3)
+	    986         HDBTime2( 1, 2 )    = HDBTime2( 1, 3 )
+	    987         HDBTime2( 2, 2 )    = HDBTime2( 2, 3 )
+	    988         HDB(2)              = HDB(3)
+	    989 
+	    990 C
+	    991 C Now zero out the structures of the third Science Record to logically clear
+	    992 C them.  This has to be done to allow for missing spins.
+	    993 C
+	    994         SCI(3).CCORE(5:) = C_BIG_NULL_BUFFER(1:LEN(SCI(3).CCORE)-4)
+	    995         DO SPIN=0,59
+	    996           SWICS_RATE(3).C_SW_RATE(SPIN)(5:) = C_BIG_NULL_BUFFER(1:LEN(SWICS_RATE(3).C_SW_RATE(SPIN))-4)
+	    997           SWICS_PHA(3).C_SW_PHA(SPIN)(5:) = C_BIG_NULL_BUFFER(1:LEN(SWICS_PHA(3).C_SW_PHA(SPIN))-4)
+	    998           STICS_RATE(3).C_ST_RATE(SPIN)(5:) = C_BIG_NULL_BUFFER(1:LEN(STICS_RATE(3).C_ST_RATE(SPIN))-4)
+	    999           STICS_PHA(3).C_ST_PHA(SPIN)(5:) = C_BIG_NULL_BUFFER(1:LEN(STICS_PHA(3).C_ST_PHA(SPIN))-4)
+	   1000           MASS_RATE(3).C_MA_RATE(SPIN)(5:) = C_BIG_NULL_BUFFER(1:LEN(MASS_RATE(3).C_MA_RATE(SPIN))-4)
+	   1001           MASS_PHA(3).C_MA_PHA(SPIN)(5:) = C_BIG_NULL_BUFFER(1:LEN(MASS_PHA(3).C_MA_PHA(SPIN))-4)
+	   1002         ENDDO
+	   1003 C
+	   1004         HKEEP(3).CHK(5:) = C_BIG_NULL_BUFFER(1:LEN(HKEEP(3).CHK)-4)
+	   1005         HKset(3) = 0
+	   1006         HDBTime2( 1, 3 ) = 0
+	   1007         HDBTime2( 2, 3 ) = 0
+	   1008         HDB(3).CHDB(5:) = C_BIG_NULL_BUFFER(1:LEN(HDB(3).CHDB)-4)
+	   1009 C
+
+WIND_POST_PROCESS                                               23-FEB-1995 12:31:24    DEC Fortran V6.2-508                Page   5
+1.1                                                             15-FEB-1995 12:28:40    [WIND.SOFTWARE.LZ]WIND_POST_PROCESS.FOR;9
+
+	   1010 	RETURN
+	   1011 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46024 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                1000   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 104 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               533032
+
+
+ENTRY POINTS
+
+    Address   Type  Name             
+                                     
+  3-00000000        WIND_POST_PROCESS
+
+
+VARIABLES
+
+    Address   Type  Name                       Address   Type  Name                       Address   Type  Name                  
+                                                                                                                                
+  7-00000006  L*1   BITRATE                 10-00003200  R*8   DR_BEG_EPOCH             7-00000008  L*1   MASSPOWER             
+  6-00000014  I*4   CURR_SCI_REC_NUMBER     10-00000008  I*4   DR_BEG_MAJFR_CNT         1-00000004  I*4   MASS_RATE_SIZE        
+  6-00000018  I*4   CURR_SPIN               10-00000020  I*4   DR_BEG_MICSEC            7-0000000C  I*4   MEASSPIN              
+  1-00000018  CHAR  C_BIG_NULL_BUFFER       10-0000001C  I*4   DR_BEG_MSEC              6-0000001C  L*4   NEW_SCI_REC           
+ 11-00000000  CHAR  C_DR2_BUFFER            10-00000014  I*4   DR_BEG_YEAR             10-00003210  R*8   PREF_EPOCH            
+ 10-00000000  CHAR  C_DR_BUFFER             10-00000000  I*4   DR_INSTR_NUM             7-0000000A  L*1   RAMCHECK              
+  1-00000018  CHAR  C_NULL_BUFFER           10-00000024  I*4   DR_NUM_MINFR_FILL        6-00000000  I*4   SCI_REC_CNTR          
+ 11-00000018  I*4   DR2_BEG_DOY             10-00000028  I*4   DR_NUM_MINFR_SYNC_ERR    7-00000000  I*4   SFPERBLOCK            
+ 11-00003200  R*8   DR2_BEG_EPOCH           10-00000004  I*4   DR_PHYS_REC_NUM        REG-00000005  I*4   SPIN                  
+ 11-00000008  I*4   DR2_BEG_MAJFR_CNT       10-00003208  R*8   DR_SC_EPOCH              7-00000010  I*4   SPINCOUNT             
+ 11-00000020  I*4   DR2_BEG_MICSEC          10-0000002C  I*4   DR_TLM_MODE              7-00000009  L*1   STICSPOWER            
+ 11-0000001C  I*4   DR2_BEG_MSEC             5-0006EEBC  I*4   EDBSET                   1-00000008  I*4   STICS_H_RATE_SIZE     
+ 11-00000014  I*4   DR2_BEG_YEAR             1-00000000  I*4   EDB_CORE_SIZE            1-0000000C  I*4   STICS_N_RATE_SIZE     
+ 11-00000000  I*4   DR2_INSTR_NUM            6-00000008  I*4   EDB_LOST                 2-00000000  I*4   STICS_RATE_SIZE       
+ 11-00000024  I*4   DR2_NUM_MINFR_FILL       6-0000000C  I*4   EDB_SKIP                 7-00000004  L*1   SUBS_ID               
+ 11-00000028  I*4   DR2_NUM_MINFR_SYNC_ERR   6-00000010  I*4   EDB_SUM                  7-00000007  L*1   SWICSPOWER            
+ 11-00000004  I*4   DR2_PHYS_REC_NUM         7-00000005  L*1   HDBFLAG                  1-00000010  I*4   SWICS_H_RATE_SIZE     
+ 11-00003208  R*8   DR2_SC_EPOCH            10-0000321C  L*1   L0_FILE_READONLY         1-00000014  I*4   SWICS_N_RATE_SIZE     
+ 11-0000002C  I*4   DR2_TLM_MODE            10-00003218  I*4   L0_FILE_REC_PNTR         2-00000004  I*4   SWICS_RATE_SIZE       
+ 10-00000018  I*4   DR_BEG_DOY               6-00000004  I*4   L1_RECS_WRITTEN                                                  
+
+
+
+WIND_POST_PROCESS                                               23-FEB-1995 12:31:24    DEC Fortran V6.2-508                Page   6
+1.1                             Symbol Table                    15-FEB-1995 12:28:40    [WIND.SOFTWARE.LZ]WIND_POST_PROCESS.FOR;9
+
+ARRAYS
+
+     Address  Type  Name                          Bytes  Dimensions
+
+  5-00005688  I*1   CORE_DATA                      1980  (0:10, 0:59, 3)
+ 11-0000000C  I*4   DR2_BEG_SC_CLOCK                  8  (2)
+ 11-00000000  I*1   DR2_BUFFER                    13300  (13300)
+ 11-00000000  I*1   DR2_BUFFER_CONTINGENCY        13300  (13300)
+ 11-0000012A  I*1   DR2_FILL                          2  (2)
+ 11-0000012C  I*1   DR2_MINFR                     12500  (12500)
+ 11-0000012C  I*1   DR2_MINFR_3DP                 12500  (50, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_EPA                  6000  (24, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_KON                  1500  (6, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_MFI                  6250  (25, 0:249)
+ 11-00000030  I*1   DR2_MINFR_QUAL                  250  (0:249)
+ 11-0000012C  I*1   DR2_MINFR_SMS                 10500  (42, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_SWE                 11250  (45, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_TGR                  5250  (21, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_WAV                 11250  (45, 0:249)
+ 10-0000000C  I*4   DR_BEG_SC_CLOCK                   8  (2)
+ 10-00000000  I*1   DR_BUFFER                     13300  (13300)
+ 10-00000000  I*1   DR_BUFFER_CONTINGENCY         13300  (13300)
+ 10-0000012A  I*1   DR_FILL                           2  (2)
+ 10-0000012C  I*1   DR_MINFR                      12500  (12500)
+ 10-0000012C  I*1   DR_MINFR_3DP                  12500  (50, 0:249)
+ 10-0000012C  I*1   DR_MINFR_EPA                   6000  (24, 0:249)
+ 10-0000012C  I*1   DR_MINFR_KON                   1500  (6, 0:249)
+ 10-0000012C  I*1   DR_MINFR_MFI                   6250  (25, 0:249)
+ 10-00000030  I*1   DR_MINFR_QUAL                   250  (0:249)
+ 10-0000012C  I*1   DR_MINFR_SMS                  10500  (42, 0:249)
+ 10-0000012C  I*1   DR_MINFR_SWE                  11250  (45, 0:249)
+ 10-0000012C  I*1   DR_MINFR_TGR                   5250  (21, 0:249)
+ 10-0000012C  I*1   DR_MINFR_WAV                  11250  (45, 0:249)
+  8-000003CC  I*4   HDBTIME2                         24  (2, 3)
+  9-00000CF0  I*4   HKLOCI                          300  (75)
+  9-00000E1C  I*4   HKLOCJ                          300  (75)
+  9-00000CE4  I*4   HKSET                            12  (3)
+  1-00000018  I*1   NULL_BUFFER                   46000  (46000)
+  7-0000000B  L*1   SPARFLAGS                         1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  5-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  5-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  5-00000000  SCI         CORE             22152  (3)
+  5-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  5-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  5-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  5-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+WIND_POST_PROCESS                                               23-FEB-1995 12:31:24    DEC Fortran V6.2-508                Page   7
+1.1                             Symbol Table                    15-FEB-1995 12:28:40    [WIND.SOFTWARE.LZ]WIND_POST_PROCESS.FOR;9
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_POST_PROCESS.LIS;3
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]WIND_POST_PROCESS.OBJ;3
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.85 seconds
+  Elapsed time:      2.52 seconds
+  Pagefaults:         207
+  I/O Count:           21

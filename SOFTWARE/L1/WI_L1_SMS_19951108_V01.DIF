@@ -1,0 +1,103 @@
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+    4        Program Name: WIND_HEALTH       Version:1.10        Run Date: 14:49:47 21-NOV-95
+    5        First complete science record:    91152       Time: 23:57:40
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+    4        Program Name: WIND_HEALTH       Version:1.5         Run Date: 17:35:23 20-NOV-95
+    5        First complete science record:    91152       Time: 23:57:40
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+   74   
+   75    CHK         Parameter Identification            Minimum     Maximum     Average    # 0's   Commanded Level    Commanded Vol
+   76    ---------------------------------------------------------------------------------------------------------------------------
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+   74   1CHK         Parameter Identification            Minimum     Maximum     Average    # 0's   Commanded Level    Commanded Vol
+   75    ---------------------------------------------------------------------------------------------------------------------------
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+   99     20  SWICS PAPS Output Voltage (Gnd Ref)      -22793.87   -22793.87   -22793.93       1            197         -22887.59
+  100     21  SWICS +5 V Voltage (PAPS Ref)                 5.02        5.02        5.02       1
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+   98     20  SWICS PAPS Output Voltage (Gnd Ref)      -22793.87   -22793.87   -22793.87       1            197         -22887.59
+   99     21  SWICS +5 V Voltage (PAPS Ref)                 5.02        5.02        5.02       1
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+  110         SWICS Stop MCPPS Voltage (PAPS Ref)        -999.00     -999.00     -999.00     470              0              0.00
+  111     29  SWICS SSD Temp (PAPS Ref)                    -5.01       -4.44       -4.69       1
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+  109         SWICS Stop MCPPS Voltage (PAPS Ref)          18.21     3462.45        0.00     470              0              1.56
+  110     29  SWICS SSD Temp (PAPS Ref)                    -5.01       -4.44       -4.69       1
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+  132     50  MASS HPS Output Voltage (ADPS Ref)        23351.77    23351.77    23351.91       1            176          23226.58
+  133         MASS Start MCPPS Voltage (ADPS Ref)        2545.97     2603.21     2575.25       1            136           2500.18
+  134         MASS Stop MCPPS Voltage (ADPS Ref)         1839.00     1869.65     1869.45       1            136           1829.67
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+  131     50  MASS HPS Output Voltage (ADPS Ref)        23351.77    23351.77    23351.77       1            176          23226.58
+  132         MASS Start MCPPS Voltage (ADPS Ref)        2545.97     2603.21     2575.26       1            136           2500.18
+  133         MASS Stop MCPPS Voltage (ADPS Ref)         1839.00     1869.65     1869.45       1            136           1829.67
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+  146         STICS MCPPS 1 Output Voltage               2863.02     2921.52     2889.37       1            160           1997.84
+  147         STICS MCPPS 2 Output Voltage               2828.24     2965.23     2888.96       1            160           1994.43
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+  145         STICS MCPPS 1 Output Voltage               2863.02     2921.52     2889.39       1            160           1997.84
+  146         STICS MCPPS 2 Output Voltage               2828.24     2965.23     2888.96       1            160           1994.43
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+  159         Telemetry Format: Science Mode       Telemetry Rate 5565 BPS       Spin Period:  3.
+  160         Reset Counter:  2
+  161         Last Reset Cause:  0 = Power on     
+  162         Latchup Counter - Main:  2
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+  158         Telemetry Format: Science Mode
+  159         Telemetry Rate 5565 BPS
+  160         Spin Rate:  3.03
+  161         Reset Counter:  2
+  162         Last Reset Cause:  0
+  163         Latchup Counter - Main:  2
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+  263        MCPPS 1   |  ON    |   160   |   160   |     2871.92   |
+  264        MCPPS 2   |  ON    |   160   |   160   |     2871.92   |
+  265        MCPPS 3   |  ON    |   160   |   160   |     2871.92   |
+  266        MCPPS 4   |  ON    |   160   |   160   |     2871.92   |
+  267        MCPPS 5   |  ON    |   160   |   160   |     2871.92   |
+  268        TOFPS(6)  |  ON    |   220   |   220   |      955.37   |
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+  264        MCPPS 1   |  ON    |   160   |   160   |     2902.02   |
+  265        MCPPS 2   |  ON    |   160   |   160   |     2886.95   |
+  266        MCPPS 3   |  ON    |   160   |   160   |     2896.98   |
+  267        MCPPS 4   |  ON    |   160   |   160   |     2921.96   |
+  268        MCPPS 5   |  ON    |   160   |   160   |     2887.14   |
+  269        TOFPS(6)  |  ON    |   220   |   220   |      955.37   |
+************
+************
+File SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12
+  308        STOP MCPPS  |  OFF   |   115   |     0   |        0.00   |
+  309   
+******
+File SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1
+  309        STOP MCPPS  |  OFF   |   115   |     0   |     2772.75   |
+  310   
+************
+Number of difference sections found: 9
+Number of difference records found: 19
+DIFFERENCES /IGNORE=()/MERGED=1/OUTPUT=SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.DIF;2-
+    SMS1:[WIND.SOFTWARE.L1]WI_L1_SMS_19951108_V01.HEALTH;12-
+    SMS1:[WIND.SOFTWARE.L1]BENCHMARK_1108.HEALTH;1

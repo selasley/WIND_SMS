@@ -1,0 +1,179 @@
+NMNQ_BINS                                                       25-JAN-1995 19:36:03    DEC Fortran V6.2-508                Page   1
+                                                                25-JAN-1995 19:34:12    SMS1:[WIND.SOFTWARE.STICS]NMNQ_BINS.FOR;14
+
+	      1       SUBROUTINE NMNQ_BINS(UNQ_MAX,UMQMAX,UMQMIN,NQ_MPQ,
+	      2      .		           UNM_MAX,UMMAX, UMMIN, NM_M,
+	      3      .      		   ELOW,EHIGH,TLOW,THIGH,
+	      4      .                     AM,BM,C1_EQ,C2A_EQ,C2B_EQ,D1_EQ,D2_EQ,
+	      5      .                     EMQ, BK_C2, BK_MQ, KM, KQ)
+	      6 
+	      7 C*******************************************************************
+	      8 C     This SUBROUTINE calculates ln bin boundaris for Nm, and Nq   *
+	      9 C     given the number of bins requested by the user               * 
+	     10 C     Original version 24 Jan 95 by ABG                            *
+	     11 C     History:
+	     12 C                
+	     13 c*******************************************************************
+	     14       IMPLICIT NONE
+	     15 
+	     16       INTEGER*4 UNM_MAX, UNQ_MAX,   	!max bin values (-1 = use default)
+	     17      .           NM_MAX,  NQ_MAX
+	     18 
+	     19       REAL*4 UMMAX,UMMIN,   !measurable mass range in amu (-1 = use default)
+	     20      .       UMQMAX,UMQMIN, !measurable m/q range in amu/e (-1 = use default)
+	     21      .       MMAX,MMIN,   !measurable mass range in amu 
+	     22      .       MQMAX,MQMIN, !measurable m/q range in amu/e 
+	     23      .       KM,KQ        !NM, NQ resolution parameters
+	     24    
+	     25       REAL*4 NQ_MPQ(0:1000),    ! bin boundary values (m/q and m)
+	     26      .       NM_M  (0:500 )
+	     27 
+	     28       INTEGER*4 I,J,K
+	     29 
+	     30       REAL*4 ELOW,EHIGH,TLOW,THIGH,
+	     31      .       AM(6),BM(6),C1_EQ,C2A_EQ,C2B_EQ,D1_EQ,D2_EQ,
+	     32      .       EMQ(6), BK_MQ
+	     33       INTEGER*4  BK_C2
+	     34           
+	     35 C     determine if default (i.e., dpu) binning will be used, in whole or
+	     36 C     in part, or not at all
+	     37 
+	     38       CALL NMNQ_COEFF      (UNQ_MAX,UMQMAX,UMQMIN,    !user input
+	     39      .                      UNM_MAX,UMMAX, UMMIN,
+	     40      .                      ELOW,EHIGH,TLOW,THIGH,      !return values
+	     41      .                      NQ_MAX,MQMAX,MQMIN,
+	     42      .                      NM_MAX,MMAX ,MMIN,
+	     43      .                      KM,KQ,
+	     44      .                      AM,BM,C1_EQ,C2A_EQ,C2B_EQ,
+	     45      .                      D1_EQ,D2_EQ,EMQ,
+	     46      .                      BK_C2, BK_MQ)
+	     47 
+	     48 
+	     49 C  ************************************************************
+	     50 C  *              calculate binning parameters                *
+	     51 C  *              M(lower bound of Nm) = Mmin * kM**(Nm-1)    *
+	     52 C  *              M/Q(lower bound of Nq) = MQmin * kQ**(Nq-1) *
+	     53 C  ************************************************************
+	     54 
+	     55 
+	     56       DO I = 0,500
+	     57          NM_M(I) = 0.
+
+NMNQ_BINS                                                       25-JAN-1995 19:36:03    DEC Fortran V6.2-508                Page   2
+                                                                25-JAN-1995 19:34:12    SMS1:[WIND.SOFTWARE.STICS]NMNQ_BINS.FOR;14
+
+	     58          IF(I.GT.0.  .AND.  I.LE.NM_MAX) 
+	     59      .        NM_M(I) = MMIN * KM**(FLOAT(I)-1.)
+	     60       END DO
+	     61 
+	     62       DO I = 0, 1000
+	     63          NQ_MPQ(I) = 0.
+	     64          IF(I.GT.0  .AND.  I.LE.NQ_MAX+1) 
+	     65      .        NQ_MPQ(I) = MQMIN * KQ**(FLOAT(I)-1.)
+	     66       END DO
+	     67 
+	     68       RETURN
+	     69       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                   32 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $CODE$                                 608   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  3 $LINK$                                  80 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  720
+
+
+ENTRY POINTS
+
+    Address   Type  Name     
+                             
+  2-00000000        NMNQ_BINS
+
+
+VARIABLES
+
+    Address   Type  Name        Address   Type  Name        Address   Type  Name        Address   Type  Name   
+                                                                                                               
+      **      I*4   BK_C2         **      R*4   ELOW      1-00000010  R*4   MQMAX         **      R*4   UMQMAX 
+      **      R*4   BK_MQ   REG-########  I*4   I         1-00000014# R*4   MQMIN         **      R*4   UMQMIN 
+      **      R*4   C1_EQ     1-00000018  I*4   J         1-00000000# I*4   NM_MAX        **      I*4   UNM_MAX
+      **      R*4   C2A_EQ    1-0000001C  I*4   K         1-00000004# I*4   NQ_MAX        **      I*4   UNQ_MAX
+      **      R*4   C2B_EQ        **      R*4   KM            **      R*4   THIGH                              
+      **      R*4   D1_EQ         **      R*4   KQ            **      R*4   TLOW                               
+      **      R*4   D2_EQ     1-00000008  R*4   MMAX          **      R*4   UMMAX                              
+      **      R*4   EHIGH     1-0000000C# R*4   MMIN          **      R*4   UMMIN                              
+
+
+ARRAYS
+
+     Address  Type  Name          Bytes  Dimensions
+
+      **      R*4   AM               24  (6)
+      **      R*4   BM               24  (6)
+      **      R*4   EMQ              24  (6)
+      **      R*4   NM_M           2004  (0:500)
+      **      R*4   NQ_MPQ         4004  (0:1000)
+
+
+
+NMNQ_BINS                                                       25-JAN-1995 19:36:03    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    25-JAN-1995 19:34:12    SMS1:[WIND.SOFTWARE.STICS]NMNQ_BINS.FOR;14
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name            
+                        
+        NMNQ_COEFF      
+
+NMNQ_BINS                                                       25-JAN-1995 19:36:03    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    25-JAN-1995 19:34:12    SMS1:[WIND.SOFTWARE.STICS]NMNQ_BINS.FOR;14
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.STICS]NMNQ_BINS.LIS;9
+  /OBJECT=SMS1:[WIND.SOFTWARE.STICS]NMNQ_BINS.OBJ;9
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.27 seconds
+  Elapsed time:      2.00 seconds
+  Pagefaults:         151
+  I/O Count:            8

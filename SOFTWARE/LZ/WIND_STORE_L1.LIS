@@ -1,0 +1,281 @@
+WIND_STORE_L1                                                   30-NOV-1995 14:17:18    DEC Fortran V6.2-508                Page   1
+                                                                 9-FEB-1995 20:43:31    SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.FOR;21
+
+	      1       SUBROUTINE WIND_STORE_L1( STATUS )
+	      2 C
+	      3 C	Stores L1 values on disk in file with LZ replaced L1.
+	      4 C
+	      5 C	This version:   2.6   9-FEB-1995 
+	      6 C
+	      7 C     Creation:
+	      8 C	H.BROER		 8-APR-1994
+	      9 C
+	     10 C     Revisions:
+	     11 C	 9-JUN-1994	H.BROER		update include files
+	     12 C	29-JUN-1994	H.BROER		next update
+	     13 C       15-JUL-1994	JOHN PAQUETTE	corrected order in which data output
+	     14 C   	18-JUL-1994	JOHN PAQUETTE	changed indices JJ to KK, to II and JJ
+	     15 C	 9-SEP-1994	L. Bleau	remove code that copies HKs, trim down
+	     16 C					routine to do nothing except write
+	     17 C					out a Science Record to the L1 file
+	     18 C	21-SEP-1994	L. Bleau	change code to write out HDB(1) instead
+	     19 C					of HDB(HDBset)
+	     20 C	14-OCT-1994	L. Bleau	add call to write out sci rec header
+	     21 C	20-OCT-1994	JOHN PAQUETTE   write out only as many rates as are
+	     22 C					present 
+	     23 C	25-OCT-1994	L. Bleau	add logic to determine SWICS rates
+	     24 C					record length
+	     25 C        4-NOV-1994     L. Bleau        changed KB to TTOUT in WRITE statements
+	     26 C	13-DEC-1994	L. Bleau	added call to LIB$SIGNAL to display
+	     27 C					error message if WRITE gets an error
+	     28 C	 9-FEB-1995	L. Bleau	change comment delimiters
+	     29 C	 9-FEB-1995	L. Bleau	change include stmt to use EDBDEF.INC
+	     30 C					and EDBVARS.INC instead of EDB.INC only
+	     31 C
+	     32 CDEC$ IDENT   '2.6'
+	     33 
+	     34       IMPLICIT NONE
+	     35 
+	     36       INCLUDE	'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_STORE_L1                                                   30-NOV-1995 14:17:18    DEC Fortran V6.2-508                Page   2
+2.6                                                              9-FEB-1995 20:43:31    SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.FOR;21
+
+	    574       INCLUDE	'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_STORE_L1                                                   30-NOV-1995 14:17:18    DEC Fortran V6.2-508                Page   3
+2.6                                                              9-FEB-1995 20:43:31    SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.FOR;21
+
+	    756       INCLUDE	'INC_DIR:WIND_L0_RECORD.INC/NOLIST'
+	    807       INCLUDE   'INC_DIR:WIND_Lun.INC/NOLIST'
+	    837       INCLUDE	'($SSDEF)/NOLIST'
+	   2262 
+	   2263       INTEGER*4	II,
+	   2264      :		JJ,
+	   2265      :          KK,
+	   2266      :		STATUS
+	   2267 C
+	   2268 C	STORE ONE (1) SCIENCE RECORD DATA
+	   2269 C
+	   2270       CALL WIND_WRITE_L1_HEADER( L1_Lun, 2 )
+	   2271       WRITE( L1_Lun, 100, IOSTAT = STATUS, ERR = 9001 ) SCI( 1 ).CCORE			! BASIC
+	   2272  100  FORMAT( A )
+	   2273 
+	   2274       HKeep( 1 ).HKcount = HKset( 1 )
+	   2275       WRITE( L1_Lun, 200, IOSTAT = STATUS, ERR = 9001 ) HKeep( 1 ).CHK, HDB( 1 ).CHDB	! HKs + HDB
+	   2276  200  FORMAT( A, A )
+	   2277       IF( STATUS .EQ. 0 )	STATUS = SS$_NORMAL
+	   2278 C
+	   2279 C The code which copied the last valied HK to the first HK position has been
+	   2280 C moved to WIND_RESET_HK
+	   2281 C
+	   2282 
+	   2283 C
+	   2284 C Write out SWICS rates and PHA by voltage step for all 60 voltage steps
+	   2285 C
+	   2286       DO II = 0, 59
+	   2287 C
+	   2288 C There is a variable number of SWICS Rates (LBR 62 bytes, HBR:116 bytes);
+	   2289 C write out only as many Rates as we have. We must allow for the 4-byte
+	   2290 C identifier ('SWRA'), and the fact that the variable SWICS_RATE_SIZE assumes a
+	   2291 C zero origin.
+	   2292 C
+	   2293         IF(SCI(1).EDB(II).SWICS_RATE_SIZE.EQ.0)THEN
+	   2294           KK = 4
+	   2295         ELSE
+	   2296           KK = SCI(1).EDB(II).SWICS_RATE_SIZE + 5
+	   2297         ENDIF
+	   2298         WRITE( L1_LUN, 100 )  SWICS_RATE( 1 ).C_SW_RATE(II)( 1:KK )	
+	   2299 C
+	   2300         JJ	= SCI( 1 ).EDB( II ).SWICS_Len * 4 + 4
+	   2301         WRITE( L1_LUN, 100 )  SWICS_PHA( 1 ).C_SW_PHA(II)( 1:JJ )	! SWICS_PHA
+	   2302       END DO
+	   2303 C
+	   2304 C Write out MASS rates and PHA by voltage step for all 60 voltage steps
+	   2305 C
+	   2306       DO II = 0, 59
+	   2307           WRITE( L1_LUN, 100 )   MASS_RATE( 1 ).C_MA_RATE( II )		! MASS_RATE
+	   2308           JJ	= SCI( 1 ).EDB( II ).MASS_Len * 2 + 4
+	   2309           WRITE( L1_LUN, 100 )   MASS_PHA( 1 ).C_MA_PHA(II)( 1:JJ )	! MASS_PHA
+	   2310       END DO
+	   2311 C
+	   2312 C Write out STICS rates and PHA by voltage step for all 60 voltage steps.
+	   2313 C
+	   2314       DO II = 0, 59
+	   2315 C
+
+WIND_STORE_L1                                                   30-NOV-1995 14:17:18    DEC Fortran V6.2-508                Page   4
+2.6                                                              9-FEB-1995 20:43:31    SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.FOR;21
+
+	   2316 C There is a variable number of STICS Rates at LBR (180 bytes or 0 bytes);
+	   2317 C write out only as many Rates as we have. If there are 180 rates, we must
+	   2318 C allow for the 4-byte identifier ('STRA'), and the fact that the variable
+	   2319 C SWICS_RATE_SIZE assumes a zero origin. If there are no rates, we still have
+	   2320 C to print out the identifier.
+	   2321 C
+	   2322           IF(SCI(1).EDB(II).STICS_RATE_SIZE.EQ.0)THEN
+	   2323             KK = 4
+	   2324           ELSE
+	   2325             KK = SCI(1).EDB(II).STICS_RATE_SIZE + 5
+	   2326           ENDIF
+	   2327           WRITE( L1_LUN, 100 )  STICS_RATE( 1 ).C_ST_RATE(II)( 1:KK )
+	   2328 C
+	   2329           JJ	= SCI( 1 ).EDB( II ).STICS_Len * 4 + 4
+	   2330           WRITE( L1_LUN, 100 )  STICS_PHA( 1 ).C_ST_PHA(II)( 1:JJ )	! STICS_PHA
+	   2331       END DO
+	   2332 
+	   2333       RETURN
+	   2334 
+	   2335 9001  CONTINUE
+	   2336       WRITE( TTOUT, 901 )  '  ***** ERROR STORING L1-DATA *****', STATUS
+	   2337  901  FORMAT( A, '  STATUS =', I5 )
+	   2338       CALL LIB$SIGNAL(%VAL(STATUS))
+	   2339       STOP  1101
+	   2340 
+	   2341       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                    8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                                60 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                1416   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 288 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 L0_RECORD                               38 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               461098
+
+
+ENTRY POINTS
+
+    Address   Type  Name         
+                                 
+  4-00000000        WIND_STORE_L1
+
+
+
+WIND_STORE_L1                                                   30-NOV-1995 14:17:18    DEC Fortran V6.2-508                Page   5
+2.6                             Symbol Table                     9-FEB-1995 20:43:31    SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.FOR;21
+
+VARIABLES
+
+    Address   Type  Name                  Address   Type  Name                  Address   Type  Name             
+                                                                                                                 
+  7-00000006  L*1   BITRATE            10-0000000C  I*2   MCOREID             1-00000008  I*4   STICS_H_RATE_SIZE
+ 10-00000006  I*2   COREID             10-0000001E  I*2   MCORENUM            1-0000000C  I*4   STICS_N_RATE_SIZE
+ 10-00000018  I*2   CORENUM             7-0000000C  I*4   MEASSPIN            2-00000000  I*4   STICS_RATE_SIZE  
+  6-0006EEBC  I*4   EDBSET             10-00000012  I*2   MPHAID              7-00000004  L*1   SUBS_ID          
+  1-00000000  I*4   EDB_CORE_SIZE      10-00000024  I*2   MPHANUM             7-00000007  L*1   SWICSPOWER       
+  7-00000005  L*1   HDBFLAG             7-0000000A  L*1   RAMCHECK            1-00000010  I*4   SWICS_H_RATE_SIZE
+ 10-00000002  I*2   HDBRECID           10-00000000  I*2   RECORDID            1-00000014  I*4   SWICS_N_RATE_SIZE
+ 10-00000014  I*2   HDBRECNUM          10-0000000A  I*2   SCOREID             2-00000004  I*4   SWICS_RATE_SIZE  
+ 10-00000004  I*2   HKRECID            10-0000001C  I*2   SCORENUM           10-00000008  I*2   WCOREID          
+ 10-00000016  I*2   HKRECNUM            7-00000000  I*4   SFPERBLOCK         10-0000001A  I*2   WCORENUM         
+REG-########  I*4   II                 10-00000010  I*2   SPHAID             10-0000000E  I*2   WPHAID           
+REG-########  I*4   JJ                 10-00000022  I*2   SPHANUM            10-00000020  I*2   WPHANUM          
+REG-########  I*4   KK                  7-00000010  I*4   SPINCOUNT                                              
+  7-00000008  L*1   MASSPOWER               **      I*4   STATUS                                                 
+  1-00000004  I*4   MASS_RATE_SIZE      7-00000009  L*1   STICSPOWER                                             
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  8-000003CC  I*4   HDBTIME2            24  (2, 3)
+  9-00000CF0  I*4   HKLOCI             300  (75)
+  9-00000E1C  I*4   HKLOCJ             300  (75)
+  9-00000CE4  I*4   HKSET               12  (3)
+  7-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+
+WIND_STORE_L1                                                   30-NOV-1995 14:17:18    DEC Fortran V6.2-508                Page   6
+2.6                             Symbol Table                     9-FEB-1995 20:43:31    SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.FOR;21
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+      **       100        **       200        **       901    4-00000494   9001
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                         Type  Name                      
+                                                                     
+        LIB$SIGNAL                         WIND_WRITE_L1_HEADER      
+
+WIND_STORE_L1                                                   30-NOV-1995 14:17:18    DEC Fortran V6.2-508                Page   7
+2.6                             Symbol Table                     9-FEB-1995 20:43:31    SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.FOR;21
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.LIS;70
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_STORE_L1.OBJ;39
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.53 seconds
+  Elapsed time:      3.29 seconds
+  Pagefaults:         243
+  I/O Count:           30

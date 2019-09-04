@@ -1,0 +1,425 @@
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   1
+                                                                12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+	      1 	SUBROUTINE WIND_OUTPUT_L1
+	      2 C
+	      3 C       This routine prepares a science record for output and writes it out.
+	      4 C       Doing this requires several steps, some of which are science related,
+	      5 C       others mainly bookkeeping.
+	      6 C
+	      7 C	1) save science record counter in Curr_Sci_Rec_Number, set Curr_Spin
+	      8 C	  to -1
+	      9 C       2) concatenate the STICS rate data in the EDBset'th science record
+	     10 C       If EDBset is 3 (this is 3rd science record or later) perform steps 2-8
+	     11 C         3) shift data into/within the first science record
+	     12 C         4) fill in the wall times in the HDB with those of spin 0
+	     13 C         5) build the science record header
+	     14 C         6) write the completed science record to the output file and keep a
+	     15 C            count of the number of records written
+	     16 C         7) move science data down within their various arrays
+	     17 C         8) concatenate STICS PHA data
+	     18 C         9) clear 3rd science record to zero
+	     19 C      10) copy latest HK to first position in newly cleared science record
+	     20 C      11) increment EDBset, but to no higher than 3
+	     21 C      12) increment Sci_rec_cntr, save into Curr_Sci_Rec_Number
+	     22 C      13) set flag New_Sci_Rec to .TRUE.
+	     23 C
+	     24 C     This version:   1.7   12-APR-1995
+	     25 C
+	     26 C     CREATION:
+	     27 C       13-JAN-1995    L. Bleau
+	     28 C
+	     29 C     REVISIONS:
+	     30 C       19-JAN-1995     J.PAQUETTE      call to CONCATENATE_STICS split into
+	     31 C                                       calls to CONCATENATE_STICS_RATES and
+	     32 C                                       CONCATENATE_STICS_PHA 
+	     33 C 1.2	 7-FEB-1995	PAQUETTE	if found zero-valued PHA word decrement
+	     34 C					count of PHA words for that sensor
+	     35 C 1.3	13-FEB-1995	L. Bleau	move where Sci_Rec_Cntr is incremented,
+	     36 C					add code to save it in Curr_Sci_Rec_Number,
+	     37 C					add calls to WIND_REPORT to inform user
+	     38 C					of zero-valued PHA words
+	     39 C 1.4   14-FEB-1995	L. Bleau	set New_Sci_Rec .TRUE. before returning
+	     40 C	23-FEB-1995	L. Bleau	remove comman DIAG and add INCLUDE
+	     41 C					DIAG.INC
+	     42 C 1.5	23-FEB-1995	L. Bleau	if PRINTLZ_MODE is set do everything
+	     43 C					except write the L1 record
+	     44 C	27-FEB-1995	L. Bleau	updated comments
+	     45 C 1.6	14-MAR-1995	L. Bleau	limit output file to 600 L1 records in
+	     46 C					case there's an infinite loop
+	     47 C 1.7	12-APR-1995	L. Bleau	added include L1INFO.INC
+	     48 C
+	     49 CDEC$ IDENT     '1.7'
+	     50 	IMPLICIT NONE
+	     51 	INCLUDE   'INC_DIR:EDBDEF.INC/NOLIST'
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   2
+1.7                                                             12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+	    589 	INCLUDE   'INC_DIR:EDBVARS.INC/NOLIST'
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   3
+1.7                                                             12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+	    771 	INCLUDE   'INC_DIR:L0_DATA_Record.INC/NOLIST'
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   4
+1.7                                                             12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+	    939 	INCLUDE   'INC_DIR:DIAG.INC/NOLIST'
+	    948 	INCLUDE   'INC_DIR:L1FMT.INC/NOLIST'
+	   1080 	INCLUDE   'INC_DIR:L1INFO.INC/NOLIST'
+	   1108 C
+	   1109 	INTEGER ISTAT, SPIN
+	   1110 C
+	   1111 C Update current science record number and current spin info
+	   1112 C Set Curr_Spin to -1 to indicate this processing isn't associated with any
+	   1113 C particular spin
+	   1114 C
+	   1115         Curr_Sci_Rec_Number = Sci_Rec_Cntr
+	   1116 	Curr_Spin = -1
+	   1117 C
+	   1118 C At low bit rate, a STICS voltage step lasts for two spins, and the data is
+	   1119 C cut in half and output over two spins. Thus, for low bit rate, we must
+	   1120 C concatenate the two halves of the data. Rate data must be concatenated before
+	   1121 C shifting.
+	   1122 C
+	   1123         CALL WIND_CONCATENATE_STICS_RATES(EDBSet)
+	   1124 C
+	   1125         IF (EDBset .EQ. 3) THEN
+	   1126 C
+	   1127 C Now we must shift the data elements in time so that they will be associated
+	   1128 C with the times (and voltage steps) during which they were accumulated, not
+	   1129 C those during which they were read out.
+	   1130 C
+	   1131           CALL WIND_SHIFT_DATA
+	   1132 C
+	   1133 C At low bit rate, a STICS voltage step lasts for two spins, and the data is
+	   1134 C cut in half and output over two spins. Thus, for low bit rate, we must
+	   1135 C concatenate the two halves of the data. PHA data must be concatenated after
+	   1136 C shifting.
+	   1137 C
+	   1138           CALL WIND_CONCATENATE_STICS_PHA(1)
+	   1139 C
+	   1140 C The wall clock time is not given as part of the HDB, so copy it from the
+	   1141 C EDB of spin zero and store in the HDB structure.
+	   1142 C Also copy it in ITIME format, and store it, too, in structure 
+	   1143 C
+	   1144           HDB(1).BDH.EPOCH = SCI(1).EDB(0).EPOCH
+	   1145           HDB(1).BDH.W_Time = SCI(1).EDB(0).W_Time
+	   1146 C
+	   1147 C Prepare a header for the record to be stored.
+	   1148 C
+	   1149           CALL WIND_BUILD_SR_HEADER
+	   1150 C
+	   1151 C If we are in PRINTLZ mode don't do any reports or writes
+	   1152 C
+	   1153           IF (.NOT. PRINTLZ_MODE) THEN
+	   1154 C
+	   1155 C Test for PHA word that are 0 using the flags in the header record; if we have
+	   1156 C a 0 PHA word decrement the PHA word counter, effectively eliminating it.
+	   1157 C
+	   1158             DO 100 SPIN=0,59
+	   1159               Curr_Spin = SPIN
+	   1160               IF(BTEST( L1_SR_HEADER.ZERO_SWICS_PHA(SPIN/32+1), MOD(SPIN,32) ) )THEN
+	   1161                 CALL WIND_REPORT( 'zero-valued SWICS PHA word found', 0, Curr_Spin )
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   5
+1.7                                                             12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+	   1162                 SCI(1).EDB(SPIN).SWICS_Len = SCI(1).EDB(SPIN).SWICS_Len - 1
+	   1163               ENDIF
+	   1164               IF(BTEST( L1_SR_HEADER.ZERO_STICS_PHA(SPIN/32+1), MOD(SPIN,32) ) )THEN
+	   1165                 CALL WIND_REPORT( 'zero-valued STICS PHA word found', 0, Curr_Spin  )
+	   1166                 SCI(1).EDB(SPIN).STICS_Len = SCI(1).EDB(SPIN).STICS_Len - 1
+	   1167               ENDIF
+	   1168               IF(BTEST( L1_SR_HEADER.ZERO_MASS_PHA(SPIN/32+1), MOD(SPIN,32) ) )THEN
+	   1169                 CALL WIND_REPORT( 'zero-valued MASS PHA word found', 0, Curr_Spin  )
+	   1170                 SCI(1).EDB(SPIN).MASS_Len = SCI(1).EDB(SPIN).MASS_Len - 1
+	   1171               ENDIF
+	   1172  100        CONTINUE
+	   1173           ENDIF                              
+	   1174 C
+	   1175 C Now store the L1 data
+	   1176 C Write out 1st science record, which is the one we just corrected by the calls
+	   1177 C to WIND_CONCATENATE_STICS and WIND_SHIFT_DATA
+	   1178 C
+	   1179           IF (.NOT. PRINTLZ_MODE) CALL WIND_STORE_L1( ISTAT )
+	   1180           L1_recs_written = L1_recs_written + 1
+	   1181           IF(DIAG .LE. 5 .OR. .NOT.INTER) THEN
+	   1182             WRITE(6,1001) L1_recs_written
+	   1183 1001        FORMAT('  Done with L1 Sci Rec ',I4)
+	   1184           ELSE
+	   1185             WRITE(6,1002) L1_recs_written
+	   1186 1002        FORMAT('+ Done with L1 Sci Rec ',I4)
+	   1187           ENDIF
+	   1188 C
+	   1189 C Test number of L1 records written; there should be only 480.
+	   1190 C If it's greater than 600 assume there's an infinite loop and stop the program.
+	   1191 C
+	   1192 	  IF (L1_recs_written .GT. 600) THEN
+	   1193 	    TYPE *,' '
+	   1194 	    TYPE *,'*** WIND_CD_READ is in an infinite loop ***'
+	   1195 	    TYPE *,'*** Stopping program ***'
+	   1196 	    CALL WIND_REPORT('probable infinite loop, stopping program',
+	   1197      &        0, L1_recs_written )
+	   1198 	    STOP
+	   1199 	  ENDIF
+	   1200 C
+	   1201 C Move the data. Contents of 2nd science record --> 1st science record.
+	   1202 C Contents of 3rd science record --> 2nd science record.  New data will go into
+	   1203 C the 3rd science record in the future.  We also have to do the same thing with
+	   1204 C the HK's and their pointers and the HDBs and their times.
+	   1205 C Also zero out the structures of the third Science Record to logically clear
+	   1206 C them.  This has to be done to allow for missing spins.
+	   1207 C
+	   1208           CALL WIND_POST_PROCESS
+	   1209         END IF
+	   1210 C
+	   1211 C At this point we have a completed copy of the most recent science record.  If
+	   1212 C EDBset is a 1 or a 2 then the science record just completed is in position
+	   1213 C EDBset (that is, 1 or 2).  If, however, EDBset is 3 (the normal case after
+	   1214 C the first two records have been processed) then the science record just
+	   1215 C completed in is position 2, since it has just been shifted down one position.
+	   1216 C The science record just completed (except for the first one) may have an
+	   1217 C extra HK at its beginning which should  not have been duplicated from the
+	   1218 C previous science record.  Call routine WIND_RESET_HK to examine this science
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   6
+1.7                                                             12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+	   1219 C record and compare the times of the EDB and the second HK (the first HK was
+	   1220 C duplicated from the previous science record and is guaranteed to have a much
+	   1221 C earlier time stamp).  If the times reasonably match (within 1 sec) remove the
+	   1222 C first HK by copying the rest of the HKs down one position.  Remember to
+	   1223 C adjust the counter of number of valid HKs (array HKset).
+	   1224 C
+	   1225         IF(EDBSet.EQ.3)THEN
+	   1226           CALL WIND_RESET_HK(EDBSet-1)
+	   1227         ELSE
+	   1228           CALL WIND_RESET_HK(EDBSet)
+	   1229         END IF
+	   1230 C
+	   1231 C Formerly simply had EDBset=2; thus if EDBset was 1 it was set to 2. If it was
+	   1232 C 2 already, it remained so. Now If its 1 or 2 its incremented; if its 3 it
+	   1233 C remains 3.
+	   1234 C
+	   1235         IF(EDBset.LT.3)THEN
+	   1236           EDBset =  EDBset+1
+	   1237         ENDIF
+	   1238 C
+	   1239 C Update current science record number and current spin info (again)
+	   1240 C Also set New_Sci_Rec to let other parts of the program know we've started
+	   1241 C processing a new science record
+	   1242 C
+	   1243         Sci_rec_cntr = Sci_rec_cntr+1
+	   1244         Curr_Sci_Rec_Number = Sci_Rec_Cntr
+	   1245 	Curr_Spin = -1
+	   1246         New_Sci_Rec = .TRUE.
+	   1247 
+	   1248 	RETURN
+	   1249 	END
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   7
+1.7                             Symbol Table                    12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46024 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   12 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                                80 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                1284   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 592 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 DIAG                                    48 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 13 L1_HEADERS                             644 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 14 L1INFO                                  40 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               534588
+
+
+ENTRY POINTS
+
+    Address   Type  Name          
+                                  
+  4-00000000        WIND_OUTPUT_L1
+
+
+VARIABLES
+
+    Address   Type  Name                       Address   Type  Name                       Address   Type  Name                  
+                                                                                                                                
+  7-00000006  L*1   BITRATE                 10-00000008  I*4   DR_BEG_MAJFR_CNT        10-00003218  I*4   L0_FILE_REC_PNTR      
+ 14-00000014  I*4   CURR_SCI_REC_NUMBER     10-00000020  I*4   DR_BEG_MICSEC           14-00000004  I*4   L1_RECS_WRITTEN       
+ 14-00000018  I*4   CURR_SPIN               10-0000001C  I*4   DR_BEG_MSEC             12-00000010  CHAR  LINK_DATE_TIME        
+  1-00000018  CHAR  C_BIG_NULL_BUFFER       10-00000014  I*4   DR_BEG_YEAR              7-00000008  L*1   MASSPOWER             
+ 11-00000000  CHAR  C_DR2_BUFFER            10-00000000  I*4   DR_INSTR_NUM             1-00000004  I*4   MASS_RATE_SIZE        
+ 10-00000000  CHAR  C_DR_BUFFER             10-00000024  I*4   DR_NUM_MINFR_FILL        7-0000000C  I*4   MEASSPIN              
+  1-00000018  CHAR  C_NULL_BUFFER           10-00000028  I*4   DR_NUM_MINFR_SYNC_ERR   14-0000001C  L*4   NEW_SCI_REC           
+ 12-00000000  I*4   DIAG                    10-00000004  I*4   DR_PHYS_REC_NUM         12-00000008  L*4   NRT_MODE              
+ 11-00000018  I*4   DR2_BEG_DOY             10-00003208  R*8   DR_SC_EPOCH             10-00003210  R*8   PREF_EPOCH            
+ 11-00003200  R*8   DR2_BEG_EPOCH           10-0000002C  I*4   DR_TLM_MODE             12-0000000C  L*4   PRINTLZ_MODE          
+ 11-00000008  I*4   DR2_BEG_MAJFR_CNT        6-0006EEBC  I*4   EDBSET                  12-00000027  CHAR  PROG_VERSION          
+ 11-00000020  I*4   DR2_BEG_MICSEC           1-00000000  I*4   EDB_CORE_SIZE            7-0000000A  L*1   RAMCHECK              
+ 11-0000001C  I*4   DR2_BEG_MSEC            14-00000008  I*4   EDB_LOST                14-00000000  I*4   SCI_REC_CNTR          
+ 11-00000014  I*4   DR2_BEG_YEAR            14-0000000C  I*4   EDB_SKIP                 7-00000000  I*4   SFPERBLOCK            
+ 11-00000000  I*4   DR2_INSTR_NUM           14-00000010  I*4   EDB_SUM                REG-00000008  I*4   SPIN                  
+ 11-00000024  I*4   DR2_NUM_MINFR_FILL      14-00000020  L*4   EPH_AVAIL                7-00000010  I*4   SPINCOUNT             
+ 11-00000028  I*4   DR2_NUM_MINFR_SYNC_ERR  14-00000024  L*4   FROM_CD                  7-00000009  L*1   STICSPOWER            
+ 11-00000004  I*4   DR2_PHYS_REC_NUM        12-0000002C  L*4   HALT_IF_NO_EPH           1-00000008  I*4   STICS_H_RATE_SIZE     
+ 11-00003208  R*8   DR2_SC_EPOCH             7-00000005  L*1   HDBFLAG                  1-0000000C  I*4   STICS_N_RATE_SIZE     
+ 11-0000002C  I*4   DR2_TLM_MODE            12-00000004  L*4   INTER                    2-00000000  I*4   STICS_RATE_SIZE       
+ 10-00000018  I*4   DR_BEG_DOY               2-00000008  I*4   ISTAT                    7-00000004  L*1   SUBS_ID               
+ 10-00003200  R*8   DR_BEG_EPOCH            10-0000321C  L*1   L0_FILE_READONLY         7-00000007  L*1   SWICSPOWER            
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   8
+1.7                             Symbol Table                    12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+    Address   Type  Name                       Address   Type  Name                  
+                                                                                     
+  1-00000010  I*4   SWICS_H_RATE_SIZE        2-00000004  I*4   SWICS_RATE_SIZE       
+  1-00000014  I*4   SWICS_N_RATE_SIZE                                                
+
+
+RECORDS
+
+    Address   Name            Structure                Bytes
+                                                            
+ 13-00000000  L1_FILE_HEADER  ST_L1_FILE_HEADER          400
+ 13-00000190  L1_SR_HEADER    ST_L1_SR_HEADER            244
+
+
+ARRAYS
+
+     Address  Type  Name                          Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA                      1980  (0:10, 0:59, 3)
+ 11-0000000C  I*4   DR2_BEG_SC_CLOCK                  8  (2)
+ 11-00000000  I*1   DR2_BUFFER                    13300  (13300)
+ 11-00000000  I*1   DR2_BUFFER_CONTINGENCY        13300  (13300)
+ 11-0000012A  I*1   DR2_FILL                          2  (2)
+ 11-0000012C  I*1   DR2_MINFR                     12500  (12500)
+ 11-0000012C  I*1   DR2_MINFR_3DP                 12500  (50, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_EPA                  6000  (24, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_KON                  1500  (6, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_MFI                  6250  (25, 0:249)
+ 11-00000030  I*1   DR2_MINFR_QUAL                  250  (0:249)
+ 11-0000012C  I*1   DR2_MINFR_SMS                 10500  (42, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_SWE                 11250  (45, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_TGR                  5250  (21, 0:249)
+ 11-0000012C  I*1   DR2_MINFR_WAV                 11250  (45, 0:249)
+ 10-0000000C  I*4   DR_BEG_SC_CLOCK                   8  (2)
+ 10-00000000  I*1   DR_BUFFER                     13300  (13300)
+ 10-00000000  I*1   DR_BUFFER_CONTINGENCY         13300  (13300)
+ 10-0000012A  I*1   DR_FILL                           2  (2)
+ 10-0000012C  I*1   DR_MINFR                      12500  (12500)
+ 10-0000012C  I*1   DR_MINFR_3DP                  12500  (50, 0:249)
+ 10-0000012C  I*1   DR_MINFR_EPA                   6000  (24, 0:249)
+ 10-0000012C  I*1   DR_MINFR_KON                   1500  (6, 0:249)
+ 10-0000012C  I*1   DR_MINFR_MFI                   6250  (25, 0:249)
+ 10-00000030  I*1   DR_MINFR_QUAL                   250  (0:249)
+ 10-0000012C  I*1   DR_MINFR_SMS                  10500  (42, 0:249)
+ 10-0000012C  I*1   DR_MINFR_SWE                  11250  (45, 0:249)
+ 10-0000012C  I*1   DR_MINFR_TGR                   5250  (21, 0:249)
+ 10-0000012C  I*1   DR_MINFR_WAV                  11250  (45, 0:249)
+  8-000003CC  I*4   HDBTIME2                         24  (2, 3)
+  9-00000CF0  I*4   HKLOCI                          300  (75)
+  9-00000E1C  I*4   HKLOCJ                          300  (75)
+  9-00000CE4  I*4   HKSET                            12  (3)
+  1-00000018  I*1   NULL_BUFFER                   46000  (46000)
+  7-0000000B  L*1   SPARFLAGS                         1  (1)
+
+
+
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page   9
+1.7                             Symbol Table                    12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label
+                                                           
+  4-00000270   100        **       1001       **       1002
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                                 Type  Name                                 Type  Name                              
+                                                                                                                                
+        WIND_BUILD_SR_HEADER                       WIND_POST_PROCESS                          WIND_SHIFT_DATA                   
+        WIND_CONCATENATE_STICS_PHA                 WIND_REPORT                                WIND_STORE_L1                     
+        WIND_CONCATENATE_STICS_RATES               WIND_RESET_HK                                                                
+
+WIND_OUTPUT_L1                                                  30-NOV-1995 14:18:02    DEC Fortran V6.2-508                Page  10
+1.7                             Symbol Table                    12-APR-1995 19:16:18    SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.FOR;16
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.LIS;44
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ]WIND_OUTPUT_L1.OBJ;41
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.10 seconds
+  Elapsed time:      2.90 seconds
+  Pagefaults:         225
+  I/O Count:           41

@@ -1,0 +1,115 @@
+TEST2$MAIN                                                       1-JUN-1995 19:30:04    DEC Fortran V6.2-508                Page   1
+                                                                 1-JUN-1995 19:30:03    SMS1:[WIND.SOFTWARE.L1]TEST2.FOR;1
+
+	      1 	integer mode/1/, units, system
+	      2 	logical what_info(7)
+	      3 	real*8 beg_date, end_date
+	      4 10	call get_orbit_request(mode, beg_date, end_date, what_info, units,
+	      5 	1 system) 
+	      6 	type *, beg_date, end_date, what_info, units,
+	      7 	1 system
+	      8 	goto 10
+	      9 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   4 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   52 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                 332   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 172 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+
+    Total Space Allocated                  564
+
+
+ENTRY POINTS
+
+    Address   Type  Name      
+                              
+  3-00000000        TEST2$MAIN
+
+
+VARIABLES
+
+    Address   Type  Name         Address   Type  Name         Address   Type  Name    
+                                                                                      
+  2-00000000  R*8   BEG_DATE   1-00000000  I*4   MODE       2-00000010  I*4   UNITS   
+  2-00000008  R*8   END_DATE   2-00000014  I*4   SYSTEM                               
+
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  2-00000018  L*4   WHAT_INFO           28  (7)
+
+
+
+LABELS
+
+    Address   Label
+                   
+  3-00000038   10  
+
+
+
+TEST2$MAIN                                                       1-JUN-1995 19:30:04    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                     1-JUN-1995 19:30:03    SMS1:[WIND.SOFTWARE.L1]TEST2.FOR;1
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                   
+                               
+        GET_ORBIT_REQUEST      
+
+TEST2$MAIN                                                       1-JUN-1995 19:30:04    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     1-JUN-1995 19:30:03    SMS1:[WIND.SOFTWARE.L1]TEST2.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=NATURAL)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(ALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /DIAGNOSTICS=SMS1:[WIND.SOFTWARE.L1]TEST2.DIA;1
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]TEST2.LIS;1
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]TEST2.OBJ;1
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.09 seconds
+  Elapsed time:      1.56 seconds
+  Pagefaults:         134
+  I/O Count:            8

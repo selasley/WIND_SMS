@@ -1,0 +1,11 @@
+ Errors found while generating the file : ahhe960909.dat             
+   Run time  13:59:19   24-SEP-99
+  DOY:HR:MN:SEC                  COMMENTS
+  253:00:00:08   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  54 spins                                           
+  253:00:51:21   Invalid speed encountered:         0.0 +/-        0.0 km/s
+                 Incomplete Science Record:  59 spins                                           
+ Total Bad HDBs =  0
+ Total Invalid DVS =   0
+ Total Bad Speeds =   2
+ Total Bad Basic Rates =    0     Total Good Basic Rates =         12

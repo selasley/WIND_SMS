@@ -1,0 +1,34 @@
+This readme file contains several instructions for the possible tasks needed 
+for the routine processing.
+1. RESUBMIT ALL ROUTINE PROCESSES
+     submit the command procedure sms1:[wind.software.swics]routine.com
+2. IF THE PROCESSING IS MISSING SINCE CERTAIN DATE IN THE PAST TO TODAY
+    (a) delete the batch job 'routine' if exists
+    (b) copy sms1:[wind.software.swics]routine.com to another file, 
+        say routine1.com.
+    (c) in routine1.com, comment out two ydt=.... lines: i.e.
+          $!ydt = f$cvtime("YESTERDAY","ABSOLUTE","DATE")  
+          $!ydt = ydt + ":07:00:00.00"                      
+        and change the 'ydt' in the line
+          $directory/brief/col=1/output=dir.lis wind_l1_data:wi_l1*.dat/sin='ydt'
+        to the date desired (format is DD-MMM-YYYY:HH:MM:SS)
+    (d) submit routine1.com
+3. IF WANT TO PROCESS ONLY CERTAIN PROCESSes FOR CERTAIN DATES
+    (a) copy sms1:[wind.software.swics.scratch]dir.lis to your working directory
+    (b) edit in dir.lis, replace the names of the L1 files for the dates desired
+    (c) run sms1:[wind.software.swics]process.com    or
+            sms1:[wind.software.swics]stack_pro.com  or
+            sms1:[wind.software.swics]co_process.com
+        as needed
+        You need to enter two parameters when running the above command
+        procedures: (1) number of L1 files in dir.lis  
+                    (2) the file name 'dir.lis'
+4. IF WANT TO PRODUCE PLOTS FOR CERTAIN DATES
+     refer to the command procedure which creates the desired plot:
+       for tplot from *.outv file: in process.com
+       for stack plot from *.fsr file: in stack_pro.com
+       for coplot (the .gif plot) from *.cosw file: in co_process.com 
+     repeat the commands starting from '$idl' to '@psprint idl.ps' 
+     (enter the desired file name for plotting. 
+      e.g. smsdisk4:[wind.l2data.swics.routine]WI_L1_SMS_19970921_V01.OUTV)
+ 

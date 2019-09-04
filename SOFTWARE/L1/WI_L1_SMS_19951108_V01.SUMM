@@ -1,0 +1,9 @@
+                           WIND SMS detail report
+ 
+Level 1 file: DISK$L1DATA:[WIND.L1DATA]WI_L1_SMS_19951108_V01.DAT;1
+ 
+Below is a list of parameters which exceeded their limits.
+                                                                   Sci
+Parameter name                               Value     Limit Units Rec   Time
+---------------------------------------- --------- --------- ----  --- --------
+Latchup Counter - Main                        2.00      1.00 Numb  470 23:48:47

@@ -1,0 +1,176 @@
+CNVRT_YRMONDAY_TO_JULIAN                                        21-APR-1995 15:26:52    DEC Fortran V6.2-508                Page   1
+                                                                 9-DEC-1994 18:37:13    CNVRT_YRMONDAY_TO_JULIAN.FOR;1
+
+	      1       INTEGER*4 FUNCTION CNVRT_YRMONDAY_TO_JULIAN( IYY, IMM, IDY )
+	      2 !
+	      3 !	In this routine JULDAY returns the Julian Day Number which begins at
+	      4 !	noon of the calender date specified by month IMM, day IDY, and year IYY,
+	      5 !	all INTEGER*4 variables. Positive year signifies A.D.; negative B.C.
+	      6 !	Remember thet the year after 1 B.C. was 1 A.D.  Note that this routine
+	      7 !	will not run on systems with 2-byte integers.
+	      8 !
+	      9 !	Programmed after the sample in "NUMERICAL RECIPES IN PASCAL" by
+	     10 !	William H. Press and others.
+	     11 !
+	     12 !	Version:	29-Mar_1994
+	     13 !
+	     14 !	USAGE:
+	     15 !	JJ	= CNVRT_YRMONDAY_TO_JULIAN( IYY, IMM, IDY )
+	     16 !
+	     17 !	PARAMETERS:
+	     18 !	INTEGER*4	JJ	! OUTPUT: Integer JULIAN day
+	     19 !
+	     20 !	INTEGER*4	IYY	! INPUT:Year	pos=A.D., neg=B.C., no zero
+	     21 !			IMM	!	Month
+	     22 !			IDY	!	Day
+	     23 ! 
+	     24 !	Creation:
+	     25 !	22-Mar-1994	H.Broer	UMD, Space Physics Group	
+	     26 !
+	     27 !	Revision:
+	     28 !	25-Mar-1994	H.Broer	Correct for BC-years from Julian day 60.
+	     29 !	29-Mar-1994	H.Broer Correct last day of Julian calender
+	     30 !
+
+CNVRT_YRMONDAY_TO_JULIAN                                        21-APR-1995 15:26:52    DEC Fortran V6.2-508                Page   2
+                                                                 9-DEC-1994 18:37:13    CNVRT_YRMONDAY_TO_JULIAN.FOR;1
+
+	     32       IMPLICIT NONE
+	     33 
+	     34       INTEGER*4	IGREG,		! variable
+	     35      :		IGREG1/588829/,	! Gregorian Calender was adopted on 15-OCT-1582
+	     36      :		IGREG2/588818/,	! the day before was 4-OCT-1582
+	     37      :		IDY,		! Input:	DAY OF MONTH
+	     38      :		IMM,		!		MONTH OF YEAR
+	     39      :		IYY,		!		YEAR
+	     40      :		JA,		!
+	     41      :		JM,		!
+	     42      :		JY,		!
+	     43      :		JUL
+	     44 
+	     45 1000  IF( IYY .EQ. 0 ) THEN
+	     46           TYPE 100, ' THERE IS NO YEAR 0.'
+	     47   100 FORMAT( 1H , ' ***** ', A, ' ***** ' )
+	     48           TYPE 110, ' PLEASE ENTER YEAR;?'
+	     49   110 FORMAT( 1H , A, $ )
+	     50           ACCEPT 120, IYY
+	     51   120 FORMAT( I10 )
+	     52           GOTO 1000
+	     53       ENDIF
+	     54 
+	     55       IF( IYY .LT. 0 )	IYY = IYY + 1
+	     56 
+	     57       IF( IMM .GT. 2 )	THEN
+	     58           JY	= IYY
+	     59           JM	= IMM + 1
+	     60       ELSE
+	     61           JY	= IYY - 1
+	     62           JM	= IMM + 13
+	     63       ENDIF
+	     64 
+	     65       JUL	= INT( 365.25D0 * ( JY + 4712 ) )
+	     66      :		+ INT( 30.6001D0 * JM )
+	     67      :		+ IDY
+	     68      :		- 63
+	     69 
+	     70       IGREG	= IDY + 31*( IMM + 12*IYY )
+	     71       IF( IGREG .GE. IGREG1 )   THEN
+	     72           JA	= INT( 0.01 * JY )
+	     73           JUL	= JUL + 2 - JA + INT( 0.25 * JA )
+	     74       ELSE
+	     75           IF( IGREG .GT. IGREG2 )	JUL = 2299160
+	     76       ENDIF
+	     77 
+	     78       CNVRT_YRMONDAY_TO_JULIAN	= JUL
+	     79 
+	     80       RETURN
+	     81 
+	     82       END
+
+CNVRT_YRMONDAY_TO_JULIAN                                        21-APR-1995 15:26:52    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     9-DEC-1994 18:37:13    CNVRT_YRMONDAY_TO_JULIAN.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                                80 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                 588   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 192 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                  868
+
+
+ENTRY POINTS
+
+    Address   Type  Name                    
+                                            
+  3-00000000  I*4   CNVRT_YRMONDAY_TO_JULIAN
+
+
+VARIABLES
+
+    Address   Type  Name       Address   Type  Name       Address   Type  Name       Address   Type  Name  
+                                                                                                           
+      **      I*4   IDY      1-00000004  I*4   IGREG2 REG-0000001B  I*4   JA     REG-00000013  I*4   JY    
+REG-00000001  I*4   IGREG        **      I*4   IMM    REG-00000012  I*4   JM                               
+  1-00000000  I*4   IGREG1       **      I*4   IYY    REG-00000005  I*4   JUL                              
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+      **       100        **       110        **       120        **       1000
+
+CNVRT_YRMONDAY_TO_JULIAN                                        21-APR-1995 15:26:52    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                     9-DEC-1994 18:37:13    CNVRT_YRMONDAY_TO_JULIAN.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRMONDAY_TO_JULIAN.LIS;7
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]CNVRT_YRMONDAY_TO_JULIAN.OBJ;7
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.21 seconds
+  Elapsed time:      1.92 seconds
+  Pagefaults:         137
+  I/O Count:           10

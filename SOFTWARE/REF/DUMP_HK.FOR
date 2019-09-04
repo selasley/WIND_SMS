@@ -1,0 +1,26 @@
+	SUBROUTINE DUMP_HK(JOUT,HKSTR)
+        INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+        INTEGER*4 HKCOUNT,HKNUM,K,JOUT
+	CHARACTER*30 FORMAT_TIME
+C
+	RECORD /HKeep/ HKSTR
+
+	HKCOUNT = HKSTR.HKcount
+	WRITE(JOUT,1003) HKCOUNT
+1003    FORMAT(/' DUMP OF HK         # OF HKs =',I5)
+C
+        DO 100 HKNUM=1,MIN(HKCOUNT,MAX_HK)
+          WRITE(JOUT,1001) HKNUM,FORMAT_TIME(HKSTR.HKSET(HKNUM).W_TIME),
+     &                           HKSTR.HKSET(HKNUM).EPOCH,
+     &                           FORMAT_TIME(HKSTR.HKSET(HKNUM).SC_TIME),
+     &                           HKSTR.HKSET(HKNUM).SC_EPOCH
+1001  FORMAT(/' HK ',I2,T10,'W_TIME:  ',A30,5X,F15.0/
+     &                  T10,'SC_TIME: ',A30,5X,F15.0)
+          WRITE(JOUT,1002) (HKSTR.HKSET(HKNUM).HK(K).BVAL,
+     &                      HKSTR.HKSET(HKNUM).HK(K).QUAL,
+     &                     K=1,75)
+1002      FORMAT(10(2X,Z2,1X,I1))
+100     CONTINUE
+C
+        RETURN
+	END

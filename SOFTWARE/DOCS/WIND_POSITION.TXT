@@ -1,0 +1,86 @@
+                                WIND_POSITION
+    WIND_POSITION is a program to extract the WIND satellite's position and
+display it in a form easily loaded into a spreadsheet.  Its major subroutines
+and their calling sequences are listed below.
+    The program prompts the user for what information is to be extracted and
+dumped.  It then accesses the appropriate set of CDF files, concatenates the
+data retrieved, transforms it as the user requested, and writes it to the
+appropriate output device, being it terminal or file.
+GET_ORBIT_REQUEST
+    This routine obtains information from the user about what time interval
+should be dumped, what coordinates should be dumped, and whether any
+transformations should be performed prior to dumping.  While initially
+implemented as an interactive prompt for the user this may be changed to some
+other type of interface.
+	MODE	   I	I*4	operating mode; ignored for now
+	BEG_DATE   O	R*8	date/time of first position requested
+	END_DATE   O	R*8	date/time of last position requested
+	WHAT_INFO  O	L*4	array indicating what position information to
+				display
+	UNITS	   O	I*4	whether or not to translate into alternate
+				units: 0 = no change (kM), 1 = Earth radii
+	SYSTEM	   O	I*4	whether or not to transform into an alternate
+				coordinate system: 0 = no change, 1 = spherical
+				(r,theta,phi)
+GET_EPHEMERIS
+    This routine accesses a particular day's orbit and attitude CDF files and
+returns all the data in each file in a common block.
+	OR_NAME  I	CH*(*)	name of CDF file containing orbit data
+	AT_NAME  I	CH*(*)	name of CDF file containing attitude data
+	STATUS   O	I*4	returned status of CDF operations
+GET_ORBIT_DAYS
+    This routine returns all requested orbit information for a given time
+frame, which is an interval between two dates. 
+	BEG_DATE   I	R*8	date/time of first position requested
+	END_DATE   I	R*8	date/time of last position requested
+	WHAT_INFO  I	L*4	array indicating what position information to
+				return
+	MAXSIZE	   I	I*4	size of data array to hold result
+	NSTORED	   O	I*4	number of array elements stored into
+	GCI_POS    O	/EPHEMERIS/	output array of GCI positions
+	GCI_VEL    O	/EPHEMERIS/	output array of GCI velocities
+	GSE_POS    O	/EPHEMERIS/	output array of GSE positions
+	GSE_POS    O	/EPHEMERIS/	output array of GSE velocities
+	GSM_POS    O	/EPHEMERIS/	output array of GSM positions
+	GSM_POS    O	/EPHEMERIS/	output array of GSM velocities
+	SUN_VEC    O	/EPHEMERIS/	output array of sun vectors
+CONVERT_ORBIT_INFO
+    This routine is called if the position information needs to be transformed
+to some other system of units, such as Re (Earth radii), or spherical
+coordinates, or both.  The input coordinates are assumed to be in units of
+kilometers in a Cartesian space (x,y,z). 
+	I_POSITION I	/EPHEMERIS/	input array of position coordinates
+	UNITS	   I	I*4	whether or not to translate into alternate
+				units: 0 = No change, 1 = Earth radii
+	SYSTEM	   I	I*4	whether or not to transform into an alternate
+				coordinate system: 0 = No change, 1 = Spherical
+				(r,theta,phi)
+	NSIZE	   I	I*4	size of input and output arrays (# of valid
+				entries)
+	O_POSITION O	/EPHEMERIS/	output array of position coordinates
+	EARTH_DIST O	R*8	output array of distance from Earth, in the
+				units requested by the UNITS parameter
+DUMP_ORBIT_INFO
+    This routine displays the requested coordination information in a form
+easily usable by a spreadsheet program.  The display is prefaced by a heading
+indicating the range of dates in the dump and the values being displayed.
+	D_UNIT	   I	I*4	Fortran unit number to write the dump to;
+				assumes is already open
+	BEG_DATE   I	R*8	date/time of first position dumped
+	END_DATE   I	R*8	date/time of last position dumped
+	WHAT_POS   I	L*4	array indicating what position information to
+				return
+	UNITS	   I	I*4	whether or not to translate into alternate
+				units: 0 = No change, 1 = Earth radii
+	SYSTEM	   I	I*4	whether or not to transform into an alternate
+				coordinate system: 0 = No change, 1 = Spherical
+				(r,theta,phi)
+	NSIZE	   I	I*4	size of input and output arrays (# of valid
+				entries)
+	GCI_POS    I	/EPHEMERIS/	input array of GCI positions
+	GCI_VEL    I	/EPHEMERIS/	input array of GCI velocities
+	GSE_POS    I	/EPHEMERIS/	input array of GSE positions
+	GSE_POS    I	/EPHEMERIS/	input array of GSE velocities
+	GSM_POS    I	/EPHEMERIS/	input array of GSM positions
+	GSM_POS    I	/EPHEMERIS/	input array of GSM velocities
+	SUN_VEC    I	/EPHEMERIS/	input array of sun vectors

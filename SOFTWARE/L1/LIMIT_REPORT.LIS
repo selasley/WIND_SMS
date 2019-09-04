@@ -1,0 +1,253 @@
+LIMIT_REPORT                                                    21-NOV-1995 14:18:45    DEC Fortran V6.2-508                Page   1
+                                                                20-NOV-1995 20:27:13    SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.FOR;14
+
+	      1 	SUBROUTINE LIMIT_REPORT(STATS,VALUE)
+	      2 
+	      3 C+
+	      4 C 
+	      5 C FUNCTIONAL DESCRIPTION:	
+	      6 C 
+	      7 C    This subroutine performs various initilization operations for the
+	      8 C    WIND_HEALTH program.  Amoung them are:
+	      9 C
+	     10 C    	  Prompt user to input L1 filename
+	     11 C	  Open the L1 file to unit L1_LUN, saving its header in L1_FILE_HEADER
+	     12 C	  Construct the output filename, saving the name and its length in
+	     13 C	    OUTPUTFILENAME and NCH 
+	     14 C 
+	     15 C FORMAL PARAMETERS:
+	     16 C  
+	     17 C     STATS
+	     18 C         A structure of type HOUSEKEEPING_STATS containing information about
+	     19 C         the quantity which is out-of-limits.
+	     20 C
+	     21 C     VALUE
+	     22 C         A REAL*4 variable containig the value of the quantity which is
+	     23 C         out-of-limits.
+	     24 C
+	     25 C  
+	     26 C COMMON BLOCKS:
+	     27 C  
+	     28 C     REPORT	  Information controlling the limit reporting feature of the
+	     29 C     		  program.
+	     30 C     INFO	  Information about the L1 file and the current science record.
+	     31 C  
+	     32 C DESIGN:
+	     33 C  
+	     34 C     If this is the first time we are called write a header message to each
+	     35 C	output file.
+	     36 C     Write a 1-line message to WH_LUN, along with value, limit, science
+	     37 C	record, and time.  Check which limit was exceeded and write proper one.
+	     38 C     If this is the first time this parameter has exceeded either of its
+	     39 C	limits write the parameter name to WH_LUN2.
+	     40 C     Keep a count of the number of times we are called (= # of times any
+	     41 C	parameter exceeds either of its limits).
+	     42 C
+	     43 C 
+	     44 C This version:   1.2   20-NOV-1995
+	     45 C 
+	     46 C Created: 
+	     47 C 
+	     48 C	 13-NOV-1995    Larry Bleau
+	     49 C 
+	     50 C Revised:
+	     51 C 
+	     52 C	 Date     | Name  | Description
+	     53 C ----------------+-------+-----------------------------------------------------
+	     54 C 14-NOV-1995	  |  LRB  | changed from stub to fully functional subroutine;
+	     55 C		  |       | changed format/content of mail msg header, detail
+	     56 C		  |       | file
+	     57 C 20-NOV-1995     |  LRB  | changed format of mail message
+
+LIMIT_REPORT                                                    21-NOV-1995 14:18:45    DEC Fortran V6.2-508                Page   2
+                                                                20-NOV-1995 20:27:13    SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.FOR;14
+
+	     58 C 
+	     59 C-
+	     60 CDEC$	IDENT  '1.2'
+	     61 	IMPLICIT NONE
+	     62 	INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+LIMIT_REPORT                                                    21-NOV-1995 14:18:45    DEC Fortran V6.2-508                Page   3
+1.2                                                             20-NOV-1995 20:27:13    SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.FOR;14
+
+	    600 	INCLUDE 'INC_DIR:LIMITDEF.INC/NOLIST'
+	    649 C
+	    650 C Parameter declarations
+	    651 C
+	    652 	RECORD /HOUSEKEEPING_STATS/ STATS
+	    653 	REAL*4 VALUE
+	    654 C
+	    655 	INTEGER NCH,NCH2
+	    656 	CHARACTER*100 FNAME
+	    657 C
+	    658 C COMMON blocks
+	    659 C
+	    660 	INTEGER NUM_SR
+	    661 	REAL*8 THIS_TIME
+	    662 	RECORD /T/ W_THIS_TIME
+	    663 	COMMON /INFO/ THIS_TIME,W_THIS_TIME,NUM_SR
+	    664 C
+	    665 	INTEGER WH_LUN,WH_LUN2,NEXCEED,NCHL1,NCHMAIL
+	    666 	CHARACTER*80 L1NAME,MAIL_LIST
+	    667 	COMMON /REPORT/ WH_LUN,WH_LUN2,L1NAME,NCHL1,NEXCEED,MAIL_LIST,NCHMAIL
+	    668 C
+	    669 	IF (NEXCEED .EQ. 0) THEN
+	    670 	  INQUIRE(UNIT=WH_LUN,NAME=FNAME)
+	    671 	  NCH = INDEX(FNAME, ']')
+	    672 	  NCH2 = INDEX(FNAME, ' ')
+	    673 	  IF (NCH2 .EQ. 0) NCH2 = LEN(FNAME)
+	    674 	  WRITE(WH_LUN,101) L1NAME(1:NCHL1)
+	    675 101	  FORMAT('                           WIND SMS detail report'/
+	    676      &		 ' '/
+	    677      &		 'Level 1 file: ',A//
+	    678      &		 ' '/
+	    679      &		 'Below is a list of parameters which exceeded their limits.'//
+	    680      &		 '                                                                   Sci'/
+	    681      &		 'Parameter name                               Value     Limit Units Rec   Time'/
+	    682      &		 '---------------------------------------- --------- --------- ----  --- --------')
+	    683 	  WRITE(WH_LUN2,102) L1NAME(1:NCHL1),FNAME(NCH+1:NCH2),FNAME(1:NCH)
+	    684 102	  FORMAT('WIND SMS brief report'/
+	    685      &		 'Level 1 file: ',A/
+	    686      &		 ' '/
+	    687      &		 'More detailed information can be found in the file '//
+	    688      &		 T10,A//
+	    689      &		 'located in   ',A/
+	    690      &		 ' '/
+	    691      &		 'The WIND SMS parameters listed below have exceeded their limits:'/
+	    692      &		 ' ')
+	    693 	END IF
+	    694 	NEXCEED = NEXCEED + 1
+	    695 C
+	    696 C Write out a 1-line message identifying the parameter, the value and the limit
+	    697 C it exceeded, and when it happened (both science record number and time of
+	    698 C day). 
+	    699 C
+	    700 C Message format:
+	    701 C
+	    702 C 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+	    703 C Parameter name                               Value     Limit Units Rec   Time
+	    704 C IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII VVVVVV.VV VVVVVV.VV UUUU  NNN HH:MM:SS
+
+LIMIT_REPORT                                                    21-NOV-1995 14:18:45    DEC Fortran V6.2-508                Page   4
+1.2                                                             20-NOV-1995 20:27:13    SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.FOR;14
+
+	    705 C
+	    706 	IF (VALUE .GT. STATS.HI_LIMIT) THEN
+	    707 	  WRITE(WH_LUN,103) STATS.IDENT,VALUE,STATS.HI_LIMIT,STATS.UNITS,
+	    708      &			  NUM_SR,W_THIS_TIME.HR,W_THIS_TIME.MIN,W_THIS_TIME.SEC
+	    709 	ELSE
+	    710 	  WRITE(WH_LUN,103) STATS.IDENT,VALUE,STATS.LO_LIMIT,STATS.UNITS,
+	    711      &			  NUM_SR,W_THIS_TIME.HR,W_THIS_TIME.MIN,W_THIS_TIME.SEC
+	    712 	END IF
+	    713 103	FORMAT(A40, T42, F9.2, 1X, F9.2, 1X, A4, I5, 1X, I2.2,':',I2.2,':',I2.2)
+	    714 C
+	    715 C If this is the first time this parameter has exceeded either of its limits
+	    716 C output just the parameter name to another file, opened to unit WH_LUN2.  This
+	    717 C shorter file can be mailed to someone and easily read.
+	    718 C One of HI_COUNT or LO_COUNT has already been incremented before we are
+	    719 C called, so testing if their sum equals 1 satisfies the above condition.
+	    720 C
+	    721 	IF (STATS.HI_COUNT+STATS.LO_COUNT .EQ. 1) WRITE(WH_LUN2,104) STATS.IDENT
+	    722 104	FORMAT(3X,A)
+	    723 	RETURN
+	    724 	END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $BSS$                                  112 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $IODATA$                               816 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $CODE$                                1504   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  4 $LINK$                                 208 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  5 INFO                                    20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  6 REPORT                                 180 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated                 2840
+
+
+ENTRY POINTS
+
+    Address   Type  Name        
+                                
+  3-00000000        LIMIT_REPORT
+
+
+VARIABLES
+
+    Address   Type  Name          Address   Type  Name          Address   Type  Name          Address   Type  Name     
+                                                                                                                       
+  1-00000008  CHAR  FNAME       1-00000004  I*4   NCH2        5-00000010  I*4   NUM_SR      6-00000004  I*4   WH_LUN2  
+  6-00000008  CHAR  L1NAME      6-00000058  I*4   NCHL1       5-00000000  R*8   THIS_TIME                              
+  6-00000060  CHAR  MAIL_LIST   6-000000B0  I*4   NCHMAIL         **      R*4   VALUE                                  
+  1-00000000  I*4   NCH         6-0000005C  I*4   NEXCEED     6-00000000  I*4   WH_LUN                                 
+
+
+
+LIMIT_REPORT                                                    21-NOV-1995 14:18:45    DEC Fortran V6.2-508                Page   5
+1.2                             Symbol Table                    20-NOV-1995 20:27:13    SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.FOR;14
+
+RECORDS
+
+    Address   Name         Structure                 Bytes
+                                                          
+      **      STATS        HOUSEKEEPING_STATS          124
+  5-00000008  W_THIS_TIME  T                             8
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label
+                                                                               
+      **       101        **       102        **       103        **       104 
+
+LIMIT_REPORT                                                    21-NOV-1995 14:18:45    DEC Fortran V6.2-508                Page   6
+1.2                             Symbol Table                    20-NOV-1995 20:27:13    SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.FOR;14
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(SYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(NODICTIONARY,NOINCLUDE,MAP,NOPREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=0,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.LIS;19
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]LIMIT_REPORT.OBJ;16
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.68 seconds
+  Elapsed time:      2.19 seconds
+  Pagefaults:         213
+  I/O Count:           21

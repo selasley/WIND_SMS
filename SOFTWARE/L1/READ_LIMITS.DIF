@@ -1,0 +1,73 @@
+DEC/CMS File Comparison Utility
+Files Compared By BLEAU On 17-NOV-1995 22:16:40
+   (1)  Element READ_LIMITS.FOR Generation 1
+   (2)  SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 31   
+      1)C     {tbs}
+File SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8 Line 31   
+      2)C     None
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 35   
+      1)C     {tbs}
+File SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8 Line 35   
+      2)C     Initialize ENTITY array to have large MIN_VALUE, small MAX_VALUE
+      2)C     Open LIMITS file and read it; for each line
+      2)C       Decode line
+      2)C       If reporting to be enabled save lower, upper limits
+      2)C     Close file
+      2)C  
+      2)C     Location of limits file can be redirected at runtime by defining the
+      2)C       logical name LIMITS.  If not defined filename defaults to LIMITS.DAT.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 38   
+      1)C This version:    14-NOV-1995
+File SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8 Line 45   
+      2)C This version:   17-NOV-1995
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 48   
+      1)C [change_entry]
+File SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8 Line 55   
+      2)C 17-NOV-1995     |  LRB  | Add loop to initialize ENTITY array
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 63   
+      1)C COMMON blocks
+File SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8 Line 70   
+      2)C Initialize ENTITY array, setting the REPORT field to .FALSE., MIN_VALUE to a
+      2)C large number, and MAX_VALUE to a small number
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+File SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8 Line 73   
+      2)	DO IDX=1,MAX_ENTITY
+      2)	  ENTITY(IDX).REPORT = .FALSE.
+      2)	  ENTITY(IDX).MIN_VALUE = 99999.
+      2)	  ENTITY(IDX).MAX_VALUE = -99999.
+      2)	END DO
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 114  
+      1)	ENTITY(IDX).REPORT = .FALSE.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 116  
+      1)	ENTITY(IDX).MIN_VALUE = 99999.
+      1)	ENTITY(IDX).MAX_VALUE = -99999.
+File SMS1:[WIND.SOFTWARE.L1]READ_LIMITS.FOR;8 Line 128  
+      2)	ENTITY(IDX).COUNT = 0
+      2)	ENTITY(IDX).NZERO = 0
+      2)	ENTITY(IDX).UNITS = LINE(66:69)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 122  
+      1)	ENTITY(IDX).UNITS = LINE(66:69)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
+Element READ_LIMITS.FOR(1) Line 124  
+      1)	ENTITY(IDX).COUNT = 0
+      1)	ENTITY(IDX).NZERO = 0
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+**** End of Differences ****

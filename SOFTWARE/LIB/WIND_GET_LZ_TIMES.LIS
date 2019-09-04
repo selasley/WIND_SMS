@@ -1,0 +1,362 @@
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   1
+                                                                12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+	      1       SUBROUTINE WIND_GET_LZ_TIMES (epoch_start_tm, epoch_stop_tm,
+	      2      :                          req_start_time, req_end_time, status )
+	      3 !+
+	      4 !     This version:   1.3    1-DEC-1994
+	      5 !
+	      6 !     EPIC_GET_LZ_TIMES
+	      7 !       This subroutine prompts the user for a time interval (start & stop
+	      8 !       times) within an LZ file.
+	      9 !
+	     10 !     REFERENCE:
+	     11 !
+	     12 !     USAGE and PARAMETERS:
+	     13 !       call WIND_GET_LZ_TIMES (epoch_start_tm, epoch_stop_tm,
+	     14 !    :                          req_start_time, req_end_time, status )
+	     15 !
+	     16 !       epoch_start_tm  R*8     Input variable containing time of first record
+	     17 !
+	     18 !       epoch_stop_tm   R*8     Input variable containing time of last record
+	     19 !
+	     20 !       req_start_time  R*8     Output variable containing requested start time
+	     21 !
+	     22 !       end_end_time    R*8     Output variable containing requested end time
+	     23 !
+	     24 !       status          I*4     Output variable for the return status.
+	     25 !
+	     26 !
+	     27 !     CALLS/FUNCTIONS:
+	     28 !       CALL WIND_EPOCH_TO_GREG
+	     29 !       CALL MODEPS     ! deleted
+	     30 !       CALL TIINT4
+	     31 !       CALL TILOG
+	     32 !       CALL WIND_GREG_TO_EPOCH
+	     33 !
+	     34 !     CREATION:
+	     35 !        10-MAR-1994    H.BROER
+	     36 !
+	     37 !     REVISIONS:
+	     38 !         6-APR-1994    H.BROER         time conversion routines changed to WIND modules
+	     39 !        15-APR-1994    H.BROER         replace MODEPS
+	     40 !        28-APR-1994    H.BROER         update correcting logic
+	     41 !         1-DEC-1994    L. Bleau        change WRITE unit from KB to TTOUT
+	     42 !-
+	     43 CDEC$ IDENT     '1.3'
+
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   2
+1.3                                                             12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+	     45       IMPLICIT NONE
+	     46 
+	     47       INCLUDE   '($SSDEF)/NOLIST'
+	   1472 
+	   1473       REAL*8
+	   1474      :          epoch_start_tm,
+	   1475      :          epoch_stop_tm,
+	   1476      :          req_start_time,
+	   1477      :          req_end_time
+	   1478 
+	   1479       INTEGER*4 YEAR,
+	   1480      +          sYEAR,
+	   1481      +          eYEAR,
+	   1482      +          sLY,
+	   1483      +          eLY,
+	   1484      +          DOY,
+	   1485      +          sDOY,
+	   1486      +          eDOY,
+	   1487      +          HOUR,
+	   1488      +          MINUTE,
+	   1489      +          SECOND,
+	   1490      +          MILLIS,
+	   1491      +          sMILLS,
+	   1492      +          eMILLS,
+	   1493      +          MICROS,
+	   1494      +          status,
+	   1495      +          KB/5/,
+	   1496      +          TTOUT/6/,
+	   1497      +          ftime(4)
+	   1498 
+	   1499       equivalence (ftime(1), YEAR),
+	   1500      +            (ftime(2), DOY),
+	   1501      +            (ftime(3), MILLIS),
+	   1502      +            (ftime(4), MICROS)
+	   1503 
+	   1504       logical*1 OKAY
+	   1505 
+	   1506 !-----------------------------------------------------------------------------
+	   1507 !     Format statements
+	   1508 !-----------------------------------------------------------------------------
+	   1509    10 FORMAT ( 1H , A, $ )
+	   1510 
+	   1511    20 FORMAT    ( 1H , A, /,
+	   1512      :          ' YEAR', T9, ':', I4, /,
+	   1513      :          ' DAY ', T9, ':', I4, /,
+	   1514      :          ' HOUR', T9, ':', I4, /,
+	   1515      :          ' MINUTE', T9, ':', I4, /,
+	   1516      :          ' SECOND', T9, ':', I4, /,
+	   1517      :          ' MILLIS', T9, ':', I4, /,
+	   1518      :          ' MICROS', T9, ':', I4 )
+
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   3
+1.3                                                             12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+	   1520 !-----------------------------------------------------------------------------
+	   1521       status    = ss$_normal                    ! GOOD START
+	   1522 !-----------------------------------------------------------------------------
+	   1523 !     Get STARTING time request
+	   1524 !-----------------------------------------------------------------------------
+	   1525   100 CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, epoch_start_tm, status )
+	   1526       sYEAR     = YEAR
+	   1527   110 CONTINUE
+	   1528       WRITE( TTOUT, 10 )   ' STARTING YEAR IS (NEG = ALL DATA ON FILE) '
+	   1529       CALL TIINT4( sYEAR, *990 )
+	   1530 
+	   1531       IF( sYEAR .LT. 0 )        THEN
+	   1532           req_start_time        = epoch_start_tm
+	   1533           req_end_time          = epoch_stop_tm
+	   1534           GOTO 990
+	   1535       ENDIF
+	   1536       sLY       = 0
+	   1537       IF( MOD( sYEAR, 4 ) .EQ. 0 )   THEN
+	   1538           IF( MOD( sYEAR, 100 ) .NE. 0 )   THEN
+	   1539               sLY       = 1
+	   1540           ELSE
+	   1541               IF( MOD( sYEAR, 400 ) .EQ. 0 )    sLY = 1
+	   1542           END IF
+	   1543       END IF
+	   1544       sDOY      = DOY
+	   1545       SECOND    = MILLIS / 1000
+	   1546       sMILLS    = MOD( MILLIS, 1000 )
+	   1547       MINUTE    = SECOND / 60
+	   1548       SECOND    = MOD( SECOND, 60 )
+	   1549       HOUR      = MINUTE / 60
+	   1550       MINUTE    = MOD( MINUTE, 60 )
+	   1551 
+	   1552   120 WRITE( TTOUT, 10 )   ' STARTING DAY IS '
+	   1553       CALL TIINT4( sDOY, *110 )
+	   1554       IF( sDOY .LE. 0 )                 GOTO 120
+	   1555       IF( (sDOY - sLY) .GT. 365 )       GOTO 120
+	   1556 
+	   1557   130 WRITE( TTOUT, 10 )   ' STARTING HOUR IS '
+	   1558       CALL TIINT4( HOUR, *120 )
+	   1559       IF( HOUR .LT. 0  .OR.  HOUR .GT. 23 )     GOTO 130
+	   1560 
+	   1561   140 WRITE( TTOUT, 10 )   ' STARTING MINUTE IS '
+	   1562       CALL TIINT4( MINUTE, *130 )
+	   1563       IF( MINUTE .LT. 0  .OR.  MINUTE .GT. 59 ) GOTO 140
+	   1564 
+	   1565   150 WRITE( TTOUT, 10 )   ' STARTING SECOND IS '
+	   1566       CALL TIINT4( SECOND, *140 )
+	   1567       IF( SECOND .LT. 0  .OR.  SECOND .GT. 59 ) GOTO 150
+	   1568 
+	   1569   160 WRITE( TTOUT, 10 )   ' STARTING MILLISECOND IS '
+	   1570       CALL TIINT4( sMILLS, *150 )
+	   1571       IF( sMILLS .LT. 0 .OR. sMILLS .GT. 999 )  GOTO 160
+	   1572 
+	   1573   170 WRITE( TTOUT, 10 )   ' STARTING MICROSECOND IS '
+	   1574       CALL TIINT4( MICROS, *160 )
+	   1575       IF( MICROS .LT. 0 .OR. MICROS .GT. 999 )  GOTO 170
+	   1576 
+
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   4
+1.3                                                             12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+	   1577   180 WRITE( TTOUT, 20 )   ' STARTING TIME CHOOSEN :',
+	   1578      :                  sYEAR, sDOY, HOUR, MINUTE, SECOND, sMILLS, MICROS
+	   1579 
+	   1580       OKAY      = .TRUE.
+	   1581       WRITE( TTOUT, 10 )   ' OKAY'
+	   1582       CALL TILOG( OKAY, *100 )
+	   1583       IF( .not.OKAY )           GOTO 110
+	   1584       MILLIS    = ( ( HOUR * 60 + MINUTE ) * 60 + SECOND ) * 1000 + sMILLS
+	   1585       CALL WIND_GREG_TO_EPOCH( sYEAR, sDOY, MILLIS, MICROS, req_start_time, status )
+
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   5
+1.3                                                             12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+	   1587 !-----------------------------------------------------------------------------
+	   1588 !     Get stop time request
+	   1589 !-----------------------------------------------------------------------------
+	   1590   200 CALL WIND_EPOCH_TO_GREG( YEAR, DOY, MILLIS, MICROS, epoch_stop_tm, status )
+	   1591       eYEAR     = YEAR
+	   1592   210 WRITE( TTOUT, 10 )   ' STOP YEAR IS  (NEG INPUT = ALL DATA TO END-OF-FILE)'
+	   1593       CALL TIINT4( eYEAR, *180 )
+	   1594       IF( eYEAR .LT. 0 )        THEN
+	   1595           req_end_time          = epoch_stop_tm
+	   1596           GOTO 990
+	   1597       ENDIF
+	   1598 
+	   1599       eLY       = 0
+	   1600       IF( MOD( eYEAR, 4 ) .EQ. 0 )   THEN
+	   1601           IF( MOD( eYEAR, 100 ) .NE. 0 )   THEN
+	   1602               eLY       = 1
+	   1603           ELSE
+	   1604               IF( MOD( eYEAR, 400 ) .EQ. 0 )    eLY = 1
+	   1605           END IF
+	   1606       END IF
+	   1607       eDOY      = DOY
+	   1608       SECOND    = MILLIS / 1000
+	   1609       eMILLS    = MOD( MILLIS, 1000 )
+	   1610       MINUTE    = SECOND / 60
+	   1611       SECOND    = MOD( SECOND, 60 )
+	   1612       HOUR      = MINUTE / 60
+	   1613       MINUTE    = MOD( MINUTE, 60 )
+	   1614 
+	   1615   220 WRITE( TTOUT, 10 )   ' STOP DAY IS '
+	   1616       CALL TIINT4( eDOY, *210 )
+	   1617       IF( eDOY .LE. 0 )                 GOTO 220
+	   1618       IF( (eDOY - eLY) .GT. 365 )       GOTO 220
+	   1619 
+	   1620   230 WRITE( TTOUT, 10 )   ' STOP HOUR IS '
+	   1621       CALL TIINT4( HOUR, *220 )
+	   1622       IF( HOUR .LT. 0  .OR.  HOUR .GT. 23 )     GOTO 230
+	   1623 
+	   1624   240 WRITE( TTOUT, 10 )   ' STOP MINUTE IS '
+	   1625       CALL TIINT4( MINUTE, *230 )
+	   1626       IF( MINUTE .LT. 0  .OR.  MINUTE .GT. 59 ) GOTO 240
+	   1627 
+	   1628   250 WRITE( TTOUT, 10 )   ' STOP SECOND IS '
+	   1629       CALL TIINT4( SECOND, *240 )
+	   1630       IF( SECOND .LT. 0  .OR.  SECOND .GT. 59 ) GOTO 250
+	   1631 
+	   1632   260 WRITE( TTOUT, 10 )   ' STOP MILLISECOND IS '
+	   1633       CALL TIINT4( eMILLS, *250 )
+	   1634       IF( eMILLS .LT. 0 .OR. eMILLS .GT. 999 )  GOTO 260
+	   1635 
+	   1636   270 WRITE( TTOUT, 10 )   ' STOP MICROSECOND IS '
+	   1637       CALL TIINT4( MICROS, *260 )
+	   1638       IF( MICROS .LT. 0 .OR. MICROS .GT. 999 )  GOTO 270
+	   1639 
+	   1640       WRITE( TTOUT, 20 )   ' STOP TIME CHOOSEN :',
+	   1641      :                  eYEAR, eDOY, HOUR, MINUTE, SECOND, eMILLS, MICROS
+	   1642 
+	   1643       OKAY      = .TRUE.
+
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   6
+1.3                                                             12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+	   1644       WRITE( TTOUT, 10 )   ' OKAY'
+	   1645       CALL TILOG( OKAY, *200 )
+	   1646       IF( .not.OKAY )           GOTO 210
+	   1647 
+	   1648       MILLIS    = ( ( HOUR * 60 + MINUTE ) * 60 + SECOND ) * 1000 + eMILLS
+	   1649       CALL WIND_GREG_TO_EPOCH( eYEAR, eDOY, MILLIS, MICROS, req_end_time, status )
+	   1650 
+	   1651   990 CONTINUE
+	   1652       RETURN
+	   1653       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                   8 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   16 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               268 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                3560   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 689 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                 4541
+
+
+ENTRY POINTS
+
+    Address   Type  Name             
+                                     
+  4-00000000        WIND_GET_LZ_TIMES
+
+
+VARIABLES
+
+    Address   Type  Name               Address   Type  Name               Address   Type  Name          
+                                                                                                        
+  2-00000004  I*4   DOY              1-00000000  I*4   KB               0-00000078# I*4   SECOND        
+  0-0000008C  I*4   EDOY             2-0000000C  I*4   MICROS         REG-0000000F  I*4   SLY           
+REG-0000000F  I*4   ELY              2-00000008  I*4   MILLIS           0-00000084  I*4   SMILLS        
+  0-00000098  I*4   EMILLS           0-00000088# I*4   MINUTE               **      I*4   STATUS        
+      **      R*8   EPOCH_START_TM   0-00000090  L*1   OKAY             0-0000003C  I*4   SYEAR         
+      **      R*8   EPOCH_STOP_TM        **      R*8   REQ_END_TIME     1-00000004  I*4   TTOUT         
+  0-00000038  I*4   EYEAR                **      R*8   REQ_START_TIME   2-00000000  I*4   YEAR          
+  0-00000080  I*4   HOUR             0-0000007C  I*4   SDOY                                             
+
+
+ARRAYS
+
+     Address  Type  Name         Bytes  Dimensions
+
+  2-00000000  I*4   FTIME           16  (4)
+
+
+
+
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   7
+1.3                             Symbol Table                    12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label     Address   Label
+                                                                                                   
+      **       10     4-00000278   120    4-00000418   160    4-00000730   210    4-00000A00   250 
+      **       20     4-000002E0   130    4-00000480   170    4-000008C8   220    4-00000A68   260 
+  4-000000A0   100    4-00000348   140    4-000004F0   180    4-00000930   230    4-00000AD0   270 
+  4-000000E0   110    4-000003B0   150    4-000006F8   200    4-00000998   240    4-00000D80   990 
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                       Type  Name                    
+                                                                 
+        TIINT4                           WIND_EPOCH_TO_GREG      
+        TILOG                            WIND_GREG_TO_EPOCH      
+
+WIND_GET_LZ_TIMES                                               21-APR-1995 15:27:26    DEC Fortran V6.2-508                Page   8
+1.3                             Symbol Table                    12-DEC-1994 16:03:40    [WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.FOR;3
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.LIS;6
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]WIND_GET_LZ_TIMES.OBJ;6
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          1.88 seconds
+  Elapsed time:      3.36 seconds
+  Pagefaults:         290
+  I/O Count:           14

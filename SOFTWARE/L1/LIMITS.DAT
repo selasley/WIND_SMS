@@ -1,0 +1,742 @@
+!
+! This file is the limits file for the WIND_HEALTH program.
+! Its contents determine what quantities are to be checked to determine if they
+! are within limits, and what those lower and upper limits are.
+!
+! Lines beginning with a "!" character are comments lines.  Anything can be
+! entered after the "!" character.  Comment lines can be interspersed freely
+! with limit lines.  Empty lines (nothing on them at all) are also ignored.
+! All other lines identify a parameter and its associated limits.
+!
+! Each noncomment line has six fields, which are described below along with
+! their format. 
+!
+!                Column   Size
+! Field name   Position  (Chars)  Format  Meaning                           
+! ===========  ========  =======  ======  =============================     
+! Index (#)         1      3       I3     a unique identifying number for this
+!                                         parameter; DO NOT CHANGE THIS!!!
+! Parameter         5     40       A40    the descriptive name of the parameter
+! Lower            46      9       F9.2   lower limit; lowest "good" value
+! Upper            57      9       F9.2   upper limit; highest "good" value
+! Units            68      4       A4     the units of this parameter
+! Check?           77      1       A1     whether of not to check this
+!                                         parameter against its upper and lower
+!                                         limits; must be Y or N
+!
+! Index
+!
+! ***IMPORTANT***
+! The index number in columns 1-3 is used internally by WIND_HEALTH.  If it is
+! changed WIND_HEALTH will not operate correctly; the program must be updated
+! and recompiled to work with the modified value.
+!
+!      !! DO NOT CHANGE THIS VALUE UNLESS YOU KNOW WHAT YOU ARE DOING !!
+!
+!
+! Parameter
+!
+! The descriptive text in the Parameter field must, within 40 characters,
+! uniquely describe the parameter.  The contents of this field will be used to
+! report out-of-limit conditions, which is why it must be unique.  Uniqueness
+! is not enforced by WIND_HEALTH; it is the responsibility of the individual
+! modifying this file to keep it unique.
+!
+! As of 10-NOV-1995 the values used for this field are unique.  You only need
+! to verify their uniqueness if you modify this field's contents.
+!
+!
+! Lower  and  Upper
+!
+! The fields Lower and Upper contain the lower and upper bounds for this
+! parameter's value.  NOTE: While these bounds are often referred to as
+! "limits", they are *not* the same as the any of the various "limit values" of
+! the SMS instrument.  These "limit values" are parameters in their own right,
+! with their own lower and upper bounds.
+!
+! If limit checking is enabled for this parameter the parameter's value is
+! compared against the values stored in its Lower and Upper fields.  If it is
+! outside this range an out-of-limit report is generated.  If limit checking is
+! not enabled for this parameter no report is done on this parameter and the
+! values in the Lower and Upper fields are ignored.
+!
+!
+! Units
+!
+! The Units field describes the units of the parameter.  This field is not used
+! in processing; it is for reporting purposes only, and can contain any vaule
+! you desire.  The field is only five columns wide, so you may need to
+! abbreviate.  Typical abbreviations are DegC, DegF, Volt, and Amps.  For a
+! pure number with no units, use Numb; for an encoded value use Code; for a
+! logical value (on/off, enable/disable) use Flag.
+!
+!
+! Check?
+!
+! The Check? field is a single character representing a logical quantity.  If
+! true limit checking is enabled for this parameter; if false limit checking is
+! disabled.  To enable limit checking the character in the Check? field must be
+! a "Y", "y", "T", "t", or "1"; any other value evaluates to false and disables
+! limit checking for that parameter.  For clarity we recommend you use "Y" or
+! "N" (without the surrounding quotes).
+!
+!
+!
+!#  Parameter                                    Lower      Upper  Units  Check?
+!-- ---------------------------------------- ---------  ---------  ----     -
+400 SWICS DPPS Output Voltage step 0                               Volt     N
+401 SWICS DPPS Output Voltage step 1                               Volt     N
+402 SWICS DPPS Output Voltage step 2                               Volt     N
+403 SWICS DPPS Output Voltage step 3                               Volt     N
+404 SWICS DPPS Output Voltage step 4                               Volt     N
+405 SWICS DPPS Output Voltage step 5                               Volt     N
+406 SWICS DPPS Output Voltage step 6                               Volt     N
+407 SWICS DPPS Output Voltage step 7                               Volt     N
+408 SWICS DPPS Output Voltage step 8                               Volt     N
+409 SWICS DPPS Output Voltage step 9                               Volt     N
+410 SWICS DPPS Output Voltage step 10                              Volt     N
+411 SWICS DPPS Output Voltage step 11                              Volt     N
+412 SWICS DPPS Output Voltage step 12                              Volt     N
+413 SWICS DPPS Output Voltage step 13                              Volt     N
+414 SWICS DPPS Output Voltage step 14                              Volt     N
+415 SWICS DPPS Output Voltage step 15                              Volt     N
+416 SWICS DPPS Output Voltage step 16                              Volt     N
+417 SWICS DPPS Output Voltage step 17                              Volt     N
+418 SWICS DPPS Output Voltage step 18                              Volt     N
+419 SWICS DPPS Output Voltage step 19                              Volt     N
+420 SWICS DPPS Output Voltage step 20                              Volt     N
+421 SWICS DPPS Output Voltage step 21                              Volt     N
+422 SWICS DPPS Output Voltage step 22                              Volt     N
+423 SWICS DPPS Output Voltage step 23                              Volt     N
+424 SWICS DPPS Output Voltage step 24                              Volt     N
+425 SWICS DPPS Output Voltage step 25                              Volt     N
+426 SWICS DPPS Output Voltage step 26                              Volt     N
+427 SWICS DPPS Output Voltage step 27                              Volt     N
+428 SWICS DPPS Output Voltage step 28                              Volt     N
+429 SWICS DPPS Output Voltage step 29                              Volt     N
+430 SWICS DPPS Output Voltage step 30                              Volt     N
+431 SWICS DPPS Output Voltage step 31                              Volt     N
+432 SWICS DPPS Output Voltage step 32                              Volt     N
+433 SWICS DPPS Output Voltage step 33                              Volt     N
+434 SWICS DPPS Output Voltage step 34                              Volt     N
+435 SWICS DPPS Output Voltage step 35                              Volt     N
+436 SWICS DPPS Output Voltage step 36                              Volt     N
+437 SWICS DPPS Output Voltage step 37                              Volt     N
+438 SWICS DPPS Output Voltage step 38                              Volt     N
+439 SWICS DPPS Output Voltage step 39                              Volt     N
+440 SWICS DPPS Output Voltage step 40                              Volt     N
+441 SWICS DPPS Output Voltage step 41                              Volt     N
+442 SWICS DPPS Output Voltage step 42                              Volt     N
+443 SWICS DPPS Output Voltage step 43                              Volt     N
+444 SWICS DPPS Output Voltage step 44                              Volt     N
+445 SWICS DPPS Output Voltage step 45                              Volt     N
+446 SWICS DPPS Output Voltage step 46                              Volt     N
+447 SWICS DPPS Output Voltage step 47                              Volt     N
+448 SWICS DPPS Output Voltage step 48                              Volt     N
+449 SWICS DPPS Output Voltage step 49                              Volt     N
+450 SWICS DPPS Output Voltage step 50                              Volt     N
+451 SWICS DPPS Output Voltage step 51                              Volt     N
+452 SWICS DPPS Output Voltage step 52                              Volt     N
+453 SWICS DPPS Output Voltage step 53                              Volt     N
+454 SWICS DPPS Output Voltage step 54                              Volt     N
+455 SWICS DPPS Output Voltage step 55                              Volt     N
+456 SWICS DPPS Output Voltage step 56                              Volt     N
+457 SWICS DPPS Output Voltage step 57                              Volt     N
+458 SWICS DPPS Output Voltage step 58                              Volt     N
+459 SWICS DPPS Output Voltage step 59                              Volt     N
+460 MASS ADPS Output Voltage step 0                                Volt     N
+461 MASS ADPS Output Voltage step 1                                Volt     N
+462 MASS ADPS Output Voltage step 2                                Volt     N
+463 MASS ADPS Output Voltage step 3                                Volt     N
+464 MASS ADPS Output Voltage step 4                                Volt     N
+465 MASS ADPS Output Voltage step 5                                Volt     N
+466 MASS ADPS Output Voltage step 6                                Volt     N
+467 MASS ADPS Output Voltage step 7                                Volt     N
+468 MASS ADPS Output Voltage step 8                                Volt     N
+469 MASS ADPS Output Voltage step 9                                Volt     N
+470 MASS ADPS Output Voltage step 10                               Volt     N
+471 MASS ADPS Output Voltage step 11                               Volt     N
+472 MASS ADPS Output Voltage step 12                               Volt     N
+473 MASS ADPS Output Voltage step 13                               Volt     N
+474 MASS ADPS Output Voltage step 14                               Volt     N
+475 MASS ADPS Output Voltage step 15                               Volt     N
+476 MASS ADPS Output Voltage step 16                               Volt     N
+477 MASS ADPS Output Voltage step 17                               Volt     N
+478 MASS ADPS Output Voltage step 18                               Volt     N
+479 MASS ADPS Output Voltage step 19                               Volt     N
+480 MASS ADPS Output Voltage step 20                               Volt     N
+481 MASS ADPS Output Voltage step 21                               Volt     N
+482 MASS ADPS Output Voltage step 22                               Volt     N
+483 MASS ADPS Output Voltage step 23                               Volt     N
+484 MASS ADPS Output Voltage step 24                               Volt     N
+485 MASS ADPS Output Voltage step 25                               Volt     N
+486 MASS ADPS Output Voltage step 26                               Volt     N
+487 MASS ADPS Output Voltage step 27                               Volt     N
+488 MASS ADPS Output Voltage step 28                               Volt     N
+489 MASS ADPS Output Voltage step 29                               Volt     N
+490 MASS ADPS Output Voltage step 30                               Volt     N
+491 MASS ADPS Output Voltage step 31                               Volt     N
+492 MASS ADPS Output Voltage step 32                               Volt     N
+493 MASS ADPS Output Voltage step 33                               Volt     N
+494 MASS ADPS Output Voltage step 34                               Volt     N
+495 MASS ADPS Output Voltage step 35                               Volt     N
+496 MASS ADPS Output Voltage step 36                               Volt     N
+497 MASS ADPS Output Voltage step 37                               Volt     N
+498 MASS ADPS Output Voltage step 38                               Volt     N
+499 MASS ADPS Output Voltage step 39                               Volt     N
+500 MASS ADPS Output Voltage step 40                               Volt     N
+501 MASS ADPS Output Voltage step 41                               Volt     N
+502 MASS ADPS Output Voltage step 42                               Volt     N
+503 MASS ADPS Output Voltage step 43                               Volt     N
+504 MASS ADPS Output Voltage step 44                               Volt     N
+505 MASS ADPS Output Voltage step 45                               Volt     N
+506 MASS ADPS Output Voltage step 46                               Volt     N
+507 MASS ADPS Output Voltage step 47                               Volt     N
+508 MASS ADPS Output Voltage step 48                               Volt     N
+509 MASS ADPS Output Voltage step 49                               Volt     N
+510 MASS ADPS Output Voltage step 50                               Volt     N
+511 MASS ADPS Output Voltage step 51                               Volt     N
+512 MASS ADPS Output Voltage step 52                               Volt     N
+513 MASS ADPS Output Voltage step 53                               Volt     N
+514 MASS ADPS Output Voltage step 54                               Volt     N
+515 MASS ADPS Output Voltage step 55                               Volt     N
+516 MASS ADPS Output Voltage step 56                               Volt     N
+517 MASS ADPS Output Voltage step 57                               Volt     N
+518 MASS ADPS Output Voltage step 58                               Volt     N
+519 MASS ADPS Output Voltage step 59                               Volt     N
+520 MASS DDPS Output Voltage step 0                                Volt     N
+521 MASS DDPS Output Voltage step 1                                Volt     N
+522 MASS DDPS Output Voltage step 2                                Volt     N
+523 MASS DDPS Output Voltage step 3                                Volt     N
+524 MASS DDPS Output Voltage step 4                                Volt     N
+525 MASS DDPS Output Voltage step 5                                Volt     N
+526 MASS DDPS Output Voltage step 6                                Volt     N
+527 MASS DDPS Output Voltage step 7                                Volt     N
+528 MASS DDPS Output Voltage step 8                                Volt     N
+529 MASS DDPS Output Voltage step 9                                Volt     N
+530 MASS DDPS Output Voltage step 10                               Volt     N
+531 MASS DDPS Output Voltage step 11                               Volt     N
+532 MASS DDPS Output Voltage step 12                               Volt     N
+533 MASS DDPS Output Voltage step 13                               Volt     N
+534 MASS DDPS Output Voltage step 14                               Volt     N
+535 MASS DDPS Output Voltage step 15                               Volt     N
+536 MASS DDPS Output Voltage step 16                               Volt     N
+537 MASS DDPS Output Voltage step 17                               Volt     N
+538 MASS DDPS Output Voltage step 18                               Volt     N
+539 MASS DDPS Output Voltage step 19                               Volt     N
+540 MASS DDPS Output Voltage step 20                               Volt     N
+541 MASS DDPS Output Voltage step 21                               Volt     N
+542 MASS DDPS Output Voltage step 22                               Volt     N
+543 MASS DDPS Output Voltage step 23                               Volt     N
+544 MASS DDPS Output Voltage step 24                               Volt     N
+545 MASS DDPS Output Voltage step 25                               Volt     N
+546 MASS DDPS Output Voltage step 26                               Volt     N
+547 MASS DDPS Output Voltage step 27                               Volt     N
+548 MASS DDPS Output Voltage step 28                               Volt     N
+549 MASS DDPS Output Voltage step 29                               Volt     N
+550 MASS DDPS Output Voltage step 30                               Volt     N
+551 MASS DDPS Output Voltage step 31                               Volt     N
+552 MASS DDPS Output Voltage step 32                               Volt     N
+553 MASS DDPS Output Voltage step 33                               Volt     N
+554 MASS DDPS Output Voltage step 34                               Volt     N
+555 MASS DDPS Output Voltage step 35                               Volt     N
+556 MASS DDPS Output Voltage step 36                               Volt     N
+557 MASS DDPS Output Voltage step 37                               Volt     N
+558 MASS DDPS Output Voltage step 38                               Volt     N
+559 MASS DDPS Output Voltage step 39                               Volt     N
+560 MASS DDPS Output Voltage step 40                               Volt     N
+561 MASS DDPS Output Voltage step 41                               Volt     N
+562 MASS DDPS Output Voltage step 42                               Volt     N
+563 MASS DDPS Output Voltage step 43                               Volt     N
+564 MASS DDPS Output Voltage step 44                               Volt     N
+565 MASS DDPS Output Voltage step 45                               Volt     N
+566 MASS DDPS Output Voltage step 46                               Volt     N
+567 MASS DDPS Output Voltage step 47                               Volt     N
+568 MASS DDPS Output Voltage step 48                               Volt     N
+569 MASS DDPS Output Voltage step 49                               Volt     N
+570 MASS DDPS Output Voltage step 50                               Volt     N
+571 MASS DDPS Output Voltage step 51                               Volt     N
+572 MASS DDPS Output Voltage step 52                               Volt     N
+573 MASS DDPS Output Voltage step 53                               Volt     N
+574 MASS DDPS Output Voltage step 54                               Volt     N
+575 MASS DDPS Output Voltage step 55                               Volt     N
+576 MASS DDPS Output Voltage step 56                               Volt     N
+577 MASS DDPS Output Voltage step 57                               Volt     N
+578 MASS DDPS Output Voltage step 58                               Volt     N
+579 MASS DDPS Output Voltage step 59                               Volt     N
+580 STICS +DDPS Output Voltage step 0                              Volt     N
+581 STICS +DDPS Output Voltage step 1                              Volt     N
+582 STICS +DDPS Output Voltage step 2                              Volt     N
+583 STICS +DDPS Output Voltage step 3                              Volt     N
+584 STICS +DDPS Output Voltage step 4                              Volt     N
+585 STICS +DDPS Output Voltage step 5                              Volt     N
+586 STICS +DDPS Output Voltage step 6                              Volt     N
+587 STICS +DDPS Output Voltage step 7                              Volt     N
+588 STICS +DDPS Output Voltage step 8                              Volt     N
+589 STICS +DDPS Output Voltage step 9                              Volt     N
+590 STICS +DDPS Output Voltage step 10                             Volt     N
+591 STICS +DDPS Output Voltage step 11                             Volt     N
+592 STICS +DDPS Output Voltage step 12                             Volt     N
+593 STICS +DDPS Output Voltage step 13                             Volt     N
+594 STICS +DDPS Output Voltage step 14                             Volt     N
+595 STICS +DDPS Output Voltage step 15                             Volt     N
+596 STICS +DDPS Output Voltage step 16                             Volt     N
+597 STICS +DDPS Output Voltage step 17                             Volt     N
+598 STICS +DDPS Output Voltage step 18                             Volt     N
+599 STICS +DDPS Output Voltage step 19                             Volt     N
+600 STICS +DDPS Output Voltage step 20                             Volt     N
+601 STICS +DDPS Output Voltage step 21                             Volt     N
+602 STICS +DDPS Output Voltage step 22                             Volt     N
+603 STICS +DDPS Output Voltage step 23                             Volt     N
+604 STICS +DDPS Output Voltage step 24                             Volt     N
+605 STICS +DDPS Output Voltage step 25                             Volt     N
+606 STICS +DDPS Output Voltage step 26                             Volt     N
+607 STICS +DDPS Output Voltage step 27                             Volt     N
+608 STICS +DDPS Output Voltage step 28                             Volt     N
+609 STICS +DDPS Output Voltage step 29                             Volt     N
+610 STICS +DDPS Output Voltage step 30                             Volt     N
+611 STICS +DDPS Output Voltage step 31                             Volt     N
+612 STICS +DDPS Output Voltage step 32                             Volt     N
+613 STICS +DDPS Output Voltage step 33                             Volt     N
+614 STICS +DDPS Output Voltage step 34                             Volt     N
+615 STICS +DDPS Output Voltage step 35                             Volt     N
+616 STICS +DDPS Output Voltage step 36                             Volt     N
+617 STICS +DDPS Output Voltage step 37                             Volt     N
+618 STICS +DDPS Output Voltage step 38                             Volt     N
+619 STICS +DDPS Output Voltage step 39                             Volt     N
+620 STICS +DDPS Output Voltage step 40                             Volt     N
+621 STICS +DDPS Output Voltage step 41                             Volt     N
+622 STICS +DDPS Output Voltage step 42                             Volt     N
+623 STICS +DDPS Output Voltage step 43                             Volt     N
+624 STICS +DDPS Output Voltage step 44                             Volt     N
+625 STICS +DDPS Output Voltage step 45                             Volt     N
+626 STICS +DDPS Output Voltage step 46                             Volt     N
+627 STICS +DDPS Output Voltage step 47                             Volt     N
+628 STICS +DDPS Output Voltage step 48                             Volt     N
+629 STICS +DDPS Output Voltage step 49                             Volt     N
+630 STICS +DDPS Output Voltage step 50                             Volt     N
+631 STICS +DDPS Output Voltage step 51                             Volt     N
+632 STICS +DDPS Output Voltage step 52                             Volt     N
+633 STICS +DDPS Output Voltage step 53                             Volt     N
+634 STICS +DDPS Output Voltage step 54                             Volt     N
+635 STICS +DDPS Output Voltage step 55                             Volt     N
+636 STICS +DDPS Output Voltage step 56                             Volt     N
+637 STICS +DDPS Output Voltage step 57                             Volt     N
+638 STICS +DDPS Output Voltage step 58                             Volt     N
+639 STICS +DDPS Output Voltage step 59                             Volt     N
+640 STICS -DDPS Output Voltage step 0                              Volt     N
+641 STICS -DDPS Output Voltage step 1                              Volt     N
+642 STICS -DDPS Output Voltage step 2                              Volt     N
+643 STICS -DDPS Output Voltage step 3                              Volt     N
+644 STICS -DDPS Output Voltage step 4                              Volt     N
+645 STICS -DDPS Output Voltage step 5                              Volt     N
+646 STICS -DDPS Output Voltage step 6                              Volt     N
+647 STICS -DDPS Output Voltage step 7                              Volt     N
+648 STICS -DDPS Output Voltage step 8                              Volt     N
+649 STICS -DDPS Output Voltage step 9                              Volt     N
+650 STICS -DDPS Output Voltage step 10                             Volt     N
+651 STICS -DDPS Output Voltage step 11                             Volt     N
+652 STICS -DDPS Output Voltage step 12                             Volt     N
+653 STICS -DDPS Output Voltage step 13                             Volt     N
+654 STICS -DDPS Output Voltage step 14                             Volt     N
+655 STICS -DDPS Output Voltage step 15                             Volt     N
+656 STICS -DDPS Output Voltage step 16                             Volt     N
+657 STICS -DDPS Output Voltage step 17                             Volt     N
+658 STICS -DDPS Output Voltage step 18                             Volt     N
+659 STICS -DDPS Output Voltage step 19                             Volt     N
+660 STICS -DDPS Output Voltage step 20                             Volt     N
+661 STICS -DDPS Output Voltage step 21                             Volt     N
+662 STICS -DDPS Output Voltage step 22                             Volt     N
+663 STICS -DDPS Output Voltage step 23                             Volt     N
+664 STICS -DDPS Output Voltage step 24                             Volt     N
+665 STICS -DDPS Output Voltage step 25                             Volt     N
+666 STICS -DDPS Output Voltage step 26                             Volt     N
+667 STICS -DDPS Output Voltage step 27                             Volt     N
+668 STICS -DDPS Output Voltage step 28                             Volt     N
+669 STICS -DDPS Output Voltage step 29                             Volt     N
+670 STICS -DDPS Output Voltage step 30                             Volt     N
+671 STICS -DDPS Output Voltage step 31                             Volt     N
+672 STICS -DDPS Output Voltage step 32                             Volt     N
+673 STICS -DDPS Output Voltage step 33                             Volt     N
+674 STICS -DDPS Output Voltage step 34                             Volt     N
+675 STICS -DDPS Output Voltage step 35                             Volt     N
+676 STICS -DDPS Output Voltage step 36                             Volt     N
+677 STICS -DDPS Output Voltage step 37                             Volt     N
+678 STICS -DDPS Output Voltage step 38                             Volt     N
+679 STICS -DDPS Output Voltage step 39                             Volt     N
+680 STICS -DDPS Output Voltage step 40                             Volt     N
+681 STICS -DDPS Output Voltage step 41                             Volt     N
+682 STICS -DDPS Output Voltage step 42                             Volt     N
+683 STICS -DDPS Output Voltage step 43                             Volt     N
+684 STICS -DDPS Output Voltage step 44                             Volt     N
+685 STICS -DDPS Output Voltage step 45                             Volt     N
+686 STICS -DDPS Output Voltage step 46                             Volt     N
+687 STICS -DDPS Output Voltage step 47                             Volt     N
+688 STICS -DDPS Output Voltage step 48                             Volt     N
+689 STICS -DDPS Output Voltage step 49                             Volt     N
+690 STICS -DDPS Output Voltage step 50                             Volt     N
+691 STICS -DDPS Output Voltage step 51                             Volt     N
+692 STICS -DDPS Output Voltage step 52                             Volt     N
+693 STICS -DDPS Output Voltage step 53                             Volt     N
+694 STICS -DDPS Output Voltage step 54                             Volt     N
+695 STICS -DDPS Output Voltage step 55                             Volt     N
+696 STICS -DDPS Output Voltage step 56                             Volt     N
+697 STICS -DDPS Output Voltage step 57                             Volt     N
+698 STICS -DDPS Output Voltage step 58                             Volt     N
+699 STICS -DDPS Output Voltage step 59                             Volt     N
+!        1         2         3         4         5         6         7
+!2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8
+101 DPU Temp (Passive)                           35.53      35.53  DegC     N
+102 SWICS Gnd Electronics Temp (Passive)        -11.30     -10.87  DegC     N
+103 MASS Gnd Electronics Temp (Passive)          23.63      24.18  DegC     N
+104 STICS SSD Temp (Passive)                     -7.05      -7.05  DegC     N
+105 STICS AE Housing Temp (Passive)              23.63      24.18  DegC     N
+106 DPU 28 V Primary Current                    102.00     110.16  Amps     N
+107 DPU 5.2 V (Switched) Voltage                  5.18       5.22  Volt     N
+108 DPU 5.2 V (Permanent) Voltage                 5.18       5.18  Volt     N
+109 DPU 10 V Voltage                              9.95       9.95  Volt     N
+110 DPU Temperature, PIF_A                       30.35      30.35  DegC     N
+111 DPU Temperature, CTL_W                       36.42      36.42  DegC     N
+112 SWICS +28 V Primary Current (Gnd Ref)       208.06     209.09  Amps     N
+113 SWICS +5 V Voltage (Gnd Ref)                  4.93       4.95  Volt     N
+114 SWICS +5 V Current (Gnd Ref)                 26.50      27.00  Amps     N
+115 SWICS -5 V Voltage (Gnd Ref)                 -4.97      -4.97  Volt     N
+116 SWICS +8 V Voltage (Gnd Ref)                  7.88       7.92  Volt     N
+117 SWICS +8 V Current (Gnd Ref)                 13.60      13.80  Amps     N
+118 SWICS 20 V Voltage (Gnd Ref)                 19.60      19.80  Volt     N
+119 SWICS 20 V Current (Gnd Ref)                150.17     162.16  Amps     N
+120 SWICS LVPS 28 V Voltage (Gnd Ref)            28.44      28.44  Volt     N
+121 SWICS DPPS 28 V Current (Gnd Ref)             8.76       8.76  Amps     N
+122 SWICS PAPS 28 V Current (Gnd Ref)             8.65       8.86  Amps     N
+123 SWICS PAPS Output Voltage (Gnd Ref)      -22793.87  -22793.87  Volt     N
+002 SWICS PAPS Output Voltage Cmd Level           0        999     Levl     N
+003 SWICS PAPS Output Voltage Cmd Voltage    -22793.87  -22793.87  Volt     N
+124 SWICS +5 V Voltage (PAPS Ref)                 5.02       5.02  Volt     N
+125 SWICS +5 V Current (PAPS Ref)                97.59      98.31  Amps     N
+126 SWICS -5 V Voltage (PAPS Ref)                -5.20      -5.20  Volt     N
+127 SWICS -5 V Current (PAPS Ref)                42.65      43.38  Amps     N
+128 SWICS +12 V Voltage (PAPS Ref)               11.83      11.83  Volt     N
+129 SWICS +12 V Current (PAPS Ref)               50.35      51.01  Amps     N
+130 SWICS -12 V Voltage (PAPS Ref)              -11.95     -11.89  Volt     N
+131 SWICS -12 V Current (PAPS Ref)               21.81      22.11  Amps     N
+132 SWICS SSD Bias Voltage (PAPS Ref)            57.00      57.00  Volt     N
+133 SWICS Start MCPPS Voltage (PAPS Ref)       2754.11    2791.39  Volt     N
+004 SWICS Start MCPPS Voltage Cmd Level           0        999     Levl     N
+005 SWICS Start MCPPS Voltage Cmd Voltage      2754.11    2791.39  Volt     N
+134 SWICS Stop MCPPS Voltage (PAPS Ref)          18.21    3462.45  Volt     N
+006 SWICS Stop MCPPS Voltage Cmd Level            0        999     Levl     N
+007 SWICS Stop MCPPS Voltage Cmd Voltage         18.21    3462.45  Volt     N
+135 SWICS SSD Temp (PAPS Ref)                    -4.73      -4.73  DegC     N
+136 SWICS Bubble Elect Temp, (PAPS Ref)           3.51       3.51  DegC     N
+137 MASS +28 V Primary Current (Gnd Ref)        164.85     168.00  Amps     N
+138 MASS +5 V Voltage (Gnd Ref)                   5.00       5.00  Volt     N
+139 MASS +5 V Current (Gnd Ref)                  34.50      36.00  Amps     N
+140 MASS -5 V Voltage (Gnd Ref)                  -5.03      -5.03  Volt     N
+141 MASS +8 V Voltage (Gnd Ref)                   8.00       8.00  Volt     N
+142 MASS LVPS 28 V Voltage (Gnd Ref)             27.86      28.00  Volt     N
+143 MASS ADPS 28 V Current (Gnd Ref)             13.00      13.40  Amps     N
+144 MASS DPPS 28 V Current (Gnd Ref)              6.40       6.80  Amps     N
+145 MASS Analog Electronics Temp (Gnd Ref)       26.29      26.29  DegC     N
+146 MASS +5 V Voltage (ADPS Ref)                  4.97       4.97  Volt     N
+147 MASS +5 V Current (ADPS Ref)                127.00     138.00  Amps     N
+148 MASS -5 V Voltage (ADPS Ref)                 -5.05      -5.03  Volt     N
+149 MASS -5 V Current (ADPS Ref)                110.00     111.00  Amps     N
+150 MASS +6 V Voltage (ADPS Ref)                  5.70       5.79  Volt     N
+151 MASS +6 V Current (ADPS Ref)                 21.00      21.00  Amps     N
+152 MASS +12 V Voltage (ADPS Ref)                12.18      12.18  Volt     N
+153 MASS -12 V Voltage (ADPS Ref)               -12.00     -12.00  Volt     N
+154 MASS LVPS 28 V Voltage (ADPS Ref)            27.16      27.30  Volt     N
+155 MASS HPS & MCPPS 28V I (ADPS Ref)            24.20      24.40  Amps     N
+156 MASS HPS Output Voltage (ADPS Ref)        23351.77   23351.77  Volt     N
+394 MASS HPS Output Voltage Cmd Level             0        999     Levl     N
+395 MASS HPS Output Voltage Cmd Voltage       23351.77   23351.77  Volt     N
+157 MASS Start MCPPS Voltage (ADPS Ref)        2545.97    2603.21  Volt     N
+396 MASS Start MCPPS Voltage Cmd Level            0        999     Levl     N
+397 MASS Start MCPPS Voltage Cmd Voltage       2545.97    2603.21  Volt     N
+158 MASS Stop MCPPS Voltage (ADPS Ref)         1869.65    1869.65  Volt     N
+398 MASS Stop MCPPS Voltage Cmd Level             0        999     Levl     N
+399 MASS Stop MCPPS Voltage Cmd Voltage        1869.65    1869.65  Volt     N
+159 STICS 28 V Primary Current                  222.36     226.44  Amps     N
+160 STICS +5 V Voltage                            5.01       5.01  Volt     N
+161 STICS -5 V Voltage                           -5.00      -4.98  Volt     N
+162 STICS +6 V Voltage                            5.92       5.95  Volt     N
+163 STICS -6 V Voltage                           -5.94      -5.91  Volt     N
+164 STICS +12 V Voltage                          11.73      11.79  Volt     N
+165 STICS -12 V Voltage                         -11.76     -11.70  Volt     N
+166 STICS MCPPS 28 V Current                     33.00      34.50  Amps     N
+167 STICS DPPS 28 V Current                      30.50      32.00  Amps     N
+168 STICS SSD Bias Voltage                      107.50     109.50  Volt     N
+169 STICS MCPPS 0 Output Voltage               2832.74    2930.69  Volt     N
+170 STICS MCPPS 1 Output Voltage               2863.02    2921.52  Volt     N
+171 STICS MCPPS 2 Output Voltage               2867.39    2965.23  Volt     N
+172 STICS MCPPS 3 Output Voltage               2857.30    2916.82  Volt     N
+173 STICS MCPPS 4 Output Voltage               2862.44    2941.80  Volt     N
+174 STICS MCPPS 5 Output Voltage               2887.14    2946.21  Volt     N
+175 STICS TOFPS (MCPPS 6) Output Voltage        916.15    1014.20  Volt     N
+380 STICS MCPPS 0 Output Voltage Cmd Level        0        999     Levl     N
+381 STICS MCPPS 1 Output Voltage Cmd Level        0        999     Levl     N
+382 STICS MCPPS 2 Output Voltage Cmd Level        0        999     Levl     N
+383 STICS MCPPS 3 Output Voltage Cmd Level        0        999     Levl     N
+384 STICS MCPPS 4 Output Voltage Cmd Level        0        999     Levl     N
+385 STICS MCPPS 5 Output Voltage Cmd Level        0        999     Levl     N
+386 STICS TOFPS (MCPPS 6) Out Volt Cmd Lvl        0        999     Levl     N
+387 STICS MCPPS 0 Output Voltage Cmd Volt      2832.74    2930.69  Volt     N
+388 STICS MCPPS 1 Output Voltage Cmd Volt      2863.02    2921.52  Volt     N
+389 STICS MCPPS 2 Output Voltage Cmd Volt      2867.39    2965.23  Volt     N
+390 STICS MCPPS 3 Output Voltage Cmd Volt      2857.30    2916.82  Volt     N
+391 STICS MCPPS 4 Output Voltage Cmd Volt      2862.44    2941.80  Volt     N
+392 STICS MCPPS 5 Output Voltage Cmd Volt      2887.14    2946.21  Volt     N
+393 STICS TOFPS (MCPPS 6) Out Volt Cmd Volt     916.15    1014.20  Volt     N
+176 STICS T1, AE Housing Temp                    24.49      25.08  DegC     N
+177 STICS T2, Fairing/HOP Temp                   -7.32      -7.03  DegC     N
+178 STICS T3, SSD Temp                           -6.74      -6.74  DegC     N
+179 STICS T4, Back Panel Temp                    -9.60      -9.32  DegC     N
+!
+!          SPACECRAFT AND DPU STATUS ITEMS
+!       1 = ON / enabled,  0 = OFF / disabled
+!
+180 Telemetry Format                              1          1     Code     Y
+! Note: 0 = Maneuver mode, 1 = Science mode
+181 Telemetry Rate                             5565.00    5565.00  b/s      Y
+! Note: Rate can be only 5565 (bit=0) or 11130 (bit=1)
+182 Spin Period                                   3.03       3.03  Secs     N
+183 Reset Counter                                 0          1     Numb     Y
+184 Last Reset Cause                              0          0     Code     N
+185 Latchup Counter - Main                        0          1     Numb     Y
+186 Latchup Counter for Memory                    0          0     Numb     Y
+187 Latchup Counter for MP                        0          0     Numb     Y
+188 Latchup Counter for SWICS Classification      0          0     Numb     Y
+189 Latchup Counter for MASS Classification       0          0     Numb     Y
+190 Latchup Counter for STICS Classification      0          0     Numb     Y
+191 RAM Error Counter                             0          0     Numb     N
+192 ROM Error Counter                             0          0     Numb     N
+193 PROM Bank Selection                           1          1     Code     N
+194 PROM Toggle Mode Enabled                      0          1     Flag     N
+195 Program Patch Active                          0          1     Flag     N
+196 Valid Command Counter                       122        122     Numb     N
+197 Invalid Command Counter                       0          0     Numb     N
+198 Command Repetition for SWICS                  0          0     Flag     N
+199 Command Repetition for MASS                   0          0     Flag     N
+200 Command Repetition for STICS                  0          0     Flag     N
+201 High Voltage Reconfiguration without HV       0          1     Flag     N
+202 Sun Sector                                    0         14     Numb     N
+008 Sun Sector Offset                             0         14     Numb     N
+203 Sun Sector Clock Source                       0          1     Code     N
+204 Sun Sector Clock OK                           0          1     Flag     N
+205 Sun Pulse OK                                  0          1     Flag     N
+!
+!               POWER SWITCH STATUS
+!                 1 = ON,  0 = OFF
+!
+206 STICS Main Power                              1          1     Flag     N
+207 STICS Cover Power                             0          0     Flag     N
+208 STICS Heater Power                            0          0     Flag     N
+209 SWICS Main Power                              1          1     Flag     N
+210 SWICS Cover Power                             0          0     Flag     N
+211 SWICS Heater Power                            0          0     Flag     N
+212 MASS Main Power                               1          1     Flag     N
+213 MASS Cover Power                              0          0     Flag     N
+!
+!
+!          CONFIGURATION ERRORS
+!         1 = Error,  0 = Normal
+!
+214 STICS Configuration                           0          0     Flag     N
+215 STICS Snapshot                                0          0     Flag     N
+216 SWICS Configuration                           0          0     Flag     N
+217 SWICS Snapshot                                0          0     Flag     N
+218 MASS Configuration                            0          0     Flag     N
+219 MASS Snapshot                                 0          0     Flag     N
+220 LOAD Configuration                            0          0     Flag     N
+221 LOAD Snapshot                                 0          0     Flag     N
+!
+!         MASS STATUS ITEMS
+!
+222 HPS ENABLE                                    1          1     Flag     N
+223 HPS LIMIT                                   176        176     Levl     N
+224 HPS LEVEL                                   176        176     Levl     N  
+225 HPS MEASURED VOLTAGE                      23351.77   23351.77  Volt     N  
+226 STOP MCP ENABLE                               1          1     Flag     N
+227 STOP MCP LIMIT                              139        139     Levl     N
+228 STOP MCP LEVEL                              136        136     Levl     N  
+229 STOP MCP MEASURED VOLTAGE                  1869.65    1869.65  Volt     N  
+230 START MCP ENABLE                              1          1     Flag     N
+231 START MCP LIMIT                             139        139     Levl     N
+232 START MCP LEVEL                             136        136     Levl     N  
+233 START MCP MEASURED VOLTAGE                 2588.90    2588.90  Volt     N  
+234 ADPS ENABLE                                   1          1     Flag     N
+235 ADPS LIMIT                                  160        160     Levl     N
+001 ADPS LEVEL                                  160        160     Levl     N
+236 MASS DPPS ENABLE                              1          1     Levl     N
+!
+!
+!   1 = ON / Enabled, 0 = OFF / Disabled
+!
+237 ADPS automatic calculation                    1          1     Flag     N
+238 ADPS stepping sequence                        0          1     Code     N
+239 ADPS table                                    0          1     Code     N
+240 MASS DPPS stepping sequence                   0          1     Code     N
+241 FSR limit for stop reversal                 255        255     Levl     N
+242 Discharge occurred                            0          1     Flag     N
+243 Internal Callibrator                          0          0     Flag     N
+244 Callibrator level                             0          0     Flag     N
+245 MASS Test tables                              0          0     Flag     N
+246 MASS Command Echo Check                       1          1     Flag     N
+247 MASS PHA FIFO mode                            0          0     Flag     N
+248 Stop preamp power                             1          1     Flag     N
+249 Start preamp 1 power                          0          0     Flag     N
+250 Start preamp 2 power                          1          1     Flag     N
+251 MASS Multiple Stops                           0          0     Flag     N
+252 MASS Multiple Starts                          0          0     Flag     N
+253 MASS sun sector definition                 3072       3072     Code     N
+! displayed as 0000000000110000, with first char being sector (bit) 0
+!
+!     MATRIX RATE BORDERS
+!
+254 LOWER MR0                                     4          4     Chan     N 
+255 UPPER MR0                                   754        754     Chan     N 
+256 LOWER MR1                                   754        754     Chan     N 
+257 UPPER MR1                                   879        879     Chan     N 
+258 LOWER MR2                                   879        879     Chan     N 
+259 UPPER MR2                                  1505       1505     Chan     N 
+260 LOWER MR3                                  1505       1505     Chan     N 
+261 UPPER MR3                                  1716       1716     Chan     N 
+262 LOWER MR4                                  1716       1716     Chan     N 
+263 UPPER MR4                                  1843       1843     Chan     N 
+264 LOWER MR5                                  1843       1843     Chan     N 
+265 UPPER MR5                                  2046       2046     Chan     N 
+266 LOWER MR6                                  2046       2046     Chan     N 
+267 UPPER MR6                                  2281       2281     Chan     N 
+268 LOWER MR7                                  2281       2281     Chan     N 
+269 UPPER MR7                                  2425       2425     Chan     N 
+270 LOWER MR8                                  2425       2425     Chan     N 
+271 UPPER MR8                                  2648       2648     Chan     N 
+272 LOWER MR9                                  2648       2648     Chan     N 
+273 UPPER MR9                                  4094       4094     Chan     N 
+!                                                                             
+274 BR0/BR1 border                             1505       1505     Chan     N 
+! Compression code:  0 = A, 1 = C
+275 MR Compression code for rate group 1          1          1     Code     N 
+276 MR Compression code for rate group 2          1          1     Code     N 
+!
+!          STICS STATUS ITEMS
+!           1 = ON, 0 = OFF
+!
+277 STICS +DPPS ENABLE                            1          1     Flag     N 
+278 STICS -DPPS ENABLE                            1          1     Flag     N 
+279 STICS MCPPS 0 ENABLE                          1          1     Flag     N 
+286 STICS MCPPS 0 LIMIT                         160        160     Levl     N 
+293 STICS MCPPS 0 LEVEL                         160        160     Levl     N 
+!   STICS MCPPS 0 MEASURED VOLTAGE             2832.74    2832.74  Volt     N 
+! NOTE: The above parameter is the last value of STICS MCPPS 0 Output Voltage
+280 STICS MCPPS 1 ENABLE                          1          1     Flag     N 
+287 STICS MCPPS 1 LIMIT                         160        160     Levl     N 
+294 STICS MCPPS 1 LEVEL                         160        160     Levl     N 
+!   STICS MCPPS 1 MEASURED VOLTAGE             2902.02    2902.02  Volt     N 
+! NOTE: The above parameter is the last value of STICS MCPPS 1 Output Voltage
+281 STICS MCPPS 2 ENABLE                          1          1     Flag     N 
+288 STICS MCPPS 2 LIMIT                         160        160     Levl     N 
+295 STICS MCPPS 2 LEVEL                         160        160     Levl     N 
+!   STICS MCPPS 2 MEASURED VOLTAGE             2886.95    2886.95  Volt     N 
+! NOTE: The above parameter is the last value of STICS MCPPS 2 Output Voltage
+282 STICS MCPPS 3 ENABLE                          1          1     Flag     N 
+289 STICS MCPPS 3 LIMIT                         160        160     Levl     N 
+296 STICS MCPPS 3 LEVEL                         160        160     Levl     N 
+!   STICS MCPPS 3 MEASURED VOLTAGE             2916.82    2916.82  Volt     N 
+! NOTE: The above parameter is the last value of STICS MCPPS 3 Output Voltage
+283 STICS MCPPS 4 ENABLE                          1          1     Flag     N 
+290 STICS MCPPS 4 LIMIT                         160        160     Levl     N 
+297 STICS MCPPS 4 LEVEL                         160        160     Levl     N 
+!   STICS MCPPS 4 MEASURED VOLTAGE             2882.28    2882.28  Volt     N 
+! NOTE: The above parameter is the last value of STICS MCPPS 4 Output Voltage
+284 STICS MCPPS 5 ENABLE                          1          1     Flag     N 
+291 STICS MCPPS 5 LIMIT                         160        160     Levl     N 
+298 STICS MCPPS 5 LEVEL                         160        160     Levl     N 
+!   STICS MCPPS 5 MEASURED VOLTAGE             2906.83    2906.83  Volt     N 
+! NOTE: The above parameter is the last value of STICS MCPPS 5 Output Voltage
+285 STICS TOFPS(6) ENABLE                         1          1     Flag     N
+292 STICS TOFPS(6) LIMIT                        220        220     Levl     N 
+299 STICS TOFPS(6) LEVEL                        220        220     Levl     N 
+!   STICS TOFPS(6) MEASURED VOLTAGE             995.37     995.37  Volt     N 
+! NOTE: The above parameter is the last value of STICS TOFPS Output Voltage
+!                                                                
+!           1 = ON / enabled, 0 = OFF / disabled                 
+!                                                                
+307 STICS DPPS Stepping Sequence                  0          3     Code     N 
+308 Internal Callibrator power                    0          0     Flag     N 
+309 Auto Callibrate Sequence                      0          0     Flag     N 
+310 Commanded Time Callibrator Level            300        300     ns       N 
+311 STICS Energy Callibrator Level                0          0     Levl     N 
+312 STICS Command Echo Check                      1          1     Flag     N 
+313 Rate Mode                                     0          1     Code     N 
+314 STICS PHA FIFO Mode                           0          0     Flag     N 
+315 Data Mode                                Normal                Code     N 
+316 STICS Main SSD Bias                           1          1     Flag     N 
+317 Time Preamp "Telescope 1"                     1          1     Flag     N 
+318 Time Preamp Start 3                           1          1     Flag     N 
+319 Time Preamp Start 4                           1          1     Flag     N 
+320 Time Preamps "Telescope 3"                    1          1     Flag     N 
+321 Time Preamp Stop 2                            1          1     Flag     N 
+322 STICS Multiple Starts                         0          0     Flag     N 
+323 STICS Multiple Stops                          0          0     Flag     N 
+324 STICS Trigger Mode                            2          2     Code     N 
+! Note: For Trigger Mode, value is in range 0-7, is = (Tn & !En)|(Tn & En)
+! Note: Compression code:  0 = A, 1 = C                                
+325 STICS Compression code for rate group 1       1          1     Code     N
+326 STICS Compression code for rate group 2       1          1     Code     N
+!                                                                
+!           1 = ON, 0 = OFF                                      
+!                                                                
+327 SSD 1 BIAS                                    1          1     Flag     N
+328 SSD 1 PREAMP POWER                            1          1     Flag     N
+329 SSD 1 THRESHOLD LEVEL                         0          0     Flag     N
+330 SSD 2 BIAS                                    1          1     Flag     N
+331 SSD 2 PREAMP POWER                            1          1     Flag     N
+332 SSD 2 THRESHOLD LEVEL                         0          0     Flag     N
+333 SSD 3 BIAS                                    1          1     Flag     N
+334 SSD 3 PREAMP POWER                            1          1     Flag     N
+335 SSD 3 THRESHOLD LEVEL                         0          0     Flag     N
+!                                                                
+!          SWICS STATUS ITEMS                                    
+!           1 = ON,  0 = OFF                                     
+!                                                                
+336 SWICS DPPS ENABLE                             1          1     Flag     N
+337 PAPS ENABLE                                   1          1     Flag     N
+338 PAPS LIMIT                                  197        197     Levl     N
+339 PAPS LEVEL                                  197        197     Levl     N
+!340 PAPS MEASURED VOLTAGE                    -22793.87  -22793.87  Volt     N
+341 START MCPPS ENABLE                            1          1     Flag     N
+342 START MCPPS LIMIT                           170        170     Levl     N
+343 START MCPPS LEVEL                           170        170     Levl     N
+!344 START MCPPS MEASURED VOLTAGE               2772.75    2772.75  Volt     N
+345 STOP MCPPS ENABLE                             0          0     Flag     N
+346 STOP MCPPS LIMIT                            115        115     Levl     N
+347 STOP MCPPS LEVEL                              0          0     Levl     N
+!348 STOP MCPPS MEASURED VOLTAGE                2772.75    2772.75  Volt     N
+!                                                                
+!           1 = ON / enabled, 0 = OFF / disabled                 
+!                                                                
+349 SWICS DPPS Stepping Sequence                  0          1     Code     N
+350 Discharge Indicator                           0          1     Code     N
+351 Callibration                                  0          1     Code     N
+352 SWICS Energy Callibrator Level                0          0     Levl     N
+353 Time Callibrator Level                        0          0     Levl     N
+354 SWICS Main SSD Bias                           1          1     Flag     N
+355 SSD 1 Preamp and Bias                         1          1     Flag     N
+356 SSD 2 Preamp and Bias                         1          1     Flag     N
+357 SSD 3 Preamp and Bias                         1          1     Flag     N
+358 Energy Threshold                              0          1     Code     N
+359 TAC Slope                                   -10.0       10.0   Pct      N
+360 SWICS Trigger Mode                            2          2     Code     N
+! Note: Trigger Mode value = E AND T                             
+361 Command Error Check                           1          1     Flag     N
+009 SWICS sun sector definitions               3072       3072     Code     N
+! displayed as 0000000000110000, with first char being sector (bit) 0
+362 Compressed FSR Limit for Step Reversal      255        255     Numb     N
+363 Reversal Stepping Mode                                         Code     N
+! value is Rate Counting Continued After Reversal Stepping
+364 SWICS PHA FIFO Mode                           1          1     Flag     N
+365 SWICS Test Tables                             0          1     Code     N
+! Compression code:  0 = A, 1 = C                                
+366 SWICS Compression code for rate group 1       0          0     Code     N
+367 SWICS Compression code for rate group 2       0          0     Code     N

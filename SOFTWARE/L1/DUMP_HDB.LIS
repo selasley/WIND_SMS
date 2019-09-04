@@ -1,0 +1,234 @@
+DUMP_HDB                                                        27-OCT-1995 11:57:48    DEC Fortran V6.2-508                Page   1
+                                                                22-FEB-1995 16:12:51    SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+	      1 	subroutine dump_hdb(jout,hdbrec)
+	      2 	implicit none
+	      3         INCLUDE 'INC_DIR:EDBDEF.INC/NOLIST'
+
+DUMP_HDB                                                        27-OCT-1995 11:57:48    DEC Fortran V6.2-508                Page   2
+                                                                22-FEB-1995 16:12:51    SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+	    541 	record /HDBstr/ hdbrec
+	    542 	integer jout,ii
+	    543 	character*30 format_time
+	    544 c
+	    545 	write(jout,1001) 
+	    546 1001	format(1x,'DUMP OF HDB')
+	    547 	write(jout,1002) format_time(hdbrec.w_time),hdbrec.epoch
+	    548 1002	format(1x,'  w_time: ',a,5x,f15.0)
+	    549 	write(jout,1003) format_time(hdbrec.sc_time),hdbrec.sc_epoch
+	    550 1003	format(1x,' sc_time: ',a,5x,f15.0)
+	    551 	write(jout,1005) hdbrec.qual
+	    552 1005	format(1x,'qual: ',z8)
+	    553 	write(jout,1006) (hdbrec.dat(ii),ii=0,279)
+	    554 1006	format(9x,10z3.2,5x,10z3.2/9x,10z3.2,5x,10z3.2/)
+	    555 	return
+	    556 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   40 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               196 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                1132   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 276 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               460932
+
+
+ENTRY POINTS
+
+    Address   Type  Name    
+                            
+  4-00000000        DUMP_HDB
+
+
+VARIABLES
+
+    Address   Type  Name     Address   Type  Name
+                                                 
+REG-00000003  I*4   II         **      I*4   JOUT
+
+
+
+DUMP_HDB                                                        27-OCT-1995 11:57:48    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                    22-FEB-1995 16:12:51    SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+RECORDS
+
+    Address   Name    Structure        Bytes
+                                            
+      **      HDBREC  HDBSTR             324
+
+
+LABELS
+
+    Address   Label     Address   Label     Address   Label     Address   Label     Address   Label
+                                                                                                   
+      **       1001       **       1002       **       1003       **       1005       **       1006
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name             
+                         
+  CHAR  FORMAT_TIME      
+
+FORMAT_TIME                                                     27-OCT-1995 11:57:48    DEC Fortran V6.2-508                Page   4
+                                Symbol Table                    22-FEB-1995 16:12:51    SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+	    557 	character*30 function format_time(timestrc)
+	    558 	implicit none
+	    559         include 'inc_dir:edb.inc/nolist'
+
+FORMAT_TIME                                                     27-OCT-1995 11:57:48    DEC Fortran V6.2-508                Page   5
+                                Symbol Table                    22-FEB-1995 16:12:51    SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+	   1335 	record /t/ timestrc
+	   1336 	character*30 temp
+	   1337 	write(temp,1001) timestrc.year,timestrc.doy,timestrc.hr,timestrc.min,
+	   1338      &			 timestrc.sec,timestrc.csec
+	   1339 1001	format(6i5)
+	   1340 	format_time = temp
+	   1341 	return
+	   1342 	end
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                                  24 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                   40 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                               196 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                                1132   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                 276 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  7 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               460932
+
+
+ENTRY POINTS
+
+    Address   Type  Name       
+                               
+  4-00000308  CHAR  FORMAT_TIME
+
+
+VARIABLES
+
+    Address   Type  Name                  Address   Type  Name                  Address   Type  Name             
+                                                                                                                 
+  7-00000006  L*1   BITRATE             7-0000000A  L*1   RAMCHECK            7-00000004  L*1   SUBS_ID          
+  6-0006EEBC  I*4   EDBSET              7-00000000  I*4   SFPERBLOCK          7-00000007  L*1   SWICSPOWER       
+  1-00000000  I*4   EDB_CORE_SIZE       7-00000010  I*4   SPINCOUNT           1-00000010  I*4   SWICS_H_RATE_SIZE
+  7-00000005  L*1   HDBFLAG             7-00000009  L*1   STICSPOWER          1-00000014  I*4   SWICS_N_RATE_SIZE
+  7-00000008  L*1   MASSPOWER           1-00000008  I*4   STICS_H_RATE_SIZE   2-00000004  I*4   SWICS_RATE_SIZE  
+  1-00000004  I*4   MASS_RATE_SIZE      1-0000000C  I*4   STICS_N_RATE_SIZE   2-00000008  CHAR  TEMP             
+  7-0000000C  I*4   MEASSPIN            2-00000000  I*4   STICS_RATE_SIZE                                        
+
+
+RECORDS
+
+    Address   Name      Structure        Bytes
+                                              
+      **      TIMESTRC  T                    8
+
+
+
+FORMAT_TIME                                                     27-OCT-1995 11:57:48    DEC Fortran V6.2-508                Page   6
+                                Symbol Table                    22-FEB-1995 16:12:51    SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+ARRAYS
+
+     Address  Type  Name             Bytes  Dimensions
+
+  6-00005688  I*1   CORE_DATA         1980  (0:10, 0:59, 3)
+  8-000003CC  I*4   HDBTIME2            24  (2, 3)
+  9-00000CF0  I*4   HKLOCI             300  (75)
+  9-00000E1C  I*4   HKLOCJ             300  (75)
+  9-00000CE4  I*4   HKSET               12  (3)
+  7-0000000B  L*1   SPARFLAGS            1  (1)
+
+
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+  8-00000000  HDB         HDBSTR             972  (3)
+  9-00000000  HKEEP       HKEEP             3300  (3)
+  6-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  6-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  6-00000000  SCI         CORE             22152  (3)
+  6-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  6-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  6-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  6-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label
+                   
+      **       1001
+
+FORMAT_TIME                                                     27-OCT-1995 11:57:48    DEC Fortran V6.2-508                Page   7
+                                Symbol Table                    22-FEB-1995 16:12:51    SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.FOR;5
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.LIS;10
+  /OBJECT=SMS1:[WIND.SOFTWARE.L1]DUMP_HDB.OBJ;10
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.92 seconds
+  Elapsed time:      2.66 seconds
+  Pagefaults:         161
+  I/O Count:           31

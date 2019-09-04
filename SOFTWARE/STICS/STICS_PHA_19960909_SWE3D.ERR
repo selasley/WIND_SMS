@@ -1,0 +1,97 @@
+  Errors found while generating the file : STICS_PHA_19960909_SWE3D.FLX
+   Run time  14:00:57   29-SEP-99
+  DOY:HR:MN:SEC                  COMMENTS
+  253:00:00:08   Invalid speed encountered =>      -2000.0
+  253:00:00:11   Invalid speed encountered =>      -2000.0
+  253:00:00:15   Invalid speed encountered =>      -2000.0
+  253:00:00:18   Invalid speed encountered =>      -2000.0
+  253:00:00:21   Invalid speed encountered =>      -2000.0
+  253:00:00:24   Invalid speed encountered =>      -2000.0
+  253:00:00:28   Invalid speed encountered =>      -2000.0
+  253:00:00:31   Invalid speed encountered =>      -2000.0
+  253:00:00:34   Invalid speed encountered =>      -2000.0
+  253:00:00:37   Invalid speed encountered =>      -2000.0
+  253:00:00:40   Invalid speed encountered =>      -2000.0
+  253:00:00:44   Invalid speed encountered =>      -2000.0
+  253:00:00:47   Invalid speed encountered =>      -2000.0
+  253:00:00:50   Invalid speed encountered =>      -2000.0
+  253:00:00:53   Invalid speed encountered =>      -2000.0
+  253:00:00:56   Invalid speed encountered =>      -2000.0
+  253:00:01:00   Invalid speed encountered =>      -2000.0
+  253:00:01:03   Invalid speed encountered =>      -2000.0
+  253:00:01:06   Invalid speed encountered =>      -2000.0
+  253:00:01:09   Invalid speed encountered =>      -2000.0
+  253:00:01:13   Invalid speed encountered =>      -2000.0
+  253:00:01:16   Invalid speed encountered =>      -2000.0
+  253:00:01:19   Invalid speed encountered =>      -2000.0
+  253:00:01:22   Invalid speed encountered =>      -2000.0
+  253:00:01:26   Invalid speed encountered =>      -2000.0
+  253:00:01:29   Invalid speed encountered =>      -2000.0
+  253:00:01:32   Invalid speed encountered =>      -2000.0
+  253:00:01:35   Invalid speed encountered =>      -2000.0
+  253:00:01:38   Invalid speed encountered =>      -2000.0
+  253:00:01:42   Invalid speed encountered =>      -2000.0
+  253:00:01:45   Invalid speed encountered =>      -2000.0
+  253:03:03:24   Invalid speed encountered =>      -2000.0
+  253:05:09:01   Invalid speed encountered =>      -2000.0
+  253:06:13:26   Invalid speed encountered =>      -2000.0
+  253:08:06:10   Invalid speed encountered =>      -2000.0
+  253:09:13:44   Bad HDB found
+  253:09:46:00   Invalid speed encountered =>      -2000.0
+  253:09:55:40   Invalid speed encountered =>      -2000.0
+  253:10:21:26   Invalid speed encountered =>      -2000.0
+  253:12:10:56   Invalid speed encountered =>      -2000.0
+  253:12:23:33   Sectors 6+ 7  Basic Rate =      1.   Basic PHA =    2.
+  253:13:21:45   Bad HDB found
+  253:13:25:33   Spin # = 10  Step Mode =  3   DVS = 20
+  253:13:25:40   Spin # = 12  Step Mode =  3   DVS = 24
+  253:13:25:46   Spin # = 14  Step Mode =  3   DVS = 30
+  253:13:25:52   Spin # = 16  Step Mode =  3   DVS = 27
+  253:13:25:59   Spin # = 18  Step Mode =  3   DVS = 23
+  253:13:26:05   Spin # = 20  Step Mode =  3   DVS = 19
+  253:13:26:12   Spin # = 22  Step Mode =  3   DVS = 15
+  253:13:26:18   Spin # = 24  Step Mode =  3   DVS = 11
+  253:13:26:25   Spin # = 26  Step Mode =  3   DVS =  7
+  253:13:26:31   Spin # = 28  Step Mode =  3   DVS =  3
+  253:13:26:37   Spin # = 30  Step Mode =  3   DVS =  0
+  253:13:26:44   Spin # = 32  Step Mode =  3   DVS =  4
+  253:13:26:50   Spin # = 34  Step Mode =  3   DVS =  8
+  253:13:26:57   Spin # = 36  Step Mode =  3   DVS = 12
+  253:13:27:03   Spin # = 38  Step Mode =  3   DVS = 16
+  253:13:27:10   Spin # = 40  Step Mode =  3   DVS = 20
+  253:13:27:16   Spin # = 42  Step Mode =  3   DVS = 24
+  253:13:27:23   Spin # = 44  Step Mode =  3   DVS = 30
+  253:13:27:29   Spin # = 46  Step Mode =  3   DVS = 27
+  253:13:27:35   Spin # = 48  Step Mode =  3   DVS = 23
+  253:13:27:42   Spin # = 50  Step Mode =  3   DVS = 19
+  253:13:27:49   Spin # = 52  Step Mode =  3   DVS = 15
+  253:13:27:55   Spin # = 54  Step Mode =  3   DVS = 11
+  253:13:28:01   Spin # = 56  Step Mode =  3   DVS =  7
+  253:13:28:08   Spin # = 58  Step Mode =  3   DVS =  3
+  253:21:41:07   Spin # =  2  Step Mode =  3   DVS =  4
+  253:21:41:53   Spin # = 16  Step Mode =  3   DVS = 27
+  253:21:41:59   Spin # = 18  Step Mode =  3   DVS = 23
+  253:21:42:05   Spin # = 20  Step Mode =  3   DVS = 19
+  253:21:42:12   Spin # = 22  Step Mode =  3   DVS = 15
+  253:21:42:18   Spin # = 24  Step Mode =  3   DVS = 11
+  253:21:42:25   Spin # = 26  Step Mode =  3   DVS =  7
+  253:21:42:31   Spin # = 28  Step Mode =  3   DVS =  3
+  253:21:42:38   Spin # = 30  Step Mode =  3   DVS =  0
+  253:21:42:44   Spin # = 32  Step Mode =  3   DVS =  4
+  253:21:42:51   Spin # = 34  Step Mode =  3   DVS =  8
+  253:21:42:57   Spin # = 36  Step Mode =  3   DVS = 12
+  253:21:43:03   Spin # = 38  Step Mode =  3   DVS = 16
+  253:21:43:10   Spin # = 40  Step Mode =  3   DVS = 20
+  253:21:43:16   Spin # = 42  Step Mode =  3   DVS = 24
+  253:21:43:23   Spin # = 44  Step Mode =  3   DVS = 30
+  253:21:43:29   Spin # = 46  Step Mode =  3   DVS = 27
+  253:21:43:36   Spin # = 48  Step Mode =  3   DVS = 23
+  253:21:43:42   Spin # = 50  Step Mode =  3   DVS = 19
+  253:21:43:49   Spin # = 52  Step Mode =  3   DVS = 15
+  253:21:43:55   Spin # = 54  Step Mode =  3   DVS = 11
+  253:21:44:02   Spin # = 56  Step Mode =  3   DVS =  7
+  253:21:44:08   Spin # = 58  Step Mode =  3   DVS =  3
+ Total Bad HDBs =  2
+ Total Invalid DVS =  48
+ Total Bad Speeds =  39
+ Total Bad Basic Rates =    1     Total Good Basic Rates =       3562

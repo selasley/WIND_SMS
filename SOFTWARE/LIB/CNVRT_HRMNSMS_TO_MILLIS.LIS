@@ -1,0 +1,119 @@
+CNVRT_HRMNSMS_TO_MILLIS                                         21-APR-1995 15:26:41    DEC Fortran V6.2-508                Page   1
+                                                                 9-DEC-1994 18:37:12    CNVRT_HRMNSMS_TO_MILLIS.FOR;1
+
+	      1       SUBROUTINE CNVRT_HRMNSMS_TO_MILLIS( MILLI, IHR, IMIN, ISEC, MSEC )
+	      2 !
+	      3 !	This version:	5-APR-1994
+	      4 !
+	      5 !	This subroutine converts integer numbers representing Hour, Minutes,
+	      6 !	Seconds, and Milliseconds to an integer number of milliseconds of day.
+	      7 !
+	      8 !   USAGE:
+	      9 !	CALL SUBROUTINE CNVRT_HRMNSMS_TO_MILLIS( MILLI, IHR, IMIN, ISEC, MSEC )
+	     10 !
+	     11 !   PARAMETERS:
+	     12 !	NAME	TYPE	USE	Description
+	     13 !	----	----	---	-----------
+	     14 !	MILLI	I*4	 O	Milliseconds of day
+	     15 !	IHR	I*4	 I	hour of day
+	     16 !	IMIN	I*4	 I	minute of hour
+	     17 !	ISEC	I*4	 I	seconds of minute
+	     18 !	MSEC	I*4	 I	millisecond of second
+	     19 !
+	     20 !   FUNCTION OR SUBROUTINE CALLS:
+	     21 !
+	     22 !   CREATION:
+	     23 !	 5-APR-1994	H.BROER	University of Maryland, SPACE PHYSICS GROUP
+	     24 !
+	     25 !
+	     26       IMPLICIT NONE
+	     27 
+	     28       INTEGER*4	IHR,		!
+	     29      :		IMIN,		!
+	     30      :		ISEC,		!
+	     31      :		MILLI,		!
+	     32      :		MSEC		!
+	     33 
+	     34       MILLI	= ( ( IHR * 60 + IMIN ) * 60 + ISEC ) * 1000 + MSEC
+	     35 
+	     36       RETURN
+	     37 
+	     38       END
+
+CNVRT_HRMNSMS_TO_MILLIS                                         21-APR-1995 15:26:41    DEC Fortran V6.2-508                Page   2
+                                Symbol Table                     9-DEC-1994 18:37:12    CNVRT_HRMNSMS_TO_MILLIS.FOR;1
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $CODE$                                  76   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  2 $LINK$                                  16 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+
+    Total Space Allocated                   92
+
+
+ENTRY POINTS
+
+    Address   Type  Name                   
+                                           
+  1-00000000        CNVRT_HRMNSMS_TO_MILLIS
+
+
+VARIABLES
+
+    Address   Type  Name      Address   Type  Name      Address   Type  Name 
+                                                                             
+      **      I*4   IHR         **      I*4   ISEC        **      I*4   MSEC 
+      **      I*4   IMIN        **      I*4   MILLI                          
+
+CNVRT_HRMNSMS_TO_MILLIS                                         21-APR-1995 15:26:41    DEC Fortran V6.2-508                Page   3
+                                Symbol Table                     9-DEC-1994 18:37:12    CNVRT_HRMNSMS_TO_MILLIS.FOR;1
+
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(NOASSERTIONS,NOBOUNDS,FORMAT,NOFP_EXCEPTIONS,NOOVERFLOW,NOUNDERFLOW)
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,NODECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LIB]CNVRT_HRMNSMS_TO_MILLIS.LIS;8
+  /OBJECT=SMS1:[WIND.SOFTWARE.LIB]CNVRT_HRMNSMS_TO_MILLIS.OBJ;8
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:          0.12 seconds
+  Elapsed time:      1.61 seconds
+  Pagefaults:          99
+  I/O Count:            7

@@ -1,0 +1,11 @@
+$ ! DWIND_CD_READ.COM      Version 20-APR-1994
+$
+$    LINK/MAP/CROSS/DEBUG -
+       WIND_CD_READ, -
+       WIND_CD_INIT, -
+       RECORD_PC_DATA, -
+       WIND_SAVE_HK, -
+       LIB_DIR:WIND_LIB/LIBR, -
+       [GEOTAIL.L1.OBJ]XTI_LIB/LIBR
+$
+$    EXIT

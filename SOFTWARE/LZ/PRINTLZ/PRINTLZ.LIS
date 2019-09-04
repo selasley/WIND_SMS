@@ -1,0 +1,2218 @@
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   1
+                                                                23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	      1       PROGRAM PRINTLZ
+	      2 C+
+	      3 C       Taken from WIND_CD_READ, this program transfers the data from a Level 
+	      4 C       0 file on a CD-ROM and constructs a Level 1 disk file.  The user is 
+	      5 C       prompted for the start and stop times to use (typically a 24 hr period), 
+	      6 C       as well as several other operating parameters.
+	      7 C
+	      8 C     This version:   1.2   17-FEB-1995
+	      9 C
+	     10 C     REFERENCE:
+	     11 C
+	     12 C     USAGE and PARAMETERS:
+	     13 C       RUN WIND_PRINTLZ
+	     14 C
+	     15 C     CALLS/FUNCTIONS:
+	     16 C       CALL EPOCH_TO_ITIME( RTIME, ITIME, ISTAT )
+	     17 C       CALL EXIT( ISTAT )                              ! SYSTEM
+	     18 C       CALL MVBITS( TEMP2, 2, 6, MSpin, 0 )            ! SYSTEM
+	     19 C       CALL TILOG( lSCTime, *1000 )                    !! XTI_LIB.OLB
+	     20 C       CALL WIND_CD_INIT()
+	     21 C       CALL WIND_EPOCH_TO_GREG(        SC_Beg_Year,                                            !! WIND_LIB.OLB
+	     22 C     :                                 SC_Beg_DOY,
+	     23 C     :                                 SC_Beg_Msec,
+	     24 C     :                                 SC_Beg_MicSec,
+	     25 C     +                                 STRTime,        ! UTC: EPOCH as Real*8
+	     26 C     +                                 ISTAT )
+	     27 C       CALL WIND_GET_FILENAME( FILENAME, ISTAT )                                               !! WIND_LIB.OLB
+	     28 C       CALL WIND_GET_LZ_TIMES( DSTRYRDAY, DSTPYRDAY, STRTime, STPTime, ISTAT )                 !! WIND_LIB.OLB
+	     29 C       CALL WIND_GREG_TO_EPOCH(        LR_Beg_Year,    ! ATC: Year                             !! WIND_LIB.OLB
+	     30 C     +                                 LR_Beg_DOY,     ! ATC: Day Of Year
+	     31 C     +                                 LR_Beg_MSec,    ! ATC: Millisecond of DAY
+	     32 C     +                                 LR_Beg_MicSec,  ! ATC: Microsecond of MSec
+	     33 C     +                                 LR_Beg_EPOCH,   ! ATC: EPOCH AS REAL*8
+	     34 C     +                                 ISTAT )
+	     35 C       CALL WIND_OPEN_LZ_DATA( FILENAME, 'OLD', ISTAT )                                !! WIND_LIB.OLB
+	     36 C       CALL WIND_PB5_TO_EPOCH(         LR_Beg_SC_Clock,! UTC: PB5 (2 INTEGER*4)        !! WIND_LIB.OLB
+	     37 C     +                                 SC_Beg_EPOCH,   ! UTC: EPOCH as Real*8
+	     38 C     +                                 ISTAT )
+	     39 C       CALL WIND_PRINT_HK( DR_Beg_MajFr_Cnt, HKset, SYNC_WORD )
+	     40 C       CALL WIND_RESET_HK(EDBSet-1)
+	     41 C
+	     42 C       = BTEST( TEMP2, 1 )                                     ! SYSTEM
+	     43 C       = CHLAST( FILENAME )                                    ! UMDCOMMON.OLB
+	     44 C       = IAND( TEMP2, 'FF'X )                                  ! SYSTEM
+	     45 C       = IOR( ISHFT( HDBTime, 8 ), (TEMP4 .AND. 'FF'X) )       ! SYSTEM
+	     46 C       = JIOR( ISHFT( (TEMP4 .AND. 'FF'X), 8 ), SRCount )      ! SYSTEM
+	     47 C
+	     48 C     CREATION:
+	     49 C       24-JAN-1995     J.PAQUETTE
+	     50 C
+	     51 C     REVISIONS:
+	     52 C	27-JAN-1995	L. Bleau	added code to write multiple dump files,
+	     53 C                                       changed FIL1NAME to DUMPNAME
+	     54 C 1.2   17-FEB-1995	L. Bleau	changed SFDU_Lun to L0_Lun, since it
+	     55 C					refers to the L0 (or LZ) file and not
+	     56 C					to the SFDU file 
+	     57 C-
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   2
+                                                                23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	     58 
+	     59 CDEC$ IDENT     '1.3'
+	     60 
+	     61       IMPLICIT NONE
+	     62 
+	     63       DATA      Ver_EPIC_SFDU_to_L0 / 1.00, 0/ ! Software version number
+	     64 
+	     65       INCLUDE   'INC_DIR:EDB.INC/NOLIST'
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   3
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	    856       INCLUDE   'INC_DIR:L0_DATA_Record.INC/NOLIST'
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   4
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   1024       INCLUDE   'INC_DIR:L0_Labl_Record.INC/NOLIST'
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   5
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   1151       INCLUDE   'INC_DIR:SW_CODES.INC/NOLIST'
+	   1454       INCLUDE   'INC_DIR:WIND_Lun.INC/NOLIST'
+	   1484       INCLUDE   '($SSDEF)/NOLIST'
+	   2909 
+	   2910       COMMON /FILE/  FILENAME, DUMPNAME
+	   2911 
+	   2912       COMMON /DATES/ SC_Beg_Year, SC_Beg_DOY, SC_Beg_Msec, SC_Beg_MicSec,
+	   2913      &               SC_End_Year, SC_End_DOY, SC_End_Msec, SC_End_MicSec
+	   2914 C
+	   2915       REAL*8            DR_Beg_SC_EPOCH,!
+	   2916      :                  DSTPYRDAY,      ! STOP TIME
+	   2917      :                  DSTRYRDAY,      ! START TIME
+	   2918      :                  DYRDAY,         ! CURRENT TIME
+	   2919      :                  SC_Beg_EPOCH,   ! UTC: S/C Clock
+	   2920      :                  SC_End_EPOCH,   ! UTC: S/C Clock
+	   2921      :                  STRTime,        ! Requested start time
+	   2922      :                  STPTime,        ! Requested stop time
+	   2923      +                  RECFLAG/0D0/,   ! TEMPORARY
+	   2924      +                  DELTATime/184D0/,! HighBit Rate
+	   2925      :                  DELTAT(0:59)/   2097.6D0,
+	   2926      +                                  1674.4D0,
+	   2927      +                                  1214.4D0,
+	   2928      +                                  57*828.D0/,     ! Empiric set EDB output delay
+	   2929      :                  T,              ! TEMPORARY TIME
+	   2930      :                  T1              ! TEMPORARY TIME
+	   2931 
+	   2932       INTEGER*4         Bytes_SFrame,   ! Bytes per Subframe
+	   2933      +                  CHLAST,         ! FUNCTION
+	   2934      +                  EDBpos,         ! internal
+	   2935      +                  EDB_Start,      ! internal
+	   2936      +                  HDBSet/1/,      ! internal
+	   2937      +                  HDB_End,        ! End position of HDB
+	   2938      +                  HDB_Pos,        ! Current position of HDB
+	   2939      +                  HDB_Start,      ! Starting position of HDB
+	   2940      :                  HDBTime,        ! Time contained in HDB-Header
+	   2941      :                  ID,             ! DAY
+	   2942      :                  II,             ! LOOP COUNTER
+	   2943      :                  IJ,             !  "      "
+	   2944      :                  IM,             ! MONTH
+	   2945      :                  IY,             ! YEAR
+	   2946      :                  IPRNT/8/,       ! DEBUGGING INFO TO FILE
+	   2947      :                  IPRT/7/,        ! DEBUGGING INFO TO FILE
+	   2948      :                  IREC,           ! last character position of read string
+	   2949      :                  ISTAT,          ! STATUS FOR OPENING DATAFILE
+	   2950      :                  JJ,             ! LOOP COUNTER
+	   2951      :                  JIOR,           ! FUNCTION
+	   2952      :                  KK,             ! LOOP COUNTER
+	   2953      +                  LOAD_EDB,       ! Assigned GOTO Label
+	   2954      +                  MAXSFrame/250/, ! maximum number of Subframes per Majorframe
+	   2955      :                  MAXSpCnt/255/,  ! maximum number of cont. SpinCount
+	   2956      :                  MM,             ! POSITION OF ';'
+	   2957      :                  NCF,            ! NUMBER OF CHARACTERS IN FILENAME
+	   2958      :                  O_SpinCnt,      ! Last Spin counter
+	   2959      :                  POINTER,        ! INTERNAL 
+	   2960      :                  SC_Beg_Year,    !
+	   2961      :                  SC_Beg_DOY,     !
+	   2962      :                  SC_Beg_Msec,    !
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   6
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   2963      :                  SC_Beg_MicSec,  !
+	   2964      :                  SC_End_Year,    !
+	   2965      :                  SC_End_DOY,     !
+	   2966      :                  SC_End_Msec,    !
+	   2967      :                  SC_End_MicSec,  !
+	   2968      +                  SRCount,        ! Science Record Count, read from MajF
+	   2969      +                  TEMP4,
+	   2970      +                  IJK             ! IMPLICIT NONE SUCKS
+	   2971 
+	   2972       INTEGER*4
+	   2973      :                  MSpin,          ! Measured Spin
+	   2974      :                  O_MSpin,        ! Last Measured Spin
+	   2975      +                  TEMP2
+	   2976 
+	   2977       INTEGER*4         SR_Qual/8/      ! anticipated HDB Quality
+	   2978 
+	   2979       LOGICAL*4         HDBFirst/.TRUE./,
+	   2980      +                  BTEST,          ! FUNCTION
+	   2981      +                  BUFFER_READ/.FALSE./,   ! MAJOR FRAME READ FLAG
+	   2982      +                  CmdErrFlag,     ! Command Error Flag
+	   2983      +                  EDB_done,       ! internal
+	   2984      +                  FirstEDB/.TRUE./,!First time flag
+	   2985      +                  lSCTime,        ! S/C clock is PREFERRED TIME
+	   2986      :                  OBitRate/.TRUE./,       ! Old BitRate
+	   2987      :                  OK,             ! internal value
+	   2988      :                  VALData         ! Valid Data available (within time)
+	   2989 
+	   2990       LOGICAL SYNC_WORD
+	   2991 C
+	   2992       CHARACTER*80      FILENAME, DUMPNAME, INFILE, INCHAR
+	   2993       CHARACTER*34      CLASS(0:9)
+	   2994       CHARACTER*8       PROGRAM_START_TIME, PROGRAM_END_TIME
+	   2995       CHARACTER*23      START_DATE_TIME
+	   2996       CHARACTER*30      ATIME, WIND_FORMAT_TIME
+	   2997 
+	   2998       INTEGER           DUMP_SEQUENCE/1/,
+	   2999      &                  DUMP_FILE_L1_RECS/120/
+	   3000 
+	   3001       INTEGER SPIN, DIAG
+	   3002       LOGICAL INTER
+	   3003       COMMON /DIAG/ DIAG,INTER
+	   3004       DATA DIAG/6/
+	   3005 
+	   3006       INTEGER*4 FORTERR,RMSSTC,RMSSTV,LUN,VAXERR
+	   3007 
+	   3008       CALL TIM_STAMP
+	   3009 1000  CONTINUE
+	   3010       CALL WIND_CD_INIT
+	   3011 
+	   3012   100 FORMAT(1H , A, $)
+	   3013 
+	   3014       FILENAME = 'WIND_LZ_DATA:*LZ*.DAT'
+	   3015       WRITE( TTOUT, 100 )   'LZ-FILENAME = '
+	   3016       CALL WIND_GET_FILENAME( FILENAME, ISTAT )                 ! FILE NAME
+	   3017       IF( ISTAT .NE. SS$_NORMAL )   STOP 0001
+	   3018 C
+	   3019  1020 CONTINUE
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   7
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3020       CALL WIND_OPEN_LZ_DATA( FILENAME, 'OLD', ISTAT )          ! OPEN FILE
+	   3021 C
+	   3022       INQUIRE( L0_Lun, NAME=FILENAME )
+	   3023       NCF    = CHLAST( FILENAME )
+	   3024       IF(DIAG .LE. 5) WRITE( TTOUT, 110 )   FILENAME(1:NCF), ISTAT
+	   3025   110 FORMAT( 1H , 'OPENED FILE: ', A, ',  STATUS IS', I3 )
+	   3026       IF( ISTAT .NE. SS$_NORMAL ) STOP 0002
+	   3027 C
+	   3028       IREC = LR_Phys_Rec_Size
+	   3029 C
+	   3030 C  LABEL_RECORD                                              ! READ LABEL RECORD
+	   3031 C
+	   3032 C      READ( L0_Lun, 400, END=9999, ERR=9998)  IREC, ( LR_BUFFER(II), II=1,IREC )
+	   3033       READ( L0_Lun, 401, END=9999, ERR=9998)  IREC, C_LR_BUFFER(1:IREC)
+	   3034   400 FORMAT( Q, 12800A1 )
+	   3035   401 FORMAT( Q, A )
+	   3036 
+	   3037       CALL FIXUP( LR_Beg_SC_Clock )
+	   3038       CALL FIXUP( LR_End_SC_Clock )
+	   3039 
+	   3040       IF(DIAG .LE. 4) WRITE( TTOUT, 111 )  LR_Phys_Rec_Size
+	   3041   111 FORMAT( 1H0, ' RECORD SIZE FOR THIS FILE =', I6, // )
+	   3042 
+	   3043  1040 CONTINUE
+	   3044       MM = INDEX( FILENAME(1:NCF), ']' )
+	   3045       KK = INDEX( FILENAME(MM+1:NCF), '.' )
+	   3046       DUMPNAME = FILENAME
+	   3047       IF (KK .NE. 0) THEN
+	   3048         DUMPNAME(MM+KK:MM+KK+3) = '.DMP'
+	   3049       ELSE
+	   3050         DUMPNAME(NCF+1:NCF+4) = '.DMP'
+	   3051       ENDIF
+	   3052 
+	   3053       KK = INDEX( DUMPNAME(1:NCF), ';' )
+	   3054       IF( KK .NE. 0 )    DUMPNAME(KK:)  = ' '
+	   3055       KK = INDEX( DUMPNAME(1:NCF), ' ' )
+	   3056       WRITE( TTOUT, 101 )   'LZ-DUMP-FILENAME = ',DUMPNAME(1:KK)
+	   3057 101   FORMAT(1X,A,A)
+	   3058       CALL WIND_GET_FILENAME( DUMPNAME, ISTAT )                 ! FILE NAME
+	   3059 
+	   3060       IF( ISTAT .NE. SS$_NORMAL .AND.
+	   3061      :    ISTAT .NE. 0 ) CALL EXIT( ISTAT )
+	   3062 
+	   3063 C Remove explicit version number from filename (starting at ';') before opening
+	   3064 C If we don't Fortran OPEN gives error 43 when file already exists
+	   3065  
+	   3066       MM = INDEX( DUMPNAME, ';' )
+	   3067       IF (MM .NE. 0) DUMPNAME(MM:)=' '
+	   3068       OPEN(UNIT=28,NAME=DUMPNAME,STATUS='NEW')
+	   3069 
+	   3070  1060 CONTINUE
+	   3071 C
+	   3072  1120 WRITE( TTOUT, 100 ) 'Do you prefer S/C clock ?'
+	   3073       lSCTime = .FALSE.
+	   3074       CALL TILOG( lSCTime, *1000 )
+	   3075 
+	   3076       CALL WIND_PB5_TO_EPOCH(           LR_Beg_SC_Clock,! UTC: PB5 (2 INTEGER*4)
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   8
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3077      +                                  SC_Beg_EPOCH,   ! UTC: EPOCH as Real*8
+	   3078      +                                  ISTAT )
+	   3079       IF( ISTAT .NE. SS$_NORMAL ) STOP 0003
+	   3080 
+	   3081       CALL WIND_PB5_TO_EPOCH(           LR_End_SC_Clock,! UTC: PB5 (2 INTEGER*4)
+	   3082      +                                  SC_End_EPOCH,   ! UTC: EPOCH as Real*8
+	   3083      +                                  ISTAT )
+	   3084       IF( ISTAT .NE. SS$_NORMAL ) STOP 0004
+	   3085 
+	   3086       CALL WIND_GREG_TO_EPOCH(          LR_Beg_Year,    ! ATC: Year
+	   3087      +                                  LR_Beg_DOY,     ! ATC: Day Of Year
+	   3088      +                                  LR_Beg_MSec,    ! ATC: Millisecond of DAY
+	   3089      +                                  LR_Beg_MicSec,  ! ATC: Microsecond of MSec
+	   3090      +                                  LR_Beg_EPOCH,   ! ATC: EPOCH AS REAL*8
+	   3091      +                                  ISTAT )
+	   3092       IF( ISTAT .NE. SS$_NORMAL ) STOP 0005
+	   3093 
+	   3094       CALL WIND_GREG_TO_EPOCH(          LR_End_Year,
+	   3095      +                                  LR_End_DOY,
+	   3096      +                                  LR_End_MSec,
+	   3097      +                                  LR_End_MicSec,
+	   3098      +                                  LR_End_EPOCH,
+	   3099      +                                  ISTAT )
+	   3100       IF( ISTAT .NE. SS$_NORMAL ) STOP 0006
+	   3101 
+	   3102  1140 CONTINUE
+	   3103       IF( lSCTime ) THEN
+	   3104           DSTRYRDAY = SC_Beg_EPOCH
+	   3105           DSTPYRDAY = SC_End_EPOCH
+	   3106       ELSE
+	   3107           DSTRYRDAY = LR_Beg_EPOCH
+	   3108           DSTPYRDAY = LR_End_EPOCH
+	   3109       ENDIF
+	   3110 C
+	   3111 C  GET START & STOP TIMES
+	   3112 C
+	   3113       CALL WIND_GET_LZ_TIMES( DSTRYRDAY, DSTPYRDAY, STRTime, STPTime, ISTAT )
+	   3114 
+	   3115       CALL WIND_EPOCH_TO_GREG(          SC_Beg_Year,
+	   3116      :                                  SC_Beg_DOY,
+	   3117      :                                  SC_Beg_Msec,
+	   3118      :                                  SC_Beg_MicSec,
+	   3119      +                                  STRTime,        ! UTC: EPOCH as Real*8
+	   3120      +                                  ISTAT )
+	   3121       IF( ISTAT .NE. SS$_NORMAL ) STOP 0007
+	   3122 
+	   3123       CALL WIND_EPOCH_TO_GREG(          SC_End_Year,
+	   3124      :                                  SC_End_DOY,
+	   3125      :                                  SC_End_Msec,
+	   3126      :                                  SC_End_MicSec,
+	   3127      +                                  STPTime,        ! UTC: EPOCH as Real*8
+	   3128      +                                  ISTAT )
+	   3129       IF( ISTAT .NE. SS$_NORMAL ) STOP 0008
+	   3130 
+	   3131       IF(DIAG .LE. 5) WRITE( TTOUT, 114 )          SC_Beg_Year,
+	   3132      :                          SC_Beg_DOY,
+	   3133      :                          SC_Beg_Msec,
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page   9
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3134      :                          SC_Beg_MicSec,
+	   3135      +                          STRTime,
+	   3136      :                          SC_End_Year,
+	   3137      :                          SC_End_DOY,
+	   3138      :                          SC_End_Msec,
+	   3139      :                          SC_End_MicSec,
+	   3140      +                          STPTime
+	   3141 
+	   3142   114 FORMAT(   ' Requested times', /,
+	   3143      :          ' START :',     T12, ' Year =', T24, I4, /,
+	   3144      :                          T12, ' DOY =',  T24, I4, /,
+	   3145      :                          T12, ' Msec =', T20, I8, /,
+	   3146      :                          T12, ' uSec =', T24, I4, /,
+	   3147      :                          T12, ' STRTime=',  T22, F22.3, //,
+	   3148      :          ' End :',       T12, ' Year =', T24, I4, /,
+	   3149      :                          T12, ' DOY =',  T24, I4, /,
+	   3150      :                          T12, ' Msec =', T20, I8, /,
+	   3151      :                          T12, ' uSec =', T24, I4, /,
+	   3152      :                          T12, ' STPTime=',  T22, F22.3 )
+	   3153 
+	   3154       IF(DIAG .LE. 4) WRITE( TTOUT, 116 )  LR_Phys_Rec_Num, LR_Phys_Rec_in_File
+	   3155   116 FORMAT( ' Starting Physical Record Number   =', I5, /,
+	   3156      :        ' Number of Physical Records in File=', I5 ) 
+	   3157       CALL LIB$DATE_TIME(START_DATE_TIME)
+	   3158       CALL TIME(PROGRAM_START_TIME)
+	   3159 
+	   3160       IF(DIAG .LE. 4) WRITE( IPRT, 117 ) LR_SCID,       ! Spacecraft ID
+	   3161      +          LR_Instr_Num,           ! Instrument Number
+	   3162      +          LR_Instr_Name,          ! Instrument Name
+	   3163      +          LR_Phys_Rec_Num,        ! Physical Record Number
+	   3164      +          LR_Phys_Rec_per_MajFr,  ! Physical Records Per Major Frame
+	   3165      +          LR_Phys_Rec_in_File,    ! Number of Physical Records in File
+	   3166      +          LR_Beg_MajFr_Cnt,       ! Major Frame Count - First Major Frame
+	   3167      +          LR_End_MajFr_Cnt,       ! Major Frame Count _ Last Major Frame
+	   3168      +          LR_Beg_SC_Clock,        ! S/C Clock-Beginning of First MajFrame
+	   3169      +          LR_End_SC_Clock,        ! S/C Clock-Beginning of Last MajFrame
+	   3170      +          LR_Beg_Year,            ! ATC: year-Beginning of First MajFrame
+	   3171      +          LR_Beg_DOY,             ! ATC: day -Beginning of First MajFrame
+	   3172      +          LR_Beg_MSec,            ! ATC: msec-Beginning of First MajFrame
+	   3173      +          LR_Beg_MicSec,          ! ATC: usec-Beginning of First MajFrame
+	   3174      +          LR_End_Year,            ! ATC: year-Beginning of Last MajFrame
+	   3175      +          LR_End_DOY,             ! ATC: day -Beginning of Last MajFrame
+	   3176      +          LR_End_MSec,            ! ATC: msec-Beginning of Last MajFrame
+	   3177      +          LR_End_MicSec,          ! ATC: usec-Beginning of Last MajFrame
+	   3178      +          LR_Num_MajFr_Exp,       ! Number of Major Frames Expected
+	   3179      +          LR_Num_MajFr_File,      ! Number of Major Frames in File
+	   3180      +          LR_Num_MajFr_Gaps,      ! Major Frame Level Gaps in Coverage
+	   3181      +          LR_Data_Cov_Typ,        ! Data Coverage Type
+	   3182      +          LR_Decom_Rerun_Num,     ! Decommutation Rerun Number
+	   3183      +          LR_Decom_Prog_V_Num,    ! Decommutation Program Version Number
+	   3184      +          LR_Decom_Char_DB_V_Num, ! Decom.Characteristic Database Vers.Num
+	   3185      +          LR_Decom_Run_DateTime,  ! Decommutation Run Date/Time
+	   3186      +          LR_Instr_File_Name,     ! Instrument File Name
+	   3187      +          LR_Phys_Rec_Size,       ! Physical Record Length
+	   3188      +          LR_Merge_Rerun_Num,     ! Merge Rerun Number
+	   3189      +          LR_Merge_Prog_V_Num,    ! Merge Program Version Number
+	   3190      +          LR_Merge_Run_DateTime,  ! Merge Run Date/Time
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  10
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3191      +          LR_Num_Edit_Files,      ! Number of Edit Files
+	   3192      +          LR_Beg_EPOCH,
+	   3193      +          LR_End_EPOCH
+	   3194   117 FORMAT( 1H1,' LR_SCID             =', I6,
+	   3195      +  /,      ' LR_Instr_Num          =', I6,
+	   3196      +  /,      ' LR_Instr_Name         =  ', A4,
+	   3197      +  /,      ' LR_Phys_Rec_Num       =', I6,
+	   3198      +  /,      ' LR_Phys_Rec_per_MajFr =', I6,
+	   3199      +  /,      ' LR_Phys_Rec_in_File   =', I6,
+	   3200      +  /,      ' LR_Beg_MajFr_Cnt      =', I6,
+	   3201      +  /,      ' LR_End_MajFr_Cnt      =', I6,
+	   3202      +  /,      ' LR_Beg_SC_Clock       =', 2Z8.8,      ! S/C Clock-Beginning of First MajFrame
+	   3203      +  /,      ' LR_End_SC_Clock       =', 2Z8.8,      ! S/C Clock-Beginning of Last MajFrame
+	   3204      +  /,      ' LR_Beg_Year           =', I6,         ! ATC: year-Beginning of First MajFrame
+	   3205      +  /,      ' LR_Beg_DOY            =', I6,         ! ATC: day -Beginning of First MajFrame
+	   3206      +  /,      ' LR_Beg_MSec           =', I9,         ! ATC: msec-Beginning of First MajFrame
+	   3207      +  /,      ' LR_Beg_MicSec         =', I6,         ! ATC: usec-Beginning of First MajFrame
+	   3208      +  /,      ' LR_End_Year           =', I6,         ! ATC: year-Beginning of Last MajFrame
+	   3209      +  /,      ' LR_End_DOY            =', I6,         ! ATC: day -Beginning of Last MajFrame
+	   3210      +  /,      ' LR_End_MSec           =', I9,         ! ATC: msec-Beginning of Last MajFrame
+	   3211      +  /,      ' LR_End_MicSec         =', I6,         ! ATC: usec-Beginning of Last MajFrame
+	   3212      +  /,      ' LR_Num_MajFr_Exp      =', I6          ! Number of Major Frames Expected
+	   3213      +  /,      ' LR_Num_MajFr_File     =', I6,         ! Number of Major Frames in File
+	   3214      +  /,      ' LR_Num_MajFr_Gaps     =', I6,         ! Major Frame Level Gaps in Coverage
+	   3215      +  /,      ' LR_Data_Cov_Typ       =  ', A4,       ! Data Coverage Type
+	   3216      +  /,      ' LR_Decom_Rerun_Num    =', I6,         ! Decommutation Rerun Number
+	   3217      +  /,      ' LR_Decom_Prog_V_Num   =', A8,         ! Decommutation Program Version Number
+	   3218      +  /,      ' LR_Decom_Char_DB_V_Num=', A8,         ! Decom.Characteristic Database Vers.Num
+	   3219      +  /,      ' LR_Decom_Run_DateTime =', A16,        ! Decommutation Run Date/Time
+	   3220      +  /,      ' LR_Instr_File_Name    =', A44,        ! Instrument File Name
+	   3221      +  /,      ' LR_Phys_Rec_Size      =', I6,         ! Physical Record Length
+	   3222      +  /,      ' LR_Merge_Rerun_Num    =', I6,         ! Merge Rerun Number
+	   3223      +  /,      ' LR_Merge_Prog_V_Num   =', A8,         ! Merge Program Version Number
+	   3224      +  /,      ' LR_Merge_Run_DateTime =', A16,        ! Merge Run Date/Time
+	   3225      +  /,      ' LR_Num_Edit_Files     =', I6,         ! Number of Edit Files
+	   3226      +  /,      ' LR_Beg_EPOCH          =', F20.5,      ! ATC: EPOCH, First Major Frame
+	   3227      +  /,      ' LR_End_EPOCH          =', F20.5 )     ! ATC: EPOCH, Last Major Frame
+	   3228 
+	   3229       C_DR_Buffer = C_NULL_Buffer                               ! Initialize DATA buffer
+	   3230 C
+	   3231 C  DATA_RECORD  1
+	   3232 C
+	   3233 C  READ DATA RECORD                                             ! READ DATA RECORD
+	   3234 C      READ( L0_Lun, 400, END=9999, ERR=9998) IREC,( DR2_BUFFER(II), II=1,IREC )
+	   3235       READ( L0_Lun, 401, END=9999, ERR=9998) IREC,C_DR2_BUFFER(1:IREC)
+	   3236 
+	   3237       CALL FIXUP( DR_Beg_SC_Clock )
+	   3238 
+	   3239       IF(DIAG .LE. 3) WRITE( TTOUT, 118 )   'First READ', DR2_Phys_Rec_Num, DR2_Beg_MajFr_Cnt
+	   3240   118 FORMAT( 1H0, A, ', DR2_Phys_Rec_Num =', I5, ', DR2_Beg_MajFr_Cnt = ', Z8 )
+	   3241 
+	   3242       BUFFER_READ = .TRUE.
+	   3243       IF( lSCTime ) THEN
+	   3244           CALL WIND_PB5_TO_EPOCH(       DR2_Beg_SC_Clock,! UTC: PB5 (2 INTEGER*4)! Calc S/C-EPOCH
+	   3245      +                                  DR2_SC_EPOCH,    ! UTC: EPOCH as Real*8
+	   3246      +                                  ISTAT )
+	   3247           IF( ISTAT .NE. SS$_NORMAL ) STOP 0010
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  11
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3248           T = DR2_SC_EPOCH
+	   3249       ELSE
+	   3250           CALL WIND_GREG_TO_EPOCH(      DR2_Beg_Year,   ! ATC: Year     ! Calc WALL-EPOCH
+	   3251      +                                  DR2_Beg_DOY,    ! ATC: Day Of Year
+	   3252      +                                  DR2_Beg_MSec,   ! ATC: Millisecond of DAY
+	   3253      +                                  DR2_Beg_MicSec, ! ATC: Microsecond of MSec
+	   3254      +                                  DR2_Beg_EPOCH,  ! ATC: EPOCH AS REAL*8
+	   3255      +                                  ISTAT )
+	   3256           IF( ISTAT .NE. SS$_NORMAL ) STOP 0009
+	   3257           T = DR2_Beg_EPOCH
+	   3258       END IF
+	   3259       IF( STRTime .LE. T ) VALData = .TRUE.
+	   3260 
+	   3261  1200 CONTINUE
+	   3262       IF( BUFFER_READ ) THEN
+	   3263           C_DR_Buffer = C_DR2_Buffer
+	   3264 c          IF( .NOT.FirstEDB ) OBitRate = BitRate
+	   3265           OBitRate = BitRate
+	   3266 
+	   3267           IF(DIAG .LE. 2) WRITE( IPRNT, 120 )   ' SHIFTED', DR_Phys_Rec_Num, DR_Beg_MajFr_Cnt
+	   3268   120 FORMAT( 1H0, A, ', DR_Phys_Rec_Num =', I5, ', DR_Beg_MajFr_Cnt = ', Z8 )
+	   3269 
+	   3270       END IF ! ( BUFFER_READ )
+	   3271 
+	   3272 C      READ( L0_Lun, 400, END=9999, ERR=9998) IREC,( DR2_BUFFER(II), II=1,IREC )
+	   3273       READ( L0_Lun, 401, END=9999, ERR=9998) IREC,C_DR2_BUFFER(1:IREC)
+	   3274 
+	   3275       CALL FIXUP( DR_Beg_SC_Clock )
+	   3276 
+	   3277       BUFFER_READ = .TRUE.
+	   3278       IF( VALData ) GOTO 1300
+	   3279 
+	   3280       IF( lSCTime ) THEN
+	   3281           CALL WIND_PB5_TO_EPOCH(       DR2_Beg_SC_Clock,! UTC: PB5 (2 INTEGER*4)
+	   3282      +                                  T,               ! UTC: EPOCH as Real*8
+	   3283      +                                  ISTAT )
+	   3284           IF( ISTAT .NE. SS$_NORMAL ) STOP 0011
+	   3285       ELSE
+	   3286           CALL WIND_GREG_TO_EPOCH(      DR2_Beg_Year,   ! ATC: Year
+	   3287      +                                  DR2_Beg_DOY,    ! ATC: Day Of Year
+	   3288      +                                  DR2_Beg_MSec,   ! ATC: Millisecond of DAY
+	   3289      +                                  DR2_Beg_MicSec, ! ATC: Microsecond of MSec
+	   3290      +                                  T,              ! ATC: EPOCH AS REAL*8
+	   3291      +                                  ISTAT )
+	   3292           IF( ISTAT .NE. SS$_NORMAL ) STOP 0012
+	   3293       END IF
+	   3294 
+	   3295       IF( STRTime .GT. T ) GOTO 1200
+	   3296 
+	   3297       VALData = .TRUE.
+	   3298 
+	   3299       IF( STRTime .EQ. T ) GOTO 1200
+	   3300       
+	   3301       IF(DIAG .LE. 3) WRITE( TTOUT, 118 )   ' 2nd READ', DR2_Phys_Rec_Num, DR2_Beg_MajFr_Cnt
+	   3302 
+	   3303  1300 CONTINUE
+	   3304       CALL WIND_PB5_TO_EPOCH(           DR_Beg_SC_Clock,! UTC: PB5 (2 INTEGER*4)
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  12
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3305      +                                  DR_SC_EPOCH,    ! UTC: EPOCH as Real*8
+	   3306      +                                  ISTAT )
+	   3307       IF( ISTAT .NE. SS$_NORMAL ) STOP 0013
+	   3308 
+	   3309       CALL WIND_EPOCH_TO_GREG(          SC_Beg_Year,
+	   3310      :                                  SC_Beg_DOY,
+	   3311      :                                  SC_Beg_Msec,
+	   3312      :                                  SC_Beg_MicSec,
+	   3313      +                                  DR_SC_EPOCH,    ! UTC: EPOCH as Real*8
+	   3314      +                                  ISTAT )
+	   3315       IF( ISTAT .NE. SS$_NORMAL ) STOP 0014
+	   3316 
+	   3317       CALL WIND_GREG_TO_EPOCH(          DR_Beg_Year,    ! ATC: Year
+	   3318      +                                  DR_Beg_DOY,     ! ATC: Day Of Year
+	   3319      +                                  DR_Beg_MSec,    ! ATC: Millisecond of DAY
+	   3320      +                                  DR_Beg_MicSec,  ! ATC: Microsecond of MSec
+	   3321      +                                  DR_Beg_EPOCH,   ! ATC: EPOCH AS REAL*8
+	   3322      +                                  ISTAT )
+	   3323       IF( ISTAT .NE. SS$_NORMAL ) STOP 0015
+	   3324 
+	   3325       IF( lSCTime ) THEN
+	   3326           DYRDAY = DR_SC_EPOCH
+	   3327       ELSE
+	   3328           DYRDAY = DR_Beg_EPOCH
+	   3329       END IF
+	   3330       Pref_EPOCH = DYRDAY
+	   3331 
+	   3332       CALL WIND_PRINT_HK( DR_Beg_MajFr_Cnt, HKset(EDBset), SYNC_WORD )
+	   3333 
+	   3334       IF(DIAG .LE. 2) WRITE( IPRNT, 130 )       DR_Phys_Rec_Num,DR_Beg_MajFr_Cnt,
+	   3335      +                          DR_Beg_Year,    SC_Beg_Year,    ! Year
+	   3336      +                          DR_Beg_DOY,     SC_Beg_DOY,     ! Day Of Year
+	   3337      +                          DR_Beg_MSec,    SC_Beg_Msec,    ! Millisecond of DAY
+	   3338      +                          DR_Beg_MicSec,  SC_Beg_MicSec,  ! Microsecond of MSec
+	   3339      +                          DR_Beg_EPOCH,   DR_SC_EPOCH     ! EPOCH AS REAL*8
+	   3340 
+	   3341   130 FORMAT(   T10, 'Phys.Rec.#', I4,  T50, ' WALL-TIME',      T72, ' S/C-TIME', /,
+	   3342      :          T10, 'Major Fr.=',Z4.4, T50, ' =========',      T72, ' ========', /,
+	   3343      :          T30, 'YEAR :',          T54, I4,        T75, I4, /,
+	   3344      :          T30, ' DOY :',          T54, I4,        T75, I4, /,
+	   3345      :          T30, 'msec :',          T50, I8,        T71, I8, /,
+	   3346      :          T30, 'usec :',          T54, I4,        T75, I4, /,
+	   3347      :          T30, 'EPOCH :',         T38, F20.3,     T59, F20.3, /)
+	   3348 
+	   3349   131 FORMAT(   T10, 'SCI.Rec.#', I5,   T50, ' WALL-TIME',      T72, ' S/C-TIME', /,
+	   3350      :          T10, 'MSpin #.=', I5,   T50, ' =========',      T72, ' ========', /,
+	   3351      :          T30, 'YEAR :',          T53, I5,        T74, I5, /,
+	   3352      :          T30, ' DOY :',          T53, I5,        T74, I5, /,
+	   3353      :          T30, 'HOURS:',          T53, I5,        T74, I5, /,
+	   3354      :          T30, 'MINUTES:',        T53, I5,        T74, I5, /,
+	   3355      :          T30, 'SECONDS:',        T53, I5,        T74, I5, /,
+	   3356      :          T30, 'CENTISECONDS:',   T53, I5,        T74, I5, /)
+	   3357 
+	   3358       IF(DIAG .LE. 2) WRITE( IPRT, 132 )
+	   3359      +          DR_Instr_Num,           ! Instrument Number
+	   3360      +          DR_Phys_Rec_Num,        ! Physical Record Number within File
+	   3361      +          DR_Beg_MajFr_Cnt,       ! Major Frame Count-Beginning of Maj.Fra
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  13
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3362      +          DR_Beg_SC_Clock,        ! Spacecraft Clock -Beginning of Maj.Fra
+	   3363      +          DR_Beg_Year,            ! ATC: year-Beginning of Major Frame
+	   3364      +          DR_Beg_DOY,             ! ATC: doy -Beginning of Major Frame
+	   3365      +          DR_Beg_MSec,            ! ATC: msec-Beginning of Major Frame
+	   3366      +          DR_Beg_MicSec,          ! ATC: usec-Beginning of Major Frame
+	   3367      +          DR_Num_MinFr_Fill,      ! Number of Minor Frames with Fill
+	   3368      +          DR_Num_MinFr_Sync_Err,  ! Number of Minor Frames with Sync_Err
+	   3369      +          DR_TLM_Mode,            ! Telemetry Mode Indicator
+	   3370                                                 ! 1 = science mode
+	   3371                                                 ! 2 = engineering mode
+	   3372                                                 ! 3 = maneuver mode
+	   3373                                                 ! 4 = contingency mode
+	   3374      +          DR_MinFr_Qual,          ! Minor Frame Quality
+	   3375                                                 ! bit 0 = frame sync error flag
+	   3376                                                 ! bit 1 = frame counter error fllag
+	   3377                                                 ! bit 2 = fill frame flag
+	   3378                                                 ! bit 3-31 spares
+	   3379      +          DR_Fill,                ! adjustment to Longword
+	   3380      +          DR_Beg_EPOCH            ! EPOCH time-Beginning of Major Frame ?
+	   3381 
+	   3382   132 FORMAT( 1H1,
+	   3383      +  /,      ' DR_Instr_Num          =', I6,         ! Instrument Number
+	   3384      +  /,      ' DR_Phys_Rec_Num       =', I6,         ! Physical Record Number within File
+	   3385      +  /,      ' DR_Beg_MajFr_Cnt      =', I6,         ! Major Frame Count-Beginning of Maj.Fra
+	   3386      +  /,      ' DR_Beg_SC_Clock       =', 2Z8.8       ! Spacecraft Clock -Beginning of Maj.Fra
+	   3387      +  /,      ' DR_Beg_Year           =', I6,         ! ATC: year-Beginning of Major Frame
+	   3388      +  /,      ' DR_Beg_DOY            =', I6,         ! ATC: doy -Beginning of Major Frame
+	   3389      +  /,      ' DR_Beg_MSec           =', I9,         ! ATC: msec-Beginning of Major Frame
+	   3390      +  /,      ' DR_Beg_MicSec         =', I6,         ! ATC: usec-Beginning of Major Frame
+	   3391      +  /,      ' DR_Num_MinFr_Fill     =', I6,         ! Number of Minor Frames with Fill
+	   3392      +  /,      ' DR_Num_MinFr_Sync_Err =', I6,         ! Number of Minor Frames with Sync_Err
+	   3393      +  /,      ' DR_TLM_Mode           =', I6,         ! Telemetry Mode Indicator
+	   3394                         ! WIND          ! 1 = science mode      - High Bitrate
+	   3395                                         ! 2 = engineering mode  - High Bitrate
+	   3396                                         ! 3 = maneuver mode     - High Bitrate
+	   3397                                         ! 4 = contingency mode  - High Bitrate
+	   3398                                         ! 5 = science mode      - Normal Bitrate
+	   3399                                         ! 6 = engineer mode     - Normal Bitrate
+	   3400                                         ! 7 = maneuver mode     - Normal Bitrate
+	   3401                                         ! 8 = contingency mode  - Normal Bitrate
+	   3402                                         ! 128 = Transitional mode
+	   3403                                         ! 256 = Unknown mode
+	   3404      +  /,      ' DR_MinFr_Qual =', 25( /, 10Z3.2 ),    ! Minor Frame Quality
+	   3405                                                 ! bit 0 = frame sync error flag
+	   3406                                                 ! bit 1 = frame counter error fllag
+	   3407                                                 ! bit 2 = fill frame flag
+	   3408                                                 ! bit 3-31 spares
+	   3409      +  /,      ' DR_Fill       =', 2Z3.2,              ! adjustment to Longword
+	   3410      +  /,      ' DR_Beg_EPOCH  =' F22.5 )              ! EPOCH time-Beginning of Major Frame ?
+	   3411 
+	   3412       IF(DIAG .LE. 1) WRITE( IPRT, 134 )  ((II, (DR_MinFr_SMS( JJ, II ), JJ = 1,42) , II = 0,249))
+	   3413   134 FORMAT( 250( /, I5, 5X, 2Z3.2, 2( /, 10Z3.2, 3X, 10Z3.2 ) ) )
+	   3414 
+	   3415 C
+	   3416 C       Find start of EDB or HDB. Byte 0 = 14h, byte 1 = 6Fh.
+	   3417 C
+	   3418 C       Find Start of first Data Block  -  EDB or HDB
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  14
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3419 C
+	   3420       JJ = 0
+	   3421 C
+	   3422  1400 IF(DIAG .LE. 3) WRITE( IPRNT, 140 ) ' OLD ', MSpin, JJ
+	   3423   140 FORMAT( A, 'MSpin =', I3.2, ' and MinFr =', I4.3 )
+	   3424       IF( JJ .GE. MAXSFrame )   GOTO 1200
+	   3425 C
+	   3426 C Step through subframes until we find one whose first three bytes contain the
+	   3427 C sync flag (byte 0 = 14h, byte 1 = 6Fh, byte 2 is nonzero).
+	   3428 C
+	   3429 C 1st subscript to DP_MinFr_SMS is a byte offset, but 3 greater than in
+	   3430 C documentation
+	   3431 C 2nd subscript to DP_MinFr_SMS (variable JJ) is a minor frame (subframe) index
+	   3432 C
+	   3433       SYNC_WORD=.FALSE.
+	   3434       DO WHILE ( .NOT.( ( DR_MinFr_SMS( 3, JJ ) .EQ. '14'X ) .AND.
+	   3435      +                  ( DR_MinFr_SMS( 4, JJ ) .EQ. '6F'X ) .AND.
+	   3436      +                  ( DR_MinFr_SMS( 5, JJ ) .NE. '00'X ) ) )
+	   3437         JJ = JJ + 1
+	   3438         IF( JJ .GE. MAXSFrame )   THEN
+	   3439             GOTO 1200
+	   3440         ENDIF         
+	   3441       END DO
+	   3442 C
+	   3443       SYNC_WORD=.TRUE.
+	   3444 C
+	   3445       IF(DIAG .LE. 3) WRITE( IPRNT, 140 ) ' OLD ', MSpin, JJ
+	   3446       EDB_done = .FALSE.
+	   3447 
+	   3448 !      Collect characteristic properties from CORE data
+	   3449 
+	   3450       TEMP2 = DR_MinFr_SMS( 5, JJ )                             ! BYTE 2
+	   3451 
+	   3452       IF(DIAG .LE. 1) WRITE( TTOUT, 150 )  ( DR_MinFr_SMS( IJ, JJ ), IJ = 3, 13 )
+	   3453   150 FORMAT( 1H , 11Z5.3 )
+	   3454 
+	   3455 C Get bit rate, HDB flag, and number of subframes per block
+	   3456 C Set Bytes_SFrame based on BitRate
+	   3457 
+	   3458       BitRate = BTEST( TEMP2, 7 )                       ! BitRate
+	   3459       IF( BTEST( TEMP2, 6 ) ) THEN                      ! Byte/SF
+	   3460           Bytes_SFrame = 40
+	   3461       ELSE
+	   3462           Bytes_SFrame = 33
+	   3463       ENDIF
+	   3464       HDBFlag = BTEST( TEMP2, 5 )                       ! Block Mode
+	   3465       SFperBlock = IAND( TEMP2, '1F'X )                 ! Subframes per Block
+	   3466 
+	   3467 C Go to different sections of cade based on what type of block this is (EDB or
+	   3468 C HDB) as they are quite different in format and content
+	   3469 
+	   3470       IF( .NOT. HDBFlag )  THEN                         ! this is EDB
+	   3471           O_MSpin   = MSpin
+	   3472           O_SpinCnt = SpinCount
+	   3473 
+	   3474           EDB_Sum = EDB_Sum + 1
+	   3475 
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  15
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3476 !      Interpret CORE data
+	   3477           MSpin         = 0
+	   3478           TEMP2         = DR_MinFr_SMS( 6, JJ )                 ! BYTE 3
+	   3479           CALL  MVBITS( TEMP2, 2, 6, MSpin, 0 )         ! Measured Spin
+	   3480           RAMCheck      = BTEST( TEMP2, 1 )             ! RAMCheck MODE
+	   3481           MASSPower     = BTEST( TEMP2, 0 )             ! MASSPower ON
+	   3482 C
+	   3483 C The code once apparently assumed that the first value of MSpin in the first EDB would 
+	   3484 C never be 0. The code that follows allows for that possibility.
+	   3485 C
+	   3486           IF( FirstEDB ) THEN
+	   3487             O_MSpin = MSpin - 1
+	   3488             IF(MSpin .EQ. 0)O_MSpin = 59
+	   3489           ENDIF
+	   3490 
+	   3491 !          IF( ( MSpin .LE. O_MSpin ) .AND.
+	   3492 !     +         ( O_MSpin .NE. 59 ) ) GO TO 2500        ! OR CALL SUB TO SAVE SCI-REC
+	   3493 
+	   3494           SCI( EDBset ).EDB( MSpin ).SYNC(1)    = DR_MinFr_SMS( 3, JJ )
+	   3495           SCI( EDBset ).EDB( MSpin ).SYNC(2)    = DR_MinFr_SMS( 4, JJ )
+	   3496           SCI( EDBset ).EDB( MSpin ).Qual       = DR_MinFr_Qual( JJ )
+	   3497           SCI( EDBset ).EDB( MSpin ).BitRate    = BitRate
+	   3498           SCI( EDBset ).EDB( MSpin ).HDB_FLAG   = HDBFlag
+	   3499           SCI( EDBset ).EDB( MSpin ).MeaSpin    = MSpin
+	   3500           SCI( EDBset ).EDB( MSpin ).BYTE_SF    = Bytes_SFrame
+	   3501           SCI( EDBset ).EDB( MSpin ).SFperBlock = SFperBlock
+	   3502           SCI( EDBset ).EDB( MSpin ).RAMCheck   = RAMCheck
+	   3503           SCI( EDBset ).EDB( MSpin ).MASSPower  = MASSPower
+	   3504 C
+	   3505 C Added this to CORE structure
+	   3506 C
+	   3507           SCI( EDBset ).EDB( MSpin ).TLM_Mode   = DR_TLM_Mode
+	   3508 
+	   3509           IF(DIAG .LE. 3) WRITE( IPRNT, 140 ) ' NEW ', MSpin, JJ
+	   3510           TEMP2         = DR_MinFr_SMS(  7, JJ )                ! BYTE 4  - Cont. Spin Counter
+	   3511           SpinCount     = IAND( TEMP2, 'FF'X )
+	   3512           SCI( EDBset ).EDB( MSpin ).SpinCnt = SpinCount
+	   3513 
+	   3514           IF( FirstEDB ) O_SpinCnt = SpinCount - 1
+	   3515           IF( MSpin .NE. MOD( O_MSpin+1, 60 ) ) THEN
+	   3516               IF(DIAG .LE. 4) THEN
+	   3517                   WRITE( IPRNT, * )   ' MISSING SPIN!  SCI_rec=',Sci_rec_cntr,', MSpin=',MSpin,', JJ=',JJ
+	   3518                   WRITE( IPRNT, 900 )   '   MSpin =', SCI( EDBset ).EDB( MSpin ).MeaSpin
+	   3519                   WRITE( IPRNT, 900 )   ' O_MSpin =', O_MSpin
+	   3520                   WRITE( IPRNT, 900 )   'SpinCount=', SCI( EDBset ).EDB( MSpin ).SpinCnt
+	   3521                   WRITE( IPRNT, 900 )   'O_SpinCnt=', O_SpinCnt
+	   3522               ENDIF
+	   3523               IF( (MSpin .EQ. 59) .AND.
+	   3524      :          ((( O_SpinCnt+1 ) .AND. MAXSpCnt) .EQ. SpinCount) ) THEN
+	   3525                   SR_Qual = 8                                   ! Skipped Spins
+	   3526                   DO II = O_MSpin+1, 58
+	   3527                       SCI( EDBset ).EDB( II ).Qual = 8
+	   3528                   END DO
+	   3529                   EDB_Skip = EDB_Skip + 58 - O_MSpin
+	   3530                   O_MSpin = 58
+	   3531               END IF
+	   3532           END IF
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  16
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3533 C
+	   3534 C The last good spin was O_MSpin, and the current (good) spin is Mspin.  Mark
+	   3535 C all spins between the two as missing (qual flag 8).
+	   3536 C There are two spin counters: MSpin and SpinCount.  MSpin is a Science Record
+	   3537 C spin counter and goes from 0 to 59.  SpinCount is a revolution (spin) counter
+	   3538 C which continues to increase and, being a byte quantity, resets every 256
+	   3539 C spins.  Its value is in the range 0 to 255.
+	   3540 C Two loops are used because, if exactly 60 spins are missing, Mspin will equal
+	   3541 C O_MSpin+1, giving the mistaken impression no spins are missing.  Likewise, if
+	   3542 C exactly 256 spins are missing, SpinCount will be equal to O_SpinCnt+1.
+	   3543 C
+	   3544 C This code currently has a bug.  If Mspin .GT. O_MSpin+1 it works okay, but if
+	   3545 C MSpin .LT. O_MSpin+1 it marks ALL spins (from O_MSpin+1 through 59 and from
+	   3546 C 0 through MSpin-1) of the CURRENT EDB as missing.
+	   3547 C
+	   3548           DO WHILE ( MSpin .NE. MOD( O_MSpin+1, 60 ) )
+	   3549               O_MSpin = MOD( O_MSpin+1, 60 )
+	   3550               IF( (( O_SpinCnt+1 ) .AND. MAXSpCnt) .NE. SpinCount ) O_SpinCnt = ( O_SpinCnt+1 ) .AND. MAXSpCnt
+	   3551               SCI( EDBset ).EDB( O_MSpin ).Qual = 8
+	   3552               EDB_Lost = EDB_Lost + 1
+	   3553               IF(DIAG .LE. 3) WRITE( IPRNT, 900 )  ' EDB_Lost =', EDB_Lost
+	   3554           END DO ! ( MSpin .NE. MOD( O_MSpin+1, 60 ) )
+	   3555 
+	   3556           DO WHILE ( SpinCount .NE. ( O_SpinCnt+1 .AND. MAXSpCnt ) )
+	   3557               IF( MSpin .NE. MOD( O_MSpin+1, 60 ) ) O_MSpin = MOD( O_MSpin+1, 60 )
+	   3558               O_SpinCnt = ( O_SpinCnt+1 ) .AND. MAXSpCnt
+	   3559               SCI( EDBset ).EDB( O_MSpin ).Qual = 8
+	   3560               EDB_Lost = EDB_Lost + 1
+	   3561           END DO ! ( SpinCount .NE. ( O_MSpinCnt+1 .AND. MAXSpCnt ) )
+	   3562 
+	   3563 
+	   3564           SCI( EDBset ).EDB( MSpin ).SWICS_Len = 0
+	   3565           SCI( EDBset ).EDB( MSpin ).SWICSPower = .FALSE.
+	   3566           TEMP2         = DR_MinFr_SMS(  8, JJ )                ! BYTE 5
+	   3567           TEMP2         = TEMP2 .AND. 'FF'X
+	   3568           IF( TEMP2 .NE. 255 ) THEN
+	   3569               SCI( EDBset ).EDB( MSpin ).SWICS_Len  = TEMP2
+	   3570 C
+	   3571 C Check to see if # of PHA words makes sense.
+	   3572 C
+	   3573               IF(SCI( EDBset ).EDB( MSpin ).SWICS_Len.GT.168)THEN
+	   3574                 TYPE 155, SCI( EDBset ).EDB( MSpin ).SWICS_Len
+	   3575  155            FORMAT(' *** Too many SWICS PHA words, value is ',I4,' maximum possible value is 168'/)
+	   3576                 SCI( EDBset ).EDB( MSpin ).SWICS_Len = 168
+	   3577               ENDIF
+	   3578               SCI( EDBset ).EDB( MSpin ).SWICSPower = .TRUE.
+	   3579           ENDIF
+	   3580 
+	   3581 
+	   3582           SCI( EDBset ).EDB( MSpin ).STICS_Len  = 0
+	   3583           SCI( EDBset ).EDB( MSpin ).STICSPower = .FALSE.
+	   3584           TEMP2         = DR_MinFr_SMS(  9, JJ )                ! BYTE 6
+	   3585           TEMP2         = TEMP2 .AND. 'FF'X
+	   3586           IF( TEMP2 .NE. 255 ) THEN
+	   3587               SCI( EDBset ).EDB( MSpin ).STICS_Len  = TEMP2
+	   3588 C
+	   3589 C Check to see if # of PHA words makes sense.
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  17
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3590 C
+	   3591               IF(SCI( EDBset ).EDB( MSpin ).STICS_Len.GT.152)THEN
+	   3592                 TYPE 156, SCI( EDBset ).EDB( MSpin ).STICS_Len
+	   3593  156            FORMAT(' *** Too many STICS PHA words, value is ',I4,' maximum possible value is 152'/)
+	   3594                 SCI( EDBset ).EDB( MSpin ).STICS_Len = 152
+	   3595               ENDIF
+	   3596               SCI( EDBset ).EDB( MSpin ).STICSPower = .TRUE.
+	   3597           ENDIF
+	   3598 
+	   3599 
+	   3600           TEMP2 = DR_MinFr_SMS( 10, JJ )                        ! BYTE 7
+	   3601           SCI( EDBset ).EDB( MSpin ).ValCmdFl   = BTEST( TEMP2, 7 )
+	   3602           SCI( EDBset ).EDB( MSpin ).InvCmdFl   = BTEST( TEMP2, 6 )
+	   3603           SCI( EDBset ).EDB( MSpin ).CmdErrFl   = BTEST( TEMP2, 5 )
+	   3604           SCI( EDBset ).EDB( MSpin ).MASS_CP    = BTEST( TEMP2, 4 )
+	   3605           SCI( EDBset ).EDB( MSpin ).SWICS_HP   = BTEST( TEMP2, 3 )
+	   3606           SCI( EDBset ).EDB( MSpin ).SWICS_CP   = BTEST( TEMP2, 2 )
+	   3607           SCI( EDBset ).EDB( MSpin ).STICS_HP   = BTEST( TEMP2, 1 )
+	   3608           SCI( EDBset ).EDB( MSpin ).STICS_CP   = BTEST( TEMP2, 0 )
+	   3609 
+	   3610           TEMP2         = DR_MinFr_SMS( 11, JJ )                ! BYTE 8
+	   3611           TEMP2         = TEMP2 .AND. 'FF'X
+	   3612           SCI( EDBset ).EDB( MSpin ).MASS_Len = ISHFT( TEMP2, 1 )
+	   3613 
+	   3614           TEMP2         = DR_MinFr_SMS( 12, JJ )                ! BYTE 9
+	   3615           CALL MVBITS( TEMP2, 7, 1, SCI( EDBset ).EDB( MSpin ).MASS_Len, 0 )    ! Number of PHA-words
+	   3616 C
+	   3617 C Check to see if # of PHA words makes sense.
+	   3618 C
+	   3619           IF(SCI( EDBset ).EDB( MSpin ).MASS_Len.GT.381)THEN
+	   3620             TYPE 157, SCI( EDBset ).EDB( MSpin ).MASS_Len
+	   3621  157        FORMAT(' *** Too many MASS PHA words, value is ',I4,' maximum possible value is 381'/)
+	   3622             SCI( EDBset ).EDB( MSpin ).MASS_Len = 381
+	   3623           ENDIF
+	   3624 
+	   3625           SCI( EDBset ).EDB( MSpin ).MDisChar   = BTEST( TEMP2, 6 )
+	   3626           SCI( EDBset ).EDB( MSpin ).DeadTime   = BTEST( TEMP2, 5 )
+	   3627           SCI( EDBset ).EDB( MSpin ).WDisChar   = BTEST( TEMP2, 4 )
+	   3628           SCI( EDBset ).EDB( MSpin ).SpareTime  = TEMP2 .AND. '0F'X
+	   3629 
+	   3630 
+	   3631           TEMP2         = DR_MinFr_SMS( 13, JJ )                ! BYTE 10
+	   3632 
+	   3633           SCI( EDBset ).EDB( MSpin ).MHStep     = BTEST( TEMP2, 7 )
+	   3634           SCI( EDBset ).EDB( MSpin ).MSPStep    = BTEST( TEMP2, 6 )
+	   3635           SCI( EDBset ).EDB( MSpin ).MSTStep    = BTEST( TEMP2, 5 )
+	   3636           SCI( EDBset ).EDB( MSpin ).WPStep     = BTEST( TEMP2, 4 )
+	   3637           SCI( EDBset ).EDB( MSpin ).WSPStep    = BTEST( TEMP2, 3 )
+	   3638           SCI( EDBset ).EDB( MSpin ).WSTStep    = BTEST( TEMP2, 2 )
+	   3639           SCI( EDBset ).EDB( MSpin ).SSPStep    = BTEST( TEMP2, 1 )
+	   3640           SCI( EDBset ).EDB( MSpin ).SSTStep    = BTEST( TEMP2, 0 )
+	   3641 
+	   3642           EDB_Start = JJ
+	   3643 
+	   3644 !      Display for testing some of CORE data contents
+	   3645           IF(DIAG .LE. 3) WRITE( TTOUT, 160 )  MSpin, EDB_Start
+	   3646   160 FORMAT( ' Start of EDB', /,
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  18
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3647      +        ' MeaSpin = ', I8.2, ' starts at SubFr.', I3 )
+	   3648           IF( BitRate ) THEN
+	   3649               IF(DIAG .LE. 2) WRITE( IPRNT, 165 )  ' TLM is in HIGH BitRate'
+	   3650               SWICS_RATE_Size   = SWICS_H_RATE_Size     ! MAX. Index
+	   3651               STICS_RATE_Size   = STICS_H_RATE_Size     ! MAX. Index
+	   3652               DELTATime         = 184.D0
+	   3653           ELSE
+	   3654               IF(DIAG .LE. 2) WRITE( IPRNT, 165 )  ' TLM is in NORMAL BitRate'
+	   3655               SWICS_RATE_Size = SWICS_N_RATE_Size       ! MAX. Index
+	   3656               STICS_RATE_Size = STICS_N_RATE_Size       ! MAX. Index
+	   3657               IF( .not.OBitRate ) DELTATime = 368.D0
+	   3658           ENDIF
+	   3659   165 FORMAT( 1H , A )
+	   3660           SCI( EDBset ).EDB( MSpin ).SWICS_RATE_Size = SWICS_RATE_Size
+	   3661           SCI( EDBset ).EDB( MSpin ).STICS_RATE_Size = STICS_RATE_Size
+	   3662 
+	   3663           IF(DIAG .LE. 2) WRITE( IPRNT, 166 ) DR_TLM_MODE
+	   3664   166 FORMAT( ' DR_TLM_MODE =', I2 )
+	   3665           IF(DIAG .LE. 3) THEN
+	   3666               WRITE( TTOUT, 170 )   SCI( EDBset ).EDB( MSpin ).BYTE_SF
+	   3667   170 FORMAT( ' There are ', I2, ' Bytes per Subframe' )
+	   3668               WRITE( TTOUT, 175 )   SCI( EDBset ).EDB( MSpin ).SFperBlock
+	   3669   175 FORMAT( ' There are ', I2, ' Subframes per Block' )
+	   3670               WRITE( TTOUT, 180 )   SCI( EDBset ).EDB( MSpin ).SpinCnt
+	   3671   180 FORMAT( ' Current Spin Count is ', I3 )
+	   3672           ENDIF
+	   3673 
+	   3674 !      Maintain Quality Flags for EDBs
+	   3675           IF( FirstEDB )   THEN
+	   3676               IF( MSpin .NE. 0 )   THEN
+	   3677                   DO II = 0, MSpin
+	   3678                       SCI( EDBset ).EDB( II ).Qual              = 4     ! FILL indicator
+	   3679                       SCI( EDBset ).EDB( II ).CORE_Qual         = 8
+	   3680                       SCI( EDBset ).EDB( II ).SW_BR_Qual        = 8
+	   3681                       SCI( EDBset ).EDB( II ).SW_MR_Qual        = 8
+	   3682                       SCI( EDBset ).EDB( II ).SW_ME1_Qual       = 8
+	   3683                       SCI( EDBset ).EDB( II ).SW_ME2_Qual       = 8
+	   3684                       SCI( EDBset ).EDB( II ).SW_ER_Qual        = 8
+	   3685                       SCI( EDBset ).EDB( II ).SW_P_Qual         = 8
+	   3686                       SCI( EDBset ).EDB( II ).ST_HMR_Qual       = 8
+	   3687                       SCI( EDBset ).EDB( II ).ST_SMR_Qual       = 8
+	   3688                       SCI( EDBset ).EDB( II ).ST_BR_Qual        = 8
+	   3689                       SCI( EDBset ).EDB( II ).ST_OMR_Qual       = 8
+	   3690                       SCI( EDBset ).EDB( II ).ST_ER_Qual        = 8
+	   3691                       SCI( EDBset ).EDB( II ).ST_P_Qual         = 8
+	   3692                       SCI( EDBset ).EDB( II ).MA_UER_Qual       = 8
+	   3693                       SCI( EDBset ).EDB( II ).MA_SER_Qual       = 8
+	   3694                       SCI( EDBset ).EDB( II ).MA_BR_Qual        = 8
+	   3695                       SCI( EDBset ).EDB( II ).MA_MR_Qual        = 8
+	   3696                       SCI( EDBset ).EDB( II ).MA_P_Qual         = 8
+	   3697                   ENDDO
+	   3698               ENDIF
+	   3699               FirstEDB = .FALSE.
+	   3700               IF(DIAG .LE. 3) WRITE( TTOUT, 165 )   ' First EDBs indicated as FILL '
+	   3701           ENDIF
+	   3702 
+	   3703 !  MOVE RawData / SubFrame to EDB
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  19
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3704           IF( MSpin .EQ. 0 ) RECFLAG = RECFLAG + 1D0
+	   3705           T1 = (JJ * 1D0) * DELTATime - DELTAT(MSpin)
+	   3706 
+	   3707           SCI( EDBset ).EDB( MSpin ).EPOCH = DR_Beg_EPOCH + T1
+	   3708           CALL EPOCH_TO_ITIME( SCI(EDBset).EDB(MSpin).EPOCH, 
+	   3709      :                         SCI(EDBset).EDB(MSpin).W_Time, ISTAT )
+	   3710           IF( (SCI( EDBset ).EDB( MSpin ).EPOCH - SCI( EDBset ).EDB( O_MSpin ).EPOCH) .GT. 4.D3 ) THEN
+	   3711               IF(DIAG .LE. 2) THEN
+	   3712                   WRITE( TTOUT, 191 ) MSpin, SCI( EDBset ).EDB( MSpin ).EPOCH
+	   3713                   WRITE( TTOUT, 191 ) O_MSpin, SCI( EDBset ).EDB( O_MSpin ).EPOCH
+	   3714                   WRITE( TTOUT, 190 ) JJ, DELTATime
+	   3715   190 FORMAT( ' MinF', I3.3, '=', F22.3, ' ms', / )
+	   3716               END IF
+	   3717           END IF
+	   3718 
+	   3719           SCI( EDBset ).EDB( MSpin ).SC_EPOCH = DR_SC_EPOCH + T1
+	   3720           CALL EPOCH_TO_ITIME( SCI(EDBset).EDB(MSpin).SC_EPOCH, 
+	   3721      :                         SCI(EDBset).EDB(MSpin).SC_TIME, ISTAT )
+	   3722 
+	   3723           IF( MSpin .EQ. 0 ) THEN
+	   3724               IF(DIAG .LE. 3) WRITE( IPRNT, 191 ) MSpin, SCI( EDBset ).EDB( MSpin ).EPOCH
+	   3725   191 FORMAT( ' EDB', I2.2, ' =', F22.3, ' ms' )
+	   3726               IF(DIAG .LE. 2) WRITE( IPRNT, 131 ) SRCount, MSpin,
+	   3727      :          SCI(EDBset).EDB(MSpin).W_Time.YEAR,
+	   3728      :          SCI(EDBset).EDB(MSpin).SC_Time.YEAR,
+	   3729      :          SCI(EDBset).EDB(MSpin).W_Time.DOY,
+	   3730      :          SCI(EDBset).EDB(MSpin).SC_Time.DOY,
+	   3731      :          SCI(EDBset).EDB(MSpin).W_Time.HR,
+	   3732      :          SCI(EDBset).EDB(MSpin).SC_Time.HR,
+	   3733      :          SCI(EDBset).EDB(MSpin).W_Time.MIN,
+	   3734      :          SCI(EDBset).EDB(MSpin).SC_Time.MIN,
+	   3735      :          SCI(EDBset).EDB(MSpin).W_Time.SEC,
+	   3736      :          SCI(EDBset).EDB(MSpin).SC_Time.SEC,
+	   3737      :          SCI(EDBset).EDB(MSpin).W_Time.CSEC,
+	   3738      :          SCI(EDBset).EDB(MSpin).SC_Time.CSEC
+	   3739           END IF ! ( MSpin .EQ. 0 )
+	   3740 
+	   3741           IF( lSCTime ) THEN
+	   3742               DYRDAY = DR_SC_EPOCH + T1
+	   3743           ELSE
+	   3744               DYRDAY = DR_Beg_EPOCH + T1
+	   3745           END IF
+	   3746 
+	   3747           SCI( EDBset ).EDB( MSpin ).Qual = 0           ! Clear EDB Quality Flag
+	   3748           EDBpos = 0
+	   3749           ASSIGN 2020 TO LOAD_EDB
+	   3750 
+	   3751  2000     DO WHILE ( .NOT.EDB_done )
+	   3752               IF( JJ .GE. MAXSFrame ) THEN
+	   3753                   JJ = 0
+	   3754                   IF( .NOT.BUFFER_READ ) THEN
+	   3755 C                      READ( L0_Lun, 400, END=9999, ERR=9998) IREC,( DR2_BUFFER(II), II=1,IREC )
+	   3756                       READ( L0_Lun, 401, END=9999, ERR=9998) IREC,C_DR2_BUFFER(1:IREC)
+	   3757 
+	   3758                       CALL FIXUP( DR_Beg_SC_Clock )
+	   3759 
+	   3760                       BUFFER_READ = .TRUE.
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  20
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3761                   ENDIF
+	   3762 
+	   3763                   C_DR_Buffer   = C_DR2_Buffer
+	   3764                   OBitRate      = BitRate
+	   3765                   BUFFER_READ   = .FALSE.
+	   3766                   IF(DIAG .LE. 3) WRITE( IPRNT, 120 )   ' SHIFTED2', DR_Phys_Rec_Num, DR_Beg_MajFr_Cnt
+	   3767 
+	   3768                   CALL WIND_PB5_TO_EPOCH(       DR_Beg_SC_Clock,! UTC: PB5 (2 INTEGER*4)
+	   3769      +                                          DR_SC_EPOCH,    ! UTC: EPOCH as Real*8
+	   3770      +                                          ISTAT )
+	   3771                   IF( ISTAT .NE. SS$_NORMAL ) CALL EXIT( ISTAT )
+	   3772 
+	   3773                   CALL WIND_EPOCH_TO_GREG(      SC_Beg_Year,
+	   3774      :                                          SC_Beg_DOY,
+	   3775      :                                          SC_Beg_Msec,
+	   3776      :                                          SC_Beg_MicSec,
+	   3777      +                                          DR_SC_EPOCH,    ! UTC: EPOCH as Real*8
+	   3778      +                                          ISTAT )
+	   3779                   IF( ISTAT .NE. SS$_NORMAL ) CALL EXIT( ISTAT )
+	   3780 
+	   3781                   CALL WIND_GREG_TO_EPOCH( DR_Beg_Year, ! ATC: Year
+	   3782      +                                  DR_Beg_DOY,     ! ATC: Day Of Year
+	   3783      +                                  DR_Beg_MSec,    ! ATC: Millisecond of DAY
+	   3784      +                                  DR_Beg_MicSec,  ! ATC: Microsecond of MSec
+	   3785      +                                  DR_Beg_EPOCH,   ! ATC: EPOCH AS REAL*8
+	   3786      +                                  ISTAT )
+	   3787                   IF( ISTAT .NE. SS$_NORMAL ) CALL EXIT( ISTAT )
+	   3788 
+	   3789                   IF( lSCTime ) THEN
+	   3790                       DYRDAY = DR_SC_EPOCH
+	   3791                   ELSE
+	   3792                       DYRDAY = DR_Beg_EPOCH
+	   3793                   END IF
+	   3794                   Pref_EPOCH = DYRDAY
+	   3795 
+	   3796                   CALL WIND_PRINT_HK( DR_Beg_MajFr_Cnt, HKset(EDBset), SYNC_WORD )
+	   3797 
+	   3798                   IF(DIAG .LE. 2) WRITE( IPRNT, 130 ) DR_Phys_Rec_Num, DR_Beg_MajFr_Cnt,
+	   3799      +                          DR_Beg_Year,    SC_Beg_Year,    ! Year
+	   3800      +                          DR_Beg_DOY,     SC_Beg_DOY,     ! Day Of Year
+	   3801      +                          DR_Beg_MSec,    SC_Beg_Msec,    ! Millisecond of DAY
+	   3802      +                          DR_Beg_MicSec,  SC_Beg_MicSec,  ! Microsecond of MSec
+	   3803      +                          DR_Beg_EPOCH,   DR_SC_EPOCH     ! EPOCH AS REAL*8
+	   3804 
+	   3805                   IF(DIAG .LE. 2) WRITE( IPRT, 132 )
+	   3806      +          DR_Instr_Num,           ! Instrument Number
+	   3807      +          DR_Phys_Rec_Num,        ! Physical Record Number within File
+	   3808      +          DR_Beg_MajFr_Cnt,       ! Major Frame Count-Beginning of Maj.Fra
+	   3809      +          DR_Beg_SC_Clock,        ! Spacecraft Clock -Beginning of Maj.Fra
+	   3810      +          DR_Beg_Year,            ! ATC: year-Beginning of Major Frame
+	   3811      +          DR_Beg_DOY,             ! ATC: doy -Beginning of Major Frame
+	   3812      +          DR_Beg_MSec,            ! ATC: msec-Beginning of Major Frame
+	   3813      +          DR_Beg_MicSec,          ! ATC: usec-Beginning of Major Frame
+	   3814      +          DR_Num_MinFr_Fill,      ! Number of Minor Frames with Fill
+	   3815      +          DR_Num_MinFr_Sync_Err,  ! Number of Minor Frames with Sync_Err
+	   3816      +          DR_TLM_Mode,            ! Telemetry Mode Indicator
+	   3817                                                 ! 1 = science mode
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  21
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3818                                                 ! 2 = engineering mode
+	   3819                                                 ! 3 = maneuver mode
+	   3820                                                 ! 4 = contingency mode
+	   3821      +          DR_MinFr_Qual,          ! Minor Frame Quality
+	   3822                                                 ! bit 0 = frame sync error flag
+	   3823                                                 ! bit 1 = frame counter error fllag
+	   3824                                                 ! bit 2 = fill frame flag
+	   3825                                                 ! bit 3-31 spares
+	   3826      +          DR_Fill,                ! adjustment to Longword
+	   3827      +          DR_Beg_EPOCH            ! EPOCH time-Beginning of Major Frame ?
+	   3828 
+	   3829                   IF(DIAG .LE. 1) WRITE( IPRT, 134 )            ! One Major Frame
+	   3830      :                 ((II, (DR_MinFr_SMS( IJ, II ), IJ = 1,42) , II = 0,249))
+	   3831 
+	   3832                   C_DR2_Buffer = C_NULL_Buffer
+	   3833 C                  READ( L0_Lun, 400, END=9999, ERR=9998) IREC,( DR2_BUFFER(II), II=1,IREC )
+	   3834                   READ( L0_Lun, 401, END=9999, ERR=9998) IREC,C_DR2_BUFFER(1:IREC)
+	   3835 
+	   3836                   CALL FIXUP( DR_Beg_SC_Clock )
+	   3837 
+	   3838                   IF(DIAG .LE. 2) WRITE( TTOUT, 118 )   ' 3rd READ', DR2_Phys_Rec_Num, DR2_Beg_MajFr_Cnt
+	   3839 
+	   3840                   BUFFER_READ = .TRUE.
+	   3841                   IF(DIAG .LE. 3) WRITE( TTOUT, 165 )   ' Next Major Frame read'
+	   3842 
+	   3843               ENDIF ! ( JJ .GE. MAXSFrame )
+	   3844 
+	   3845               IF( DR_MinFr_Qual( JJ ) .NE. 0 )   THEN
+	   3846                   SCI( EDBset ).EDB( MSpin ).Qual = SCI( EDBset ).EDB( MSpin ).Qual
+	   3847      +                                  .OR. 2 .OR. DR_MinFr_Qual( JJ )
+	   3848               ENDIF
+	   3849 
+	   3850               GOTO LOAD_EDB
+	   3851 
+	   3852  2020 CONTINUE
+	   3853               IF( DR_MinFr_Qual( JJ ) .NE. 0 )   THEN
+	   3854                   SCI( EDBset ).EDB( MSpin ).CORE_Qual = 4
+	   3855                   DO II = 0, EDB_Core_Size
+	   3856                       CORE_data( II, MSpin, EDBset ) = 0
+	   3857                       EDBpos = EDBpos + 1
+	   3858                   ENDDO
+	   3859               ELSE
+	   3860                   SCI( EDBset ).EDB( MSpin ).CORE_Qual = 0
+	   3861                   DO II = 0, EDB_Core_Size
+	   3862                       CORE_data( II, MSpin, EDBset ) = DR_MinFr_SMS( 3 + II, JJ )
+	   3863                       EDBpos = EDBpos + 1
+	   3864                   ENDDO
+	   3865                   IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' CORE data transferred '
+	   3866                   ATIME=WIND_FORMAT_TIME( SCI(EDBset).EDB(MSpin).W_Time)
+	   3867                   WRITE(28,2025) MSPIN, ATIME, (CORE_data( II, MSpin, EDBset ) ,II=0,EDB_Core_Size )
+	   3868  2025             FORMAT(' EDB Header for spin',I3,A30,/,1X,<EDB_Core_Size + 1>Z3.2)
+	   3869                   IF(DIAG .LE. 3) WRITE( IPRNT, 206 )  'CORE', II, MSpin, EDBset, EDBpos, JJ
+	   3870   206 FORMAT( 1H , A, ' POINTER:', I4, '  MSpin:', I3, '  EDBset:', I3,
+	   3871      :          '  EDBpos:', I4, '  JJ:', I3 )
+	   3872 
+	   3873                   SCI( EDBset ).EDB( MSpin ).SW_BR_Qual         = 8
+	   3874                   SCI( EDBset ).EDB( MSpin ).SW_MR_Qual         = 8
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  22
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3875                   SCI( EDBset ).EDB( MSpin ).SW_ME1_Qual        = 8
+	   3876                   SCI( EDBset ).EDB( MSpin ).SW_ME2_Qual        = 8
+	   3877                   SCI( EDBset ).EDB( MSpin ).SW_ER_Qual         = 8
+	   3878                   SCI( EDBset ).EDB( MSpin ).SW_P_Qual          = 8
+	   3879 !   Check IF SWICS is ON
+	   3880                   SWICSPower = SCI( EDBset ).EDB( MSpin ).SWICSPower
+	   3881                   IF( SWICSPOWER ) THEN                         ! Move SWICS-RATES
+	   3882                       SCI( EDBset ).EDB( MSpin ).SW_BR_Qual     = DR_MinFr_Qual( JJ )
+	   3883                       SCI( EDBset ).EDB( MSpin ).SW_MR_Qual     = DR_MinFr_Qual( JJ )
+	   3884                       SCI( EDBset ).EDB( MSpin ).SW_ME1_Qual    = DR_MinFr_Qual( JJ )
+	   3885                       SCI( EDBset ).EDB( MSpin ).SW_ME2_Qual    = DR_MinFr_Qual( JJ )
+	   3886                       SCI( EDBset ).EDB( MSpin ).SW_ER_Qual     = DR_MinFr_Qual( JJ )
+	   3887                       POINTER = 0
+	   3888                       ASSIGN 2040 TO LOAD_EDB
+	   3889  2040 CONTINUE
+	   3890                       SWICS_RATE( EDBset ).EDB( MSpin ).RATE( POINTER ) = DR_MinFr_SMS( EDBpos + 3, JJ )
+	   3891 
+	   3892                       IF( EDBpos .EQ. 0 ) THEN
+	   3893                             SCI( EDBset ).EDB( MSpin ).SW_MR_Qual 
+	   3894      :                    = SCI( EDBset ).EDB( MSpin ).SW_MR_Qual  .OR. DR_MinFr_Qual( JJ )
+	   3895                             SCI( EDBset ).EDB( MSpin ).SW_ME1_Qual
+	   3896      :                    = SCI( EDBset ).EDB( MSpin ).SW_ME1_Qual .OR. DR_MinFr_Qual( JJ )
+	   3897                             SCI( EDBset ).EDB( MSpin ).SW_ME2_Qual
+	   3898      :                    = SCI( EDBset ).EDB( MSpin ).SW_ME2_Qual .OR. DR_MinFr_Qual( JJ )
+	   3899                             SCI( EDBset ).EDB( MSpin ).SW_ER_Qual 
+	   3900      :                    = SCI( EDBset ).EDB( MSpin ).SW_ER_Qual  .OR. DR_MinFr_Qual( JJ )
+	   3901                       END IF
+	   3902 
+	   3903                       EDBpos = EDBpos + 1
+	   3904                       POINTER = POINTER + 1
+	   3905 
+	   3906                       IF( EDBpos .GE. Bytes_SFrame )   THEN
+	   3907                           EDBpos = 0
+	   3908                           JJ = JJ + 1
+	   3909                           IF( POINTER .LE. SWICS_RATE_Size )   GOTO 2000
+	   3910                       ELSEIF( POINTER .LE. SWICS_RATE_Size )   THEN
+	   3911                           GOTO LOAD_EDB
+	   3912                       ENDIF
+	   3913 
+	   3914                       IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' SWICS RATES transferred '
+	   3915                       WRITE(28,2045) MSPIN,SWICS_RATE( EDBset ).EDB( MSpin ).RATE
+	   3916  2045                 FORMAT(' SWICS Rates for spin',I3,/,(1X,20Z3.2))
+	   3917                   ENDIF
+	   3918 
+	   3919 
+	   3920                   IF( SWICSPower .AND. SCI( EDBset ).EDB( MSpin ).SWICS_Len .GT. 0 ) THEN       ! Move SWICS-PHA
+	   3921                       SCI( EDBset ).EDB( MSpin ).SW_P_Qual = DR_MinFr_Qual( JJ )
+	   3922                       POINTER = 0
+	   3923                       ASSIGN 2050 TO LOAD_EDB
+	   3924  2050 CONTINUE
+	   3925                       SWICS_PHA( EDBset ).EDB( MSpin ).PHA( POINTER ) = DR_MinFr_SMS( EDBpos + 3, JJ )
+	   3926 
+	   3927                       IF( EDBpos .EQ. 0 ) THEN
+	   3928                             SCI( EDBset ).EDB( MSpin ).SW_P_Qual
+	   3929      :                    = SCI( EDBset ).EDB( MSpin ).SW_P_Qual .OR. DR_MinFr_Qual( JJ )
+	   3930                       END IF
+	   3931 
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  23
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3932                       EDBpos = EDBpos + 1
+	   3933                       POINTER = POINTER + 1
+	   3934 
+	   3935                       IF( EDBpos .GE. Bytes_SFrame )   THEN
+	   3936                           EDBpos = 0
+	   3937                           JJ = JJ + 1
+	   3938                           IF( POINTER .LT. SCI( EDBset ).EDB( MSpin ).SWICS_Len*4 )   GOTO 2000
+	   3939                       ELSEIF( POINTER .LT. SCI( EDBset ).EDB( MSpin ).SWICS_Len*4 )   THEN
+	   3940                           GOTO LOAD_EDB
+	   3941                       ENDIF
+	   3942 
+	   3943                       IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' SWICS PHA transferred '
+	   3944                       WRITE(28,2055) MSPIN, SCI( EDBset ).EDB( MSpin ).SWICS_Len, 
+	   3945      &                               (SWICS_PHA( EDBset ).EDB( MSpin ).PHA( ijk),ijk=0,4*SCI( EDBset ).EDB( MSpin ).
+	   3945 SWICS_Len - 1)
+	   3946  2055                 FORMAT(' SWICS PHA for spin',I3,'          # words =',I5,/,(1X,20Z3.2))
+	   3947                   ENDIF
+	   3948 
+	   3949                   SCI( EDBset ).EDB( MSpin ).ST_HMR_Qual        = 8
+	   3950                   SCI( EDBset ).EDB( MSpin ).ST_SMR_Qual        = 8
+	   3951                   SCI( EDBset ).EDB( MSpin ).ST_BR_Qual         = 8
+	   3952                   SCI( EDBset ).EDB( MSpin ).ST_OMR_Qual        = 8
+	   3953                   SCI( EDBset ).EDB( MSpin ).ST_ER_Qual         = 8
+	   3954                   SCI( EDBset ).EDB( MSpin ).ST_P_Qual          = 8
+	   3955 !   Check IF STICS is ON
+	   3956                   STICSPower = SCI( EDBset ).EDB( MSpin ).STICSPower
+	   3957                   IF( STICSPower ) THEN                         ! Move STICS-RATE
+	   3958                       SCI( EDBset ).EDB( MSpin ).ST_HMR_Qual    = DR_MinFr_Qual( JJ )
+	   3959                       SCI( EDBset ).EDB( MSpin ).ST_SMR_Qual    = DR_MinFr_Qual( JJ )
+	   3960                       SCI( EDBset ).EDB( MSpin ).ST_BR_Qual     = DR_MinFr_Qual( JJ )
+	   3961                       SCI( EDBset ).EDB( MSpin ).ST_OMR_Qual    = DR_MinFr_Qual( JJ )
+	   3962                       SCI( EDBset ).EDB( MSpin ).ST_ER_Qual     = DR_MinFr_Qual( JJ )
+	   3963                       POINTER = 0
+	   3964                       ASSIGN 2060 TO LOAD_EDB
+	   3965  2060 CONTINUE
+	   3966                       STICS_RATE( EDBset ).EDB( MSpin ).RATE( POINTER ) = DR_MinFr_SMS( EDBpos + 3, JJ )
+	   3967 
+	   3968                       IF( EDBpos .EQ. 0 ) THEN
+	   3969                             SCI( EDBset ).EDB( MSpin ).ST_HMR_Qual
+	   3970      :                    = SCI( EDBset ).EDB( MSpin ).ST_HMR_Qual .OR. DR_MinFr_Qual( JJ )
+	   3971                             SCI( EDBset ).EDB( MSpin ).ST_SMR_Qual
+	   3972      :                    = SCI( EDBset ).EDB( MSpin ).ST_SMR_Qual .OR. DR_MinFr_Qual( JJ )
+	   3973                             SCI( EDBset ).EDB( MSpin ).ST_BR_Qual 
+	   3974      :                    = SCI( EDBset ).EDB( MSpin ).ST_BR_Qual  .OR. DR_MinFr_Qual( JJ )
+	   3975                             SCI( EDBset ).EDB( MSpin ).ST_OMR_Qual
+	   3976      :                    = SCI( EDBset ).EDB( MSpin ).ST_OMR_Qual .OR. DR_MinFr_Qual( JJ )
+	   3977                             SCI( EDBset ).EDB( MSpin ).ST_ER_Qual 
+	   3978      :                    = SCI( EDBset ).EDB( MSpin ).ST_ER_Qual  .OR. DR_MinFr_Qual( JJ )
+	   3979                       END IF
+	   3980 
+	   3981                       EDBpos = EDBpos + 1
+	   3982                       POINTER = POINTER + 1
+	   3983 
+	   3984                       IF( EDBpos .GE. Bytes_SFrame )   THEN
+	   3985                           EDBpos = 0
+	   3986                           JJ = JJ + 1
+	   3987                           IF( POINTER .LE. STICS_RATE_Size )   GOTO 2000
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  24
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   3988                       ELSEIF( POINTER .LE. STICS_RATE_Size )   THEN
+	   3989                           GOTO LOAD_EDB
+	   3990                       ENDIF
+	   3991 
+	   3992                       IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' STICS RATES transferred '
+	   3993                       WRITE(28,2065) MSPIN,STICS_RATE( EDBset ).EDB( MSpin ).RATE
+	   3994  2065                 FORMAT(' STICS Rates for spin',I3,/,(1X,20Z3.2))
+	   3995                   ENDIF
+	   3996 
+	   3997 
+	   3998                   IF( STICSPower .AND. SCI( EDBset ).EDB( MSpin ).STICS_Len .GT. 0 ) THEN       ! Move STICS-PHA
+	   3999                       SCI( EDBset ).EDB( MSpin ).ST_P_Qual = DR_MinFr_Qual( JJ )
+	   4000                       POINTER = 0
+	   4001                       ASSIGN 2070 TO LOAD_EDB
+	   4002  2070 CONTINUE
+	   4003                       STICS_PHA( EDBset ).EDB( MSpin ).PHA( POINTER ) = DR_MinFr_SMS( EDBpos + 3, JJ )
+	   4004 
+	   4005                       IF( EDBpos .EQ. 0 ) THEN
+	   4006                             SCI( EDBset ).EDB( MSpin ).ST_P_Qual
+	   4007      :                    = SCI( EDBset ).EDB( MSpin ).ST_P_Qual .OR. DR_MinFr_Qual( JJ )
+	   4008                       END IF
+	   4009 
+	   4010                       EDBpos = EDBpos + 1
+	   4011                       POINTER = POINTER + 1
+	   4012 
+	   4013                       IF( EDBpos .GE. Bytes_SFrame )   THEN
+	   4014                           EDBpos = 0
+	   4015                           JJ = JJ + 1
+	   4016                           IF( POINTER .LT. SCI( EDBset ).EDB( MSpin ).STICS_Len*4 )   GOTO 2000
+	   4017                       ELSEIF( POINTER .LT. SCI( EDBset ).EDB( MSpin ).STICS_Len*4 )   THEN
+	   4018                           GOTO LOAD_EDB
+	   4019                       ENDIF
+	   4020 
+	   4021                       IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' STICS PHA transferred '
+	   4022                       WRITE(28,2075) MSPIN,SCI( EDBset ).EDB( MSpin ).STICS_Len, 
+	   4023      &                               (STICS_PHA( EDBset ).EDB( MSpin ).PHA( ijk),ijk=0,4*SCI( EDBset ).EDB( MSpin ).
+	   4023 STICS_Len - 1)
+	   4024  2075                 FORMAT(' STICS PHA for spin',I3,'         # words =',I5,/,(1X,20Z3.2))
+	   4025                   ENDIF
+	   4026 
+	   4027                   SCI( EDBset ).EDB( MSpin ).MA_UER_Qual        = 8
+	   4028                   SCI( EDBset ).EDB( MSpin ).MA_SER_Qual        = 8
+	   4029                   SCI( EDBset ).EDB( MSpin ).MA_BR_Qual         = 8
+	   4030                   SCI( EDBset ).EDB( MSpin ).MA_MR_Qual         = 8
+	   4031                   SCI( EDBset ).EDB( MSpin ).MA_P_Qual          = 8
+	   4032 !   Check IF MASS is ON
+	   4033                   IF( MASSPower ) THEN                          ! Move MASS-RATECore
+	   4034                       SCI( EDBset ).EDB( MSpin ).MA_UER_Qual    = DR_MinFr_Qual( JJ )
+	   4035                       SCI( EDBset ).EDB( MSpin ).MA_SER_Qual    = DR_MinFr_Qual( JJ )
+	   4036                       SCI( EDBset ).EDB( MSpin ).MA_BR_Qual     = DR_MinFr_Qual( JJ )
+	   4037                       SCI( EDBset ).EDB( MSpin ).MA_MR_Qual     = DR_MinFr_Qual( JJ )
+	   4038                       POINTER = 0
+	   4039                       ASSIGN 2080 TO LOAD_EDB
+	   4040  2080 CONTINUE
+	   4041                       MASS_RATE( EDBset ).EDB( MSpin ).RATE( POINTER ) = DR_MinFr_SMS( EDBpos + 3, JJ )
+	   4042 
+	   4043                       IF( EDBpos .EQ. 0 ) THEN
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  25
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4044                           SCI( EDBset ).EDB( MSpin ).MA_UER_Qual
+	   4045      :                  = SCI( EDBset ).EDB( MSpin ).MA_UER_Qual .OR. DR_MinFr_Qual( JJ )
+	   4046                           SCI( EDBset ).EDB( MSpin ).MA_SER_Qual
+	   4047      :                  = SCI( EDBset ).EDB( MSpin ).MA_SER_Qual .OR. DR_MinFr_Qual( JJ )
+	   4048                           SCI( EDBset ).EDB( MSpin ).MA_BR_Qual
+	   4049      :                  = SCI( EDBset ).EDB( MSpin ).MA_BR_Qual .OR. DR_MinFr_Qual( JJ )
+	   4050                           SCI( EDBset ).EDB( MSpin ).MA_MR_Qual
+	   4051      :                  = SCI( EDBset ).EDB( MSpin ).MA_MR_Qual .OR. DR_MinFr_Qual( JJ )
+	   4052                       END IF
+	   4053 
+	   4054                       EDBpos = EDBpos + 1
+	   4055                       POINTER = POINTER + 1
+	   4056 
+	   4057                       IF( EDBpos .GE. Bytes_SFrame )   THEN
+	   4058                           EDBpos = 0
+	   4059                           JJ = JJ + 1
+	   4060                           IF( POINTER .LE. MASS_RATE_Size )   GOTO 2000
+	   4061                       ELSEIF( POINTER .LE. MASS_RATE_Size )   THEN
+	   4062                           GOTO LOAD_EDB
+	   4063                       ENDIF
+	   4064 
+	   4065                       IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' MASS RATES transferred '
+	   4066                       WRITE(28,2085) MSPIN,MASS_RATE( EDBset ).EDB( MSpin ).RATE
+	   4067  2085                 FORMAT(' MASS Rates for spin',I3,/,(1X,20Z3.2))
+	   4068                   ENDIF
+	   4069 
+	   4070 
+	   4071                   IF( MASSPower .AND. SCI( EDBset ).EDB( MSpin ).MASS_Len .GT. 0 ) THEN         ! Move MASS-PHA
+	   4072                       SCI( EDBset ).EDB( MSpin ).MA_P_Qual = DR_MinFr_Qual( JJ )
+	   4073                       POINTER = 0
+	   4074                       ASSIGN 2090 TO LOAD_EDB
+	   4075  2090 CONTINUE
+	   4076                       MASS_PHA( EDBset ).EDB( MSpin ).PHA( POINTER ) = DR_MinFr_SMS( EDBpos + 3, JJ )
+	   4077 
+	   4078                       IF( EDBpos .EQ. 0 ) THEN
+	   4079                             SCI( EDBset ).EDB( MSpin ).MA_P_Qual
+	   4080      :                    = SCI( EDBset ).EDB( MSpin ).MA_P_Qual .OR. DR_MinFr_Qual( JJ )
+	   4081                       END IF
+	   4082 
+	   4083                       EDBpos = EDBpos + 1
+	   4084                       POINTER = POINTER + 1
+	   4085 
+	   4086                       IF( EDBpos .GE. Bytes_SFrame )   THEN
+	   4087                           EDBpos = 0
+	   4088                           JJ = JJ + 1
+	   4089                           IF( POINTER .LT. SCI( EDBset ).EDB( MSpin ).MASS_Len*2 )   GOTO 2000
+	   4090                       ELSEIF( POINTER .LT. SCI( EDBset ).EDB( MSpin ).MASS_Len*2 )   THEN
+	   4091                           GOTO LOAD_EDB
+	   4092                       ENDIF
+	   4093 
+	   4094                       IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' MASS PHA transferred '
+	   4095                       WRITE(28,2095) MSPIN,SCI( EDBset ).EDB( MSpin ).MASS_Len, 
+	   4096      &                               (MASS_PHA( EDBset ).EDB( MSpin ).PHA( ijk),ijk=0,2*SCI( EDBset ).EDB( MSpin ).M
+	   4096 ASS_Len - 1)
+	   4097  2095                 FORMAT(' MASS PHA for spin',I3,'         # words =',I5,/,(1X,20Z3.2))
+	   4098                   ENDIF
+	   4099               ENDIF
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  26
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4100               EDB_done = .TRUE.
+	   4101               IF(DIAG .LE. 5) WRITE( TTOUT, 165 )   ' EDB done '
+	   4102           ENDDO ! WHILE ( .NOT.EDB_done )
+	   4103 
+	   4104  2500 CONTINUE
+	   4105           IF( ( MSpin .EQ. 59 ) .OR. 
+	   4106      +          ( ( MSpin .LE. O_MSpin ) .AND. ( O_MSpin .NE. 59 ) ) )  THEN
+	   4107 !  if   1 SCI-Record is filled          prepare the next
+	   4108 !
+	   4109 !  if   2 SCI-Records are filled        prepare the next
+	   4110 !
+	   4111 !  if   3 SCI-Records are filled        do all data manipulations
+	   4112 !                                       save 1 SCI-Record to L1-file
+	   4113 !                                       shift record 2 to record 1
+	   4114 !                                       shift record 3 to record 2
+	   4115 !
+	   4116               IF(DIAG .LE. 2) WRITE( IPRNT, 209 ) ( II, SCI( EDBset ).EDB( II ).EPOCH,
+	   4117      +                                  SCI( EDBset ).EDB( II ).Qual,
+	   4118      +                                  DELTAT( II ),
+	   4119      +                                  SCI( EDBset ).EDB( II ).CORE_Qual,
+	   4120      +                                  SCI( EDBset ).EDB( II ).SW_BR_Qual,
+	   4121      +                                  SCI( EDBset ).EDB( II ).SW_P_Qual,
+	   4122      +                                  SCI( EDBset ).EDB( II ).ST_BR_Qual,
+	   4123      +                                  SCI( EDBset ).EDB( II ).ST_P_Qual,
+	   4124      +                                  SCI( EDBset ).EDB( II ).MA_BR_Qual,
+	   4125      +                                  SCI( EDBset ).EDB( II ).MA_P_Qual,
+	   4126      +                                  II = 0, 59 )
+	   4127   209 FORMAT( 1H1, T23, 'EPOCH', T38, 'QUAL', T44, 'DELTA', T65, 'QUAL-FLAGS'
+	   4128      +      60( /, T5, 'EDB', I2.2, ' =', F19.3, ' ms', T39, Z2.2, 'h,',
+	   4129      +             F8.1, ' ms', T60, 7Z3.2) )
+	   4130 C
+	   4131 C At this point science record EDBset has the completed copy of the most recent
+	   4132 C science record.  
+	   4133 C We must still do things with it before writing it out.  They are:
+	   4134 C  1) concatenate the STICS data
+	   4135 C  2) shift data between spins/science records
+	   4136 C Also, since three science records are held in memory, the write is only done 
+	   4137 C after the third call.
+	   4138 C Finally, after the L1 record is written, the other two science records' data
+	   4139 C must be moved down within the SCI array and the vacated data structure zero
+	   4140 C filled.
+	   4141 C
+	   4142 	      CALL WIND_MOVE_DOWN_L1
+	   4143 C
+	   4144 C As a convenience to users, close the output dump file and open another dump
+	   4145 C file with a different name, sequencing the names (01, 02, etc.)  This makes
+	   4146 C them easier to edit should an entire LZ file be dumped.
+	   4147 C Do this every DUMP_FILE_L1_RECS L1 records.
+	   4148 C
+	   4149             IF ( MOD (SCI_REC_CNTR, DUMP_FILE_L1_RECS) .EQ. 0 ) THEN
+	   4150               DUMP_SEQUENCE = DUMP_SEQUENCE + 1
+	   4151               INQUIRE(UNIT=28,NAME=DUMPNAME)
+	   4152               CLOSE(28)
+	   4153               KK = INDEX(DUMPNAME, ';')        ! will always have ;
+	   4154 C
+	   4155 C If we have a 2-digit ending on the file extension, store updated sequence
+	   4156 C number (effectively incrementing it) to form sequenced filename.
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  27
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4157 C If not extend the filename by adding the sequence number on the end.
+	   4158 C
+	   4159               IF (INDEX('0123456789', DUMPNAME(KK-1:KK-1)) .EQ. 0) THEN
+	   4160                 DUMPNAME(KK:) = '1;'
+	   4161                 KK = KK + 1
+	   4162               ENDIF
+	   4163               WRITE( DUMPNAME(KK-1:KK-1), '(I1)' ) MOD(DUMP_SEQUENCE,10)
+	   4164               WRITE(TTOUT,1001) DUMP_SEQUENCE,DUMPNAME(1:KK)
+	   4165 1001          FORMAT(' Closing previous dump file, opening dump file ',I2/
+	   4166      &               ' New dump filename = ',A/)
+	   4167               OPEN(UNIT=28,FILE=DUMPNAME(1:KK),STATUS='NEW')
+	   4168             ENDIF
+	   4169 C
+	   4170 C Zero out EPOCH times in all spins of SCI(EDBset)
+	   4171 C
+	   4172               DO II = 0, 59
+	   4173                   SCI( EDBset ).EDB( II ).EPOCH = 0D0
+	   4174                   SCI( EDBset ).EDB( II ).SC_EPOCH = 0D0
+	   4175               END DO
+	   4176           ENDIF
+	   4177 
+	   4178           IF(DIAG .LE. 4) THEN
+	   4179             WRITE( TTOUT, 900 ) 'EDB_Start =', EDB_Start
+	   4180             WRITE( TTOUT, 900 ) 'SFperBlock=', SFperBlock
+	   4181             WRITE( TTOUT, 900 ) 'MAXSFrame =', MAXSFrame
+	   4182             WRITE( TTOUT, 900 ) '       JJ =', JJ
+	   4183           ENDIF
+	   4184 
+	   4185           IF(((EDB_Start + SFperBlock).GE.MAXSFrame) .AND. (JJ.GT.EDB_Start))   THEN
+	   4186               IF( .NOT.BUFFER_READ )   THEN
+	   4187                   IF(DIAG .LE. 3) WRITE( TTOUT, 165 )  ' BUFFER_READ is FALSE'
+	   4188                   IF( DR_Phys_Rec_Num .GT. LR_Phys_Rec_in_File )   GOTO 9999
+	   4189                   C_DR2_Buffer = C_NULL_Buffer
+	   4190 C                  READ( L0_Lun, 400, END=9999, ERR=9998) IREC,( DR2_BUFFER(II), II=1,IREC )
+	   4191                   READ( L0_Lun, 401, END=9999, ERR=9998) IREC,C_DR2_BUFFER(1:IREC)
+	   4192 
+	   4193                   CALL FIXUP( DR_Beg_SC_Clock )
+	   4194 
+	   4195                   BUFFER_READ = .TRUE.
+	   4196                   IF(DIAG .LE. 3) WRITE( TTOUT, 165 )  ' BUFFER_READ is TRUE'
+	   4197                   GOTO 1200
+	   4198               ENDIF
+	   4199           ELSE
+	   4200               EDB_done = .FALSE.
+	   4201 C
+	   4202 C Update JJ to point to next minor frame
+	   4203 C Don't worry about it being larger than MAXSFrame, as we'll go to statement
+	   4204 C label 1400 and it'll check that for us
+	   4205 C
+	   4206               JJ = EDB_Start + SFperBlock
+	   4207               IF(JJ.NE.MAXSFrame)THEN
+	   4208                 JJ = MOD(JJ, MAXSFrame)
+	   4209               ENDIF
+	   4210           ENDIF
+	   4211 
+	   4212       ELSE ! IF( .NOT.HDBFlag )                                 ! *** HDB ***
+	   4213 C
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  28
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4214 C This is ELSE part of very large IF
+	   4215 C Come here if the block we found is a HDB, not an EDB
+	   4216 C
+	   4217           HDBFirst = .FALSE.
+	   4218 C
+	   4219 C Guard against the possibility of consecutive HDB's (instead of alternating HDB's and 
+	   4220 C EDB's, the expected situation. If we have consecutive HDB's without an intervening 
+	   4221 C EDB, then HDBset could become greater than 3, and 3 is the maximum valid value.
+	   4222 C
+	   4223           IF( HDBset .GT. 3 )THEN
+	   4224             WRITE(TTOUT,*) '*** HDBset was incremented to greater than 4 !!'
+	   4225             WRITE(TTOUT,*) '    setting it to 4 and continuing...'
+	   4226             WRITE(TTOUT,*) ' '
+	   4227             HDBset = 3
+	   4228           ENDIF
+	   4229 C
+	   4230 C Assemble science record counter from HDB
+	   4231 C 
+	   4232           SRCount       = DR_MinFr_SMS( 8, JJ )
+	   4233           SRCount       = SRCount .AND. 'FF'X
+	   4234           TEMP4         = DR_MinFr_SMS( 7, JJ )
+	   4235           SRCount       = JIOR( ISHFT( (TEMP4 .AND. 'FF'X), 8 ), SRCount )
+	   4236           TEMP4         = DR_MinFr_SMS( 6, JJ )
+	   4237           SRCount       = JIOR( ISHFT( (TEMP4 .AND. 'FF'X),16 ), SRCount )
+	   4238 C
+	   4239 C Pick up spacecraft clock time, convert from PB5 to EPOCH format, and store in
+	   4240 C the HDB structure
+	   4241 C Also convert it to ITIME format, and store it, too, in structure 
+	   4242 C
+	   4243           TEMP4         = DR_MinFr_SMS( 9, JJ )
+	   4244           HDBTime       = TEMP4 .AND. 'FF'X
+	   4245           TEMP4         = DR_MinFr_SMS(10, JJ )
+	   4246           HDBTime       = IOR( ISHFT( HDBTime, 8 ), (TEMP4 .AND. 'FF'X) )
+	   4247           TEMP4         = DR_MinFr_SMS(11, JJ )
+	   4248           HDBTime       = IOR( ISHFT( HDBTime, 8 ), (TEMP4 .AND. 'FF'X) )
+	   4249           TEMP4         = DR_MinFr_SMS(12, JJ )
+	   4250           HDBTime       = IOR( ISHFT( HDBTime, 8 ), (TEMP4 .AND. 'FF'X) )
+	   4251 
+	   4252           HDBTime2( 1, HDBset ) = HDBTime
+	   4253           CALL WIND_PB5_TO_EPOCH(       HDBTime2( 1, HDBset ),
+	   4254      :                                  HDB( HDBset ).BDH.SC_EPOCH,
+	   4255      :                                  ISTAT )
+	   4256 
+	   4257           CALL EPOCH_TO_ITIME( HDB(HDBset).BDH.SC_EPOCH, 
+	   4258      :                          HDB(HDBset).BDH.SC_Time, ISTAT )
+	   4259 C
+	   4260 C Since wall clock time, is not given as part of the HDB, we get it from the
+	   4261 C EDB of spin zero.  Since the 0'th EDB for this Science Record may not yet
+	   4262 C have been read in and processed, defer fetching the time until the Level 1
+	   4263 C Science Record is complete, then get it.
+	   4264 C
+	   4265 
+	   4266           IF(DIAG .LE. 3) WRITE( IPRNT, 320 )  JJ, SRCount, HDBTime
+	   4267   320 FORMAT( ' Start of HDB at SubFr.', I3,
+	   4268      +        ',  SRCount =', I8, ',  HDBTime =', Z8.8, / )
+	   4269 
+	   4270           HDB_Start     = JJ
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  29
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4271           HDB_End       = HDB_Start + SFperBlock - 1
+	   4272           HDB_Pos       = 0
+	   4273           HDB( HDBset ).BDH.Qual = SR_Qual
+	   4274           IF(DIAG .LE. 3) WRITE( TTOUT, 340 )   HDB_Start, HDB_End
+	   4275   340 FORMAT( 1H0, ' HDB   Start =', I4.3, '  End =', I4.3 )
+	   4276 
+	   4277           DO II = HDB_Start, HDB_End
+	   4278               KK = MOD( II, MAXSFrame )
+	   4279               IF( (KK .NE. HDB_Start) .AND. (KK .EQ. 0) )   THEN
+	   4280                   C_DR_Buffer = C_DR2_Buffer
+	   4281                   OBitRate    = BitRate
+	   4282                   IF(DIAG .LE. 2) WRITE( IPRNT, 120 )   'SHIFTED3', DR_Phys_Rec_Num, DR_Beg_MajFr_Cnt
+	   4283 
+	   4284                   CALL WIND_PB5_TO_EPOCH(       DR_Beg_SC_Clock,! UTC: PB5 (2 INTEGER*4)
+	   4285      +                                          DR_SC_EPOCH,    ! UTC: EPOCH as Real*8
+	   4286      +                                          ISTAT )
+	   4287                   IF( ISTAT .NE. SS$_NORMAL ) CALL EXIT( ISTAT )
+	   4288 
+	   4289                   CALL WIND_EPOCH_TO_GREG(      SC_Beg_Year,
+	   4290      :                                          SC_Beg_DOY,
+	   4291      :                                          SC_Beg_Msec,
+	   4292      :                                          SC_Beg_MicSec,
+	   4293      +                                          DR_SC_EPOCH,    ! UTC: EPOCH as Real*8
+	   4294      +                                          ISTAT )
+	   4295                   IF( ISTAT .NE. SS$_NORMAL ) CALL EXIT( ISTAT )
+	   4296 
+	   4297                   CALL WIND_GREG_TO_EPOCH( DR_Beg_Year,         ! ATC: Year
+	   4298      +                                          DR_Beg_DOY,     ! ATC: Day Of Year
+	   4299      +                                          DR_Beg_MSec,    ! ATC: Millisecond of DAY
+	   4300      +                                          DR_Beg_MicSec,  ! ATC: Microsecond of MSec
+	   4301      +                                          DR_Beg_EPOCH,   ! ATC: EPOCH AS REAL*8
+	   4302      +                                          ISTAT )
+	   4303                   IF( ISTAT .NE. SS$_NORMAL ) CALL EXIT( ISTAT )
+	   4304 
+	   4305                   IF( lSCTime ) THEN
+	   4306                       DYRDAY = DR_SC_EPOCH
+	   4307                   ELSE
+	   4308                       DYRDAY = DR_Beg_EPOCH
+	   4309                   END IF
+	   4310                   Pref_EPOCH = DYRDAY
+	   4311 
+	   4312                   CALL WIND_PRINT_HK( DR_Beg_MajFr_Cnt, HKset(EDBset), SYNC_WORD )
+	   4313 
+	   4314                   IF(DIAG .LE. 3) WRITE( IPRNT, 130 ) DR_Phys_Rec_Num, DR_Beg_MajFr_Cnt,
+	   4315      +                          DR_Beg_Year,    SC_Beg_Year,    ! Year
+	   4316      +                          DR_Beg_DOY,     SC_Beg_DOY,     ! Day Of Year
+	   4317      +                          DR_Beg_MSec,    SC_Beg_Msec,    ! Millisecond of DAY
+	   4318      +                          DR_Beg_MicSec,  SC_Beg_MicSec,  ! Microsecond of MSec
+	   4319      +                          DR_Beg_EPOCH,   DR_SC_EPOCH     ! EPOCH AS REAL*8
+	   4320 
+	   4321                   IF(DIAG .LE. 2) WRITE( IPRT, 132 )
+	   4322      +          DR_Instr_Num,           ! Instrument Number
+	   4323      +          DR_Phys_Rec_Num,        ! Physical Record Number within File
+	   4324      +          DR_Beg_MajFr_Cnt,       ! Major Frame Count-Beginning of Maj.Fra
+	   4325      +          DR_Beg_SC_Clock,        ! Spacecraft Clock -Beginning of Maj.Fra
+	   4326      +          DR_Beg_Year,            ! ATC: year-Beginning of Major Frame
+	   4327      +          DR_Beg_DOY,             ! ATC: doy -Beginning of Major Frame
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  30
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4328      +          DR_Beg_MSec,            ! ATC: msec-Beginning of Major Frame
+	   4329      +          DR_Beg_MicSec,          ! ATC: usec-Beginning of Major Frame
+	   4330      +          DR_Num_MinFr_Fill,      ! Number of Minor Frames with Fill
+	   4331      +          DR_Num_MinFr_Sync_Err,  ! Number of Minor Frames with Sync_Err
+	   4332      +          DR_TLM_Mode,            ! Telemetry Mode Indicator
+	   4333                                                 ! 4 = contingency mode
+	   4334      +          DR_MinFr_Qual,          ! Minor Frame Quality
+	   4335                                                 ! bit 0 = frame sync error flag
+	   4336                                                 ! bit 1 = frame counter error fllag
+	   4337                                                 ! bit 2 = fill frame flag
+	   4338                                                 ! bit 3-31 spares
+	   4339      +          DR_Fill,                ! adjustment to Longword
+	   4340      +          DR_Beg_EPOCH            ! EPOCH time-Beginning of Major Frame ?
+	   4341 
+	   4342                   BUFFER_READ = .FALSE.
+	   4343               ENDIF
+	   4344                   
+	   4345               HDB( HDBset ).BDH.Qual = HDB( HDBset ).BDH.Qual .OR. DR_MinFr_Qual( KK )
+	   4346 
+	   4347               DO IJ = 3, Bytes_SFrame + 2
+	   4348                   HDB( HDBset ).BDH.DAT( HDB_Pos ) = DR_MinFr_SMS( IJ, KK )
+	   4349                   HDB_Pos = HDB_Pos + 1
+	   4350               ENDDO
+	   4351           ENDDO !       HDB_Start, HDB_End
+	   4352 
+	   4353           IF(DIAG .LE. 1) WRITE( IPRNT, 510 )   HDB( HDBset ).BDH.SC_EPOCH, HDB( HDBset ).BDH.Qual,
+	   4354      +                          ( HDBTime2( II, HDBset ), II = 1, 2 ),
+	   4355      +                          ( HDB( HDBset ).BDH.DAT( II ), II = 0, HDB_Pos-1 )
+	   4356   510 FORMAT( 1H1, T10, 'HDB_EPOCH =', F16.0, T40, 'QUAL =', Z3.2,
+	   4357      +             T51, 'HDBTime2 =',  2z9.8,
+	   4358      +      /, ( 2( T10, 10Z3.2, T45, 10Z3.2, / ) ) )
+	   4359 C
+	   4360 C Update JJ to point to next minor frame
+	   4361 C Don't worry about it being larger than MAXSFrame, as we'll go to statement
+	   4362 C label 1400 and it'll check that for us
+	   4363 C
+	   4364           JJ = HDB_Start + SFperBlock
+	   4365           IF(JJ.NE.MAXSFrame)THEN
+	   4366             JJ = MOD(JJ, MAXSFrame)
+	   4367           ENDIF
+	   4368           SR_Qual = 0
+	   4369 C
+	   4370 C We just finished filling the HDB structure (actually an array 3 long indexed
+	   4371 C by HDBset).  Increment HDBset so our next time through this code we'll store
+	   4372 C into the next HDB position.  Since HDBs are written out with Science Records,
+	   4373 C whose writes are deferred to allow shifting of times (see earlier comments),
+	   4374 C we must keep three of them and allow WIND_STORE_L1 to write the HDB out with
+	   4375 C its associated EDB.
+	   4376         WRITE(28,9995) SRCount, HDB( HDBset ).BDH.DAT
+	   4377         WRITE(28,9996)
+	   4378  9995   FORMAT(' **************************************************************************',/,' HDB for SR',I7,/,(1
+	   4378 X,20Z3.2))
+	   4379  9996   FORMAT(' **************************************************************************')
+	   4380 C
+	   4381 C While HDBset is incremented in this section of code (the ELSE part of the
+	   4382 C large IF), it is decremented in the THEN part where EDBs are complete and the
+	   4383 C write is done.  Thus, we allow HDBset to be incremented beyond the array size
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  31
+1.3                                                             23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4384 C of 3, since it will be decremented to 3 before reaching an array reference.
+	   4385 C
+	   4386           HDBset = HDBset + 1
+	   4387 
+	   4388       ENDIF ! IF( .NOT.HDBFlag )
+	   4389 C
+	   4390 C Check if we are done reading L0 data by testing against user-supplied stop
+	   4391 C time.  Branch back to label 1400 if there is more to do.
+	   4392 C
+	   4393       IF( DYRDAY .GT. STPTime ) GOTO 9999
+	   4394       GOTO 1400
+	   4395   900 FORMAT( 1X, A, I6 )
+	   4396 C
+	   4397 C All done, wind down processing.
+	   4398 C
+	   4399 9997  CONTINUE
+	   4400 9998  CONTINUE
+	   4401 9999  CONTINUE
+	   4402 99090 continue
+	   4403       CLOSE ( L0_Lun )
+	   4404       CLOSE ( 28 )
+	   4405       END
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46568 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                  728 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                              5428 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                               37668   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                2432 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+  7 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 13 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 14 LABEL_RECORD                         13000 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 15 LR_EPOCH_TIMES                          16 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 16 LR_EDITFILE                            128 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 17 VERSIONS                              1004 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 18 FILE                                   160 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 19 DATES                                   32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 20 DIAG                                     8 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               593072
+
+
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  32
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+ENTRY POINTS
+
+    Address   Type  Name   
+                           
+  4-00000010        PRINTLZ
+
+
+VARIABLES
+
+    Address   Type  Name                         Address   Type  Name                    
+                                                                                         
+  2-000000C0  CHAR  ATIME                      7-0006EEBC  I*4   EDBSET                  
+  9-00000006  L*1   BITRATE                    1-00000018  I*4   EDB_CORE_SIZE           
+  0-00000090  L*4   BUFFER_READ                0-00000094  L*4   EDB_DONE                
+  0-000000E0  I*4   BYTES_SFRAME               8-00000008  I*4   EDB_LOST                
+  2-0000007C  L*4   CMDERRFLAG                 8-0000000C  I*4   EDB_SKIP                
+  8-00000014  I*4   CURR_SCI_REC_NUMBER        0-000000E4  I*4   EDB_START               
+  8-00000018  I*4   CURR_SPIN                  8-00000010  I*4   EDB_SUM                 
+  1-00000058  CHAR  C_BIG_NULL_BUFFER         18-00000000  CHAR  FILENAME                
+ 13-00000000  CHAR  C_DR2_BUFFER               1-00000048  L*4   FIRSTEDB                
+ 12-00000000  CHAR  C_DR_BUFFER                2-00000090  I*4   FORTERR                 
+ 14-00000000  CHAR  C_LR_BUFFER                    **      L*4   HDBFIRST                
+  1-00000058  CHAR  C_NULL_BUFFER              9-00000005  L*1   HDBFLAG                 
+  1-00000010# R*8   DELTATIME                  1-00000030  I*4   HDBSET                  
+ 20-00000000  I*4   DIAG                       0-0000005C# I*4   HDBTIME                 
+ 13-00000018  I*4   DR2_BEG_DOY                0-00000064# I*4   HDB_END                 
+ 13-00003200  R*8   DR2_BEG_EPOCH            REG-00000003  I*4   HDB_POS                 
+ 13-00000008  I*4   DR2_BEG_MAJFR_CNT          0-00000060# I*4   HDB_START               
+ 13-00000020  I*4   DR2_BEG_MICSEC             2-00000060  I*4   ID                      
+ 13-0000001C  I*4   DR2_BEG_MSEC               0-00000058# I*4   II                      
+ 13-00000014  I*4   DR2_BEG_YEAR             REG-########  I*4   IJ                      
+ 13-00000000  I*4   DR2_INSTR_NUM            REG-########  I*4   IJK                     
+ 13-00000024  I*4   DR2_NUM_MINFR_FILL         2-00000064  I*4   IM                      
+ 13-00000028  I*4   DR2_NUM_MINFR_SYNC_ERR     2-00000130  CHAR  INCHAR                  
+ 13-00000004  I*4   DR2_PHYS_REC_NUM           2-000000E0  CHAR  INFILE                  
+ 13-00003208  R*8   DR2_SC_EPOCH              20-00000004  L*4   INTER                   
+ 13-0000002C  I*4   DR2_TLM_MODE               1-00000034  I*4   IPRNT                   
+ 12-00000018  I*4   DR_BEG_DOY                 1-00000038  I*4   IPRT                    
+ 12-00003200  R*8   DR_BEG_EPOCH               0-0000006C  I*4   IREC                    
+ 12-00000008  I*4   DR_BEG_MAJFR_CNT           2-0000006C  I*4   ISTAT                   
+ 12-00000020  I*4   DR_BEG_MICSEC              2-00000068  I*4   IY                      
+ 12-0000001C  I*4   DR_BEG_MSEC                0-00000054# I*4   JJ                      
+  2-00000028  R*8   DR_BEG_SC_EPOCH          REG-########  I*4   KK                      
+ 12-00000014  I*4   DR_BEG_YEAR               12-0000321C  L*1   L0_FILE_READONLY        
+ 12-00000000  I*4   DR_INSTR_NUM              12-00003218  I*4   L0_FILE_REC_PNTR        
+ 12-00000024  I*4   DR_NUM_MINFR_FILL          8-00000004  I*4   L1_RECS_WRITTEN         
+ 12-00000028  I*4   DR_NUM_MINFR_SYNC_ERR    REG-0000000B  I*4   LOAD_EDB                
+ 12-00000004  I*4   DR_PHYS_REC_NUM           14-00000034  I*4   LR_BEG_DOY              
+ 12-00003208  R*8   DR_SC_EPOCH               15-00000000  R*8   LR_BEG_EPOCH            
+ 12-0000002C  I*4   DR_TLM_MODE               14-00000018  I*4   LR_BEG_MAJFR_CNT        
+  0-00000078# R*8   DSTPYRDAY                 14-0000003C  I*4   LR_BEG_MICSEC           
+  0-00000070# R*8   DSTRYRDAY                 14-00000038  I*4   LR_BEG_MSEC             
+ 18-00000050  CHAR  DUMPNAME                  14-00000030  I*4   LR_BEG_YEAR             
+  1-00000054  I*4   DUMP_FILE_L1_RECS         14-0000005C  CHAR  LR_DATA_COV_TYP         
+  1-00000050  I*4   DUMP_SEQUENCE             14-0000006C  CHAR  LR_DECOM_CHAR_DB_V_NUM  
+REG-00000026  R*8   DYRDAY                    14-00000064  CHAR  LR_DECOM_PROG_V_NUM     
+  0-00000068# I*4   EDBPOS                    14-00000060  I*4   LR_DECOM_RERUN_NUM      
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  33
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+    Address   Type  Name                         Address   Type  Name                    
+                                                                                         
+ 14-00000074  CHAR  LR_DECOM_RUN_DATETIME      0-00000050# I*4   O_SPINCNT               
+ 16-00000000  CHAR  LR_EDITFILE_BUF            2-00000070  I*4   POINTER                 
+ 16-00000034  CHAR  LR_EDITFILE_DATA_TYP      12-00003210  R*8   PREF_EPOCH              
+ 16-00000000  CHAR  LR_EDITFILE_KEY            2-00000058  CHAR  PROGRAM_END_TIME        
+ 16-0000001C  CHAR  LR_EDITFILE_PROG_V_NUM     2-00000050  CHAR  PROGRAM_START_TIME      
+ 16-00000018  CHAR  LR_EDITFILE_RERUN_NUM      9-0000000A  L*1   RAMCHECK                
+ 16-00000024  CHAR  LR_EDITFILE_RUN_DATETIME   1-00000008# R*8   RECFLAG                 
+ 14-00000044  I*4   LR_END_DOY                 2-00000094  I*4   RMSSTC                  
+ 15-00000008  R*8   LR_END_EPOCH               2-00000098  I*4   RMSSTV                  
+ 14-0000001C  I*4   LR_END_MAJFR_CNT           8-00000000  I*4   SCI_REC_CNTR            
+ 14-0000004C  I*4   LR_END_MICSEC             19-00000004  I*4   SC_BEG_DOY              
+ 14-00000048  I*4   LR_END_MSEC                2-00000030  R*8   SC_BEG_EPOCH            
+ 14-00000040  I*4   LR_END_YEAR               19-0000000C  I*4   SC_BEG_MICSEC           
+ 14-000000B4  CHAR  LR_FILL3                  19-00000008  I*4   SC_BEG_MSEC             
+ 14-00000084  CHAR  LR_INSTR_FILE_NAME        19-00000000  I*4   SC_BEG_YEAR             
+ 14-00000008  CHAR  LR_INSTR_NAME             19-00000014  I*4   SC_END_DOY              
+ 14-00000004  I*4   LR_INSTR_NUM               2-00000038  R*8   SC_END_EPOCH            
+ 14-00000AEC  CHAR  LR_L0_PROG_V_NUM          19-0000001C  I*4   SC_END_MICSEC           
+ 14-00000AE8  CHAR  LR_L0_RERUN_NUM           19-00000018  I*4   SC_END_MSEC             
+ 14-00000AF4  CHAR  LR_L0_RUN_DATETIME        19-00000010  I*4   SC_END_YEAR             
+ 14-000000CC  CHAR  LR_MERGE_PROG_V_NUM        9-00000000  I*4   SFPERBLOCK              
+ 14-000000C8  I*4   LR_MERGE_RERUN_NUM         2-0000008C  I*4   SPIN                    
+ 14-000000D4  CHAR  LR_MERGE_RUN_DATETIME      9-00000010  I*4   SPINCOUNT               
+ 14-000000E4  I*4   LR_NUM_EDIT_FILES          2-00000074# I*4   SRCOUNT                 
+ 14-00000050  I*4   LR_NUM_MAJFR_EXP           1-00000044  I*4   SR_QUAL                 
+ 14-00000054  I*4   LR_NUM_MAJFR_FILE          2-000000A8  CHAR  START_DATE_TIME         
+ 14-00000058  I*4   LR_NUM_MAJFR_GAPS          9-00000009  L*1   STICSPOWER              
+ 14-00000014  I*4   LR_PHYS_REC_IN_FILE        1-00000020  I*4   STICS_H_RATE_SIZE       
+ 14-0000000C  I*4   LR_PHYS_REC_NUM            1-00000024  I*4   STICS_N_RATE_SIZE       
+ 14-00000010  I*4   LR_PHYS_REC_PER_MAJFR    REG-00000004  I*4   STICS_RATE_SIZE         
+ 14-000000B0  I*4   LR_PHYS_REC_SIZE           2-00000048# R*8   STPTIME                 
+ 14-00000000  I*4   LR_SCID                    2-00000040# R*8   STRTIME                 
+  0-00000080  L*4   LSCTIME                    9-00000004  L*1   SUBS_ID                 
+  2-0000009C  I*4   LUN                        9-00000007  L*1   SWICSPOWER              
+  9-00000008  L*1   MASSPOWER                  1-00000028  I*4   SWICS_H_RATE_SIZE       
+  1-0000001C  I*4   MASS_RATE_SIZE             1-0000002C  I*4   SWICS_N_RATE_SIZE       
+  1-0000003C  I*4   MAXSFRAME                REG-00000005  I*4   SWICS_RATE_SIZE         
+  1-00000040  I*4   MAXSPCNT                  17-000003E8  I*4   SWVERSION_N             
+  9-0000000C  I*4   MEASSPIN                   2-00000088  L*4   SYNC_WORD               
+REG-########  I*4   MM                         0-00000098  R*8   T                       
+  2-00000078  I*4   MSPIN                    REG-00000027  R*8   T1                      
+REG-00000006  I*4   NCF                        0-00000048# I*4   TEMP2                   
+  8-0000001C  L*4   NEW_SCI_REC              REG-########  I*4   TEMP4                   
+  1-0000004C  L*4   OBITRATE                   2-00000084  L*4   VALDATA                 
+  2-00000080  L*4   OK                         2-000000A0  I*4   VAXERR                  
+  0-0000004C# I*4   O_MSPIN                                                              
+
+
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  34
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+ARRAYS
+
+     Address  Type  Name                                   Bytes  Dimensions
+
+  2-00000180  CHAR  CLASS                                    340  (0:9)
+  7-00005688  I*1   CORE_DATA                               1980  (0:10, 0:59, 3)
+  1-0000B408  R*8   DELTAT                                   480  (0:59)
+ 13-0000000C  I*4   DR2_BEG_SC_CLOCK                           8  (2)
+ 13-00000000  I*1   DR2_BUFFER                             13300  (13300)
+ 13-00000000  I*1   DR2_BUFFER_CONTINGENCY                 13300  (13300)
+ 13-0000012A  I*1   DR2_FILL                                   2  (2)
+ 13-0000012C  I*1   DR2_MINFR                              12500  (12500)
+ 13-0000012C  I*1   DR2_MINFR_3DP                          12500  (50, 0:249)
+ 13-0000012C  I*1   DR2_MINFR_EPA                           6000  (24, 0:249)
+ 13-0000012C  I*1   DR2_MINFR_KON                           1500  (6, 0:249)
+ 13-0000012C  I*1   DR2_MINFR_MFI                           6250  (25, 0:249)
+ 13-00000030  I*1   DR2_MINFR_QUAL                           250  (0:249)
+ 13-0000012C  I*1   DR2_MINFR_SMS                          10500  (42, 0:249)
+ 13-0000012C  I*1   DR2_MINFR_SWE                          11250  (45, 0:249)
+ 13-0000012C  I*1   DR2_MINFR_TGR                           5250  (21, 0:249)
+ 13-0000012C  I*1   DR2_MINFR_WAV                          11250  (45, 0:249)
+ 12-0000000C  I*4   DR_BEG_SC_CLOCK                            8  (2)
+ 12-00000000  I*1   DR_BUFFER                              13300  (13300)
+ 12-00000000  I*1   DR_BUFFER_CONTINGENCY                  13300  (13300)
+ 12-0000012A  I*1   DR_FILL                                    2  (2)
+ 12-0000012C  I*1   DR_MINFR                               12500  (12500)
+ 12-0000012C  I*1   DR_MINFR_3DP                           12500  (50, 0:249)
+ 12-0000012C  I*1   DR_MINFR_EPA                            6000  (24, 0:249)
+ 12-0000012C  I*1   DR_MINFR_KON                            1500  (6, 0:249)
+ 12-0000012C  I*1   DR_MINFR_MFI                            6250  (25, 0:249)
+ 12-00000030  I*1   DR_MINFR_QUAL                            250  (0:249)
+ 12-0000012C  I*1   DR_MINFR_SMS                           10500  (42, 0:249)
+ 12-0000012C  I*1   DR_MINFR_SWE                           11250  (45, 0:249)
+ 12-0000012C  I*1   DR_MINFR_TGR                            5250  (21, 0:249)
+ 12-0000012C  I*1   DR_MINFR_WAV                           11250  (45, 0:249)
+ 10-000003CC  I*4   HDBTIME2                                  24  (2, 3)
+ 11-00000CF0  I*4   HKLOCI                                   300  (75)
+ 11-00000E1C  I*4   HKLOCJ                                   300  (75)
+ 11-00000CE4  I*4   HKSET                                     12  (3)
+ 14-00000020  I*4   LR_BEG_SC_CLOCK                            8  (2)
+ 14-00000000  I*1   LR_BUFFER                              13000  (13000)
+ 14-000000E8  CHAR  LR_EDIT_FILE                            2560  (20)
+ 14-00000028  I*4   LR_END_SC_CLOCK                            8  (2)
+  1-00000058  I*1   NULL_BUFFER                            46000  (46000)
+  9-0000000B  L*1   SPARFLAGS                                  1  (1)
+ 17-00000000  R*4   SWVERSION                               1000  (2, 125)
+ 17-000001B0  R*4   VER_EPIC_ADJUST_TIME                       8  (2)
+ 17-00000010  R*4   VER_EPIC_CHECK_SWVERSION                   8  (2)
+ 17-00000190  R*4   VER_EPIC_CHECK_SYNC                        8  (2)
+ 17-00000258  R*4   VER_EPIC_CLEAR_BUFFERS                     8  (2)
+ 17-00000110  R*4   VER_EPIC_CLOSE_CAL                         8  (2)
+ 17-000001E8  R*4   VER_EPIC_CLOSE_L0                          8  (2)
+ 17-00000358  R*4   VER_EPIC_CLOSE_L1                          8  (2)
+ 17-000000F0  R*4   VER_EPIC_CLOSE_SFDU                        8  (2)
+ 17-00000020  R*4   VER_EPIC_CLOSE_USERMSG                     8  (2)
+ 17-00000198  R*4   VER_EPIC_DECOM                             8  (2)
+ 17-000001A0  R*4   VER_EPIC_DECOM_DPUCOMMON                   8  (2)
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  35
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+ 17-00000378  R*4   VER_EPIC_DECOM_HSKP                        8  (2)
+ 17-00000370  R*4   VER_EPIC_FILL_OUT                          8  (2)
+ 17-00000270  R*4   VER_EPIC_GET_CHINDEX                       8  (2)
+ 17-00000268  R*4   VER_EPIC_GET_FORMAT                        8  (2)
+ 17-00000330  R*4   VER_EPIC_HDR_WRITE                         8  (2)
+ 17-00000018  R*4   VER_EPIC_INIT_CHANNELS                     8  (2)
+ 17-00000320  R*4   VER_EPIC_INIT_DECOMPRESS                   8  (2)
+ 17-00000368  R*4   VER_EPIC_INIT_SCHEMES                      8  (2)
+ 17-00000050  R*4   VER_EPIC_INTERPRET_USERMSG                 8  (2)
+ 17-00000288  R*4   VER_EPIC_IN_FILL                           8  (2)
+ 17-00000278  R*4   VER_EPIC_L0_TO_L1                          8  (2)
+ 17-000000F8  R*4   VER_EPIC_OPEN_CAL                          8  (2)
+ 17-000001B8  R*4   VER_EPIC_OPEN_L0                           8  (2)
+ 17-00000350  R*4   VER_EPIC_OPEN_L1                           8  (2)
+ 17-000000D0  R*4   VER_EPIC_OPEN_SFDU                         8  (2)
+ 17-00000028  R*4   VER_EPIC_OPEN_USERMSG                      8  (2)
+ 17-00000030  R*4   VER_EPIC_PUT_USERMSG                       8  (2)
+ 17-00000108  R*4   VER_EPIC_READ_CAL_DATA_RECORD              8  (2)
+ 17-00000100  R*4   VER_EPIC_READ_CAL_LABL_RECORD              8  (2)
+ 17-00000360  R*4   VER_EPIC_READ_EDBMAP                       8  (2)
+ 17-000001E0  R*4   VER_EPIC_READ_L0_DATA_RECORD               8  (2)
+ 17-000001D8  R*4   VER_EPIC_READ_L0_LABL_RECORD               8  (2)
+ 17-00000348  R*4   VER_EPIC_READ_L1                           8  (2)
+ 17-000000E8  R*4   VER_EPIC_READ_SFDU_DATA_RECORD             8  (2)
+ 17-000000D8  R*4   VER_EPIC_READ_SFDU_FILE_HEADER             8  (2)
+ 17-000000E0  R*4   VER_EPIC_READ_SFDU_LABL_RECORD             8  (2)
+ 17-00000040  R*4   VER_EPIC_RET_CALIBRATION                   8  (2)
+ 17-00000048  R*4   VER_EPIC_RET_CONTROL_PARAMETERS            8  (2)
+ 17-000001F8  R*4   VER_EPIC_RET_HEADS                         8  (2)
+ 17-000001A8  R*4   VER_EPIC_RET_LEVEL0                        8  (2)
+ 17-00000260  R*4   VER_EPIC_RET_MODE                          8  (2)
+ 17-00000338  R*4   VER_EPIC_RET_TIME                          8  (2)
+ 17-00000200  R*4   VER_EPIC_SETUP_SCI_RECORD                  8  (2)
+ 17-000000C8  R*4   VER_EPIC_SFDU_TO_L0                        8  (2)
+ 17-00000280  R*4   VER_EPIC_SHIFT_EDBS                        8  (2)
+ 17-00000038  R*4   VER_EPIC_TERM                              8  (2)
+ 17-00000380  R*4   VER_EPIC_UNPACK_HSKP                       8  (2)
+ 17-000001D0  R*4   VER_EPIC_WRITE_L0_DATA_RECORD              8  (2)
+ 17-000001C0  R*4   VER_EPIC_WRITE_L0_FILE_HEADER              8  (2)
+ 17-000001C8  R*4   VER_EPIC_WRITE_L0_LABL_RECORD              8  (2)
+ 17-00000340  R*4   VER_EPIC_WRITE_L1                          8  (2)
+ 17-00000118  R*4   VER_ICSS_RET_LZ                            8  (2)
+ 17-000001F0  R*4   VER_JULIAN_DOY                             8  (2)
+ 17-00000328  R*4   VER_L1_GET_REC_PREAMBLE                    8  (2)
+ 17-00000008  R*4   VER_MAINSEC                                8  (2)
+ 17-00000000  R*4   VER__PROG                                  8  (2)
+
+
+
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  36
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+RECORD ARRAYS
+
+    Address   Name        Structure         Bytes  Dimensions
+
+ 10-00000000  HDB         HDBSTR             972  (3)
+ 11-00000000  HKEEP       HKEEP             3300  (3)
+  7-0004D424  MASS_PHA    MA_PHA          137880  (3)
+  7-0004BDA4  MASS_RATE   MA_RATE           5760  (3)
+  7-00000000  SCI         CORE             22152  (3)
+  7-00030F54  STICS_PHA   ST_PHA          110160  (3)
+  7-00028DF4  STICS_RATE  ST_RATE          33120  (3)
+  7-0000B2A4  SWICS_PHA   SW_PHA          121680  (3)
+  7-00005E44  SWICS_RATE  SW_RATE          21600  (3)
+
+
+
+LABELS
+
+    Address   Label      Address   Label      Address   Label      Address   Label      Address   Label      Address   Label 
+                                                                                                                             
+      **       100         **       134         **       190         **       1020        **       2045        **       9995 
+      **       101         **       140         **       191     4-000003A4   1040    4-0000575C   2050        **       9996 
+      **       110         **       150         **       206     4-00000000   1060        **       2055        **       9997 
+      **       111         **       155         **       209     4-00000000   1120    4-00005C9C   2060        **       9998 
+      **       114         **       156         **       320         **       1140        **       2065        **       9999 
+      **       116         **       157         **       340     4-000012F8   1200    4-00006070   2070        **       99090
+      **       117         **       160         **       400     4-000015A4   1300        **       2075                      
+      **       118         **       165         **       401     4-00001BF0   1400    4-00006548   2080                      
+      **       120         **       166         **       510         **       2000        **       2085                      
+      **       130         **       170         **       900     4-00004AE0   2020    4-000068A8   2090                      
+      **       131         **       175     4-000000E0   1000        **       2025        **       2095                      
+      **       132         **       180         **       1001    4-000053E4   2040        **       2500                      
+
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                       Type  Name                       Type  Name                       Type  Name                    
+                                                                                                                                   
+  I*4   CHLAST                           TIM_STAMP                        WIND_GET_LZ_TIMES                WIND_PRINT_HK           
+        EPOCH_TO_ITIME                   WIND_CD_INIT                     WIND_GREG_TO_EPOCH                                       
+        FIXUP                            WIND_EPOCH_TO_GREG               WIND_MOVE_DOWN_L1                                        
+        LIB$DATE_TIME              CHAR  WIND_FORMAT_TIME                 WIND_OPEN_LZ_DATA                                        
+        TILOG                            WIND_GET_FILENAME                WIND_PB5_TO_EPOCH                                        
+
+PRINTLZ                                                         23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  37
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4406 
+	   4407       SUBROUTINE FIXUP( SC_Clock )
+	   4408 C
+	   4409 C This routine is called after a READ to possibly reverse the two 32-bit parts
+	   4410 C of the SC clock.  On the older CD (1993) these values come in correctly,
+	   4411 C while on the newer files (both production and NRT) they are in the reverse
+	   4412 C order.  This may change again when the CDs of Level 0 data start being
+	   4413 C produced.
+	   4414 C
+	   4415 C For now FIXUP is called unconditionally.  This will have to be
+	   4416 C reevaluated later, when the CDs of actual data start coming out.
+	   4417 C
+	   4418 C ALGORITHM:
+	   4419 C
+	   4420 C The first time we are called obtain the current date (we're interested in the
+	   4421 C year) and extract the year from the SC clock.  Compare these two values.
+	   4422 C If the year obtained from the SC clock (SC_Year) is later than the
+	   4423 C current year, and obvious impossibility, set the logical variable SWAP_PARTS
+	   4424 C to .TRUE.; otherwise set it to .FALSE. .
+	   4425 C
+	   4426 C For all calls test SWAP_PARTS.  If it is set exchange the two 32-bit parts of
+	   4427 C SC_Clock.
+	   4428 C
+	   4429 C While this will not catch all errors, it will catch the more obvious one
+	   4430 C and allow WIND_PRINTLZ to operate
+	   4431 C Further refinements will have to wait for a later date.
+	   4432 C
+	   4433       IMPLICIT NONE
+	   4434       INTEGER*4 SC_Clock(2), ITEMP
+	   4435       INTEGER MONTH, DAY, THIS_YEAR
+	   4436       LOGICAL FIRST_TIME, SWAP_PARTS
+	   4437       SAVE FIRST_TIME, SWAP_PARTS
+	   4438       DATA FIRST_TIME, SWAP_PARTS /.TRUE., .FALSE./
+	   4439 C
+	   4440       REAL*8 SC_EPOCH
+	   4441       INTEGER*4  SC_Year, SC_DOY, SC_Msec, SC_MicSec, ISTAT
+	   4442 C
+	   4443 C The first time we are called:
+	   4444 C   Obtain the current date
+	   4445 C   Decode the SC clock time into normal calendar date/time
+	   4446 C   Compare the years from the two sources and set SWAP_PARTS accordingly
+	   4447 C
+	   4448       IF (FIRST_TIME) THEN
+	   4449 C
+	   4450 C Get the date.  Remember to adjust year to proper century, as it only give a
+	   4451 C 2-digit value (0..99).
+	   4452 C
+	   4453         CALL IDATE(MONTH,DAY,THIS_YEAR)
+	   4454         IF (THIS_YEAR .LT. 90) THIS_YEAR = THIS_YEAR + 2000
+	   4455         IF (THIS_YEAR .LT. 100) THIS_YEAR = THIS_YEAR + 1900
+	   4456 C
+	   4457 C First convert SC clock into EPOCH time
+	   4458 C
+	   4459         CALL WIND_PB5_TO_EPOCH( SC_Clock,         ! UTC: PB5 (2 INTEGER*4)
+	   4460      +                          SC_EPOCH,         ! UTC: EPOCH as Real*8
+	   4461      +                          ISTAT )
+	   4462 C
+
+FIXUP                                                           23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  38
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4463 C Now convert the EPOCH time into normal time: calendar year, day of year, etc.
+	   4464 C
+	   4465         CALL WIND_EPOCH_TO_GREG(  SC_Year,
+	   4466      +                            SC_DOY,
+	   4467      +                            SC_Msec,
+	   4468      +                            SC_MicSec,
+	   4469      +                            SC_EPOCH,       ! UTC: EPOCH as Real*8
+	   4470      +                            ISTAT )
+	   4471 C
+	   4472 C Now for the big test.  If the year just obtained (SC_Year) is later than the
+	   4473 C current year, set SWAP_PARTS to .TRUE., else set it to .FALSE.
+	   4474 C Reset the first-time-called flag.
+	   4475 C
+	   4476 C While this will not catch all errors, it will catch the more obvious ones.
+	   4477 C Further refinements will have to wait for a later date.
+	   4478 C
+	   4479         SWAP_PARTS = SC_Year .GT. THIS_YEAR
+	   4480         FIRST_TIME = .FALSE.
+	   4481         TYPE *,'THIS_YEAR, SC_Year =',THIS_YEAR,SC_Year
+	   4482         IF (SWAP_PARTS) TYPE *,'SC clock parts will be swapped'
+	   4483         IF (.NOT. SWAP_PARTS) TYPE *,'SC clock parts will NOT be swapped'
+	   4484       END IF
+	   4485 C
+	   4486 C At this point SWAP_PARTS has been properly set
+	   4487 C Come here for all calls, test SWAP_PARTS, and exchange the two parts of
+	   4488 C SC_Clock if it is set
+	   4489 C
+	   4490       IF (SWAP_PARTS) THEN
+	   4491         ITEMP = SC_Clock(1)
+	   4492         SC_Clock(1) = SC_Clock(2)
+	   4493         SC_Clock(2) = ITEMP
+	   4494       END IF
+	   4495 C
+	   4496       RETURN
+	   4497       END
+
+FIXUP                                                           23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  39
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+
+
+PROGRAM SECTIONS
+
+    Name				 Bytes   Attributes
+
+  1 $DATA$                               46568 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  2 $BSS$                                  728 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  3 $IODATA$                              5428 NOPIC CON REL LCL NOSHR NOEXE   RD   WRT OCTA
+  4 $CODE$                               37668   PIC CON REL LCL   SHR   EXE NORD NOWRT OCTA
+  5 $LINK$                                2432 NOPIC CON REL LCL NOSHR NOEXE   RD NOWRT OCTA
+  6 LIB$INITIALIZE                           4 NOPIC CON REL GBL NOSHR NOEXE   RD NOWRT LONG
+  7 EDB                                 454336 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  8 L1INFO                                  32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+  9 EDB_HEADER                              20 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 10 HDB                                    996 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 11 HK                                    3912 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 12 DATA_RECORD                          13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 13 DATA_RECORD2                         13300 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 14 LABEL_RECORD                         13000 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 15 LR_EPOCH_TIMES                          16 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 16 LR_EDITFILE                            128 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 17 VERSIONS                              1004 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 18 FILE                                   160 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 19 DATES                                   32 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+ 20 DIAG                                     8 NOPIC OVR REL GBL NOSHR NOEXE   RD   WRT OCTA
+
+    Total Space Allocated               593072
+
+
+ENTRY POINTS
+
+    Address   Type  Name 
+                         
+  4-000090B0        FIXUP
+
+
+VARIABLES
+
+    Address   Type  Name           Address   Type  Name           Address   Type  Name      
+                                                                                            
+  2-0000000C  I*4   DAY          2-00000008  I*4   MONTH        2-0000001C  I*4   SC_MSEC   
+  1-00000000  L*4   FIRST_TIME   2-00000018  I*4   SC_DOY       2-00000014  I*4   SC_YEAR   
+  2-00000024  I*4   ISTAT        2-00000000  R*8   SC_EPOCH     1-00000004  L*4   SWAP_PARTS
+REG-00000010  I*4   ITEMP        2-00000020  I*4   SC_MICSEC    2-00000010  I*4   THIS_YEAR 
+
+
+ARRAYS
+
+     Address  Type  Name            Bytes  Dimensions
+
+      **      I*4   SC_CLOCK            8  (2)
+
+
+
+
+FIXUP                                                           23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  40
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+FUNCTIONS AND SUBROUTINES REFERENCED
+
+  Type  Name                       Type  Name                    
+                                                                 
+        WIND_EPOCH_TO_GREG               WIND_PB5_TO_EPOCH       
+
+FIXUP                                                           23-FEB-1995 12:58:32    DEC Fortran V6.2-508                Page  41
+1.3                             Symbol Table                    23-FEB-1995 12:58:27    [WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.FOR;12
+
+	   4498 
+
+
+  +---------------------------------------------------+
+  |               KEY TO ADDRESS CODE FORMATS         |
+  |   ppp-oooooooo  - In Psect ppp, Offset oooooooo   |
+  |   ***-********  - External                        |
+  |               # - Suffix: Also In Registers       |
+  |   REG-rrrrrrrr  - In Register rrrrrrrr            |
+  |   REG-########  - In Various Registers            |
+  |        **       - Not Used; Not Allocated         |
+  +---------------------------------------------------+
+
+
+COMMAND QUALIFIERS
+
+  /ALIGNMENT=(COMMONS=(PACKED,NOMULTILANGUAGE),RECORDS=PACKED)
+  /ASSUME=(ACCURACY_SENSITIVE,BACKSLASH,NODUMMY_ALIASES,NOUNDERSCORE)
+  /CHECK=(ASSERTIONS,BOUNDS,FORMAT,FP_EXCEPTIONS,OVERFLOW,ÿÿÿ°&¶
+  /DEBUG=(NOSYMBOLS,TRACEBACK)
+  /DESIGN=(NOCOMMENTS)
+  /SHOW=(DICTIONARY,INCLUDE,MAP,PREPROCESSOR)
+  /STANDARD=(NOSEMANTIC,NOSOURCE_FORM,NOSYNTAX)
+  /WARNINGS=(NOALIGNMENT,NOARGUMENT_CHECKING,DECLARATIONS,GENERAL,NOTRUNCATED_SOURCE,UNCALLED,
+             UNINITIALIZED,UNREACHABLE,UNUSED)
+  /NOAUTOMATIC  /BLAS=NOMAPPED  /CONVERT=NATIVE  /NOCROSS_REFERENCE  /NOD_LINES  /ERROR_LIMIT=30  /EXTEND_SOURCE
+  /NOPAD_SOURCE  /NOF77  /FLOAT=G_FLOAT  /IEEE_MODE=FAST  /ROUNDING_MODE=NEAREST
+  /GRANULARITY=QUADWORD  /INSTRUCTION_SET=FLOATING  /INTEGER_SIZE=32  /NOMACHINE_CODE
+  /MATH_LIBRARY=ACCURATE  /NAMES=UPPERCASE  /OPTIMIZE=(LEVEL=4,UNROLL=0)  /REAL_SIZE=32  /NORECURSIVE
+  /NOSEPARATE_COMPILATION  /NOSYNCHRONOUS_EXCEPTIONS  /NOSYNTAX_ONLY  /TERMINAL=NOSTATISTICS  /NOTIE  /VMS
+  /NOANALYSIS_DATA
+  /NODIAGNOSTICS
+  /INCLUDE=(.FOR,.f,FORT$INCLUDE:.FOR,FORT$INCLUDE:.f)
+  /LIST=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.LIS;9
+  /OBJECT=SMS1:[WIND.SOFTWARE.LZ.PRINTLZ]PRINTLZ.OBJ;5
+  /NOLIBRARY
+   sys$lib=SYS$COMMON:[SYSLIB]FORSYSDEF.TLB;1
+
+COMPILER: DEC Fortran V6.2-508-274F
+
+COMPILATION STATISTICS
+
+  CPU time:         15.62 seconds
+  Elapsed time:     18.41 seconds
+  Pagefaults:        1622
+  I/O Count:          119

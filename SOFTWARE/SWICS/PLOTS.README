@@ -1,0 +1,36 @@
+                              SWICS/Wind Routine Plots
+The plots in this binder contain the following parameters:
+     Proton Velocity (km/s)
+     Alpha Velocity - Proton Velocity (km/s)
+     Proton Kinetic Temperature (x10^4 K)
+     Proton Kinetic Temperature / Alpha Kinetic Temperature
+     Oxygen Ionization Temperature (x10^6 K)
+     CNO/Fe ratio
+The proton velocity and kinetic temperature is calculated using the peak 3
+points of the FSR 'fitted' to a Gaussian (actually calculated not fitted).
+The alpha velocity and kinetic temperature is calculated in the same manner
+as the proton velocity and temperature.  The alpha kinetic temperature is
+less reliable in high kinetic time periods when the proton peak may encroach
+on the alpha peak.
+The oxygen ionization temperature is calculated from the ratio of O7+ to O6+
+counts using the tables of Arnaud and Rothenflug.  The only correction made to
+these counts is to account for possible different dcr/fsr 'efficiencies'.  
+The counts are multiplied by fsr/dcr for that spin.  The counts are collected
+for 1 hour (or long enough to have more than 2 counts in each total) and then
+the temperature is calculated.
+The CNO/Fe ratio is calculated from the ratio of counts in a mass-m/q region
+defined to contain primarily CNO and the counts in a region defined to contain
+primarily Fe.  These counts are accumulated over at least 1 hour (or long
+enought to have more than 2 counts in each total).  The plotted value is a 
+ratio of the counts which have been corrected for dcr/fsr efficiency in the 
+manner as as the oxygen counts.  This value should be considered preliminary
+and the absolute value is most probably not valid since CNO and Fe certainly
+have different detection efficiencies.  
+CAUTION should be taken when examining trends of these parameters in the data.
+All the parameters are dependent on the mode of the instrument (least true
+for the proton velocity).  As the instrument mode was changed often during
+the first months of the mission, significant changes probably do not reflect
+true fluctuations.
+Any question regarding these plots (generation, interpretation, etc) should
+be directed to Chris Cohen.
+16 February 1995

@@ -1,0 +1,33 @@
+From:	UMDSP::PAQUETTE     "John Paquette(Univ. Md)" 27-APR-1995 16:02:18.85
+To:	UMSMS::PAQUETTE
+CC:	
+Subj:	
+From:	UMDSP::LUNDGREN     "Robert Lundgren, (301)-405-6211" 27-APR-1995 15:57:27.31
+To:	PAQUETTE
+CC:	LUNDGREN
+Subj:	SMS level conversion factors
+                         SMS High Voltage Power Supplies 
+                      Conversion of Command Level to Voltage
+                                                                   SMS_LEV.TXT
+                                                         Revised 11 April 1995
+HDB                            
+Byte  Power Supply             Voltage as a function of Level (L)
+                                                                     
+61    SWICS PAPS               Voltage = 190.96  - 117.15*L
+62    SWICS Start MCPPS        Voltage = 1.129   + 16.303*L
+63    SWICS Stop MCPPS         Voltage = 1.564   + 12.181*L
+      MASS ADPS                Voltage = 2013.9  - 31.809*L
+110   MASS HPS                 Voltage = -19.5   + 132.08*L
+112   MASS Start MCPPS         Voltage = 12.2    + 18.294*L
+114   MASS Stop MCPPS          Voltage = 0.2     + 13.452*L
+17    STICS MCPPS 0            Voltage = -11.081 + 12.535*L
+18    STICS MCPPS 1            Voltage = -7.7568 + 12.535*L
+19    STICS MCPPS 2            Voltage = -9.4054 + 12.524*L
+20    STICS MCPPS 3            Voltage = -7.1081 + 12.526*L
+21    STICS MCPPS 4            Voltage = -8.5135 + 12.541*L
+22    STICS MCPPS 5            Voltage = -10.081 + 12.565*L
+23    STICS TOFPS (MCPPS 6)    Voltage = -3.0764 + 4.5362*L
+      SWICS DPPS               Voltage = 43.832*e^(0.068794*L)
+      MASS DPPS                Voltage = -76.412*e^(0.050056*L)
+      STICS +DPPS              Voltage = 240.465*e^(0.118579*L)
+      STICS -DPPS              Voltage = -277.871*e^(0.113290*L)
